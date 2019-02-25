@@ -1,0 +1,16 @@
+* Weekly meetings, Tuesday, 10 AM
+** Updates
+** Code browsing
+* 2019-02-26, 10 AM
+** DONE Google Calendar
+   CLOSED: [2019-02-20 Mi 11:52] SCHEDULED: <2019-02-20 Mi>
+** DONE Git repo
+   CLOSED: [2019-02-24 So 12:13]
+** TODO Ask Philipp for Bishop solutions
+   SCHEDULED: <2019-02-21 Do>
+** Minimum working example 
+*** Representation HMM
+*** Expectation Maximization
+*** Viterbi algorithm
+** Collecting data
+*** Same structure as official data sets
