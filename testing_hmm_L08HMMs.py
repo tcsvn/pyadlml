@@ -9,7 +9,8 @@ S0 = 'S0'
 S1 = 'S1'
 A = 'A'
 B = 'B'
-# Board Mode: Angabe der Pin-Nummer
+
+
 class TestHmmExampleL08HMM(unittest.TestCase):
     def setUp(self):
         # set of observations
@@ -30,25 +31,34 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         obs_seq = [A,A,B]
         #self.hmm.forward_backward(obs_seq)
 
+
     def test_backward(self):
         obs_seq = [A,A,B]
-        self.hmm.backward(obs_seq)
+        result = np.array([[0.15768, 0.276, 0.4, 1.0],
+                           [0.063, 0.21, 0.7, 1.0]])
 
-        # pomegranate
-        backward_matrix = self.pom.backward(obs_seq)
+        backward_matrix = self.hmm.backward(obs_seq)
         print(backward_matrix)
+
+        print(result)
+        self.assertTrue(np.allclose(result, backward_matrix))
+
 
     def test_forward(self):
         obs_seq = [A,A,B]
+        result = np.array([[1.0, 0.48, 0.2304, 0.027648],
+                           [0.0, 0.12, 0.0936, 0.130032]])
         forward_matrix = self.hmm.forward(obs_seq)
-        print(forward_matrix)
+
+        self.assertTrue(np.allclose(result, forward_matrix))
+
 
     def test_state_sequence(self):
         #self.hmm.render_graph()
         seq = [A,A,B]
         prob = self.hmm.prob_state_seq(seq)
         self.assertEqual(prob, 0.0128)
-        #self.pom.
+
 
     def test_getter_emission(self):
         #self.hmm.draw()
@@ -67,8 +77,9 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         self.assertEqual(self.hmm.prob_za_given_zb(S1, S1), 1.0)
 
     def test_viterbi(self):
-        # calcultes the
         obs_seq = [A,A,B]
-        #best_state_seq = [SN, SN, SN, RN, RN, SN]
+        best_state_seq = [S0, S0, S1]
+
+        # test
         res = self.hmm.viterbi(seq=obs_seq)
-        #self.assertListEqual(best_state_seq, res)
+        self.assertListEqual(best_state_seq, res)

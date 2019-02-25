@@ -255,32 +255,34 @@ class HiddenMarkovModel():
         # alpha(z12) | alpha(z22) | alpha(z32) | ... |
 
         # compute Initial condition (13.37)
-        forward_matrix = np.zeros((len(self._z), len(seq)))
-        for idx, zn in enumerate(self._z):
-            #forward_matrix[idx][0] = self.prob_z1_and_x1(z, seq[0])
-            #print(str(self.prob_pi(zn)) + " " + str(self.prob_x_given_z(seq[0],zn)))
-            forward_matrix[idx][0] = self.prob_pi(zn)*self.prob_x_given_z(seq[0],zn)
+        forward_matrix = np.zeros((len(self._z), len(seq)+1))
+        for idx, pi_zn in enumerate(self._pi):
+            forward_matrix[idx][0] = pi_zn
 
-        # todo debug
+        for idx, zn in enumerate(self._z):
+            forward_matrix[idx][1] = self.prob_pi(zn)*self.prob_x_given_z(seq[0],zn)
+
         # alpha recursion
-        for t in range(1,len(seq)):
+        for t in range(1,len(seq)+1):
             for idx, zn in enumerate(self._z):
-                xn = seq[t]
+                xn = seq[t-1]
                 sum = 0
                 # sum over preceding alpha values of the incident states multiplicated with the transition
                 # probability into the current state
-                #s = "["
+                s = "["
                 for i, znm1 in enumerate(self._z):
                     # alpha value of prec state * prob of transitioning into current state * prob of emitting the observation
-                    #s += "(" + str(alpha_matrix[i][t-1]) + "*" + str(self.prob_za_given_zb(zn, znm1)) + ") +"
+                    s += "(" + str(forward_matrix[i][t-1])+ "*" + str(self.prob_za_given_zb(zn, znm1)) + ")+"
                     sum += forward_matrix[i][t-1]*self.prob_za_given_zb(zn, znm1)
+
                 # multiply by the data contribution the prob of observing the current observation
+                s+= "]*"+str(self.prob_x_given_z(xn, zn))
+                print(s)
+                print('-'*3)
                 sum *= self.prob_x_given_z(xn, zn)
                 forward_matrix[idx][t] = sum
 
         return forward_matrix
-        # todo is only the last alpha_t relevant?
-        #return alpha.T[len(seq)-1]
 
 
     def prob_pi(self, zn):
