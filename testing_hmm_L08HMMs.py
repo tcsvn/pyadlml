@@ -27,22 +27,28 @@ class TestHmmExampleL08HMM(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_forward_backward(self):
+    def test_xi(self):
         obs_seq = [A,A,B]
-        #self.hmm.forward_backward(obs_seq)
+        forward_matrix = self.hmm.forward(obs_seq)
+        backward_matrix = self.hmm.backward(obs_seq)
+        xi = self.hmm.xi(forward_matrix,backward_matrix, obs_seq)
+        #print('-'*30)
+        #print(xi)
+        # todo add assertion
 
     def test_gamma(self):
         obs_seq = [A,A,B]
         forward_matrix = self.hmm.forward(obs_seq)
         backward_matrix = self.hmm.backward(obs_seq)
         gamma = self.hmm.gamma(forward_matrix, backward_matrix)
+        print(gamma)
+        # todo add assertion
 
     def test_prob_X(self):
         obs_seq = [A,A,B]
         forward_matrix = self.hmm.forward(obs_seq)
         prob_X = self.hmm.prob_X(forward_matrix)
         self.assertEqual(round(prob_X,2), 0.16)
-
 
     def test_backward(self):
         obs_seq = [A,A,B]
@@ -54,7 +60,6 @@ class TestHmmExampleL08HMM(unittest.TestCase):
 
         print(result)
         self.assertTrue(np.allclose(result, backward_matrix))
-
 
     def test_forward(self):
         obs_seq = [A,A,B]

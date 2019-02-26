@@ -62,6 +62,7 @@ class HiddenMarkovModel():
 
     def draw(self): self.render_console()
     def plot(self): self.render_console()
+
     def generate_visualization(self):
         """ Returns a graphviz object representing the network"""
         dot = Digraph()
@@ -194,54 +195,40 @@ class HiddenMarkovModel():
         return sum
 
     def xi(self, alpha_matrix, beta_matrix, seq):
-        prob_X = self.prob_X(alpha_matrix)
-        xn = seq[len(seq)-1]
-
-        # bsp for zn-1 = z1 , zn = z2
-        # xn := is last observed x of the sequence
-        # [\alpha(znm1)*p(xn|zn)p(zn|znm1)\beta(zn)]/prob(x)
-        # \alpha(z1)*prob p(zn
-        #
-        res = np.array((self._z,self._z))
-
-        for zn_idx, zn in self._z:
-            for znm1_idx, znm1 in self._z:
-                term = 0
-                alpha_znm1 = alpha_matrix[znm1_idx][len(alpha_matrix)-2]
-                beta_zn = beta_matrix[zn_idx][len(beta_matrix)-1]
-                term = [alpha_znm1*self.prob_x_given_z(xn, zn)*self.prob_za_given_zb(zn, znm1)\
-                        *beta_zn]/prob_X
-                res[zn_idx][znm1_idx] = term
-        return res
-
-    def xi(self, seq):
         """
         computes the probability for every state zn-1 and a possible succeeding state zn
-        given a certain sequence X
-        :param seq1:
-        :param seq2:
-        :return: 2D array zt X ztp1
+        for every time t in a given a sequence X
+        :param alpha_matrix:
+        :param beta_matrix:
+        :param seq:
+        :return: 2D matrix (znm1 X zn X t)
         """
-        alpha_matrix = self.forward(seq)
-        beta_matrix = self.backward(seq)
         prob_X = self.prob_X(alpha_matrix)
-        xn = seq[len(seq)-1]
+        res = np.zeros((len(self._z),len(self._z), len(seq)))
 
-        # bsp for zn-1 = z1 , zn = z2
-        # xn := is last observed x of the sequence
-        # [\alpha(znm1)*p(xn|zn)p(zn|znm1)\beta(zn)]/prob(x)
-        # \alpha(z1)*prob p(zn
-        #
-        res = np.array((self._z,self._z))
-
-        for zn_idx, zn in self._z:
-            for znm1_idx, znm1 in self._z:
-                term = 0
-                alpha_znm1 = alpha_matrix[znm1_idx][len(alpha_matrix)-2]
-                beta_zn = beta_matrix[zn_idx][len(beta_matrix)-1]
-                term = [alpha_znm1*self.prob_x_given_z(xn, zn)*self.prob_za_given_zb(zn, znm1)\
-                        *beta_zn]/prob_X
-                res[zn_idx][znm1_idx] = term
+        #print(prob_X)
+        #print(alpha_matrix)
+        #print(beta_matrix)
+        #print('-'*10)
+        for t in range(0, len(seq)):
+            for znm1_idx, znm1 in enumerate(self._z):
+                for zn_idx, zn in enumerate(self._z):
+                    xn = seq[t]
+                    alpha_znm1 = alpha_matrix[znm1_idx][t]
+                    beta_zn = beta_matrix[zn_idx][t]
+                    prob_em = self.prob_x_given_z(xn,zn)
+                    prob_trans = self.prob_za_given_zb(zn, znm1)
+                    res[zn_idx][znm1_idx][t] = (alpha_znm1*prob_trans*prob_em*beta_zn)/prob_X
+                    # debug
+                    #s = "tmp = ("
+                    #s += str(round(alpha_znm1,2)) + "*"
+                    #s += str(round(prob_trans, 2)) + "*"
+                    #s += str(round(prob_em,2)) + "*"
+                    #s += str(round(beta_zn,2))+ ")/("
+                    #s += str(round(prob_X,2)) + ") = "
+                    #s += str(res[zn_idx][znm1_idx])
+                    #print(s)
+                    #print('-----')
         return res
 
     def forward(self, seq):
@@ -428,21 +415,15 @@ class HiddenMarkovModel():
         max_prob_matrix = np.zeros((len(self._z),len(seq)))
         for idx, state in enumerate(self._z):
             max_prob_matrix[idx][0] = self.prob_z1(state)*self.prob_x_given_z(seq[0], state)
-        #print(max_prob_matrix)
-        #seq_counter=1
         for seq_counter in range(1,len(seq)):
             for idx, act_state in enumerate(self._z):
-                values = np.zeros(len(self._z))
-                #print(values)
+                tmp = np.zeros(len(self._z))
                 for idx2, prev_state in enumerate(self._z):
                     x = self.get_index_by_state_label(prev_state)
-                    prev_max_prob = max_prob_matrix[x][seq_counter-1]
-                    transition_prob = self.prob_za_given_zb(act_state, prev_state)
-                    emission_prob = self.prob_x_given_z(seq[seq_counter], act_state)
-                    values[idx2] = prev_max_prob*transition_prob*emission_prob
-                    #print("P(" + seq[seq_counter] + " | t=" + act_state + " , t-1=" + prev_state + ") = " + str(previous_prob) + " * " + str(transition_prob) + " * " + str(emission_prob))
-                    #print('--'*30)
-                max_prob_matrix[idx][seq_counter] = values.max()
+                    tmp[idx2] = max_prob_matrix[x][seq_counter-1]\
+                        *self.prob_za_given_zb(act_state, prev_state)\
+                        *self.prob_x_given_z(seq[seq_counter], act_state)
+                max_prob_matrix[idx][seq_counter] = tmp.max()
 
         # generate state sequence
         res = []
