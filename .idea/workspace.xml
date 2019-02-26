@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="503f9e1a-da8b-4c6f-bc5e-9a6e6e865a3a" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/hmm/hmm.py" beforeDir="false" afterPath="$PROJECT_DIR$/hmm/hmm.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/testing_hmm_L08HMMs.py" beforeDir="false" afterPath="$PROJECT_DIR$/testing_hmm_L08HMMs.py" afterDir="false" />
     </list>
@@ -23,7 +22,8 @@
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_getter_emission.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_getter_emission Coverage Results" MODIFIED="1551100251684" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_2_TestHmmSunnyRainyExample_test_forward_backward.coverage" NAME="Unittests for testing_hmm_2.TestHmmSunnyRainyExample.test_forward_backward Coverage Results" MODIFIED="1550996989195" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_backward.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_backward Coverage Results" MODIFIED="1551131850800" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_prob_X.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_prob_X Coverage Results" MODIFIED="1551160675502" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_prob_X.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_prob_X Coverage Results" MODIFIED="1551163152041" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_gamma.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_gamma Coverage Results" MODIFIED="1551164260467" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_2_TestHmmSunnyRainyExample_test_getter.coverage" NAME="Unittests for testing_hmm_2.TestHmmSunnyRainyExample.test_getter Coverage Results" MODIFIED="1550847680629" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_2_TestHmmSunnyRainyExample_test_viterbi.coverage" NAME="Unittests for testing_hmm_2.TestHmmSunnyRainyExample.test_viterbi Coverage Results" MODIFIED="1551098758601" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_2_TestHmmSunnyRainyExample_test_probabilities.coverage" NAME="Unittests for testing_hmm_2.TestHmmSunnyRainyExample.test_probabilities Coverage Results" MODIFIED="1550835441562" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
@@ -38,14 +38,14 @@
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_viterbi.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_viterbi Coverage Results" MODIFIED="1551127615986" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="FileEditorManager">
-    <splitter split-orientation="horizontal" split-proportion="0.48675033">
+    <splitter split-orientation="horizontal" split-proportion="0.6043069">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
           <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/hmm/hmm.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="476">
-                  <caret line="187" column="40" selection-start-line="187" selection-start-column="40" selection-end-line="187" selection-end-column="40" />
+                <state relative-caret-position="323">
+                  <caret line="165" column="33" selection-start-line="165" selection-start-column="33" selection-end-line="165" selection-end-column="33" />
                   <folding>
                     <element signature="e#0#29#0" expanded="true" />
                   </folding>
@@ -60,8 +60,8 @@
           <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/testing_hmm_L08HMMs.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="799">
-                  <caret line="53" column="26" selection-start-line="53" selection-start-column="26" selection-end-line="53" selection-end-column="26" />
+                <state relative-caret-position="323">
+                  <caret line="37" column="43" selection-start-line="37" selection-start-column="43" selection-end-line="37" selection-end-column="43" />
                   <folding>
                     <element signature="e#0#15#0" expanded="true" />
                   </folding>
@@ -97,8 +97,8 @@
         <option value="/mnt/external_D/code/hassbrain_algorithm/testing_hmm_L08HMMs.py" />
         <option value="$PROJECT_DIR$/testing_hmm_2.py" />
         <option value="/mnt/external_D/code/hassbrain_algorithm/hmm/hmm.py" />
-        <option value="$PROJECT_DIR$/hmm/hmm.py" />
         <option value="$PROJECT_DIR$/testing_hmm_L08HMMs.py" />
+        <option value="$PROJECT_DIR$/hmm/hmm.py" />
       </list>
     </option>
   </component>
@@ -162,7 +162,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python tests.Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_prob_X">
+  <component name="RunManager" selected="Python tests.Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_gamma">
     <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_backward" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
       <module name="hassbrain_algorithm" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -193,6 +193,21 @@
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
+    <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_gamma" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+      <module name="hassbrain_algorithm" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_gamma&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
     <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_prob_X" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
       <module name="hassbrain_algorithm" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -205,21 +220,6 @@
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
       <option name="_new_target" value="&quot;testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_prob_X&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
-      <method v="2" />
-    </configuration>
-    <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_state_sequence" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
-      <module name="hassbrain_algorithm" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_state_sequence&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
@@ -240,11 +240,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python tests.Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_gamma" />
         <item itemvalue="Python tests.Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_prob_X" />
         <item itemvalue="Python tests.Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_backward" />
         <item itemvalue="Python tests.Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_forward" />
         <item itemvalue="Python tests.Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_viterbi" />
-        <item itemvalue="Python tests.Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_state_sequence" />
       </list>
     </recent_temporary>
   </component>
@@ -264,44 +264,44 @@
       <workItem from="1550930249781" duration="19055000" />
       <workItem from="1550991818398" duration="10291000" />
       <workItem from="1551094957279" duration="30350000" />
-      <workItem from="1551158230509" duration="2176000" />
+      <workItem from="1551158230509" duration="4569000" />
     </task>
     <servers />
   </component>
   <component name="TestHistory">
-    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_prob_X - 2019.02.26 at 06h 55m 04s.xml">
-      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_prob_X" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_gamma - 2019.02.26 at 07h 40m 14s.xml">
+      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_gamma" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_prob_X - 2019.02.26 at 06h 55m 38s.xml">
-      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_prob_X" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_gamma - 2019.02.26 at 07h 42m 00s.xml">
+      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_gamma" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_prob_X - 2019.02.26 at 06h 56m 00s.xml">
-      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_prob_X" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_gamma - 2019.02.26 at 07h 52m 02s.xml">
+      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_gamma" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_prob_X - 2019.02.26 at 06h 56m 07s.xml">
-      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_prob_X" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_gamma - 2019.02.26 at 07h 52m 09s.xml">
+      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_gamma" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_prob_X - 2019.02.26 at 06h 56m 20s.xml">
-      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_prob_X" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_gamma - 2019.02.26 at 07h 54m 27s.xml">
+      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_gamma" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_prob_X - 2019.02.26 at 06h 56m 40s.xml">
-      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_prob_X" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_gamma - 2019.02.26 at 07h 55m 06s.xml">
+      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_gamma" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_prob_X - 2019.02.26 at 06h 56m 59s.xml">
-      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_prob_X" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_gamma - 2019.02.26 at 07h 56m 07s.xml">
+      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_gamma" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_prob_X - 2019.02.26 at 06h 57m 20s.xml">
-      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_prob_X" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_gamma - 2019.02.26 at 07h 56m 33s.xml">
+      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_gamma" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_prob_X - 2019.02.26 at 06h 57m 49s.xml">
-      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_prob_X" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_gamma - 2019.02.26 at 07h 57m 20s.xml">
+      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_gamma" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_prob_X - 2019.02.26 at 06h 57m 56s.xml">
-      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_prob_X" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_gamma - 2019.02.26 at 07h 57m 41s.xml">
+      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_gamma" configurationId="tests" />
     </history-entry>
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="102876000" />
+    <option name="totallyTimeSpent" value="105269000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="1933" y="16" width="1894" height="1051" extended-state="0" />
@@ -310,7 +310,7 @@
       <window_info content_ui="combo" id="Project" order="0" sideWeight="0.07633588" weight="0.7905405" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info active="true" x="1968" y="288" width="1864" height="314" id="Run" order="3" sideWeight="0.9236641" side_tool="true" visible="true" weight="0.31316915" />
+      <window_info active="true" x="1968" y="288" width="1864" height="314" id="Run" order="3" sideWeight="0.9236641" side_tool="true" visible="true" weight="0.26115343" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" sideWeight="0.49774775" weight="0.3293348" />
       <window_info anchor="bottom" x="2885" y="40" width="940" height="1025" id="Debug" order="2" weight="0.30041152" />
@@ -452,22 +452,22 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/hmm/hmm.py">
+    <entry file="file://$PROJECT_DIR$/testing_hmm_L08HMMs.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="476">
-          <caret line="187" column="40" selection-start-line="187" selection-start-column="40" selection-end-line="187" selection-end-column="40" />
+        <state relative-caret-position="323">
+          <caret line="37" column="43" selection-start-line="37" selection-start-column="43" selection-end-line="37" selection-end-column="43" />
           <folding>
-            <element signature="e#0#29#0" expanded="true" />
+            <element signature="e#0#15#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/testing_hmm_L08HMMs.py">
+    <entry file="file://$PROJECT_DIR$/hmm/hmm.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="799">
-          <caret line="53" column="26" selection-start-line="53" selection-start-column="26" selection-end-line="53" selection-end-column="26" />
+        <state relative-caret-position="323">
+          <caret line="165" column="33" selection-start-line="165" selection-start-column="33" selection-end-line="165" selection-end-column="33" />
           <folding>
-            <element signature="e#0#15#0" expanded="true" />
+            <element signature="e#0#29#0" expanded="true" />
           </folding>
         </state>
       </provider>

@@ -31,6 +31,11 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         obs_seq = [A,A,B]
         #self.hmm.forward_backward(obs_seq)
 
+    def test_gamma(self):
+        obs_seq = [A,A,B]
+        forward_matrix = self.hmm.forward(obs_seq)
+        backward_matrix = self.hmm.backward(obs_seq)
+        gamma = self.hmm.gamma(forward_matrix, backward_matrix)
 
     def test_prob_X(self):
         obs_seq = [A,A,B]

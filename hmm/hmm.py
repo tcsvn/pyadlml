@@ -162,20 +162,24 @@ class HiddenMarkovModel():
         # TODO normalize the constant
 
     def gamma(self, alpha_matrix, beta_matrix):
-        res = alpha_matrix*beta_matrix
-        res = res/self.prob_X(alpha_matrix)
-        return res
+        """
+        computes the probability of zn given a sequence X for every timestep from
+        the alpha and beta matrices
+        :param alpha_matrix:
+        :param beta_matrix:
+        :return: 2D
+        """
+        return np.divide(alpha_matrix*beta_matrix,
+                         self.prob_X(alpha_matrix))
 
-    def gamma(self, seq):
+    def predictive_dist(self, seq):
         """
-        computes the probability for every state zt given a sequence X
-        :return: 1D array of probabilitys
+        Seite 642
+        observed sequence predict the next observation x_(n+1)
+        :return:
         """
-        alpha = self.forward(seq)
-        beta = self.backward(seq)
-        res = alpha*beta
-        res = res/self.prob_X(alpha)
-        return res
+        # todo implement
+        pass
 
     def prob_X(self, alpha_matrix):
         """
