@@ -185,8 +185,8 @@ class HiddenMarkovModel():
         :return: a float value
         """
         sum = 0
-        for idx_zn in range(0, self._z):
-            sum += alpha_matrix[len(alpha_matrix)-1][idx_zn]
+        for idx_zn in range(0, len(self._z)):
+            sum += alpha_matrix[idx_zn][len(alpha_matrix[0])-1]
         return sum
 
     def xi(self, alpha_matrix, beta_matrix, seq):
@@ -269,16 +269,16 @@ class HiddenMarkovModel():
                 sum = 0
                 # sum over preceding alpha values of the incident states multiplicated with the transition
                 # probability into the current state
-                s = "["
+                #s = "["
                 for i, znm1 in enumerate(self._z):
                     # alpha value of prec state * prob of transitioning into current state * prob of emitting the observation
-                    s += "(" + str(forward_matrix[i][t-1])+ "*" + str(self.prob_za_given_zb(zn, znm1)) + ")+"
+                    #s += "(" + str(forward_matrix[i][t-1])+ "*" + str(self.prob_za_given_zb(zn, znm1)) + ")+"
                     sum += forward_matrix[i][t-1]*self.prob_za_given_zb(zn, znm1)
 
                 # multiply by the data contribution the prob of observing the current observation
-                s+= "]*"+str(self.prob_x_given_z(xn, zn))
-                print(s)
-                print('-'*3)
+                #s+= "]*"+str(self.prob_x_given_z(xn, zn))
+                #print(s)
+                #print('-'*3)
                 sum *= self.prob_x_given_z(xn, zn)
                 forward_matrix[idx][t] = sum
 
@@ -445,14 +445,3 @@ class HiddenMarkovModel():
         for timestep in max_prob_matrix.T:
            res.append(self._z[timestep.argmax()])
         return res
-
-
-
-
-
-
-
-
-
-
-

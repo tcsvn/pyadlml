@@ -32,6 +32,13 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         #self.hmm.forward_backward(obs_seq)
 
 
+    def test_prob_X(self):
+        obs_seq = [A,A,B]
+        forward_matrix = self.hmm.forward(obs_seq)
+        prob_X = self.hmm.prob_X(forward_matrix)
+        self.assertEqual(round(prob_X,2), 0.16)
+
+
     def test_backward(self):
         obs_seq = [A,A,B]
         result = np.array([[0.15768, 0.276, 0.4, 1.0],
