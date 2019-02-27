@@ -14,3 +14,9 @@
 *** Viterbi algorithm
 ** Collecting data
 *** Same structure as official data sets
+* 2019-03-05, 10 AM
+** Computing/Tracking Q
+*** Plotting/Logging
+** Expectation computation + maximization
+** Scaling factors (Bishop 13.2.4)
+** (Optional showcase) Handwritten digits (Bishop 615)
