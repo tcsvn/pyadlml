@@ -17,6 +17,7 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         observation_alphabet = [A, B]
         states = [S0, S1]
         init_dist = [1.0, 0.0]
+        self.obs_seq = [A,A,B]
 
         # init markov model
         self.hmm = HiddenMarkovModel(states, observation_alphabet, ProbabilityMassFunction, init_dist)
@@ -27,6 +28,8 @@ class TestHmmExampleL08HMM(unittest.TestCase):
     def tearDown(self):
         pass
 
+
+
     def test_xi(self):
         obs_seq = [A,A,B]
         forward_matrix = self.hmm.forward(obs_seq)
@@ -35,6 +38,15 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         #print('-'*30)
         #print(xi)
         # todo add assertion
+
+    def test_predict_next_x(self):
+        obs_seq = self.obs_seq
+        print(self.hmm)
+        #self.hmm.train(obs_seq, 0.000001)
+        #print(self.hmm)
+        predicted_probs = self.hmm.predict_probs_xnp(obs_seq)
+        self.assertAlmostEqual(1.0, predicted_probs.sum())
+
 
     def test_gamma(self):
         obs_seq = [A,A,B]
@@ -52,8 +64,8 @@ class TestHmmExampleL08HMM(unittest.TestCase):
 
     def test_backward(self):
         obs_seq = [A,A,B]
-        result = np.array([[0.15768, 0.276, 0.4, 1.0],
-                           [0.063, 0.21, 0.7, 1.0]]).T
+        result = np.array([[ 0.276, 0.4, 1.0],
+                           [ 0.21, 0.7, 1.0]]).T
 
         backward_matrix = self.hmm.backward(obs_seq)
         print(backward_matrix)
@@ -63,8 +75,8 @@ class TestHmmExampleL08HMM(unittest.TestCase):
 
     def test_forward(self):
         obs_seq = [A,A,B]
-        result = np.array([[1.0, 0.48, 0.2304, 0.027648],
-                           [0.0, 0.12, 0.0936, 0.130032]]).T
+        result = np.array([[0.48, 0.2304, 0.027648],
+                           [0.12, 0.0936, 0.130032]]).T
         forward_matrix = self.hmm.forward(obs_seq)
         print(forward_matrix)
         print('-'*200)
