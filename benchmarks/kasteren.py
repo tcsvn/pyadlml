@@ -4,12 +4,33 @@ START_TIME = 'Start time'
 END_TIME = 'End time'
 ID = 'Idea'
 VAL = 'Val'
+NAME = 'Name'
 
 class DatasetKasteren():
     def __init__(self):
         self._obs_seq = []
         self._df = None
         self._label = None
+        self._label_hashmap = None
+        self._label_reverse_hashmap = None
+
+
+    def get_id_from_label(self, label, state):
+        """
+        returns the id of a sensor given a label
+        :param label:
+        :return:
+        """
+        return self._label_hashmap[label][state]
+
+    def get_label_from_id(self, id):
+        """
+        retrieves the label given a sensor id
+        :param id:
+        :return:
+        """
+        return self._label_reverse_hashmap[id]
+
 
 
     def load_sensors(self, path_to_file):
@@ -45,10 +66,11 @@ class DatasetKasteren():
                                  skiprows=6,
                                  nrows=14,
                                  skipinitialspace=4,
-                                 names=[ID, 'Name'],
+                                 names=[ID, NAME],
                                  engine='python'
                                  )
         sens_label[ID] = sens_label[ID].apply(lambda x: x[1:-1])
+        sens_label[NAME] = sens_label[NAME].apply(lambda x: x[1:-1])
         sens_label[ID] = pd.to_numeric(sens_label[ID])
 
         # todo declare at initialization of dataframe
@@ -75,12 +97,12 @@ class DatasetKasteren():
 
         # create alternating zeros and 1 label dataframe
         lb_zero = labels.copy()
-        lb_zero['Val'] = 0
+        lb_zero[VAL] = 0
         lb_zero = lb_zero.loc[:, lb_zero.columns != 'Idea']
         lb_one = labels.copy()
-        lb_one['Val'] = 1
+        lb_one[VAL] = 1
         lb_one = lb_one.loc[:, lb_one.columns != 'Idea']
-        new_label = pd.concat([lb_one, lb_zero]).sort_values('Name')
+        new_label = pd.concat([lb_one, lb_zero]).sort_values(NAME)
         new_label = new_label.reset_index(drop=True)
 
         #
@@ -90,9 +112,9 @@ class DatasetKasteren():
         #
         df_start = df.copy()
         df_end = df.copy()
-        df_end = df_end.loc[:, df_end.columns != 'Start time']
-        df_start = df_start.loc[:, df_start.columns != 'End time']
-        df_end['Val'] = 0
+        df_end = df_end.loc[:, df_end.columns != START_TIME]
+        df_start = df_start.loc[:, df_start.columns != END_TIME]
+        df_end[VAL] = 0
 
         # rename column 'End Time' and 'Start Time' to 'Time'
         new_columns = df_end.columns.values
@@ -117,13 +139,32 @@ class DatasetKasteren():
             label =row[1][0]
             value = row[1][2]
             # lookup id in new_label
-            correct_row = new_label[(new_label['Name'] == label) \
-                                    & (new_label['Val'] == value)]
+            correct_row = new_label[(new_label[NAME] == label) \
+                                    & (new_label[VAL] == value)]
             ide = correct_row.index[0]
             lst.append(ide)
+        #new_label[NAME] = new_label[NAME].str.strip()
         #print(lst)
         #print(len(lst))
         #print(len(new_df.index))
         self._obs_seq = lst
         self._df = new_df
         self._label = new_label
+
+        # create hashmap instead of shitty dataframe >:/
+        self._label_hashmap = {}
+        self._label_reverse_hashmap = {}
+        idx = 0
+        for row in new_label.iterrows():
+            name = str(row[1][0])
+            value = row[1][1]
+            if idx%2 == 0:
+                self._label_hashmap[name] = {}
+                self._label_hashmap[name][value] = idx
+                self._label_reverse_hashmap[idx] = name
+            else:
+                self._label_hashmap[name][value] = idx
+                self._label_reverse_hashmap[idx] = name
+            idx+=1
+
+
