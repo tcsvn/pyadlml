@@ -39,7 +39,15 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         #print(xi)
         # todo add assertion
 
-    def test_predict_next_x(self):
+    def test_predict_xnp1(self):
+        obs_seq = self.obs_seq
+        print(self.hmm)
+        #self.hmm.train(obs_seq, 0.000001)
+        #print(self.hmm)
+        symbol = self.hmm.predict_xnp1(obs_seq)
+        print(symbol)
+
+    def test_predict_probs_xnp(self):
         obs_seq = self.obs_seq
         print(self.hmm)
         #self.hmm.train(obs_seq, 0.000001)

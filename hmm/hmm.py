@@ -512,6 +512,8 @@ class HiddenMarkovModel():
         todo verify if correct
         """
         obs_probs = self.predict_probs_xnp(seq)
+        max_index = obs_probs.argmax()
+        return self._o[max_index]
 
 
 
