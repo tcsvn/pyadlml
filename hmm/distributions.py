@@ -15,12 +15,16 @@ class ProbabilityMassFunction():
             if label == obs:
                 return idx
 
+    def get_probs(self):
+        return self._E
+
     def set_probs(self, np_arr):
         """
         :param np_arr:
         :return:
         """
-        if len(self._alphabet) == len(np_arr) and np_arr.sum() == 1:
+        # todo check how to manage that stuff doesn't sum to one
+        if len(self._alphabet) == len(np_arr):#and np_arr.sum() == 1:
             self._E = np_arr
         else:
             return -1

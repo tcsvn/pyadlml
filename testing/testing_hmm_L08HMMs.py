@@ -53,7 +53,7 @@ class TestHmmExampleL08HMM(unittest.TestCase):
     def test_backward(self):
         obs_seq = [A,A,B]
         result = np.array([[0.15768, 0.276, 0.4, 1.0],
-                           [0.063, 0.21, 0.7, 1.0]])
+                           [0.063, 0.21, 0.7, 1.0]]).T
 
         backward_matrix = self.hmm.backward(obs_seq)
         print(backward_matrix)
@@ -64,8 +64,11 @@ class TestHmmExampleL08HMM(unittest.TestCase):
     def test_forward(self):
         obs_seq = [A,A,B]
         result = np.array([[1.0, 0.48, 0.2304, 0.027648],
-                           [0.0, 0.12, 0.0936, 0.130032]])
+                           [0.0, 0.12, 0.0936, 0.130032]]).T
         forward_matrix = self.hmm.forward(obs_seq)
+        print(forward_matrix)
+        print('-'*200)
+        print(result)
 
         self.assertTrue(np.allclose(result, forward_matrix))
 

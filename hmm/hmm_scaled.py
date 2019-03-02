@@ -166,86 +166,150 @@ class HiddenMarkovModel():
         """
         first = seq[0]
         prob = self.prob_pi(first)
+        #s = str(prob) + " * "
+        #t = "P( "+ first +" ) * "
         for i in range(1,len(seq)):
             second = seq.pop()
             prob_sc = self.prob_za_given_zb(second, first)
             prob *=  prob_sc
+            #s += str(prob_sc) + " * "
+            #t += "P( " + second + " | " + first + " ) *"
             first = second
+        #print(t)
+        #print(s)
+        #print(self.transitions_to_df())
+        #print(self.emissions_to_df())
         return prob
+    def norm_gamma(self, norm_alpha_matrix, norm_beta_matrix):
+        return norm_alpha_matrix*norm_beta_matrix
 
-    def forward_backward(self, seq):
+    def norm_xi(self, norm_alpha_matrix, norm_beta_matrix, cn, obs_seq):
+        res = np.zeros(len(self._z), len(self._z), len(obs_seq))
+        for znm1_idx, znm1 in enumerate(self._z):
+            for zn_idx, zn in enumerate(self._z):
+                for t in range(0,len(obs_seq)):
+                    res[znm1_idx][zn_idx][t] = \
+                        cn[zn_idx]\
+                        *norm_alpha_matrix[znm1_idx][t]\
+                        *self.prob_x_given_z(obs_seq[t], zn)\
+                        *self.prob_za_given_zb(zn, znm1)\
+                        *norm_beta_matrix[zn][t]
+
+
+    def gamma(self, alpha_matrix, beta_matrix):
         """
-        computes probability of being in the state z_k given a sequence of observations x
-        :return:
+        computes the probability of zn given a sequence X for every timestep from
+        the alpha and beta matrices
+        :param alpha_matrix:
+        :param beta_matrix:
+        :return: 2D
         """
-        alpha = self.forward(seq)
-        beta = self.backward(seq)
+        return np.divide(alpha_matrix*beta_matrix,
+                         self.prob_X(alpha_matrix))
 
-        # calculate joint probability of
-        joint_dist = alpha*beta
+    def xi(self, alpha_matrix, beta_matrix, prob_X, obs_seq):
+        res = np.zeros((len(self._z), len(self._z), len(obs_seq)))
+        # a_ij = P(a_j | a_i)
+        for znm1_idx, znm1 in enumerate(self._z):
+            for zn_idx, zn in enumerate(self._z):
+                for t in range(0,len(obs_seq)):
+                    res[znm1_idx][zn_idx][t] = \
+                        (alpha_matrix[znm1_idx][t-1]\
+                        *beta_matrix[zn_idx][t]\
+                        *self.prob_x_given_z(obs_seq[t],zn)\
+                        *self.prob_za_given_zb(zn, znm1))\
+                        /prob_X
+        return res
 
-        # normalize
-        # TODO normalize the constant
+    def cn(self, seq):
+        """
+        computes the scaling factors for a given sequence of observations
+        :param seq:
+        :return: a 1D matrix with the length of the
+        sequence containing all cn values
+        """
 
-    def prob_X(self, alpha):
+        # contains the probability of seiin observation x given sequence
+        prob_o = np.zeros(len(self._o))
+        for xn in seq:
+            for idx_o, o in enumerate(self._o):
+                if o == xn:
+                    prob_o[idx_o] +=1
+                    break
+        prob_o = prob_o*(1/len(seq))
+
+        # calculate the conditional probabilitys {xt | x_t-1 ,..., x_1 }
+        cn = np.zeros(len(seq))
+        cn[0] = prob_o[self.get_index_by_emission_label(seq[0])]
+        for i, xn in enumerate(seq):
+            if i==0: continue
+            prob_x_given_o = prob_o[self.get_index_by_emission_label(xn)]
+            prob_x_given_seq_before = cn[i-1]
+            cn[i] = (prob_x_given_o*prob_x_given_seq_before)\
+                    /prob_x_given_seq_before
+        return cn
+
+
+    def prob_X(self, alpha_matrix):
         """
         computes the probability of observing a sequence given the Model
         by summing over the last alphavalues for every zn: alpha(z_nk)
-        :param alpha:
+        :param alpha_matrix:
         :return: a float value
         """
         sum = 0
         for idx_zn in range(0, len(self._z)):
-            sum += alpha[len(alpha)-1][idx_zn]
+            sum += alpha_matrix[idx_zn][len(alpha_matrix[0])-1]
         return sum
 
-    def gamma(self, alpha, beta):
+    def norm_prob_X(self, cn_seq):
+        return cn_seq.prod()
+
+    def norm_forward(self, seq, cn):
+        norm_forward_matrix = np.zeros((len(self._z), len(seq)+1))
+        for idx, zn in enumerate(self._z):
+            norm_forward_matrix[idx][0] = \
+                self.prob_pi(zn)*self.prob_x_given_z(seq[0],zn)
+
+        for t in range(1,len(seq)):
+            for idx, zn in enumerate(self._z):
+                xn = seq[t-1]
+                sum = 0
+                # sum over preceding alpha values of the incident states multiplicated with the transition
+                # probability into the current state
+                print('timestep  : ' + str(t))
+                s = "["
+                for i, znm1 in enumerate(self._z):
+                    # alpha value of prec state * prob of transitioning into current state * prob of emitting the observation
+                    s += "(" + str(norm_forward_matrix[i][t-1])+ "*" + str(self.prob_za_given_zb(zn, znm1)) + ")+"
+                    sum += norm_forward_matrix[i][t-1]*self.prob_za_given_zb(zn, znm1)
+
+                # multiply by the data contribution the prob of observing the current observation
+                s+= "]*"+str(self.prob_x_given_z(xn, zn))
+                s+= "*(1/" + str(round(cn[t],2)) + ")"
+                print(s)
+                print('-'*3)
+                sum *= self.prob_x_given_z(xn, zn)*(1/cn[t])
+                norm_forward_matrix[idx][t] = sum
+
+        return norm_forward_matrix
+
+    def norm_alpha_to_alpha(self, norm_alpha_matrix, cn):
         """
-        computes the probability of zn given a sequence X for every timestep from
-        the alpha and beta matrices
-        gamma[t][k] represents the probability of being in state k at time t given the
-        observation sequence
-        :param alpha: matrix (T x Z)
-        :param beta: matrix (T x Z)
-        :return: 2D
+        computes the alpha_matrix from the given normalized alpha_matrix
+        :param norm_alpha_matrix:
+        :return: 2D array zn X len(seq)
+        todo test function and confirm correct
         """
+        alpha_matrix = np.array([self._z, len(norm_alpha_matrix[0])])
+        for i in len(norm_alpha_matrix[0]):
+            for idx_zn, zn in enumerate(self._z):
+                c_prod = 1
+                for j in range(0,i):
+                    c_prod *= cn[j]
+                alpha_matrix[idx_zn][i] = norm_alpha_matrix[idx_zn][i]*c_prod
+        return alpha_matrix
 
-        # todo look up why the last values have to be set to zero !!!
-        res = np.divide(alpha * beta, self.prob_X(alpha))
-        for idx_zn in range(0, len(self._z)):
-            res[len(res)-1][idx_zn] = 0.0
-        return res
-
-
-    def xi(self, obs_seq, alpha=None, beta=None, prob_X=None):
-        """
-        xi[t][znm1][zn] = the probability of being in state znm1 at time t-1 and
-        in state zn at time t given the entire observation sequence
-        :param obs_seq:
-        :param alpha:
-        :param beta:
-        :param prob_X:
-        :return:  3D matrix (T x Z x Z)
-        """
-        if alpha is None:
-            alpha = self.forward(obs_seq)
-        if beta is None:
-            beta = self.backward(obs_seq)
-        if prob_X is None:
-            prob_X = self.prob_X(alpha)
-
-        xi = np.zeros((len(obs_seq),len(self._z), len(self._z)))
-
-        for t in range(1,len(obs_seq)):
-            for znm1_idx, znm1 in enumerate(self._z):
-                for zn_idx, zn in enumerate(self._z):
-                    xi[t-1][znm1_idx][zn_idx] = \
-                        (alpha[t - 1][znm1_idx] \
-                         * beta[t][zn_idx]\
-                         * self.prob_x_given_z(obs_seq[t],zn) \
-                         * self.prob_za_given_zb(zn, znm1)) \
-                        /prob_X
-        return xi
 
     def forward(self, seq):
         """
@@ -256,33 +320,40 @@ class HiddenMarkovModel():
         :return: the full forward matrix
         """
         # forward matrix:
-        # alpha[t][k] = the probability of being in state k after observing t symbols
-        # alpha_(ztk)
+        # represents alpha(z_(tk)), the probability of state z_k at timestep t of the sequence
+        # given the historical observations
         # alpha(z11) | alpha(z21) | alpha(z31) | ... |
         # alpha(z12) | alpha(z22) | alpha(z32) | ... |
 
         # compute Initial condition (13.37)
-        alpha = np.zeros((len(seq), len(self._z)))
+        forward_matrix = np.zeros((len(self._z), len(seq)+1))
+        for idx, pi_zn in enumerate(self._pi):
+            forward_matrix[idx][0] = pi_zn
 
-        # alpha_1z = pi(z)*p(x1|z)
-        for idx_zn, zn in enumerate(self._z):
-            alpha[0][idx_zn] = self.prob_pi(zn)\
-                               *self.prob_x_given_z(seq[0],zn)
+        for idx, zn in enumerate(self._z):
+            forward_matrix[idx][1] = self.prob_pi(zn)*self.prob_x_given_z(seq[0],zn)
 
         # alpha recursion
-        for t in range(1,len(seq)):
-            for idx_zn, zn in enumerate(self._z):
-                xn = seq[t]
+        for t in range(1,len(seq)+1):
+            for idx, zn in enumerate(self._z):
+                xn = seq[t-1]
+                sum = 0
                 # sum over preceding alpha values of the incident states multiplicated with the transition
                 # probability into the current state
-                for idx_znm1, znm1 in enumerate(self._z):
+                #s = "["
+                for i, znm1 in enumerate(self._z):
                     # alpha value of prec state * prob of transitioning into current state * prob of emitting the observation
-                    alpha[t][idx_zn] += alpha[t-1][idx_znm1]\
-                        *self.prob_za_given_zb(zn, znm1)
+                    #s += "(" + str(forward_matrix[i][t-1])+ "*" + str(self.prob_za_given_zb(zn, znm1)) + ")+"
+                    sum += forward_matrix[i][t-1]*self.prob_za_given_zb(zn, znm1)
 
                 # multiply by the data contribution the prob of observing the current observation
-                alpha[t][idx_zn] *= self.prob_x_given_z(xn, zn)
-        return alpha
+                #s+= "]*"+str(self.prob_x_given_z(xn, zn))
+                #print(s)
+                #print('-'*3)
+                sum *= self.prob_x_given_z(xn, zn)
+                forward_matrix[idx][t] = sum
+
+        return forward_matrix
 
 
     def prob_pi(self, zn):
@@ -290,41 +361,57 @@ class HiddenMarkovModel():
         return self._pi[idx]
 
 
-    def backward(self, seq):
+    def norm_backward(self, seq, cn):
         """
-        computes the probability of a sequence of future evidence for each state x_t
-        beta[t][k] = probability being in state z_k and then observing emitted observation
-        from t+1 to the end T
-        beta_1(z11) | beta_(z21) | ... | beta_(zn1)=1
-        beta_1(z12) | beta_(z22) | ... | beta_(zn2)=1
-        :param sequence: list [x_1, ..., x_T]
-        :return: the full backward matrix (TxN)
+        :param sequence: {x_(t+1), x+(t+2), ..., x_(T))
+        :return: the full backward matrix
         """
-
-        # initialize first
-        beta = np.zeros((len(seq), len(self._z)))
-        for idx_zn, z in enumerate(self._z):
-            beta[len(seq)-1][idx_zn] = 1
+        # computes the probability of a sequence of future evidence for each state x_t
+        # represents beta_(zn1) is the probability that z1 emitted the observations
+        # beta_1(z11) | beta_(z21) | ... | beta_(zn1)=1
+        # beta_1(z12) | beta_(z22) | ... | beta_(zn2)=1
+        norm_beta_matrix = np.zeros((len(self._z), len(seq)+1))
+        for idx, z in enumerate(self._z):
+            norm_beta_matrix[idx][len(seq)] = 1
 
         # start with beta_(znk) and calculate the betas backwards
-        for t in range(len(seq)-2, -1, -1):
+        for t in range(len(seq)-1, -1, -1):
             for zn_idx, zn in enumerate(self._z):
-                xnp1 = seq[t+1]
+                xnp1 = seq[t]
+                sum = 0
                 for znp1_idx, znp1 in enumerate(self._z):
-                    beta[t][zn_idx] += \
-                        self.prob_za_given_zb(znp1, zn)\
+                    sum += self.prob_za_given_zb(znp1, zn) \
+                           *self.prob_x_given_z(xnp1, znp1) \
+                           *norm_beta_matrix[znp1_idx][t+1]
+                norm_beta_matrix[zn_idx][t] = sum*(1/cn[t+1])
+        return norm_beta_matrix
+
+    def backward(self, seq):
+        """
+        :param sequence: {x_(t+1), x+(t+2), ..., x_(T))
+        :return: the full backward matrix
+        """
+        # computes the probability of a sequence of future evidence for each state x_t
+        # represents beta_(zn1) is the probability that z1 emitted the observations
+        # beta_1(z11) | beta_(z21) | ... | beta_(zn1)=1
+        # beta_1(z12) | beta_(z22) | ... | beta_(zn2)=1
+        beta_matrix = np.zeros((len(self._z), len(seq)+1))
+        for idx, z in enumerate(self._z):
+            beta_matrix[idx][len(seq)] = 1
+
+        # start with beta_(znk) and calculate the betas backwards
+        for t in range(len(seq)-1, -1, -1):
+            for zn_idx, zn in enumerate(self._z):
+                xnp1 = seq[t]
+                sum = 0
+                for znp1_idx, znp1 in enumerate(self._z):
+                    sum += self.prob_za_given_zb(znp1, zn)\
                         *self.prob_x_given_z(xnp1, znp1)\
-                        *beta[t+1][znp1_idx]
-        return beta
+                        *beta_matrix[znp1_idx][t+1]
+                beta_matrix[zn_idx][t] = sum
+        return beta_matrix
 
-
-
-    def train(self, epsilon, seq):
-        """
-        :param epsilon: parameter
-        :param seq:
-        :return:
-        """
+    def train(self, seq):
         condition_met = True
         prob_X = [1.0, 0.0]
         while(abs(prob_X[1] - prob_X[0]) < 0.001):
@@ -334,25 +421,29 @@ class HiddenMarkovModel():
 
 
     def training_step(self, seq):
+        """
+
+        """
+
         # E-Step ----------------------------------------------------------------
         # -----------------------------------------------------------------------
         # Filtering
-        alpha = self.forward(seq)
+        alpha_matrix = self.forward(seq)
 
         # Smoothing
         # probability distribution for point t in the past relative to
         # end of the sequence
-        beta = self.backward(seq)
+        beta_matrix = self.backward(seq)
 
 
         # marginal posterior dist of latent variable z_n
         # prob of being in state z at time t
-        gamma = self.gamma(alpha, beta)
+        gamma = self.gamma(alpha_matrix, beta_matrix)
 
-        prob_X = self.prob_X(alpha)
-        xi = self.xi(seq, alpha, beta, prob_X)
+        prob_X = self.prob_X(alpha_matrix)
+        xi = self.xi(alpha_matrix, beta_matrix, prob_X, seq)
 
-        exp_trans_zn = self.expected_trans_from_zn(gamma)
+        exp_trans_zn = self.expected_trans_from_z(gamma)
         exp_trans_zn_znp1 = self.expected_trans_from_za_to_zb(xi)
 
 
@@ -368,97 +459,92 @@ class HiddenMarkovModel():
         self._A = self.new_transition_matrix(exp_trans_zn, exp_trans_zn_znp1)
 
 
-    def new_initial_distribution(self, gamma):
+        # convergence criterion
+        # change in lokelihood fct is below some threshold
+    def new_transition_matrix(self, exp_trans_zn, exp_tranz_zn_znp1):
         """
-        :param gamma:
-        :return:
-        """
-        return gamma[0]
 
-
-    def new_transition_matrix(self, exp_trans_zn, exp_trans_znm1_zn):
-        """
-        Bishop eq. 13.19
-        todo check why indizies start at 2 (pairwise)?
         :param exp_trans_zn:
         :param exp_tranz_zn_znp1: 2D array of transition from state
         :return: 2D k X k array of new statetransitions
         """
         k = len(self._z)
         res = np.zeros((k,k))
-        #print(exp_trans_znm1_zn)
-        #print(exp_trans_zn)
-        for idx_znm1, znm1 in enumerate(self._z):
-            for idx_zn, zn in enumerate(self._z):
-                #print(str(exp_trans_znm1_zn[idx_znm1][idx_zn]) + "/" + str(exp_trans_zn[idx_znm1]))
-                res[idx_znm1][idx_zn] = \
-                    exp_trans_znm1_zn[idx_znm1][idx_zn] \
-                    / exp_trans_zn[idx_znm1]
+        for i in range(0,k):
+            for j in range(0,k):
+                res[i][j] = exp_tranz_zn_znp1[i][j]/exp_trans_zn[i]
         return res
 
 
 
+    def new_initial_distribution(self, gamma):
+        return gamma.T[1]
 
 
-    def expected_trans_from_zn(self, gamma):
+    def expected_trans_from_z(self, gamma):
         """
         computes how many times it is expected to transition from state zn
         :param zn:
         :param gamma:
-        :return:   1D array of expectations for each state zn
+        :return: array of expectations for each state zn
         """
         # 1.  calculate expected number of transitions from state i in O
         res = np.zeros(len(self._z))
-        gammaT = gamma.T
-        res = np.sum(gamma, axis=0)
-        #res = np.einsum('ij->j', gamma)
+        for idx, zn in enumerate(self._z):
+            res[idx] = gamma[idx].sum()
         return res
 
     def expected_trans_from_za_to_zb(self, xi):
         """
         computes how many times it is expected to transition from state znm1 to zn
-        :param xi:  xi[t][znm1][zn] = the probability of being in state
-                    znm1 at time t-1 and
-        :return:    a 2D (znm1 x zn) array of expectations for each pair of znm1, zn
+        :param xi: a 3D array znm1 x zn x t :
+        :return: a 2D (znm1 x zn) array of expectations for each pair of znm1, zn
         """
         res = np.zeros((len(self._z),len(self._z)))
-        res = np.sum(xi, axis=0)
-        #print(res)
-        #print('#'*100)
-        #for idx_znm1, znm1 in enumerate(self._z):
-        #    for idx_zn, zn in enumerate(self._z):
-        #        res[idx_znm1][idx_zn] = xi[t][idx_znm1][idx_zn].sum()
+        for idx_znm1, znm1 in enumerate(self._z):
+            for idx_zn, zn in enumerate(self._z):
+                res[idx_znm1][idx_zn] = xi[idx_znm1][idx_zn].sum()
         return res
 
 
     def new_emissions(self, gamma, obs_seq):
-        """
-        equation 13.23
-        :param gamma:
-        :param obs_seq:
-        :return: matrix (Z x O)
-        """
-        res = np.zeros((len(self._z),len(self._o)))
+        res = np.array((len(self._z),len(self._o)),dtype=object)
         for idx_zn, zn in enumerate(self._z):
-            # calculate number of times in state zn by summing over all
-            # timestep gamma values
-            num_times_in_zn = gamma.T[idx_zn].sum()
-            for idx_o, xn in enumerate(self._o):
-                # calc number of times ni state s,
-                # when observation  was  xn
-                num_in_zn_and_obs_xn = self.num_times_in_state_zn_and_xn(
-                    gamma.T[idx_zn], obs_seq, xn)
-               #print(str(num_in_zn_and_obs_xn) + "/" + str(num_times_in_zn))
-                res[idx_zn][idx_o] = num_in_zn_and_obs_xn/num_times_in_zn
+            ma = self.new_emissions_for_zn(zn, gamma, obs_seq)
+            res[idx_zn] = ma
         return res
 
-    def num_times_in_state_zn_and_xn(self, gamma_zn, obs_seq, xn):
-        res = 0
-        for gamma_val, x in zip(gamma_zn, obs_seq):
-            # equal to multiplying with 1 if observation is the same
+    def new_emissions_for_zn(self, zn, gamma, obs_seq):
+        """
+        computes the new probable emissions for a given state zn
+        :param zn:
+        :param gamma:
+        :return: 1D array of label to observation probability
+        """
+        idx_zn = self.get_index_by_state_label(zn)
+        new_prob_arr = np.zeros(len(self._o))
+        num_in_zn = self.expected_trans_from_z(gamma)[idx_zn]
+        for idx, xn in enumerate(self._o):
+            num_in_zn_obs_xn = self._num_in_zn_obs_xn(obs_seq, gamma[idx_zn],xn)
+            new_prob_arr[idx] = num_in_zn_obs_xn/num_in_zn
+        return new_prob_arr
+
+
+    def _num_in_zn_obs_xn(self, obs_seq, gamma_zn, xn):
+        """
+        computes the number of times in state zn when the observation
+        was xn
+        :param obs_seq:
+        :param gamma_zn: the slice of the whole gamma matrix
+        :param xn: observation label
+        :return: a float of the number
+        """
+        sum = 0
+        for g, x in zip(gamma_zn, obs_seq):
             if x == xn:
-                res += gamma_val
-        return res
+                sum += g
+        return sum
+
 
     def maximize_gaussian(self):
         pass
@@ -514,7 +600,7 @@ class HiddenMarkovModel():
                         *self.prob_x_given_z(seq[seq_counter], act_state)
                 max_prob_matrix[idx][seq_counter] = tmp.max()
 
-        # generate/backtrack state sequence
+        # generate state sequence
         res = []
         for timestep in max_prob_matrix.T:
            res.append(self._z[timestep.argmax()])
