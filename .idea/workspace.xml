@@ -2,30 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="2c0f6430-d19b-4156-9eb7-e08586abb5b4" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/benchmarks/kasteren.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/testing/bench/testing_kasteren.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/testing/hmm/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/testing/hmm/hmm2/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/testing/hmm/test_other_hmm.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/benchmark.py" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/benchmark.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/kasteren.py" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/kasteren.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/hmm/hmm2/HMM" beforeDir="false" afterPath="$PROJECT_DIR$/testing/hmm/hmm2/HMM" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/testing/hmm/hmm2/HMM/hmm/_BaseHMM.py" beforeDir="false" afterPath="$PROJECT_DIR$/testing/hmm/hmm2/HMM/hmm/_BaseHMM.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/testing/hmm/hmm2/HMM/hmm/discrete/DiscreteHMM.py" beforeDir="false" afterPath="$PROJECT_DIR$/testing/hmm/hmm2/HMM/hmm/discrete/DiscreteHMM.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/testing/hmm/hmm2/HMM/hmm/examples/tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/testing/hmm/hmm2/HMM/hmm/examples/tests.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/hmm2/HMM" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/hmm2/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/test.gv" beforeDir="false" afterPath="$PROJECT_DIR$/testing/hmm/test.gv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/test.gv.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/testing/hmm/test.gv.pdf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/test_other_hmm.py" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/benchmark.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/testing_PMF.py" beforeDir="false" afterPath="$PROJECT_DIR$/testing/hmm/testing_PMF.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/testing_hmm.py" beforeDir="false" afterPath="$PROJECT_DIR$/testing/hmm/testing_hmm.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/testing_hmm_2.py" beforeDir="false" afterPath="$PROJECT_DIR$/testing/hmm/testing_hmm_2.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/testing_hmm_L08HMMs.py" beforeDir="false" afterPath="$PROJECT_DIR$/testing/hmm/testing_hmm_L08HMMs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/testing_hmm_MIT16_410F10_lec21.py" beforeDir="false" afterPath="$PROJECT_DIR$/testing/hmm/testing_hmm_MIT16_410F10_lec21.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/testing_hmm_coin.py" beforeDir="false" afterPath="$PROJECT_DIR$/testing/hmm/testing_hmm_coin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/testing_hmm_scaled_L08HMMs.py" beforeDir="false" afterPath="$PROJECT_DIR$/testing/hmm/testing_hmm_scaled_L08HMMs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/testing_hmm_vs_hmm2_MIT16_410F10_lec21.py" beforeDir="false" afterPath="$PROJECT_DIR$/testing/hmm/testing_hmm_vs_hmm2_MIT16_410F10_lec21.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/testing_hmm_wiki.py" beforeDir="false" afterPath="$PROJECT_DIR$/testing/hmm/testing_hmm_wiki.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -35,51 +17,59 @@
   </component>
   <component name="CoverageDataManager">
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_predict_next_x.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_predict_next_x Coverage Results" MODIFIED="1551521539035" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_load_df.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_load_df Coverage Results" MODIFIED="1551544371004" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/bench" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_load_df.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_load_df Coverage Results" MODIFIED="1551545646518" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/bench" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_predict_xnp1.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_predict_xnp1 Coverage Results" MODIFIED="1551521843354" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing" />
   </component>
   <component name="FileEditorManager">
-    <leaf>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/benchmarks/benchmark.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="731">
-              <caret line="100" column="17" selection-start-line="100" selection-start-column="17" selection-end-line="100" selection-end-column="17" />
-              <folding>
-                <element signature="e#0#6#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/benchmarks/kasteren.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="34">
-              <caret line="2" column="6" selection-start-line="2" selection-start-column="6" selection-end-line="2" selection-end-column="6" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/datasets/kasteren/kasterenSenseData.txt">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="51">
-              <caret line="3" column="30" selection-start-line="3" selection-start-column="30" selection-end-line="3" selection-end-column="30" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/testing/bench/testing_kasteren.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state>
-              <caret column="14" selection-start-column="14" selection-end-column="14" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <splitter split-orientation="horizontal" split-proportion="0.39492753">
+      <split-first>
+        <leaf>
+          <file pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/benchmarks/benchmark.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="578">
+                  <caret line="50" selection-start-line="50" selection-end-line="50" />
+                  <folding>
+                    <element signature="e#0#21#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/datasets/kasteren/kasterenSenseData.txt">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="51">
+                  <caret line="3" column="30" selection-start-line="3" selection-start-column="30" selection-end-line="3" selection-end-column="30" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/testing/bench/testing_kasteren.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state>
+                  <caret column="14" selection-start-column="14" selection-end-column="14" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+        </leaf>
+      </split-first>
+      <split-second>
+        <leaf>
+          <file pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/benchmarks/kasteren.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="442">
+                  <caret line="26" column="10" selection-start-line="26" selection-start-column="10" selection-end-line="26" selection-end-column="10" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+        </leaf>
+      </split-second>
+    </splitter>
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -104,8 +94,8 @@
         <option value="$PROJECT_DIR$/testing/bench/test_kasteren.py" />
         <option value="$PROJECT_DIR$/testing/bench/testing_kasteren.py" />
         <option value="$PROJECT_DIR$/datasets/kasteren/kasterenSenseData.txt" />
-        <option value="$PROJECT_DIR$/benchmarks/benchmark.py" />
         <option value="$PROJECT_DIR$/benchmarks/kasteren.py" />
+        <option value="$PROJECT_DIR$/benchmarks/benchmark.py" />
       </list>
     </option>
   </component>
@@ -253,26 +243,11 @@
       <option name="presentableId" value="Default" />
       <updated>1551518370258</updated>
       <workItem from="1551518373539" duration="2000" />
-      <workItem from="1551518392566" duration="19359000" />
+      <workItem from="1551518392566" duration="20550000" />
     </task>
     <servers />
   </component>
   <component name="TestHistory">
-    <history-entry file="Unittests_for_testing_kasteren_TestKasteren_test_load_df - 2019.03.02 at 17h 25m 21s.xml">
-      <configuration name="Unittests for testing_kasteren.TestKasteren.test_load_df" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittests_for_testing_kasteren_TestKasteren_test_load_df - 2019.03.02 at 17h 27m 24s.xml">
-      <configuration name="Unittests for testing_kasteren.TestKasteren.test_load_df" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittests_for_testing_kasteren_TestKasteren_test_load_df - 2019.03.02 at 17h 27m 48s.xml">
-      <configuration name="Unittests for testing_kasteren.TestKasteren.test_load_df" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittests_for_testing_kasteren_TestKasteren_test_load_df - 2019.03.02 at 17h 28m 09s.xml">
-      <configuration name="Unittests for testing_kasteren.TestKasteren.test_load_df" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittests_for_testing_kasteren_TestKasteren_test_load_df - 2019.03.02 at 17h 28m 33s.xml">
-      <configuration name="Unittests for testing_kasteren.TestKasteren.test_load_df" configurationId="tests" />
-    </history-entry>
     <history-entry file="Unittests_for_testing_kasteren_TestKasteren_test_load_df - 2019.03.02 at 17h 30m 28s.xml">
       <configuration name="Unittests for testing_kasteren.TestKasteren.test_load_df" configurationId="tests" />
     </history-entry>
@@ -288,20 +263,34 @@
     <history-entry file="Unittests_for_testing_kasteren_TestKasteren_test_load_df - 2019.03.02 at 17h 32m 55s.xml">
       <configuration name="Unittests for testing_kasteren.TestKasteren.test_load_df" configurationId="tests" />
     </history-entry>
+    <history-entry file="Unittests_for_testing_kasteren_TestKasteren_test_load_df - 2019.03.02 at 17h 45m 32s.xml">
+      <configuration name="Unittests for testing_kasteren.TestKasteren.test_load_df" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_for_testing_kasteren_TestKasteren_test_load_df - 2019.03.02 at 17h 49m 32s.xml">
+      <configuration name="Unittests for testing_kasteren.TestKasteren.test_load_df" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_for_testing_kasteren_TestKasteren_test_load_df - 2019.03.02 at 17h 52m 02s.xml">
+      <configuration name="Unittests for testing_kasteren.TestKasteren.test_load_df" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_for_testing_kasteren_TestKasteren_test_load_df - 2019.03.02 at 17h 53m 51s.xml">
+      <configuration name="Unittests for testing_kasteren.TestKasteren.test_load_df" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_for_testing_kasteren_TestKasteren_test_load_df - 2019.03.02 at 17h 54m 10s.xml">
+      <configuration name="Unittests for testing_kasteren.TestKasteren.test_load_df" configurationId="tests" />
+    </history-entry>
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="19361000" />
+    <option name="totallyTimeSpent" value="20552000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="3106" y="16" width="721" height="1051" extended-state="0" />
-    <editor active="true" />
+    <frame x="1918" y="-24" width="1924" height="1106" extended-state="0" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" weight="0.26873663" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.26873663" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info active="true" id="Run" order="3" visible="true" weight="0.36188436" />
+      <window_info id="Run" order="3" weight="0.26124197" />
       <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.32921812" />
       <window_info anchor="bottom" id="Debug" order="2" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="3" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="4" weight="0.4" />
@@ -385,13 +374,6 @@
     <entry file="file://$PROJECT_DIR$/datasets/kasteren/kasterenActData.txt">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/testing/bench/testing_kasteren.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret column="14" selection-start-column="14" selection-end-column="14" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/datasets/kasteren/kasterenSenseData.txt">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="51">
@@ -399,20 +381,27 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/benchmarks/benchmark.py">
+    <entry file="file://$PROJECT_DIR$/testing/bench/testing_kasteren.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="731">
-          <caret line="100" column="17" selection-start-line="100" selection-start-column="17" selection-end-line="100" selection-end-column="17" />
-          <folding>
-            <element signature="e#0#6#0" expanded="true" />
-          </folding>
+        <state>
+          <caret column="14" selection-start-column="14" selection-end-column="14" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/benchmarks/kasteren.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="34">
-          <caret line="2" column="6" selection-start-line="2" selection-start-column="6" selection-end-line="2" selection-end-column="6" />
+        <state relative-caret-position="442">
+          <caret line="26" column="10" selection-start-line="26" selection-start-column="10" selection-end-line="26" selection-end-column="10" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/benchmarks/benchmark.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="578">
+          <caret line="50" selection-start-line="50" selection-end-line="50" />
+          <folding>
+            <element signature="e#0#21#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
