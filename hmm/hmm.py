@@ -200,22 +200,65 @@ class HiddenMarkovModel():
         beta = self.backward(seq)
 
         # calculate joint probability of
-        joint_dist = alpha*beta
+        joint_dist = np.sum(alpha*beta, axis=1)
+        n = len(alpha)-1
+        prob = joint_dist[n]
+        while prob != 0 and n > 0:
+            n -= 1
+            prob = joint_dist[n]
+            if prob != 0:
+                return prob
+        if prob == 0:
+            raise ValueError
+        else:
+            return prob
 
-        # normalize
-        # TODO normalize the constant
 
-    def prob_X(self, alpha):
+
+    def prob_X(self, alpha, beta):
+        # first try shorter computation with case n = N
+        # prob(X) = \sum_zn(\alpha(z_n))
+        # todo do this with np.sum which looks better and is faster
+        sum = 0
+        for idx_zn in range(0, len(self._z)):
+            sum += alpha[len(alpha)-1][idx_zn]
+        if sum != 0:
+            return sum
+
+        n = 0
+        while sum == 0:
+            sum = self.prob_X_n(alpha,beta, n)
+            n +=1
+            if n > len(alpha-1):
+                # something has went terribly wrong
+                # because every
+                raise ValueError
+        return sum
+
+
+    def prob_X_n(self, alpha, beta, n):
         """
         computes the probability of observing a sequence given the Model
-        by summing over the last alphavalues for every zn: alpha(z_nk)
+        by summing over the n-th place for alpha time beta values
         :param alpha:
         :return: a float value
         """
         sum = 0
         for idx_zn in range(0, len(self._z)):
-            sum += alpha[len(alpha)-1][idx_zn]
+            sum += alpha[n][idx_zn]*beta[n][idx_zn]
         return sum
+
+    #def prob_X(self, alpha):
+    #    """
+    #    computes the probability of observing a sequence given the Model
+    #    by summing over the last alphavalues for every zn: alpha(z_nk)
+    #    :param alpha:
+    #    :return: a float value
+    #    """
+    #    sum = 0
+    #    for idx_zn in range(0, len(self._z)):
+    #        sum += alpha[len(alpha)-1][idx_zn]
+    #    return sum
 
     def gamma(self, alpha, beta):
         """
@@ -229,7 +272,7 @@ class HiddenMarkovModel():
         """
 
         # todo look up why the last values have to be set to zero !!!
-        res = np.divide(alpha * beta, self.prob_X(alpha))
+        res = np.divide(alpha * beta, self.prob_X(alpha, beta))
         for idx_zn in range(0, len(self._z)):
             res[len(res)-1][idx_zn] = 0.0
         return res
@@ -250,7 +293,7 @@ class HiddenMarkovModel():
         if beta is None:
             beta = self.backward(obs_seq)
         if prob_X is None:
-            prob_X = self.prob_X(alpha)
+            prob_X = self.prob_X(alpha, beta)
 
         xi = np.zeros((len(obs_seq),len(self._z), len(self._z)))
 
@@ -360,7 +403,9 @@ class HiddenMarkovModel():
 
         while(cond(prob_X[1], prob_X[0], epsilon, steps)):
             self.training_step(seq)
-            prob_X.append(self.prob_X(self.forward(seq)))
+            alpha = self.forward(seq)
+            beta = self.backward(seq)
+            prob_X.append(self.prob_X(alpha, beta))
             prob_X.pop(0)
             steps -= 1
 
@@ -381,7 +426,7 @@ class HiddenMarkovModel():
         # prob of being in state z at time t
         gamma = self.gamma(alpha, beta)
 
-        prob_X = self.prob_X(alpha)
+        prob_X = self.prob_X(alpha, beta)
         xi = self.xi(seq, alpha, beta, prob_X)
 
         exp_trans_zn = self.expected_trans_from_zn(gamma)
@@ -524,9 +569,10 @@ class HiddenMarkovModel():
         :param seq:
         :return:  1D Matrix of probabilitys for each observation
         """
-        alpha_matrix = self.forward(seq)
-        normalizing_constant = 1/(self.prob_X(alpha_matrix))
-        alpha_zn = alpha_matrix[len(seq)-1]
+        alpha = self.forward(seq)
+        beta = self.backward(seq)
+        normalizing_constant = 1/(self.prob_X(alpha, beta))
+        alpha_zn = alpha[len(seq)-1]
 
 
         result = np.zeros(len(self._o))

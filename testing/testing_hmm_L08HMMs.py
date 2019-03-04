@@ -29,6 +29,18 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         pass
 
 
+    def test_probX(self):
+        obs_seq = [A,A,B]
+        alpha = self.hmm.forward(obs_seq)
+        beta = self.hmm.backward(obs_seq)
+        n0 = self.hmm.prob_X_n(alpha, beta, 0)
+        n1 = self.hmm.prob_X_n(alpha, beta, 1)
+        n2 = self.hmm.prob_X_n(alpha, beta, 2)
+        #print(n0)
+        #print(n1)
+        #print(n2)
+        self.assertAlmostEqual(n0, n1, 10)
+        self.assertAlmostEqual(n1, n2, 10)
 
     def test_xi(self):
         obs_seq = [A,A,B]
