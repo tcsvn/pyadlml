@@ -134,6 +134,12 @@ class Bench():
         s += "*"*100
         return s
 
+    def render_model(self, data_name):
+        if data_name == Dataset.KASTEREN:
+            kasteren = self._loaded_datasets[Dataset.KASTEREN.name]
+            dot = self._model.draw(kasteren.get_activity_label_from_id)
+        return dot
+
     def show_plot(self):
         plt.show()
 

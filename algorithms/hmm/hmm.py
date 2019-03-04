@@ -115,17 +115,52 @@ class HiddenMarkovModel():
     def draw(self): self.render_console()
     def plot(self): self.render_console()
 
+    def generate_visualization_2(self, act_retrieval_meth):
+        """ Returns a graphviz object representing the network"""
+        dot = Digraph()
+        for z in self._z:
+            label = act_retrieval_meth(z)
+            dot.node(str(z),label)
+        it = np.nditer(self._A, flags=['multi_index'])
+        while not it.finished:
+            tail_name = str(self._z[it.multi_index[0]])
+            head_name = str(self._z[it.multi_index[1]])
+            #label = str(it[0])
+            label = str(np.format_float_scientific(it[0],
+                        exp_digits=2, precision=3))
+
+            dot.edge(
+                tail_name=tail_name,
+                head_name=head_name,
+                label=label
+            )
+            it.iternext()
+        return dot
+
+
     def generate_visualization(self):
         """ Returns a graphviz object representing the network"""
         dot = Digraph()
         for z in self._z:
             dot.node(str(z),str(z))
+        print(dot)
         it = np.nditer(self._A, flags=['multi_index'])
+        print(type(it))
+        print(self._A)
         while not it.finished:
+            tail_name = str(self._z[it.multi_index[0]])
+            head_name = str(self._z[it.multi_index[1]])
+            label = str(it[0])
+            #label = str('{:10.4e}'.format(it[0]))
+            print(tail_name)
+            print(head_name)
+            print(label)
+            print('-----')
             dot.edge(
-                tail_name=self._z[it.multi_index[0]],
-                head_name=self._z[it.multi_index[1]],
-                label=str(it[0]))
+                tail_name=tail_name,
+                head_name=head_name,
+                label=label
+            )
             it.iternext()
         return dot
 

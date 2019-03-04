@@ -12,6 +12,7 @@ USER jovyan
 
 # Install in the default python3 environment
 RUN pip install pomegranate jupyterthemes graphviz #pygraphviz # for pomegranate
+RUN pip install --upgrade numpy
 
 # enable dark themee
 RUN jt -t chesterish

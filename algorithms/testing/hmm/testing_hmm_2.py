@@ -1,12 +1,14 @@
 import unittest
 import numpy as np
-from algorithms.hmm import HiddenMarkovModel
-from algorithms.hmm import ProbabilityMassFunction
+from algorithms.hmm.hmm import HiddenMarkovModel
+from algorithms.hmm.distributions import ProbabilityMassFunction
 
 RN = 'Rainy'
 SN = 'Sunny'
 HP = 'Happy'
 GR = 'Grumpy'
+
+
 # Board Mode: Angabe der Pin-Nummer
 class TestHmmSunnyRainyExample(unittest.TestCase):
     def setUp(self):
@@ -20,25 +22,11 @@ class TestHmmSunnyRainyExample(unittest.TestCase):
         self.hmm.set_transition_matrix(np.array([[0.6,0.4],[0.2,0.8]]))
         self.hmm.set_emission_matrix(np.array([[0.4,0.6],[0.8,0.2]]))
 
-        # init pomegranate model for comparision
-        #self.pom = pomegranate.HiddenMarkovModel('testing')
-        #dist_rn = pomegranate.DiscreteDistribution({HP : 0.4, GR : 0.6})
-        #dist_sn = pomegranate.DiscreteDistribution({HP : 0.8, GR : 0.2})
-        #state_rn = pomegranate.State(dist_rn, name=RN)
-        #state_sn = pomegranate.State(dist_sn, name=SN)
-        #self.pom.add_states(state_rn, state_sn)
-        #self.pom.add_transition(self.pom.start, state_rn, 1.0)
-        #self.pom.add_transition(state_rn, state_rn, 0.6)
-        #self.pom.add_transition(state_rn, state_sn, 0.4)
-        #self.pom.add_transition(state_sn, state_sn, 0.8)
-        #self.pom.add_transition(state_sn, state_rn, 0.2)
-        #self.pom.add_transition(state_sn, self.pom.end, 0.1)
-        #self.pom.bake()
 
     def test_pom(self):
         #plt.figure(figsize=(10,6))
         #self.pom.plot()
-        self.hmm.draw()
+        self.hmm.render_graph()
 
     def tearDown(self):
         pass

@@ -14,10 +14,6 @@ class TestKasteren(unittest.TestCase):
         self._bench.load_dataset(Dataset.KASTEREN)
         self._kast_obj = self._bench._loaded_datasets[Dataset.KASTEREN.name]
 
-    def test_pom(self):
-        #plt.figure(figsize=(10,6))
-        #self.pom.plot()
-        self.hmm.draw()
 
     def tearDown(self):
         pass
@@ -25,7 +21,6 @@ class TestKasteren(unittest.TestCase):
 
     def test_train_model(self):
         pass
-
 
 
     def test_train(self):
@@ -125,7 +120,7 @@ class TestKasteren(unittest.TestCase):
         hmm.training_step(obs_seq)
         alpha_after = hmm.forward(obs_seq)
         prob_x_after = hmm.prob_X(alpha_after)
-        #self.print_full(hmm.emissions_to_df())
+        self.print_full(hmm.emissions_to_df())
         print('~'*10)
         #print(alpha_before)
         print(prob_x_before)
@@ -154,7 +149,7 @@ class TestKasteren(unittest.TestCase):
         pd.set_option('display.max_rows', len(x))
         pd.set_option('display.max_columns', None)
         pd.set_option('display.width', 2000)
-        pd.set_option('display.float_format', '{:20,.2f}'.format)
+        pd.set_option('display.float_format', '{:20,.10f}'.format)
         pd.set_option('display.max_colwidth', -1)
         print(x)
         pd.reset_option('display.max_rows')
