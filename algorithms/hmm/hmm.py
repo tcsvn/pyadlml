@@ -266,12 +266,12 @@ class HiddenMarkovModel():
 
         n = 0
         while sum == 0:
-            sum = self.prob_X_n(alpha,beta, n)
-            n +=1
             if n > len(alpha-1):
                 # something has went terribly wrong
                 # because every
                 raise ValueError
+            sum = self.prob_X_n(alpha,beta, n)
+            n +=1
         return sum
 
 
@@ -279,6 +279,8 @@ class HiddenMarkovModel():
         """
         computes the probability of observing a sequence given the Model
         by summing over the n-th place for alpha time beta values
+        # seq length of 200 leads to prob values beeing lower than 0.1*e^-323 which
+        # is rounded by numpy to 0.0 leading to wrong equations
         :param alpha:
         :return: a float value
         """
@@ -364,9 +366,6 @@ class HiddenMarkovModel():
         # compute Initial condition (13.37)
         alpha = np.zeros((len(seq), len(self._z)))
 
-
-
-
         # alpha_1z = pi(z)*p(x1|z)
         for idx_zn, zn in enumerate(self._z):
             #print(idx_zn, zn)
@@ -443,7 +442,7 @@ class HiddenMarkovModel():
         diff_arr = np.full((100), 10.0)
         while(diff_arr.mean() > epsilon and steps > 0):
             self.training_step(seq)
-            new_prob_X = self.prob_X(self.forward(seq))
+            new_prob_X = self.prob_X(self.forward(seq), self.backward(seq))
             diff = new_prob_X - old_prob_X
             if diff < 0:
                 # todo VERY IMPORTANT!!!

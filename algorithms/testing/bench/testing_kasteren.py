@@ -48,15 +48,21 @@ class TestKasteren(unittest.TestCase):
 
 
         # do stuff
-        obs_seq = self._kast_obj.get_train_seq()[:19]
+        obs_seq = self._kast_obj.get_train_seq()[:250]#[:19]
         print(hmm)
-        print(hmm.prob_X(hmm.forward(obs_seq)))
+        print(obs_seq)
+        print(len(obs_seq))
+        alpha = hmm.forward(obs_seq)
+        beta = hmm.backward(obs_seq)
+        hmm.prob_X(alpha, beta)
         print('!'*100)
-        hmm.train(obs_seq, None, 2000)
+        hmm.train(obs_seq, None, 200)
         print('!'*100)
         #hmm.train(obs_seq, 0.000001, None)
         print(hmm)
-        print(hmm.prob_X(hmm.forward(obs_seq)))
+        alpha = hmm.forward(obs_seq)
+        beta = hmm.backward(obs_seq)
+        print(hmm.prob_X(alpha, beta))
 
         #for i in range(0,300):
         #    alpha_before = hmm.forward(obs_seq)
