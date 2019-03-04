@@ -2,7 +2,7 @@ from enum import Enum
 from benchmarks.kasteren import DatasetKasteren
 
 KASTEREN_SENS_PATH = '/mnt/external_D/code/hassbrain_algorithm/datasets/kasteren/kasterenSenseData.txt'
-KASTEREN_ACT_PATH = '/mnt/external_D/code/hassbrain_algorithm/datasets/kasteren/kasterenSenseData.txt'
+KASTEREN_ACT_PATH = '/mnt/external_D/code/hassbrain_algorithm/datasets/kasteren/kasterenActData.txt'
 HASS_PATH = ''
 
 class Dataset(Enum):
@@ -28,8 +28,7 @@ class Bench():
             kasteren = DatasetKasteren()
             self._loaded_datasets[Dataset.KASTEREN.name] = kasteren
             kasteren.load_sensors(KASTEREN_SENS_PATH)
-            # todo
-            # kasteren.load_activitys(KASTEREN_ACT_PATH)
+            kasteren.load_activitys(KASTEREN_ACT_PATH)
 
         elif data_name == Dataset.HASS:
             return

@@ -10,26 +10,68 @@ class DatasetKasteren():
     def __init__(self):
         self._obs_seq = []
         self._df = None
-        self._label = None
-        self._label_hashmap = None
-        self._label_reverse_hashmap = None
+        self._sensor_label = None
+        self._sensor_label_hashmap = None
+        self._sensor_label_reverse_hashmap = None
+
+        self._activity_label = None
+        self._activity_label_hashmap = None
+        self._activity_label_reverse_hashmap = None
 
 
-    def get_id_from_label(self, label, state):
+    def get_obs_seq(self):
+        return self._obs_seq
+
+    def get_sensor_labels(self):
+        lst = []
+        modu = 0
+        for key, value in self._sensor_label_reverse_hashmap.items():
+            if modu%2 == 0:
+                lst.append(value)
+            modu +=1
+        return lst
+
+    def get_sensor_list(self):
+        """
+        returns the set of encoded observations that one can make
+        :return:
+        """
+        lst = []
+        for key, value in self._sensor_label_reverse_hashmap.items():
+            lst.append(key)
+        return lst
+
+    def get_activity_list(self):
+        """
+        retrievie all encoded activity
+        :return:  list
+        """
+        lst = []
+        for key, value in self._activity_label_reverse_hashmap.items():
+            lst.append(key)
+        return lst
+
+    def get_activity_id_from_label(self, label):
+        return self._activity_label_hashmap[label]
+
+    def get_activity_label_from_id(self, id):
+        return self._activity_label_reverse_hashmap[id]
+
+    def get_sensor_id_from_label(self, label, state):
         """
         returns the id of a sensor given a label
         :param label:
         :return:
         """
-        return self._label_hashmap[label][state]
+        return self._sensor_label_hashmap[label][state]
 
-    def get_label_from_id(self, id):
+    def get_sensor_label_from_id(self, id):
         """
         retrieves the label given a sensor id
         :param id:
         :return:
         """
-        return self._label_reverse_hashmap[id]
+        return self._sensor_label_reverse_hashmap[id]
 
 
 
@@ -38,11 +80,34 @@ class DatasetKasteren():
         self._df_to_seq(labels, df)
 
     def load_activitys(self, path_to_file):
-        # todo implement
-        pass
+        """
+        todo load data too
+        :param path_to_file:
+        :return:
+        """
+        act_label = pd.read_csv(path_to_file,
+                                 sep=":",
+                                 skiprows=5,
+                                 nrows=7,
+                                 skipinitialspace=5,
+                                 names=[ID, NAME],
+                                 engine='python'
+                                 )
 
-    def get_obs_seq(self):
-        return self._obs_seq
+        act_label[NAME] = act_label[NAME].apply(lambda x: x[1:-1])
+        act_label[ID] = pd.to_numeric(act_label[ID])
+
+        self._activity_label_hashmap = {}
+        self._activity_label_reverse_hashmap = {}
+        for row in act_label.iterrows():
+            name = str(row[1][1])
+            value = row[1][0]
+            self._activity_label_hashmap[name] = value
+            self._activity_label_reverse_hashmap[value] = name
+        self._activity_labe = act_label
+
+        # todo add activity data
+
 
     def _activity_file_to_df(self, path_to_file):
         """
@@ -132,9 +197,6 @@ class DatasetKasteren():
         #print(new_df.head(20))
 
         lst = []
-        counter = 0
-        #print(new_label)
-        #print(new_df.head(5))
         for row in new_df.iterrows():
             label =row[1][0]
             value = row[1][2]
@@ -149,22 +211,28 @@ class DatasetKasteren():
         #print(len(new_df.index))
         self._obs_seq = lst
         self._df = new_df
-        self._label = new_label
+        self._sensor_label = new_label
 
         # create hashmap instead of shitty dataframe >:/
-        self._label_hashmap = {}
-        self._label_reverse_hashmap = {}
+        self._sensor_label_hashmap = {}
+        self._sensor_label_reverse_hashmap = {}
         idx = 0
         for row in new_label.iterrows():
             name = str(row[1][0])
             value = row[1][1]
             if idx%2 == 0:
-                self._label_hashmap[name] = {}
-                self._label_hashmap[name][value] = idx
-                self._label_reverse_hashmap[idx] = name
+                self._sensor_label_hashmap[name] = {}
+                self._sensor_label_hashmap[name][value] = idx
+                self._sensor_label_reverse_hashmap[idx] = name
             else:
-                self._label_hashmap[name][value] = idx
-                self._label_reverse_hashmap[idx] = name
+                self._sensor_label_hashmap[name][value] = idx
+                self._sensor_label_reverse_hashmap[idx] = name
+            #if idx%5 == 0:
+            #    print(self._sensor_label)
+            #    for item in self._sensor_label_hashmap:
+            #        print(item)
+
             idx+=1
+            #print('--')
 
 

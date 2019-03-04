@@ -6,8 +6,7 @@ import math
 LA = 'Los Angeles'
 NY = 'New York'
 NULL = 'null'
-from testing.hmm.hmm2.HMM import DiscreteHMM
-
+from testing.hmm.hmm2.hmm.discrete.DiscreteHMM import DiscreteHMM
 """
 this example is straight from lecture nodes of MIT Lec 21 Nov 24, 2010
     Finding Keyser Soeze    
@@ -31,6 +30,7 @@ class TestHmmWiki(unittest.TestCase):
                         NY, NY, NY, NY, NY, NULL, NULL, LA, LA, NY]
 
 
+        #self.hmm2 = DiscreteHMM(2, 3, trans_matrix, em_matrix, init_dist2, init_type='user')
         self.hmm2 = DiscreteHMM(2, 3, trans_matrix, em_matrix, init_dist2, init_type='user')
         self.obs_seq2 = [2,0,0,2,1,2,1,1,1,2,1,1,1,1,1,2,2,0,0,1]
         self.hmm2.mapB(self.obs_seq2)
@@ -191,7 +191,7 @@ class TestHmmWiki(unittest.TestCase):
     def test_training(self):
         epsilon = 0.1
         obs_seq = self.obs_seq
-        self.hmm.train(epsilon, obs_seq)
+        self.hmm.train(obs_seq, epsilon)
         print('~'*100)
         print(self.hmm.pi_to_df())
         print(self.hmm.transitions_to_df())

@@ -36,7 +36,7 @@ class HiddenMarkovModel():
     set of latent variables
     set of observations
     """
-    def __init__(self, latent_variables, observations, em_dist, initial_dist):
+    def __init__(self, latent_variables, observations, em_dist, initial_dist=None):
         # list of latent variables
         self._z = latent_variables
         k = len(self._z)
@@ -56,7 +56,10 @@ class HiddenMarkovModel():
         self._o = observations
 
         # initial state probabilities even
-        self._pi = initial_dist
+        if initial_dist is not None:
+            self._pi = initial_dist
+        else:
+            self._pi = np.full(k, 1/k)
 
     def __str__(self):
         s = ""
@@ -282,11 +285,14 @@ class HiddenMarkovModel():
         # compute Initial condition (13.37)
         alpha = np.zeros((len(seq), len(self._z)))
 
+
+
+
         # alpha_1z = pi(z)*p(x1|z)
         for idx_zn, zn in enumerate(self._z):
+            #print(idx_zn, zn)
             alpha[0][idx_zn] = self.prob_pi(zn)\
                                *self.prob_x_given_z(seq[0],zn)
-
         # alpha recursion
         for t in range(1,len(seq)):
             for idx_zn, zn in enumerate(self._z):
@@ -337,28 +343,30 @@ class HiddenMarkovModel():
 
 
 
-    def train(self,seq, epsilon=None, steps=None):
+    def train(self,seq, epsilon, steps=None):
         """
         :param epsilon: parameter
         :param seq:
         :return:
         """
-        if epsilon is None and steps is None:
-            epsilon = 0.001
-            steps = 10000
-            cond = lambda x,y, epsilon, s: abs(x-y) > epsilon
-        elif epsilon is not None and steps is None:
-            steps = 1000000
-            cond = lambda x,y, epsilon, s: abs(x-y) > epsilon
-        elif epsilon is None and steps is not None:
-            cond = lambda x,y, epsilon, s: s > 0
-        elif epsilon is not None and steps is not None:
-            cond = lambda x,y,epsilon, s:  abs(x-y) > epsilon and s > 0
-
+        #if epsilon is None and steps is None:
+        #    epsilon = 0.001
+        #    steps = 10000
+        #    cond = lambda x,y, epsilon, s: abs(x-y) > epsilon
+        #elif epsilon is not None and steps is None:
+        #    steps = 1000000
+        #    cond = lambda x,y, epsilon, s: abs(x-y) > epsilon
+        #elif epsilon is None and steps is not None:
+        #    cond = lambda x,y, epsilon, s: s > 0
+        #elif epsilon is not None and steps is not None:
+        #    cond = lambda x,y,epsilon, s:  abs(x-y) > epsilon and s > 0
+        # todo solve this ugly mess
+        if steps is None:
+            steps = 1000000000
 
         prob_X = [1.0, 0.0]
 
-        while(cond(prob_X[1], prob_X[0], epsilon, steps)):
+        while(abs(prob_X[1] - prob_X[0]) > epsilon and steps > 0):
             self.training_step(seq)
             prob_X.append(self.prob_X(self.forward(seq)))
             prob_X.pop(0)
@@ -380,9 +388,15 @@ class HiddenMarkovModel():
         # marginal posterior dist of latent variable z_n
         # prob of being in state z at time t
         gamma = self.gamma(alpha, beta)
+        #print(gamma)
+        #print('-'*100)
 
         prob_X = self.prob_X(alpha)
+        #print(prob_X)
+        #print('-'*100)
         xi = self.xi(seq, alpha, beta, prob_X)
+        #print(xi)
+        #print('-'*100)
 
         exp_trans_zn = self.expected_trans_from_zn(gamma)
         exp_trans_zn_znp1 = self.expected_trans_from_za_to_zb(xi)
@@ -429,9 +443,6 @@ class HiddenMarkovModel():
         return res
 
 
-
-
-
     def expected_trans_from_zn(self, gamma):
         """
         computes how many times it is expected to transition from state zn
@@ -475,12 +486,14 @@ class HiddenMarkovModel():
             # calculate number of times in state zn by summing over all
             # timestep gamma values
             num_times_in_zn = gamma.T[idx_zn].sum()
+            #print(zn)
+            #print('--'*10)
             for idx_o, xn in enumerate(self._o):
                 # calc number of times ni state s,
                 # when observation  was  xn
                 num_in_zn_and_obs_xn = self.num_times_in_state_zn_and_xn(
                     gamma.T[idx_zn], obs_seq, xn)
-               #print(str(num_in_zn_and_obs_xn) + "/" + str(num_times_in_zn))
+                #print(str(num_in_zn_and_obs_xn) + "/" + str(num_times_in_zn))
                 res[idx_zn][idx_o] = num_in_zn_and_obs_xn/num_times_in_zn
         return res
 
@@ -498,10 +511,6 @@ class HiddenMarkovModel():
     def maximize_multinomial(self):
         pass
 
-# --------------------------------------------------------------------------------------
-# --------------------------------------------------------------------------------------
-# --------------------------------------------------------------------------------------
-# --------------------------------------------------------------------------------------
 
     def predict_xnp1(self, seq):
         """
