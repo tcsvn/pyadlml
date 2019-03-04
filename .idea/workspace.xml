@@ -1,56 +1,239 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="2c0f6430-d19b-4156-9eb7-e08586abb5b4" name="Default Changelist" comment="">
+    <list default="true" id="5b1d4ea4-e931-4d76-bc0c-90991e2dc3e4" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/algorithms/benchmarks/benchmark.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/algorithms/benchmarks/kasteren.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/algorithms/logging.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/algorithms/model.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/algorithms/testing/bench/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/algorithms/testing/bench/test.gv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/algorithms/testing/bench/test.gv.pdf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/algorithms/testing/bench/testing_bench.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/algorithms/testing/bench/testing_kasteren.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/algorithms/testing/bench/train_model.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/algorithms/testing/hmm/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/algorithms/testing/hmm/hmm2/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/algorithms/testing/hmm/test_other_hmm.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/casas_aruba/README" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/casas_aruba/aruba.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/casas_aruba/aruba.zip" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/casas_aruba/data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/@actstruct/actstruct.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/@actstruct/display.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/@actstruct/horzcat.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/@actstruct/subsasgn.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/@actstruct/subsref.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/@actstruct/vertcat.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/@sensorstruct/display.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/@sensorstruct/horzcat.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/@sensorstruct/sensorstruct.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/@sensorstruct/subsasgn.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/@sensorstruct/subsref.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/@sensorstruct/vertcat.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/README.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/convert2ChangeFeatMat.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/convert2LastFiredFeatMat.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/convert2RawFeatMat.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/kasterenActData.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/kasterenDataset.mat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/kasterenSenseData.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/runScript.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/sensorGUI/getLabel.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/sensorGUI/initplot.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/sensorGUI/lineClickCallback.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/sensorGUI/plotas.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/sensorGUI/plotss.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/sensorGUI/sec2Time.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/sensorGUI/sensorGUI.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/sensorGUI/sensorGUIHandler.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/kasteren/sensorGUI/timeTicks.m" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-10-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-11-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-12-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-13-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-14-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-15-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-16-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-17-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-18-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-19-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-20-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-21-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-22-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-23-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-24-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-25-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-26-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-27-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-28-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-29-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-3-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-30-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-31-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-4-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-5-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-6-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-7-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-8-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/1-9-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/2-1-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/2-10-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/2-11-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/2-12-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/2-13-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/2-14-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/2-15-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/2-16-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/2-17-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/2-18-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/2-19-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/2-2-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/2-20-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/2-3-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/2-4-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/2-5-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/2-6-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/2-7-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/2-8-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/2-9-2005-RAW.data" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/MavPad-Mapping.pdf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mavpad2005/README" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mitlab/readme.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mitlab/subject1/Activities.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mitlab/subject1/activities_data.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mitlab/subject1/sensors.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mitlab/subject2/Activities.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mitlab/subject2/activities_data.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/datasets/mitlab/subject2/sensors.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/notebooks/data/.ipynb_checkpoints/Untitled1-checkpoint.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/notebooks/data/.ipynb_checkpoints/kasteren-checkpoint.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/notebooks/data/Untitled1.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/notebooks/data/kasteren.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/notebooks/data/test.gv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/notebooks/data/test.gv.pdf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/notebooks/data/train_model.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/notebooks/docker-compose.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hmm/hmm.py" beforeDir="false" afterPath="$PROJECT_DIR$/hmm/hmm.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/testing_hmm_L08HMMs.py" beforeDir="false" afterPath="$PROJECT_DIR$/testing/testing_hmm_L08HMMs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/algorithms/hmm/hmm.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/hmm.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/algorithms/testing/hmm/hmm2" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/testing/hmm/hmm2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/algorithms/testing/hmm/hmm2/hmm/_BaseHMM.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/testing/hmm/hmm2/hmm/_BaseHMM.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/algorithms/testing/hmm/hmm2/hmm/continuous/EMAGMHMM.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/testing/hmm/hmm2/hmm/continuous/EMAGMHMM.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/algorithms/testing/hmm/hmm2/hmm/continuous/LinearGMHMM.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/testing/hmm/hmm2/hmm/continuous/LinearGMHMM.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/algorithms/testing/hmm/hmm2/hmm/continuous/_ContinuousHMM.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/testing/hmm/hmm2/hmm/continuous/_ContinuousHMM.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/algorithms/testing/hmm/hmm2/hmm/discrete/DiscreteHMM.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/testing/hmm/hmm2/hmm/discrete/DiscreteHMM.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/algorithms/testing/hmm/hmm2/hmm/examples/tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/testing/hmm/hmm2/hmm/examples/tests.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hmm/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hmm/distributions.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/distributions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hmm/hmm.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/hmm/hmm_scaled.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/hmm_scaled.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hmm/test.gv" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/test.gv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hmm/test.gv.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/test.gv.pdf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/jupyter/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/jupyter/data/.ipynb_checkpoints/HMM-checkpoint.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/data/.ipynb_checkpoints/HMM-checkpoint.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/jupyter/data/.ipynb_checkpoints/Untitled-checkpoint.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/data/.ipynb_checkpoints/Untitled-checkpoint.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/jupyter/data/HMM.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/data/HMM.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/jupyter/data/Untitled.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/data/Untitled.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/jupyter/docker-compose.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/setup.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/benchmarks/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/hmm2/HMM" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/hmm2/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/test.gv" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/testing/hmm/test.gv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/test.gv.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/testing/hmm/test.gv.pdf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/test_other_hmm.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/testing/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/testing_PMF.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/testing/hmm/testing_PMF.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/testing_hmm.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/testing_hmm_2.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/testing_hmm_L08HMMs.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_L08HMMs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/testing_hmm_MIT16_410F10_lec21.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_MIT16_410F10_lec21.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/testing_hmm_coin.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_coin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/testing_hmm_scaled_L08HMMs.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_scaled_L08HMMs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/testing_hmm_vs_hmm2_MIT16_410F10_lec21.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_vs_hmm2_MIT16_410F10_lec21.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/testing_hmm_wiki.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_wiki.py" afterDir="false" />
     </list>
-    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="CoverageDataManager">
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_training_step_model.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_training_step_model Coverage Results" MODIFIED="1551692240967" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/bench" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_training_step_model.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_training_step_model Coverage Results" MODIFIED="1551724679925" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/bench" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_load_df.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_load_df Coverage Results" MODIFIED="1551553367813" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/bench" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_vs_hmm2_MIT16_410F10_lec21_TestHmmWiki_test_forward.coverage" NAME="Unittests for testing_hmm_vs_hmm2_MIT16_410F10_lec21.TestHmmWiki.test_forward Coverage Results" MODIFIED="1551556719932" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/hmm" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_vs_hmm2_MIT16_410F10_lec21_TestHmmWiki_test_training_step.coverage" NAME="Unittests for testing_hmm_vs_hmm2_MIT16_410F10_lec21.TestHmmWiki.test_training_step Coverage Results" MODIFIED="1551689641331" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/hmm" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_train.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_train Coverage Results" MODIFIED="1551692441259" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/bench" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_predict_xnp1.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_predict_xnp1 Coverage Results" MODIFIED="1551693157069" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_probX.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_probX Coverage Results" MODIFIED="1551694289665" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_train.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_train Coverage Results" MODIFIED="1551713440844" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/bench" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_bench_TestBench_test_pom.coverage" NAME="Unittests for testing_bench.TestBench.test_pom Coverage Results" MODIFIED="1551723721871" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/bench" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_vs_hmm2_MIT16_410F10_lec21_TestHmmWiki_test_xi.coverage" NAME="Unittests for testing_hmm_vs_hmm2_MIT16_410F10_lec21.TestHmmWiki.test_xi Coverage Results" MODIFIED="1551603503111" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/hmm" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_vs_hmm2_MIT16_410F10_lec21_TestHmmWiki.coverage" NAME="Unittests for testing_hmm_vs_hmm2_MIT16_410F10_lec21.TestHmmWiki Coverage Results" MODIFIED="1551604095489" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/hmm" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_predict_next_x.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_predict_next_x Coverage Results" MODIFIED="1551521539035" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_id_from_label.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_id_from_label Coverage Results" MODIFIED="1551548452887" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/bench" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_get_sensor_list.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_get_sensor_list Coverage Results" MODIFIED="1551688448380" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/bench" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_train_model.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_train_model Coverage Results" MODIFIED="1551690990192" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/bench" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_bench_TestBench_test_train_model.coverage" NAME="Unittests for testing_bench.TestBench.test_train_model Coverage Results" MODIFIED="1551715961870" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/bench" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_bench_TestBench_test_om.coverage" NAME="Unittests for testing_bench.TestBench.test_om Coverage Results" MODIFIED="1551723785680" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/bench" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_vs_hmm2_MIT16_410F10_lec21_TestHmmWiki_test_expected_trans_from_znm1_to_zn.coverage" NAME="Unittests for testing_hmm_vs_hmm2_MIT16_410F10_lec21.TestHmmWiki.test_expected_trans_from_znm1_to_zn Coverage Results" MODIFIED="1551603515420" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/hmm" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_label_from_id.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_label_from_id Coverage Results" MODIFIED="1551551908799" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/bench" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_get_activity_list.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_get_activity_list Coverage Results" MODIFIED="1551553897351" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/bench" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_2_TestHmmSunnyRainyExample_test_pom.coverage" NAME="Unittests for testing_hmm_2.TestHmmSunnyRainyExample.test_pom Coverage Results" MODIFIED="1551723038036" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm" />
   </component>
   <component name="FileEditorManager">
-    <splitter split-orientation="horizontal" split-proportion="0.52154857">
+    <splitter split-orientation="horizontal" split-proportion="0.46409172">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/hmm/hmm.py">
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/algorithms/benchmarks/benchmark.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="286">
-                  <caret line="243" column="7" selection-start-line="243" selection-start-column="7" selection-end-line="243" selection-end-column="7" />
+                <state relative-caret-position="476">
+                  <caret line="92" column="52" selection-start-line="92" selection-start-column="52" selection-end-line="92" selection-end-column="52" />
                   <folding>
-                    <element signature="e#0#29#0" expanded="true" />
+                    <element signature="e#0#14#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/algorithms/hmm/hmm.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="8772">
+                  <caret line="516" column="27" selection-start-line="516" selection-start-column="27" selection-end-line="516" selection-end-column="27" />
+                  <folding>
+                    <element signature="e#0#14#0" expanded="true" />
                   </folding>
                 </state>
               </provider>
             </entry>
           </file>
           <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/hmm/distributions.py">
+            <entry file="file://$PROJECT_DIR$/algorithms/testing/bench/train_model.log">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="544">
-                  <caret line="32" selection-start-line="32" selection-end-line="32" />
+                <state relative-caret-position="823">
+                  <caret line="99" selection-start-line="99" selection-end-line="99" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/algorithms/model.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="94">
+                  <caret line="28" selection-start-line="28" selection-end-line="28" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/algorithms/testing/bench/testing_kasteren.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="527">
+                  <caret line="147" selection-start-line="147" selection-end-line="147" />
+                  <folding>
+                    <element signature="e#0#15#0" expanded="true" />
+                  </folding>
                 </state>
               </provider>
             </entry>
@@ -59,11 +242,46 @@
       </split-first>
       <split-second>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/testing/testing_hmm_L08HMMs.py">
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_2.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="629">
-                  <caret line="38" column="8" selection-start-line="38" selection-start-column="8" selection-end-line="38" selection-end-column="8" />
+                <state relative-caret-position="-447">
+                  <caret line="25" column="1" selection-start-line="25" selection-start-column="1" selection-end-line="25" selection-end-column="1" />
+                  <folding>
+                    <element signature="e#0#15#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_vs_hmm2_MIT16_410F10_lec21.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="3281">
+                  <caret line="193" column="38" selection-start-line="193" selection-start-column="38" selection-end-line="193" selection-end-column="38" />
+                  <folding>
+                    <element signature="e#0#15#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_scaled_L08HMMs.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="-1259">
+                  <folding>
+                    <element signature="e#0#15#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/algorithms/testing/bench/testing_bench.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="255">
+                  <caret line="15" column="21" selection-start-line="15" selection-start-column="21" selection-end-line="15" selection-end-column="21" />
                   <folding>
                     <element signature="e#0#15#0" expanded="true" />
                   </folding>
@@ -75,27 +293,15 @@
       </split-second>
     </splitter>
   </component>
-  <component name="FindInProjectRecents">
-    <findStrings>
-      <find>kkjjjG</find>
-    </findStrings>
-  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/testing/testing_hmm_L08HMMs.py" />
-        <option value="$PROJECT_DIR$/hmm/hmm.py" />
+        <option value="$PROJECT_DIR$/algorithms/hmm/hmm.py" />
       </list>
     </option>
-  </component>
-  <component name="ProjectFrameBounds">
-    <option name="x" value="1933" />
-    <option name="y" value="16" />
-    <option name="width" value="944" />
-    <option name="height" value="1051" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
     <ConfirmationsSetting value="2" id="Add" />
@@ -116,24 +322,24 @@
             <path>
               <item name="hassbrain_algorithm" type="b2602c69:ProjectViewProjectNode" />
               <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
-              <item name="hmm" type="462c0819:PsiDirectoryNode" />
+              <item name="algorithms" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="hassbrain_algorithm" type="b2602c69:ProjectViewProjectNode" />
               <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
               <item name="testing" type="462c0819:PsiDirectoryNode" />
             </path>
+            <path>
+              <item name="hassbrain_algorithm" type="b2602c69:ProjectViewProjectNode" />
+              <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
+              <item name="testing" type="462c0819:PsiDirectoryNode" />
+              <item name="hmm2" type="462c0819:PsiDirectoryNode" />
+            </path>
           </expand>
           <select />
         </subPane>
       </pane>
     </panes>
-  </component>
-  <component name="PropertiesComponent">
-    <property name="WebServerToolWindowFactoryState" value="true" />
-    <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
-    <property name="nodejs_npm_path_reset_for_default_project" value="true" />
-    <property name="settings.editor.selected.configurable" value="editor.preferences.import" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -147,60 +353,6 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python tests.Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_probX">
-    <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_predict_next_x" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
-      <module name="hassbrain_algorithm" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/testing" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_predict_next_x&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
-      <method v="2" />
-    </configuration>
-    <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_predict_xnp1" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
-      <module name="hassbrain_algorithm" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/testing" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_predict_xnp1&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
-      <method v="2" />
-    </configuration>
-    <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_probX" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
-      <module name="hassbrain_algorithm" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/testing" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_probX&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
-      <method v="2" />
-    </configuration>
-    <recent_temporary>
-      <list>
-        <item itemvalue="Python tests.Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_probX" />
-        <item itemvalue="Python tests.Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_predict_xnp1" />
-        <item itemvalue="Python tests.Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_predict_next_x" />
-      </list>
-    </recent_temporary>
-  </component>
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -212,119 +364,297 @@
       <option name="presentableId" value="Default" />
       <updated>1551518370258</updated>
       <workItem from="1551518373539" duration="2000" />
-      <workItem from="1551518392566" duration="3359000" />
+      <workItem from="1551518392566" duration="31481000" />
+      <workItem from="1551602008700" duration="3866000" />
+      <workItem from="1551686072904" duration="6484000" />
+      <workItem from="1551718130788" duration="7032000" />
     </task>
     <servers />
   </component>
-  <component name="TestHistory">
-    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_predict_xnp1 - 2019.03.02 at 11h 15m 46s.xml">
-      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_predict_xnp1" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_predict_xnp1 - 2019.03.04 at 10h 52m 38s.xml">
-      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_predict_xnp1" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_probX - 2019.03.04 at 10h 52m 42s.xml">
-      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_probX" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_probX - 2019.03.04 at 10h 53m 50s.xml">
-      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_probX" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_probX - 2019.03.04 at 10h 54m 17s.xml">
-      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_probX" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_probX - 2019.03.04 at 10h 54m 27s.xml">
-      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_probX" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_probX - 2019.03.04 at 11h 06m 18s.xml">
-      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_probX" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_probX - 2019.03.04 at 11h 06m 36s.xml">
-      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_probX" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_probX - 2019.03.04 at 11h 07m 14s.xml">
-      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_probX" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_probX - 2019.03.04 at 11h 11m 30s.xml">
-      <configuration name="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_probX" configurationId="tests" />
-    </history-entry>
-  </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="4753000" />
+    <option name="totallyTimeSpent" value="299000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="1933" y="16" width="944" height="1051" extended-state="0" />
-    <editor active="true" />
+    <frame x="1933" y="16" width="1894" height="1051" extended-state="0" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" weight="0.16916488" />
-      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.49945474" visible="true" weight="0.18661588" />
+      <window_info id="Structure" order="1" sideWeight="0.50054526" side_tool="true" weight="0.22470076" />
       <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info active="true" id="Run" order="3" visible="true" weight="0.6666667" />
+      <window_info id="Run" order="3" sideWeight="0.49945474" weight="0.3694233" />
+      <window_info id="Debug" order="4" weight="0.27087796" />
       <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="bottom" id="Debug" order="2" weight="0.4" />
-      <window_info anchor="bottom" id="Cvs" order="3" weight="0.25" />
-      <window_info anchor="bottom" id="Inspection" order="4" weight="0.4" />
-      <window_info anchor="bottom" id="TODO" order="5" />
-      <window_info anchor="bottom" id="Docker" order="6" />
-      <window_info anchor="bottom" id="Version Control" order="7" />
-      <window_info anchor="bottom" id="Database Changes" order="8" />
-      <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
-      <window_info anchor="bottom" id="Terminal" order="10" />
-      <window_info anchor="bottom" id="Python Console" order="11" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.32824427" />
+      <window_info anchor="bottom" id="Cvs" order="2" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="4" weight="0.3293348" />
+      <window_info anchor="bottom" id="Docker" order="5" />
+      <window_info anchor="bottom" id="Version Control" order="6" weight="0.3293348" />
+      <window_info anchor="bottom" id="Database Changes" order="7" />
+      <window_info anchor="bottom" id="Event Log" order="8" side_tool="true" />
+      <window_info anchor="bottom" id="Terminal" order="9" weight="0.32921812" />
+      <window_info anchor="bottom" id="Python Console" order="10" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="right" id="Remote Host" order="3" />
-      <window_info anchor="right" id="SciView" order="4" />
+      <window_info anchor="right" id="SciView" order="4" weight="0.32441112" />
       <window_info anchor="right" id="Database" order="5" />
     </layout>
   </component>
-  <component name="TypeScriptGeneratedFilesManager">
-    <option name="version" value="1" />
-  </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/testing/testing_hmm_vs_hmm2_MIT16_410F10_lec21.py">
+    <entry file="file://$PROJECT_DIR$/datasets/mavpad2005/1-17-2005-RAW.data">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/datasets/casas_aruba/data">
+      <provider selected="true" editor-type-id="LargeFileEditor">
+        <state relative-caret-position="-34833">
+          <caret line="36" column="33" selection-start-line="36" selection-start-column="33" selection-end-line="36" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="136">
-          <caret line="8" selection-start-line="8" selection-end-line="8" />
+        <state>
+          <folding>
+            <element signature="e#0#37#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_L08HMMs.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="578">
+          <caret line="49" column="11" selection-start-line="49" selection-start-column="11" selection-end-line="49" selection-end-column="11" />
           <folding>
             <element signature="e#0#15#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/testing/testing_hmm_scaled_L08HMMs.py">
+    <entry file="file://$PROJECT_DIR$/testing/hmm/hmm2/HMM/_BaseHMM.py" />
+    <entry file="file://$PROJECT_DIR$/testing/hmm/hmm2/HMM/__init__.py" />
+    <entry file="file://$PROJECT_DIR$/testing/hmm/hmm2/HMM/discrete/DiscreteHMM.py" />
+    <entry file="file://$PROJECT_DIR$/testing/hmm/hmm2/HMM/weights/Linear.py" />
+    <entry file="file://$PROJECT_DIR$/testing/hmm/hmm2/HMM/weights/EWMA.py" />
+    <entry file="file://$PROJECT_DIR$/algorithms/testing/hmm/hmm2/hmm/discrete/DiscreteHMM.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-561">
+        <state relative-caret-position="459">
+          <caret line="27" selection-start-line="27" selection-end-line="27" />
           <folding>
-            <element signature="e#0#15#0" expanded="true" />
+            <element signature="e#83#116#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file:///mnt/external_D/code/hassbrain_algorithm/testing/testing_hmm_L08HMMs.py">
+    <entry file="file://$PROJECT_DIR$/algorithms/testing/hmm/hmm2/hmm/_BaseHMM.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="884">
+          <caret line="307" column="30" selection-start-line="307" selection-start-column="30" selection-end-line="307" selection-end-column="30" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///mnt/external_D/code/hassbrain_algorithm/testing/hmm/testing_hmm_vs_hmm2_MIT16_410F10_lec21.py" />
+    <entry file="file:///usr/lib/python3.7/contextlib.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="295">
+          <caret line="116" selection-start-line="116" selection-end-line="116" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/lib/python3.7/unittest/case.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="295">
+          <caret line="614" selection-start-line="614" selection-end-line="614" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///mnt/external_D/code/hassbrain_algorithm/testing/bench/testing_kasteren.py" />
+    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pycharm/teamcity/unittestpy.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="312">
+          <caret line="241" selection-start-line="241" selection-end-line="241" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pycharm/teamcity/common.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="422">
+          <caret line="49" selection-start-line="49" selection-end-line="49" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/datasets/kasteren/kasterenActData.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="85">
+          <caret line="5" selection-start-line="5" selection-end-line="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithms/testing/hmm/hmm2/hmm/examples/tests.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="119">
+          <caret line="7" column="21" selection-start-line="7" selection-start-column="21" selection-end-line="7" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/datasets/kasteren/kasterenSenseData.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="238">
+          <caret line="14" column="26" lean-forward="true" selection-start-line="14" selection-start-column="26" selection-end-line="14" selection-end-column="26" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/lib/python3.7/genericpath.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="289">
+          <caret line="18" selection-start-line="18" selection-end-line="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithms/logging.yaml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="68">
+          <caret line="4" column="14" lean-forward="true" selection-start-line="4" selection-start-column="14" selection-end-line="4" selection-end-column="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/notebooks/data/Untitled.ipynb">
+      <provider selected="true" editor-type-id="ipnb-editor">
+        <state>
+          <selected id="2" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/notebooks/data/HMM.ipynb">
+      <provider selected="true" editor-type-id="ipnb-editor">
+        <state>
+          <selected id="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///mnt/external_D/code/hassbrain_algorithm/algorithms/testing/bench/testing_kasteren.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="17">
+          <caret line="1" column="26" selection-start-line="1" selection-start-column="26" selection-end-line="1" selection-end-column="26" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithms/hmm/distributions.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="544">
-          <caret line="37" selection-start-line="37" selection-end-line="37" />
+          <caret line="32" selection-start-line="32" selection-end-line="32" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/hmm/hmm.py">
+    <entry file="file:///usr/lib/python3.7/site-packages/graphviz/lang.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="286">
-          <caret line="243" column="7" selection-start-line="243" selection-start-column="7" selection-end-line="243" selection-end-column="7" />
+        <state relative-caret-position="748">
+          <caret line="47" selection-start-line="47" selection-end-line="47" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/notebooks/docker-compose.yml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="153">
+          <caret line="9" column="18" selection-start-line="9" selection-start-column="18" selection-end-line="9" selection-end-column="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_coin.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
           <folding>
-            <element signature="e#0#29#0" expanded="true" />
+            <element signature="e#0#15#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/testing/testing_hmm_L08HMMs.py">
+    <entry file="file://$PROJECT_DIR$/algorithms/benchmarks/benchmark.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="629">
-          <caret line="38" column="8" selection-start-line="38" selection-start-column="8" selection-end-line="38" selection-end-column="8" />
+        <state relative-caret-position="476">
+          <caret line="92" column="52" selection-start-line="92" selection-start-column="52" selection-end-line="92" selection-end-column="52" />
+          <folding>
+            <element signature="e#0#14#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithms/benchmarks/kasteren.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="170">
+          <caret line="148" column="32" selection-start-line="148" selection-start-column="32" selection-end-line="148" selection-end-column="32" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithms/testing/bench/train_model.log">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="823">
+          <caret line="99" selection-start-line="99" selection-end-line="99" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithms/testing/bench/testing_bench.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="255">
+          <caret line="15" column="21" selection-start-line="15" selection-start-column="21" selection-end-line="15" selection-end-column="21" />
           <folding>
             <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-447">
+          <caret line="25" column="1" selection-start-line="25" selection-start-column="1" selection-end-line="25" selection-end-column="1" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_vs_hmm2_MIT16_410F10_lec21.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3281">
+          <caret line="193" column="38" selection-start-line="193" selection-start-column="38" selection-end-line="193" selection-end-column="38" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_scaled_L08HMMs.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1259">
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithms/model.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="94">
+          <caret line="28" selection-start-line="28" selection-end-line="28" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithms/testing/bench/testing_kasteren.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="527">
+          <caret line="147" selection-start-line="147" selection-end-line="147" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithms/hmm/hmm.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="8772">
+          <caret line="516" column="27" selection-start-line="516" selection-start-column="27" selection-end-line="516" selection-end-column="27" />
+          <folding>
+            <element signature="e#0#14#0" expanded="true" />
           </folding>
         </state>
       </provider>

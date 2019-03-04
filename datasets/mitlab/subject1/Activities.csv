@@ -1,0 +1,34 @@
+Heading,Category,Subcategory,Code
+Employment related,Employment work at home,Work at home,1
+Employment related,Travel employment,Going out to work,5
+Personal needs,Eating,Eating,10
+Personal needs,Personal hygiene,Toileting,15
+Personal needs,Personal hygiene,Bathing,20
+Personal needs,Personal hygiene,Grooming,25
+Personal needs,Personal hygiene,Dressing,30
+Personal needs,Personal hygiene,Washing hands,35
+Personal needs,Personal medical,Taking medication,40
+Personal needs,Sleeping,Sleeping,45
+Personal needs,Talking on telephone,Talking on telephone,50
+Personal needs,Resting,Resting,55
+Domestic work,Preparing a meal,Preparing breakfast,60
+Domestic work,Preparing a meal,Preparing lunch,65
+Domestic work,Preparing a meal,Preparing dinner,70
+Domestic work,Preparing a snack,Preparing a snack,75
+Domestic work,Preparing a beverage,Preparing a beverage,80
+Domestic work,Meal Cleanup,Washing dishes,85
+Domestic work,Meal Cleanup,Putting away dishes,90
+Domestic work,Putting away groceries,Putting away groceries,95
+Domestic work,Clean house,Cleaning,100
+Domestic work,Clean house,Doing laundry,105
+Domestic work,Clean house,Putting away laundry,110
+Domestic work,Outdoor chores,Taking out the trash,115
+Domestic work,Outdoor chores,Lawnwork,120
+Educational,Home education,Home education,125
+Educational,Travel study,Going out to school,130
+Leisure,Leisure,Watching TV,135
+Leisure,Leisure,Listening to music,140
+Entertainment and social life,Travel social,Going out for entertainment,145
+Sports,Travel sports,Going out to exercise,150
+Purchasing goods and services,Travel services,Going out for shopping,155
+Other,Other,Other,160

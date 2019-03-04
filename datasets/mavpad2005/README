@@ -1,0 +1,42 @@
+MavPad 2005 data set
+
+Description
+
+These datasets represent sensor events collected in the MavPad testbed
+during 2005 while a single resident was living in the apartment.
+
+File format
+
+There is one sensor event on each line of the files.  The event syntax is
+Date Time zone number state level source info
+
+Sensor layouts
+
+The file MavPad-Mapping.pdf describes the smart apartment testbed.  This file is excerpted
+from the document:
+
+   G. Michael Youngblood. Automating Inhabitant Interactions in Home and Workplace Environments through Data-driven Generation of Hierarchical Partially-observable Markov Decision Processes. Doctoral Dissertation. The University of Texas at Arlington. August 2005.
+
+Data files
+
+1-10-2005-RAW.data  1-23-2005-RAW.data  1-7-2005-RAW.data   2-19-2005-RAW.data
+1-11-2005-RAW.data  1-24-2005-RAW.data  1-8-2005-RAW.data   2-20-2005-RAW.data
+1-12-2005-RAW.data  1-25-2005-RAW.data  1-9-2005-RAW.data   2-2-2005-RAW.data
+1-13-2005-RAW.data  1-26-2005-RAW.data  2-10-2005-RAW.data  2-3-2005-RAW.data
+1-14-2005-RAW.data  1-27-2005-RAW.data  2-11-2005-RAW.data  2-4-2005-RAW.data
+1-15-2005-RAW.data  1-28-2005-RAW.data  2-1-2005-RAW.data   2-5-2005-RAW.data
+1-16-2005-RAW.data  1-29-2005-RAW.data  2-12-2005-RAW.data  2-6-2005-RAW.data
+1-17-2005-RAW.data  1-30-2005-RAW.data  2-13-2005-RAW.data  2-7-2005-RAW.data
+1-18-2005-RAW.data  1-31-2005-RAW.data  2-14-2005-RAW.data  2-8-2005-RAW.data
+1-19-2005-RAW.data  1-3-2005-RAW.data   2-15-2005-RAW.data  2-9-2005-RAW.data
+1-20-2005-RAW.data  1-4-2005-RAW.data   2-16-2005-RAW.data
+1-21-2005-RAW.data  1-5-2005-RAW.data   2-17-2005-RAW.data
+1-22-2005-RAW.data  1-6-2005-RAW.data   2-18-2005-RAW.data
+
+Papers
+
+All use of the data must cite the MavHome project.
+
+G. M. Youngblood and D. Cook, Data mining for hierarchical
+model creation, IEEE Transactions on Systems, Man, and
+Cybernetics, Part C, 37(4):561-572, 2007.
