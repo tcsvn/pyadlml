@@ -1,0 +1,57 @@
+version: 1
+disable_existing_loggers: true
+formatters:
+    simple:
+        format: "%(threadName)-12s %(levelname)-8s | %(message)s"
+    debug:
+        format: "%(asctime)s - %(threadName)-12s %(name)-40s %(levelname)-8s | %(message)s"
+
+handlers:
+    console:
+        class: logging.StreamHandler
+        level: DEBUG
+        formatter: debug
+        stream: ext://sys.stdout
+
+#    info_file_handler:
+#        class: logging.handlers.RotatingFileHandler
+#        level: INFO
+#        formatter: simple
+#        filename: info.log
+#        maxBytes: 10485760 # 10MB
+#        backupCount: 20
+#        encoding: utf8
+#
+#    error_file_handler:
+#        class: logging.handlers.RotatingFileHandler
+#        level: ERROR
+#        formatter: simple
+#        filename: errors.log
+#        maxBytes: 10485760 # 10MB
+#        backupCount: 20
+#        encoding: utf8
+
+loggers:
+    pyhomeautomation.interfaces.controller:
+        level: DEBUG
+        handlers: [console]
+        propagate: no
+
+    order:
+        level: DEBUG
+        handlers: [console]
+        propagate: no
+
+    pyhomeautomation.sensors.binarySensors.base:
+        level: DEBUG
+        handlers: [console]
+        propagate: no
+
+    transitions:
+        level: DEBUG
+        handlers: [console]
+        propagate: no
+
+root:
+    level: INFO
+    handlers: [console]
