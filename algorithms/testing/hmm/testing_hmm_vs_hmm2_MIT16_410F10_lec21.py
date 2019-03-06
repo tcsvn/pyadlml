@@ -1,18 +1,23 @@
 import unittest
 import numpy as np
-from algorithms.hmm import HiddenMarkovModel
-from algorithms.hmm import ProbabilityMassFunction
+from algorithms.hmm.hmm import HiddenMarkovModel
+from algorithms.hmm.distributions import ProbabilityMassFunction
+from algorithms.testing.hmm.hmm2.hmm.discrete.DiscreteHMM import DiscreteHMM
 import math
-LA = 'Los Angeles'
-NY = 'New York'
-NULL = 'null'
-from algorithms.testing.hmm import DiscreteHMM
+
+
+
 """
 this example is straight from lecture nodes of MIT Lec 21 Nov 24, 2010
     Finding Keyser Soeze    
     travels between two cities: Lost Angeles and New York
     observations are sightings 
 """
+
+LA = 'Los Angeles'
+NY = 'New York'
+NULL = 'null'
+
 class TestHmmWiki(unittest.TestCase):
     def setUp(self):
         # set of observations
@@ -22,61 +27,45 @@ class TestHmmWiki(unittest.TestCase):
         init_dist2 = np.array([0.2, 0.8])
         trans_matrix = np.array([[0.5,0.5],[0.5,0.5]])
         em_matrix = np.array([[0.4,0.1,0.5],[0.1,0.5,0.4]])
+
+
         # init markov model
+        self.obs_seq = [NULL, LA, LA, NULL, NY, NULL, NY, NY, NY, NULL, NY, NY, NY, NY, NY, NULL, NULL, LA, LA, NY]
         self.hmm = HiddenMarkovModel(states, observation_alphabet, ProbabilityMassFunction, init_dist)
         self.hmm.set_transition_matrix(trans_matrix)
         self.hmm.set_emission_matrix(em_matrix)
-        self.obs_seq = [NULL, LA, LA, NULL, NY, NULL, NY, NY, NY, NULL,
-                        NY, NY, NY, NY, NY, NULL, NULL, LA, LA, NY]
 
 
-        #self.hmm2 = DiscreteHMM(2, 3, trans_matrix, em_matrix, init_dist2, init_type='user')
-        self.hmm2 = DiscreteHMM(2, 3, trans_matrix, em_matrix, init_dist2, init_type='user')
         self.obs_seq2 = [2,0,0,2,1,2,1,1,1,2,1,1,1,1,1,2,2,0,0,1]
+        self.hmm2 = DiscreteHMM(2, 3, trans_matrix, em_matrix, init_dist2, init_type='user')
         self.hmm2.mapB(self.obs_seq2)
 
 
-        print('='*100)
-        print('Initial_probs:')
-        print(self.hmm.pi_to_df())
-        print('Transition_matrix:')
-        print(self.hmm.transitions_to_df())
-        print('-'*100)
-        print('Emission:')
-        print(self.hmm.emissions_to_df())
-        print('='*100)
-        print('*'*100)
 
     def tearDown(self):
         pass
 
     def test_xi(self):
         obs_seq = self.obs_seq
-        forward_matrix = self.hmm.forward(obs_seq)
-        backward_matrix = self.hmm.backward(obs_seq)
-        prob_X = self.hmm.prob_X(forward_matrix)
-        hmm_xi = self.hmm.xi(obs_seq,
-                             forward_matrix,
-                             backward_matrix,
+        alpha = self.hmm.forward(obs_seq)
+        beta = self.hmm.backward(obs_seq)
+        prob_X = self.hmm.prob_X(alpha)
+        xi = self.hmm.xi(obs_seq,
+                             alpha,
+                             beta,
                              prob_X)
-        #print('~'*30)
-        #print('~'*30)
-        #print(hmm_xi)
 
         hmm2_xi = self.hmm2.calcxi(
                 self.obs_seq2,
                 self.hmm2.calcalpha(self.obs_seq2),
                 self.hmm2.calcbeta(self.obs_seq2))
-        #print('-'*100)
-        #print('-'*100)
-        #print('-'*100)
-        #print('-'*100)
-        #print(hmm2_xi)
+
+
         for t in range(1,len(obs_seq)):
             for znm1_idx, znm1 in enumerate(self.hmm._z):
                 for zn_idx, zn in enumerate(self.hmm._z):
                     hmm2_val = hmm2_xi[t][znm1_idx][zn_idx]
-                    hmm_val = hmm_xi[t][znm1_idx][zn_idx]
+                    hmm_val = xi[t][znm1_idx][zn_idx]
                     #print(str(hmm_val) + " == " + str(hmm2_val))
                     self.assertAlmostEqual(hmm2_val, hmm_val)
 
@@ -108,31 +97,34 @@ class TestHmmWiki(unittest.TestCase):
         #exp_trans_zn_znp1 = self.hmm.expected_trans_from_za_to_zb(xi)
 
     def test_new_pi(self):
-        alpha_matrix = self.hmm.forward(self.obs_seq)
-        beta_matrix = self.hmm.backward(self.obs_seq)
-        gamma = self.hmm.gamma(alpha_matrix, beta_matrix)
+        alpha = self.hmm.forward(self.obs_seq)
+        beta = self.hmm.backward(self.obs_seq)
+        gamma = self.hmm.gamma(alpha, beta)
         hmm_new_pi = self.hmm.new_initial_distribution(gamma)
 
 
-
         hmm2_gamma = self.hmm2.calcgamma(self.hmm2.calcxi(
-                self.obs_seq2,
-                self.hmm2.calcalpha(self.obs_seq2),
-                self.hmm2.calcbeta(self.obs_seq2)),
-            len(self.obs_seq2))
+                        self.obs_seq2,
+                        self.hmm2.calcalpha(self.obs_seq2),
+                        self.hmm2.calcbeta(self.obs_seq2)),
+                        len(self.obs_seq2))
         # from code line 307
         hmm2_new_pi = hmm2_gamma[0]
-        print(hmm_new_pi)
-        print(hmm2_new_pi)
+
+
+
+        #print(hmm_new_pi)
+        #print(hmm2_new_pi)
+
         for zn in range(0,len(self.hmm._z)):
             self.assertAlmostEqual(hmm2_new_pi[zn], hmm_new_pi[zn])
 
 
     def test_new_transition_matrix(self):
-        alpha_matrix = self.hmm.forward(self.obs_seq)
-        beta_matrix = self.hmm.backward(self.obs_seq)
-        gamma = self.hmm.gamma(alpha_matrix, beta_matrix)
-        xi = self.hmm.xi(self.obs_seq, alpha_matrix, beta_matrix)
+        alpha = self.hmm.forward(self.obs_seq)
+        beta = self.hmm.backward(self.obs_seq)
+        gamma = self.hmm.gamma(alpha, beta)
+        xi = self.hmm.xi(self.obs_seq, alpha, beta)
 
         exp_trans_zn = self.hmm.expected_trans_from_zn(gamma)
         exp_trans_zn_znp1 = self.hmm.expected_trans_from_za_to_zb(xi)
@@ -142,22 +134,18 @@ class TestHmmWiki(unittest.TestCase):
             exp_trans_zn_znp1)
 
 
-        # new hmm2
+
         hmm2_xi = self.hmm2.calcxi(
                 self.obs_seq2,
                 self.hmm2.calcalpha(self.obs_seq2),
                 self.hmm2.calcbeta(self.obs_seq2))
         hmm2_gamma = self.hmm2.calcgamma(hmm2_xi, len(self.obs_seq2))
-        hmm2_new_A = self.hmm2.reestimateA(
-            self.obs_seq2,
-            hmm2_xi,
-            hmm2_gamma)
-        print('*'*100)
-        print('hmm')
-        print(hmm_new_A)
-        print('-'*100)
-        print('hmm2')
-        print(hmm2_new_A)
+        hmm2_new_A = self.hmm2.reestimateA(self.obs_seq2, hmm2_xi, hmm2_gamma)
+
+
+        #print(hmm_new_A)
+        #print('-'*100)
+        #print(hmm2_new_A)
 
         for znm1 in range(0,len(self.hmm._z)):
             for zn in range(0,len(self.hmm._z)):
@@ -168,10 +156,9 @@ class TestHmmWiki(unittest.TestCase):
         alpha_matrix = self.hmm.forward(self.obs_seq)
         beta_matrix = self.hmm.backward(self.obs_seq)
         gamma = self.hmm.gamma(alpha_matrix, beta_matrix)
+        hmm_new_em = self.hmm.new_emissions(gamma, self.obs_seq)
 
-        hmm_new_ems = self.hmm.new_emissions(gamma, self.obs_seq)
 
-        # new hmm2
         hmm2_xi = self.hmm2.calcxi(
                 self.obs_seq2,
                 self.hmm2.calcalpha(self.obs_seq2),
@@ -180,68 +167,62 @@ class TestHmmWiki(unittest.TestCase):
         hmm2_new_ems = self.hmm2._reestimateB(self.obs_seq2, hmm2_gamma)
 
 
-        print(hmm_new_ems)
-        print('~'*100)
-        print(hmm2_new_ems)
+        #print(hmm_new_em)
+        #print('~'*100)
+        #print(hmm2_new_ems)
 
         for znm1 in range(0,len(self.hmm._z)):
             for zn in range(0,len(self.hmm._z)):
-                self.assertAlmostEqual(hmm2_new_ems[znm1][zn], hmm_new_ems[znm1][zn])
+                self.assertAlmostEqual(hmm2_new_ems[znm1][zn], hmm_new_em[znm1][zn])
 
     def test_training(self):
-        epsilon = 0.1
-        obs_seq = self.obs_seq
-        self.hmm.train(obs_seq, epsilon)
-        print('~'*100)
-        print(self.hmm.pi_to_df())
-        print(self.hmm.transitions_to_df())
-        print(self.hmm.emissions_to_df())
-
-
-
-    def test_training_step(self):
         """
         slide 22
         test if the training converges
         :return:
         """
+        res_pi = np.array([1,0])
+        res_A = np.array([[0.6909, 0.3091],
+                          [0.0934, 0.9066]])
+        res_E = np.array([[0.5807, 0.0010, 0.4183],
+                          [0.000, 0.7621, 0.2379]])
+
+        obs_seq = self.obs_seq
+        self.hmm.train(obs_seq, steps=1000)
+        self.hmm2.train(self.obs_seq2, iterations=1000)
+
+        #print(self.hmm)
+        #print('~'*100)
+        #print(self.hmm2.pi)
+        #print(self.hmm2.A)
+        #print(self.hmm2.B)
+
+        # assert pi
+        for zn in range(0, len(res_pi)):
+            self.assertAlmostEqual(self.hmm._pi[zn], res_pi[zn])
+
+        # assert A
+        for znm1 in range(0, len(res_A)):
+            for zn in range(0,len(res_A[0])):
+                self.assertAlmostEqual(self.hmm._A[znm1][zn], res_A[znm1][zn])
+
+        # assert Emissions
+        pd_em = self.hmm.emissions_to_df()
+        for zn in range(0, len(res_A)):
+            for em in range(0, len(res_E)):
+                self.assertAlmostEqual(res_E[zn][em], round(pd_em[zn][em],4))
+
+    def test_training_step(self):
+
         obs_seq = self.obs_seq
         # transition matrix after convergence
-        result_trans_matrix = np.array([[0.6909, 0.3091],
-                                 [0.0934, 0.9066]])
-        result_obs_matrix = np.array([[0.5807, 0.0010, 0.4183],
-                               [0.000, 0.7621, 0.2379]])
-        print('beginn training...')
+
         for i in range(0,20):
             self.hmm.training_step(obs_seq)
 
-        print('*'*50)
-        print('Pi')
-        print(self.hmm.pi_to_df())
-        print('')
-        print('New Transition Matrix')
-        print(self.hmm.transitions_to_df())
-        print('')
-        print('New Emission Matrix')
-        print(self.hmm.emissions_to_df())
-        print('')
-        print('New Prob(X)')
-        print(self.hmm.prob_X(self.hmm.forward(self.obs_seq)))
-        print('')
-        print('\n')
 
-        print('~'*50)
         self.hmm2.train(self.obs_seq2, 20, 0.001)
-        print('Pi')
-        print(self.hmm2.pi)
-        print('')
-        print('New Transition Matrix')
-        print(self.hmm2.A)
-        print('')
-        print('New Emission Matrix')
-        print(self.hmm2.B)
-        print('')
-        print('New Prob(X)')
+
         print(math.exp(self.hmm2.forwardbackward(self.obs_seq2)))
 
 
@@ -263,7 +244,7 @@ class TestHmmWiki(unittest.TestCase):
         print('*'*100)
         #print(len(hmm_gamma))
         print(hmm_gamma)
-        gamma_20 = hmm_gamma[20-1]
+        gamma_20 = hmm_gamma[19]
         #print('*'*100)
 
         hmm2_gamma = self.hmm2.calcgamma(self.hmm2.calcxi(
@@ -281,16 +262,6 @@ class TestHmmWiki(unittest.TestCase):
         #hmm2_gamma = hmm2_gamma[:-1, :]
         #hmm_gamma = hmm_gamma[:-1, :]
         self.assertTrue(np.allclose(hmm2_gamma, hmm_gamma))
-
-    def test_pred_step(self):
-        """
-        slide 16
-        the probability distribution at the next period
-        gamma_21 = T'gamma_20(0.5,0.5)
-        todo implement
-        :return:
-        """
-        pass
 
     def test_prob_X(self):
         """

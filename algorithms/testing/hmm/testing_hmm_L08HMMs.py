@@ -62,7 +62,7 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         print(self.hmm)
         #self.hmm.train(obs_seq, 0.000001)
         #print(self.hmm)
-        predicted_probs = self.hmm.predict_probs_xnp(obs_seq)
+        predicted_probs = self.hmm._predict_probs_xnp(obs_seq)
         self.assertAlmostEqual(1.0, predicted_probs.sum())
 
 

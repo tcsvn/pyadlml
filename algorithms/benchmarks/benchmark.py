@@ -6,6 +6,9 @@ from numpy import genfromtxt
 import  matplotlib.pyplot as plt
 from algorithms.benchmarks.kasteren import DatasetKasteren
 import os
+
+from algorithms.benchmarks.mnist.dataset import DatasetMNIST
+
 dirname = os.path.dirname(__file__)[:-22]
 #KASTEREN_SENS_PATH = '/mnt/external_D/code/hassbrain_algorithm/datasets/kasteren/kasterenSenseData.txt'
 #KASTEREN_ACT_PATH = '/mnt/external_D/code/hassbrain_algorithm/datasets/kasteren/kasterenActData.txt'
@@ -21,6 +24,7 @@ class Dataset(Enum):
     MAVPAD2005 = 'mavpad'
     ARAS = 'aras'
     CASAS_ARUBA = 'CASAS'
+    MNIST = 'mnist'
 
 class Bench():
     def __init__(self):
@@ -52,6 +56,12 @@ class Bench():
             kasteren.load_sensors(KASTEREN_SENS_PATH)
             kasteren.load_activitys(KASTEREN_ACT_PATH)
 
+        elif data_name == Dataset.MNIST:
+            print('loading numbers...')
+            mnist = DatasetMNIST()
+            self._loaded_datasets[Dataset.MNIST.name] = mnist
+            mnist.load_files()
+
         elif data_name == Dataset.HASS:
             return
         elif data_name == Dataset.MAVPAD2005:
@@ -75,6 +85,8 @@ class Bench():
                 kasteren.get_activity_list(),
                 kasteren.get_sensor_list()
             )
+        elif data_name == Dataset.MNIST:j
+
 
     def train_model(self, data_name):
         """
