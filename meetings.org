@@ -15,8 +15,24 @@
 ** Collecting data
 *** Same structure as official data sets
 * 2019-03-05, 10 AM
-** Computing/Tracking Q
+** Computing/Tracking Q (log-likelihood)
 *** Plotting/Logging
+*** Use p(X) instead
 ** Expectation computation + maximization
+*** Local maxima, multiple runs
 ** Scaling factors (Bishop 13.2.4)
 ** (Optional showcase) Handwritten digits (Bishop 615)
+*** Git repository with pen trajectory dataset
+* 2019-03-07, 8.30 AM
+** Scaling factors, Python arbitrary float precision for comparison
+*** Alternative to scaling factors: Work in log-space (numpy.logaddexp)
+*** cₙ initialization Bayesian, not frequentist
+** MNIST pen trajectory dataset, HMM repository
+** KASTEREN dataset → Home assistant dataset
+** Thoughts about performance metric (accuracy, ...)
+** Integration in application
+*** Prediction plugin for next action
+*** Train button + GUI for data selection
+*** Demo for meeting with Philipp (18.03.2019)
+** Gaussian observations (continuous)
+* Next meeting 2019-03-12, 8.30 AM
