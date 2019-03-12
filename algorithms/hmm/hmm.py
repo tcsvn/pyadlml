@@ -311,11 +311,7 @@ class HiddenMarkovModel():
         :param beta: matrix (T x Z)
         :return: 2D
         """
-
-        # todo look up why the last values have to be set to zero !!!
         res = np.divide(alpha * beta, self.prob_X(alpha, beta))
-        for idx_zn in range(0, len(self._z)):
-            res[len(res)-1][idx_zn] = 0.0
         return res
 
 
@@ -327,8 +323,10 @@ class HiddenMarkovModel():
         :param alpha:
         :param beta:
         :param prob_X:
-        :return:  3D matrix (T x Z x Z)
+        :return:  3D matrix (T-1 x Z x Z)
         """
+        N = len(obs_seq)-1
+        K = len(self._z)
         if alpha is None:
             alpha = self.forward(obs_seq)
         if beta is None:
@@ -336,15 +334,15 @@ class HiddenMarkovModel():
         if prob_X is None:
             prob_X = self.prob_X(alpha, beta)
 
-        xi = np.zeros((len(obs_seq),len(self._z), len(self._z)))
+        xi = np.zeros((N, K, K))
 
-        for t in range(1,len(obs_seq)):
+        for n in range(1, len(obs_seq)):
             for znm1_idx, znm1 in enumerate(self._z):
                 for zn_idx, zn in enumerate(self._z):
-                    xi[t-1][znm1_idx][zn_idx] = \
-                        (alpha[t - 1][znm1_idx] \
-                         * beta[t][zn_idx]\
-                         * self.prob_x_given_z(obs_seq[t],zn) \
+                    xi[n-1][znm1_idx][zn_idx] = \
+                        (alpha[n-1][znm1_idx] \
+                         * beta[n][zn_idx]\
+                         * self.prob_x_given_z(obs_seq[n],zn) \
                          * self.prob_za_given_zb(zn, znm1)) \
                         /prob_X
         return xi
@@ -402,21 +400,32 @@ class HiddenMarkovModel():
         :param sequence: list [x_1, ..., x_T]
         :return: the full backward matrix (TxN)
         """
-
+        N = len(seq)-1
         # initialize first
         beta = np.zeros((len(seq), len(self._z)))
         for idx_zn, z in enumerate(self._z):
-            beta[len(seq)-1][idx_zn] = 1
+            beta[N][idx_zn] = 1
 
         # start with beta_(znk) and calculate the betas backwards
-        for t in range(len(seq)-2, -1, -1):
+        for n in range(N-1, -1, -1):
             for zn_idx, zn in enumerate(self._z):
-                xnp1 = seq[t+1]
+                xnp1 = seq[n+1]
+                #if n == 0 and zn_idx == 0:
+                #    print('hmm')
+                #    print(seq)
+                #    print(xnp1)
                 for znp1_idx, znp1 in enumerate(self._z):
-                    beta[t][zn_idx] += \
+                    beta[n][zn_idx] += \
                         self.prob_za_given_zb(znp1, zn)\
                         *self.prob_x_given_z(xnp1, znp1)\
-                        *beta[t+1][znp1_idx]
+                        *beta[n+1][znp1_idx]
+                    #if n == 0 and zn_idx == 0:
+                    #    print("(" + str(self._A[zn_idx][znp1_idx])+"*"+str(self.prob_x_given_z(xnp1, znp1)) +"*"+str(beta[n+1][znp1_idx]) +")+")
+                #if n == 0 and zn_idx == 0:
+                #    print(beta[n][zn_idx])
+                #    print('-'*10)
+
+                    #self._A[zn_idx][znp1_idx] \
         return beta
 
 

@@ -230,195 +230,10 @@ class HiddenMarkovModel():
             first = second
         return prob
 
-    def forward_backward(self, seq):
-        """
-        computes probability of being in the state z_k given a sequence of observations x
-        :return:
-        """
-        alpha = self.forward(seq)
-        beta = self.backward(seq)
-
-        # calculate joint probability of
-        joint_dist = np.sum(alpha*beta, axis=1)
-        n = len(alpha)-1
-        prob = joint_dist[n]
-        while prob != 0 and n > 0:
-            n -= 1
-            prob = joint_dist[n]
-            if prob != 0:
-                return prob
-        if prob == 0:
-            raise ValueError
-        else:
-            return prob
-
-
-
-    def prob_X(self, alpha, beta):
-        # first try shorter computation with case n = N
-        # prob(X) = \sum_zn(\alpha(z_n))
-        # todo do this with np.sum which looks better and is faster
-        sum = 0
-        for idx_zn in range(0, len(self._z)):
-            sum += alpha[len(alpha)-1][idx_zn]
-        if sum != 0:
-            return sum
-
-        n = 0
-        while sum == 0:
-            if n > len(alpha-1):
-                # something has went terribly wrong
-                # because every
-                raise ValueError
-            sum = self.prob_X_n(alpha,beta, n)
-            n +=1
-        return sum
-
-
-    def prob_X_n(self, alpha, beta, n):
-        """
-        computes the probability of observing a sequence given the Model
-        by summing over the n-th place for alpha time beta values
-        # seq length of 200 leads to prob values beeing lower than 0.1*e^-323 which
-        # is rounded by numpy to 0.0 leading to wrong equations
-        :param alpha:
-        :return: a float value
-        """
-        sum = 0
-        for idx_zn in range(0, len(self._z)):
-            sum += alpha[n][idx_zn]*beta[n][idx_zn]
-        return sum
-
-    #def prob_X(self, alpha):
-    #    """
-    #    computes the probability of observing a sequence given the Model
-    #    by summing over the last alphavalues for every zn: alpha(z_nk)
-    #    :param alpha:
-    #    :return: a float value
-    #    """
-    #    sum = 0
-    #    for idx_zn in range(0, len(self._z)):
-    #        sum += alpha[len(alpha)-1][idx_zn]
-    #    return sum
-
-    def gamma(self, alpha, beta):
-        """
-        computes the probability of zn given a sequence X for every timestep from
-        the alpha and beta matrices
-        gamma[t][k] represents the probability of being in state k at time t given the
-        observation sequence
-        :param alpha: matrix (T x Z)
-        :param beta: matrix (T x Z)
-        :return: 2D
-        """
-
-        # todo look up why the last values have to be set to zero !!!
-        res = np.divide(alpha * beta, self.prob_X(alpha, beta))
-        for idx_zn in range(0, len(self._z)):
-            res[len(res)-1][idx_zn] = 0.0
-        return res
-
-
-    def xi(self, obs_seq, alpha=None, beta=None, prob_X=None):
-        """
-        xi[t][znm1][zn] = the probability of being in state znm1 at time t-1 and
-        in state zn at time t given the entire observation sequence
-        :param obs_seq:
-        :param alpha:
-        :param beta:
-        :param prob_X:
-        :return:  3D matrix (T x Z x Z)
-        """
-        if alpha is None:
-            alpha = self.forward(obs_seq)
-        if beta is None:
-            beta = self.backward(obs_seq)
-        if prob_X is None:
-            prob_X = self.prob_X(alpha, beta)
-
-        xi = np.zeros((len(obs_seq),len(self._z), len(self._z)))
-
-        for t in range(1,len(obs_seq)):
-            for znm1_idx, znm1 in enumerate(self._z):
-                for zn_idx, zn in enumerate(self._z):
-                    xi[t-1][znm1_idx][zn_idx] = \
-                        (alpha[t - 1][znm1_idx] \
-                         * beta[t][zn_idx]\
-                         * self.prob_x_given_z(obs_seq[t],zn) \
-                         * self.prob_za_given_zb(zn, znm1)) \
-                        /prob_X
-        return xi
-
-    def forward(self, seq):
-        """
-        computes joint distribution p(z_k, x_(1:k))
-        calculates the probability of seeing observation seq {x_1,..., x_t }
-        and ending in state i \alpha
-        :param sequence:
-        :return: the full forward matrix
-        """
-        # forward matrix:
-        # alpha[t][k] = the probability of being in state k after observing t symbols
-        # alpha_(ztk)
-        # alpha(z11) | alpha(z21) | alpha(z31) | ... |
-        # alpha(z12) | alpha(z22) | alpha(z32) | ... |
-
-        # compute Initial condition (13.37)
-        alpha = np.zeros((len(seq), len(self._z)))
-
-        # alpha_1z = pi(z)*p(x1|z)
-        for k, zn in enumerate(self._z):
-            #print(idx_zn, zn)
-            alpha[0][k] = self.prob_pi(zn)\
-                               *self.prob_x_given_z(seq[0],zn)
-        # alpha recursion
-        for n in range(1,len(seq)):
-            for k, zn in enumerate(self._z):
-                xn = seq[n]
-                # sum over preceding alpha values of the incident states multiplicated with the transition
-                # probability into the current state
-                for knm1, znm1 in enumerate(self._z):
-                    # alpha value of prec state * prob of transitioning into current state * prob of emitting the observation
-                    alpha[n][k] += alpha[n-1][knm1]\
-                        *self.prob_za_given_zb(zn, znm1)
-
-                # multiply by the data contribution the prob of observing the current observation
-                alpha[n][k] *= self.prob_x_given_z(xn, zn)
-        return alpha
-
 
     def prob_pi(self, zn):
         idx = self.get_index_by_state_label(zn)
         return self._pi[idx]
-
-
-    def backward(self, seq):
-        """
-        computes the probability of a sequence of future evidence for each state x_t
-        beta[t][k] = probability being in state z_k and then observing emitted observation
-        from t+1 to the end T
-        beta_1(z11) | beta_(z21) | ... | beta_(zn1)=1
-        beta_1(z12) | beta_(z22) | ... | beta_(zn2)=1
-        :param sequence: list [x_1, ..., x_T]
-        :return: the full backward matrix (TxN)
-        """
-
-        # initialize first
-        beta = np.zeros((len(seq), len(self._z)))
-        for idx_zn, z in enumerate(self._z):
-            beta[len(seq)-1][idx_zn] = 1
-
-        # start with beta_(znk) and calculate the betas backwards
-        for t in range(len(seq)-2, -1, -1):
-            for zn_idx, zn in enumerate(self._z):
-                xnp1 = seq[t+1]
-                for znp1_idx, znp1 in enumerate(self._z):
-                    beta[t][zn_idx] += \
-                        self.prob_za_given_zb(znp1, zn)\
-                        *self.prob_x_given_z(xnp1, znp1)\
-                        *beta[t+1][znp1_idx]
-        return beta
-
 
 
     def train(self,seq, epsilon=None, steps=None):
@@ -442,7 +257,7 @@ class HiddenMarkovModel():
         diff_arr = np.full((100), 10.0)
         while(diff_arr.mean() > epsilon and steps > 0):
             self.training_step(seq)
-            new_prob_X = self.prob_X(self.forward(seq), self.backward(seq))
+            new_prob_X = self._prob_X(self.forward(seq), self.backward(seq))
             diff = new_prob_X - old_prob_X
             if diff < 0:
                 # todo VERY IMPORTANT!!!
@@ -466,22 +281,23 @@ class HiddenMarkovModel():
         # E-Step ----------------------------------------------------------------
         # -----------------------------------------------------------------------
         # Filtering
-        alpha = self.forward(seq)
+        N = len(seq)-1
+        alpha, cn = self.forward(seq)
 
         # Smoothing
         # probability distribution for point t in the past relative to
         # end of the sequence
-        beta = self.backward(seq)
+        beta = self.backward(seq, cn)
 
 
         # marginal posterior dist of latent variable z_n
         # prob of being in state z at time t
-        gamma = self.gamma(alpha, beta)
+        gamma = self.gamma(alpha, beta, cn[N])
         #print(gamma)
         #print('-'*100)
 
-        prob_X = self.prob_X(alpha, beta)
-        xi = self.xi(seq, alpha, beta, prob_X)
+        prob_X = self._prob_X(cn)
+        xi = self.xi(alpha, beta, cn, seq)
         #print(xi)
         #print('-'*100)
 
@@ -622,7 +438,7 @@ class HiddenMarkovModel():
         """
         alpha = self.forward(seq)
         beta = self.backward(seq)
-        normalizing_constant = 1/(self.prob_X(alpha, beta))
+        normalizing_constant = 1/(self._prob_X(alpha, beta))
         alpha_zn = alpha[len(seq)-1]
 
 
@@ -669,63 +485,35 @@ class HiddenMarkovModel():
            res.append(self._z[timestep.argmax()])
         return res
 
+    def forward_backward(self, obs_seq):
+        alpha, cn = self.forward(obs_seq)
+        return self._prob_X(cn)
 
-
-    #----------- scaled stuff ------------------------------------------------
-
-    def norm_prob_X(self, cn_seq):
+    def _prob_X(self, cn_seq):
         return cn_seq.prod()
 
-    def calc_cn(self, seq):
+    def calc_cn(self, alpha_zn, cn, xnp1):
         """
-        computes the scaling factors for a given sequence of observations
+        computes the probability for each observation to be the next symbol
+        to be generated by the model given a sequence
         :param seq:
-        :return: a 1D matrix with the length of the
-        sequence containing all cn values
+        :return:  1D Matrix of probabilitys for each observation
         """
+        prob_X = cn.prod()
 
-        N = len(seq)
-
-        # calculate the conditional probability table (O x O)
-        # cond_prob[i][j] = P (x=j | x=i) = prob of observation i and then j, j given i
-        cond_prob = np.zeros((len(self._o,), len(self._o)))
-        for n in range(1, N):
-            xnm1 = seq[n-1]
-            xn = seq[n]
-            xnm1_idx = self.em_label_to_idx(xnm1)
-            xn_idx = self.em_label_to_idx(xn)
-            cond_prob[xnm1_idx][xn_idx] +=1
-
-        # normalize probability table
-        for xnm1 in range(0, len(self._o)):
-            norm_xnm1 = cond_prob[xnm1].sum()
-            cond_prob[xnm1] = cond_prob[xnm1]/norm_xnm1
+        # sum over all probab. of seeing future xnp1 for all
+        # future states znp1
+        sum0 = 0
+        for idx_znp1, znp1 in enumerate(self._z):
+            sum1 = 0
+            for idx_zn, zn in enumerate(self._z):
+                sum1 += self.prob_za_given_zb(znp1, zn)\
+                        *alpha_zn[idx_zn]
+            sum0 += sum1*self.prob_x_given_z(xnp1, znp1)
+        return sum0#*prob_X
 
 
-        # the probability of observing xn1 in the sequence
-        xn1 = seq[0]
-        prob_xn1 = 0
-        # count occurence of
-        for xn in seq:
-            if xn1 == xn:
-                prob_xn1 +=1
-        prob_xn1 = prob_xn1*(1/N)
-
-        # calculate the conditional distribution for observation xn
-        cn = np.zeros(N)
-        cn[0] = prob_xn1
-        xnm1 = xn1
-        for n, xn in enumerate(seq):
-            if n==0: continue
-            xnm1_idx = self.em_label_to_idx(xnm1)
-            xn_idx = self.em_label_to_idx(xn)
-            cn[n] = cond_prob[xnm1_idx][xn_idx]*cn[n-1]
-            xnm1 = xn
-        return cn
-
-
-
-    def norm_forward(self, seq, cn):
+    def forward(self, seq, cn=None):
         """
         calculates the probability of seeing observation seq {x_1,..., x_t }
         and ending in state i \alpha
@@ -735,31 +523,38 @@ class HiddenMarkovModel():
         :return:
         """
         alpha = np.zeros((len(seq),len(self._z)))
-        # eq (13.37)
-        for idx, zn in enumerate(self._z):
-            alpha[0][idx] = \
-                self.prob_pi(zn)*self.prob_x_given_z(seq[0],zn)#*(1/cn[0])
+        cn = np.zeros((len(seq)))
 
-        #eq 13.55
-        for t in range(1,len(seq)):
+        # calculate c1 and alpha_hat 1
+        x1 = seq[0]
+        for idx, zn in enumerate(self._z):
+            cn[0] += self.prob_x_given_z(x1, zn)*self.prob_pi(zn)
+
+        for idx, zn in enumerate(self._z):
+            alpha[0][idx] = self.prob_pi(zn)*self.prob_x_given_z(x1,zn)\
+                            *(1/cn[0])
+
+        #eq 13.55alpha_znm1, zn, seq, xn, cn):
+        for n in range(1,len(seq)):
+            #calculate cn
+            xn = seq[n]
+            cn[n] = self.calc_cn(alpha[n-1], cn[:n], xn)
             for idx, zn in enumerate(self._z):
-                xn = seq[t]
                 sum = 0
                 # sum over preceding alpha values of the incident states multiplicated with the transition
                 # probability into the current state
                 for idx_znm1, znm1 in enumerate(self._z):
                     # alpha value of prec state * prob of transitioning into current state * prob of emitting the observation
-                    sum += alpha[t-1][idx_znm1] \
+                    sum += alpha[n-1][idx_znm1] \
                            *self.prob_za_given_zb(zn, znm1)
 
                 # multiply by the data contribution the prob of observing the current observation
-                sum *= self.prob_x_given_z(xn, zn)*(1/cn[t])
-                alpha[t][idx] = sum
+                sum *= self.prob_x_given_z(xn, zn)*(1/cn[n])
+                alpha[n][idx] = sum
 
-        return alpha
+        return alpha, cn
 
-
-    def norm_alpha_to_alpha(self, norm_alpha, cn):
+    def nalpha_to_alpha(self, norm_alpha, cn):
         """
         computes the alpha_matrix from the given normalized alpha_matrix
         eq: (13.58)
@@ -781,7 +576,7 @@ class HiddenMarkovModel():
 
 
 
-    def norm_backward(self, seq, cn):
+    def backward(self, seq, cn):
         """
         :param sequence: {x_(t+1), x+(t+2), ..., x_(T))
         :return: the full backward matrix
@@ -792,52 +587,97 @@ class HiddenMarkovModel():
         # beta_1(z12) | beta_(z22) | ... | beta_(zn2)=1
         beta = np.zeros((len(seq), len(self._z)))
         N = len(seq)-1
+        if cn is not None:
+            for k in range(0, len(self._z)):
+                beta[N][k] = 1*(1/cn[N])
 
-        for k in range(0, len(self._z)):
-            beta[N][k] = 1#(1/cn[N])
+            # start with beta_(znk) and calculate the betas backwards
+            for n in range(N-1, -1, -1):
+                for zn_k, zn in enumerate(self._z):
+                    xnp1 = seq[n+1]
+                    sum1 = 0
+                    #if n == 0 and zn_k == 0:
+                    #    print('hmm_scaled')
+                    #    print(seq)
+                    #    print(xnp1)
+                    #s ="["
+                    for znp1_k, znp1 in enumerate(self._z):
+                        sum1 += self.prob_za_given_zb(znp1, zn) \
+                               *self.prob_x_given_z(xnp1, znp1) \
+                               *beta[n+1][znp1_k]
+                        #if n == 0 and zn_k == 0:
+                            #s+="(" + str(self.prob_za_given_zb(znp1, zn))+"*"+str(self.prob_x_given_z(xnp1, znp1)) +"*"+str(beta[n+1][znp1_k]) +")\n"
+                    #s+="]*(1/" + str(cn[n+1]) + ")"
+                    beta[n][zn_k] = sum1*(1/cn[n+1])
+                    #if n == 0 and zn_k ==0:
+                        #print(s)
+                        #print(beta[n][zn_k])
+                        #print('-'*10)
+            return beta
 
-        # start with beta_(znk) and calculate the betas backwards
-        for n in range(N-1, -1, -1):
-            for zn_k, zn in enumerate(self._z):
-                xnp1 = seq[n]
-                sum = 0
-                for znp1_k, znp1 in enumerate(self._z):
-                    sum += self.prob_za_given_zb(znp1, zn) \
-                           *self.prob_x_given_z(xnp1, znp1) \
-                           *beta[n+1][znp1_k]
-                beta[n][zn_k] = sum*(1/cn[n+1])
-        return beta
 
-
-    def norm_beta_to_beta(self, norm_beta, cn):
-        N=len(norm_beta)-1
-        beta = np.zeros((N+1, len(self._z)))
+    def nbeta_to_beta(self, nbeta, cn):
+        beta = np.zeros((len(nbeta), len(self._z)))
+        N = len(nbeta)-1
 
         # first compute the cumulative product values for each zn of the cns
         # reverse cn, compute cumulative product then reverse again
-        cumprod_cn = np.cumprod(cn[::-1])[::-1]
-
         # multiply cumprod with corresp. beta value
-        for n in range(N, -1, -1):
+        for k in range(0, len(self._z)):
+            beta[N][k] = 1
+        cum_cn =  cn[N]
+
+        for n in range(N-1, -1, -1):
+            cum_cn = cum_cn*cn[n+1]
             for k in range(0, len(self._z)):
-                beta[n][k] = cumprod_cn[n]*norm_beta[n][k]
+                beta[n][k] = cum_cn * nbeta[n][k]
         return beta
 
-    def norm_gamma(self, alpha, beta):
-        return alpha * beta
+    def gamma(self, n_alpha, n_beta, cN):
+        #return n_alpha * n_beta * cN
+        return n_alpha * n_beta
 
 
-    def norm_xi(self, alpha, beta, cn, obs_seq):
+    def xi(self, alpha, beta, cn, obs_seq):
+        """
+        xi[n][k1][k2] = probability of being
+        :param alpha:
+        :param beta:
+        :param cn:
+        :param obs_seq:
+        :return:  3D array (N x K x K)
+        """
         K = len(self._z)
         N = len(obs_seq)
-        res = np.zeros((N-1, K, K))
-        for znm1_idx, znm1 in enumerate(self._z):
-            for zn_idx, zn in enumerate(self._z):
-                for n in range(1,N):
-                    res[n-1][znm1_idx][zn_idx] = \
-                        cn[zn_idx] \
-                        * alpha[n-1][znm1_idx] \
+        #print(alpha)
+        #print('--')
+        #print(beta)
+        #print('--')
+        #print(cn)
+        #print(np.cumsum(cn))
+        #print(np.cumprod(cn))
+        #print('--')
+        xi = np.zeros((N, K, K))
+        #print(xi)
+        for n in range(1, len(obs_seq)):
+            for znm1_idx, znm1 in enumerate(self._z):
+                for zn_idx, zn in enumerate(self._z):
+                    d = 1
+                    #print(1/np.cumprod(cn[n]))
+                    #if n == 1:
+                    #    d = 0.8313
+                    #if n == 2:
+                    #    d = 1.7143
+                    #if n == 3:
+                    #    d = 2.76
+                    #if n < len(obs_seq)-2:
+                    #    d = 1/cn[n+1]
+
+                    xi[n][znm1_idx][zn_idx] = \
+                        alpha[n-1][znm1_idx] \
                         * self.prob_x_given_z(obs_seq[n], zn) \
                         * self.prob_za_given_zb(zn, znm1) \
-                        * beta[n][zn_idx]
-        return res
+                        * beta[n][zn_idx] \
+                        * d \
+                        * cn[n]
+        return xi

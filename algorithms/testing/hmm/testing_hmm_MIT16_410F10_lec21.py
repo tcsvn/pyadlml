@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
-from algorithms.hmm import HiddenMarkovModel
-from algorithms.hmm import ProbabilityMassFunction
+from algorithms.hmm.hmm import HiddenMarkovModel
+from algorithms.hmm.distributions import ProbabilityMassFunction
 
 LA = 'Los Angeles'
 NY = 'New York'
@@ -47,7 +47,7 @@ class TestHmmWiki(unittest.TestCase):
         obs_seq = self.obs_seq
         forward_matrix = self.hmm.forward(obs_seq)
         backward_matrix = self.hmm.backward(obs_seq)
-        prob_X = self.hmm.prob_X(forward_matrix)
+        prob_X = self.hmm._prob_X(forward_matrix)
         xi = self.hmm.xi(forward_matrix,backward_matrix, prob_X, obs_seq)
         print('~'*30)
         print('~'*30)
@@ -101,7 +101,7 @@ class TestHmmWiki(unittest.TestCase):
             print(self.hmm.pi_to_df())
             print(self.hmm.transitions_to_df())
             print(self.hmm.emissions_to_df())
-            print("Prob of seq:\t" + str(self.hmm.prob_X(self.hmm.forward(obs_seq))))
+            print("Prob of seq:\t" + str(self.hmm._prob_X(self.hmm.forward(obs_seq))))
             print('*#'*50)
 
 
@@ -169,7 +169,7 @@ class TestHmmWiki(unittest.TestCase):
         obs_seq = self.obs_seq
         alpha_matrix = self.hmm.forward(obs_seq)
         beta_matrix = self.hmm.backward(obs_seq)
-        res = self.hmm.prob_X(alpha_matrix)
+        res = self.hmm._prob_X(alpha_matrix)
         self.assertEqual(round(res,11), 0.00000000019)
 
 

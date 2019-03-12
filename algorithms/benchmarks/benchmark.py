@@ -7,9 +7,11 @@ import  matplotlib.pyplot as plt
 from algorithms.benchmarks.kasteren import DatasetKasteren
 import os
 
-from algorithms.benchmarks.mnist.dataset import DatasetMNIST
+from algorithms.benchmarks.mnist import DatasetMNIST
 
 dirname = os.path.dirname(__file__)[:-22]
+MNIST_TRAIN_FILE = dirname + '/algorithms/benchmarks/mnist_data/data/pendigits-train'
+MNIST_TEST_FILE = dirname + '/algorithms/benchmarks/mnist_data/data/pendigits-test'
 #KASTEREN_SENS_PATH = '/mnt/external_D/code/hassbrain_algorithm/datasets/kasteren/kasterenSenseData.txt'
 #KASTEREN_ACT_PATH = '/mnt/external_D/code/hassbrain_algorithm/datasets/kasteren/kasterenActData.txt'
 KASTEREN_SENS_PATH = dirname + '/datasets/kasteren/kasterenSenseData.txt'
@@ -24,7 +26,7 @@ class Dataset(Enum):
     MAVPAD2005 = 'mavpad'
     ARAS = 'aras'
     CASAS_ARUBA = 'CASAS'
-    MNIST = 'mnist'
+    MNIST = 'mnist_data'
 
 class Bench():
     def __init__(self):
@@ -60,7 +62,7 @@ class Bench():
             print('loading numbers...')
             mnist = DatasetMNIST()
             self._loaded_datasets[Dataset.MNIST.name] = mnist
-            mnist.load_files()
+            mnist.load_files(MNIST_TEST_FILE, MNIST_TRAIN_FILE)
 
         elif data_name == Dataset.HASS:
             return
@@ -85,7 +87,13 @@ class Bench():
                 kasteren.get_activity_list(),
                 kasteren.get_sensor_list()
             )
-        elif data_name == Dataset.MNIST:j
+        elif data_name == Dataset.MNIST:
+            mnist = self._loaded_datasets[Dataset.MNIST.name]
+            self._model.model_init(
+                activity_list = mnist.get_state_list(),
+                observation_list=mnist.get_observations_list()
+            )
+
 
 
     def train_model(self, data_name):

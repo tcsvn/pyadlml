@@ -5,6 +5,8 @@ from algorithms.hmm.hmm import HiddenMarkovModel
 from algorithms.hmm.distributions import ProbabilityMassFunction
 import pandas as pd
 import numpy as np
+from algorithms.model import HMM_Model
+from algorithms.benchmarks.mnist_data.analysis import training
 
 
 class TestMNIST(unittest.TestCase):
@@ -15,13 +17,35 @@ class TestMNIST(unittest.TestCase):
         self._mnist_obj = self._bench._loaded_datasets[Dataset.MNIST.name]
 
 
+
+
     def tearDown(self):
         pass
 
+    def test_dataset(self):
+        n_observation_classes = 256
+        n_hidden_states = 30
+        n_iter = 10000
+        tol = 0.1
+        train_digits = self._mnist_obj.get_train_seq()
+        centroids = training.get_digit_kmeans_centroids(
+            train_digits, n_observation_classes - 3)
+        training.set_digit_observations(
+            train_digits,
+            centroids,
+            n_observation_classes)
+        print(train_digits[0])
+        print(type(train_digits[0]))
+        print(train_digits[0].observations)
+        hmm = training.train_hmm(
+            train_digits,
+            n_observation_classes,
+            n_hidden_states,
+            n_iter,
+            tol)
 
-    def test_train_model(self):
-        pass
-
+        #self._bench.register_model(HMM_Model())
+        #self._bench.init_model_on_dataset(Dataset.MNIST)
 
 
     def test_train(self):

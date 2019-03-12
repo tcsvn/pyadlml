@@ -59,7 +59,7 @@ class TestHmmWiki(unittest.TestCase):
 
         forward_matrix = self.hmm.forward(obs_seq)
         backward_matrix = self.hmm.backward(obs_seq)
-        prob_X = self.hmm.prob_X(forward_matrix)
+        prob_X = self.hmm._prob_X(forward_matrix)
         val = self.hmm.test_xi(S1, S2, 1,
             forward_matrix, backward_matrix,
             prob_X, obs_seq)
@@ -73,7 +73,7 @@ class TestHmmWiki(unittest.TestCase):
 
         forward_matrix = self.hmm.forward(obs_seq)
         backward_matrix = self.hmm.backward(obs_seq)
-        prob_X = self.hmm.prob_X(forward_matrix)
+        prob_X = self.hmm._prob_X(forward_matrix)
         xi = self.hmm.xi(forward_matrix,backward_matrix, prob_X, obs_seq)
         #print('-'*30)
         #print(xi)
@@ -101,7 +101,7 @@ class TestHmmWiki(unittest.TestCase):
     def test_prob_X(self):
         obs_seq = self.obs_seq
         forward_matrix = self.hmm.forward(obs_seq)
-        prob_X = self.hmm.prob_X(forward_matrix)
+        prob_X = self.hmm._prob_X(forward_matrix)
         self.assertEqual(round(prob_X,2), 0.16)
 
     def test_backward(self):

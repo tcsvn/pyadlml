@@ -6,6 +6,8 @@ from algorithms.hmm.distributions import ProbabilityMassFunction
 import pandas as pd
 import numpy as np
 
+from algorithms.testing.hmm.hmm2.discrete.DiscreteHMM import DiscreteHMM
+
 
 class TestKasteren(unittest.TestCase):
     def setUp(self):
@@ -47,22 +49,30 @@ class TestKasteren(unittest.TestCase):
         hmm.set_transition_matrix(trans_matrix)
 
 
+        hmm2 = DiscreteHMM(7, 28, trans_matrix, em_matrix, init_pi, init_type='user')
+
+        import math
         # do stuff
-        obs_seq = self._kast_obj.get_train_seq()[:250]#[:19]
-        print(hmm)
-        print(obs_seq)
-        print(len(obs_seq))
-        alpha = hmm.forward(obs_seq)
-        beta = hmm.backward(obs_seq)
-        hmm.prob_X(alpha, beta)
-        print('!'*100)
-        hmm.train(obs_seq, None, 200)
-        print('!'*100)
-        #hmm.train(obs_seq, 0.000001, None)
-        print(hmm)
-        alpha = hmm.forward(obs_seq)
-        beta = hmm.backward(obs_seq)
-        print(hmm.prob_X(alpha, beta))
+        obs_seq = self._kast_obj.get_train_seq()[:20]#[:250]#[:19]
+        print(math.exp(hmm2.forwardbackward(obs_seq)))
+        hmm2.mapB(obs_seq)
+        hmm2.train(obs_seq, 200)
+        print(math.exp(hmm2.forwardbackward(obs_seq)))
+
+        #print(hmm)
+        #print(obs_seq)
+        #print(len(obs_seq))
+        #alpha = hmm.forward(obs_seq)
+        #beta = hmm.backward(obs_seq)
+        #hmm.prob_X(alpha, beta)
+        #print('!'*100)
+        #hmm.train(obs_seq, None, 200)
+        #print('!'*100)
+        ##hmm.train(obs_seq, 0.000001, None)
+        #print(hmm)
+        #alpha = hmm.forward(obs_seq)
+        #beta = hmm.backward(obs_seq)
+        #print(hmm.prob_X(alpha, beta))
 
         #for i in range(0,300):
         #    alpha_before = hmm.forward(obs_seq)

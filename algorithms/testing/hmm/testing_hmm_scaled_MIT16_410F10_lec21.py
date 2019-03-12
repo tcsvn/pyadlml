@@ -1,8 +1,10 @@
+import math
 import unittest
 import numpy as np
 from algorithms.hmm.hmm_scaled import HiddenMarkovModel as ScaledHMM
-from algorithms.hmm.hmm import HiddenMarkovModel as HMM
+from algorithms.hmm.hmm import HiddenMarkovModel as hMM
 from algorithms.hmm.distributions import ProbabilityMassFunction
+from algorithms.testing.hmm.hmm2.discrete.DiscreteHMM import DiscreteHMM
 
 LA = 'Los Angeles'
 NY = 'New York'
@@ -20,31 +22,27 @@ class TestHmmWiki(unittest.TestCase):
         observation_alphabet = [LA, NY, NULL]
         states = [LA, NY]
         init_dist = [0.2, 0.8]
+        init_dist2 = np.array([0.2, 0.8])
+        trans_matrix = np.array([[0.5,0.5],[0.5,0.5]])
+        em_matrix = np.array([[0.4,0.1,0.5],[0.1,0.5,0.4]])
 
         self.obs_seq = [NULL, LA, LA, NULL, NY, NULL, NY, NY, NY, NULL,
                         NY, NY, NY, NY, NY, NULL, NULL, LA, LA, NY]
         # init markov model
-        self.sc_hmm = ScaledHMM(states, observation_alphabet, ProbabilityMassFunction, init_dist)
-        self.sc_hmm.set_transition_matrix(np.array([[0.5, 0.5],
-                                                    [0.5,0.5]]))
-        self.sc_hmm.set_emission_matrix(np.array([[0.4, 0.1, 0.5], [0.1, 0.5, 0.4]]))
+        self.hmm_scaled = ScaledHMM(states, observation_alphabet, ProbabilityMassFunction, init_dist)
+        self.hmm_scaled.set_transition_matrix(np.array([[0.5, 0.5],
+                                                        [0.5,0.5]]))
+        self.hmm_scaled.set_emission_matrix(np.array([[0.4, 0.1, 0.5], [0.1, 0.5, 0.4]]))
 
-        self.hmm = HMM(states, observation_alphabet, ProbabilityMassFunction, init_dist)
+        self.hmm = hMM(states, observation_alphabet, ProbabilityMassFunction, init_dist)
         self.hmm.set_transition_matrix(np.array([[0.5, 0.5],
                                                  [0.5,0.5]]))
         self.hmm.set_emission_matrix(np.array([[0.4, 0.1, 0.5], [0.1, 0.5, 0.4]]))
 
+        self.obs_seq2 = [2,0,0,2,1,2,1,1,1,2,1,1,1,1,1,2,2,0,0,1]
+        self.hmm2 = DiscreteHMM(2, 3, trans_matrix, em_matrix, init_dist2, init_type='user')
+        self.hmm2.mapB(self.obs_seq2)
 
-        #print('='*100)
-        #print('Initial_probs:')
-        #print(self.hmm.pi_to_df())
-        #print('Transition_matrix:')
-        #print(self.hmm.transitions_to_df())
-        #print('-'*100)
-        #print('Emission:')
-        #print(self.hmm.emissions_to_df())
-        #print('='*100)
-        #print('*'*100)
 
     def tearDown(self):
         pass
@@ -52,40 +50,51 @@ class TestHmmWiki(unittest.TestCase):
 
     def test_xi(self):
         obs_seq = self.obs_seq
-        forward_matrix = self.sc_hmm.forward(obs_seq)
-        backward_matrix = self.sc_hmm.backward(obs_seq)
-        prob_X = self.sc_hmm.prob_X(forward_matrix)
-        xi = self.sc_hmm.xi(forward_matrix, backward_matrix, prob_X, obs_seq)
-        print('~'*30)
-        print('~'*30)
-        print(xi)
-        # todo add assertion
+        n_alpha, cn = self.hmm_scaled.forward(obs_seq)
+        n_beta = self.hmm_scaled.backward(obs_seq, cn)
+        n_xi = self.hmm_scaled.xi(n_alpha, n_beta, cn, obs_seq)
+
+        alpha = self.hmm.forward(obs_seq)
+        beta = self.hmm.backward(obs_seq)
+        prob_X = self.hmm.prob_X(alpha,beta)
+        xi = self.hmm.xi(obs_seq, alpha, beta, prob_X)
+        print()
+        print("~"*10)
+        for i in range(0, len(self.hmm._z)):
+            for j in range(0, len(self.hmm._z)):
+                print('-'*10)
+                print(i,j)
+                print('--')
+                #print(np.sum(xi,axis=0)[i][j])
+                for n in range(0, len(obs_seq)-1):
+                    print(xi[n][i][j], n_xi[n][i][j])
+
+
 
     def test_train_transitions(self):
         obs_seq = self.obs_seq
-        alpha_matrix = self.sc_hmm.forward(obs_seq)
-        beta_matrix = self.sc_hmm.backward(obs_seq)
-        xi = self.sc_hmm.xi(alpha_matrix, beta_matrix, obs_seq)
-        pass
+        alpha_matrix = self.hmm_scaled.forward(obs_seq)
+        beta_matrix = self.hmm_scaled.backward(obs_seq)
+        xi = self.hmm_scaled.xi(alpha_matrix, beta_matrix, obs_seq)
 
     def test_expected_trans_zn(self):
         obs_seq = self.obs_seq
-        alpha_matrix = self.sc_hmm.forward(obs_seq)
-        beta_matrix = self.sc_hmm.backward(obs_seq)
-        res = self.sc_hmm.gamma(alpha_matrix, beta_matrix)
-        self.sc_hmm.expected_trans_from_z(res)
+        alpha_matrix = self.hmm_scaled.forward(obs_seq)
+        beta_matrix = self.hmm_scaled.backward(obs_seq)
+        res = self.hmm_scaled.gamma(alpha_matrix, beta_matrix)
+        self.hmm_scaled.expected_trans_from_z(res)
 
     def test_transition_matrix(self):
         obs_seq = self.obs_seq
-        alpha_matrix = self.sc_hmm.forward(obs_seq)
-        beta_matrix = self.sc_hmm.backward(obs_seq)
-        gamma = self.sc_hmm.gamma(alpha_matrix, beta_matrix)
-        xi = self.sc_hmm.xi(alpha_matrix, beta_matrix, obs_seq)
+        alpha_matrix = self.hmm_scaled.forward(obs_seq)
+        beta_matrix = self.hmm_scaled.backward(obs_seq)
+        gamma = self.hmm_scaled.gamma(alpha_matrix, beta_matrix)
+        xi = self.hmm_scaled.xi(alpha_matrix, beta_matrix, obs_seq)
 
-        exp_trans_zn = self.sc_hmm.expected_trans_from_z(gamma)
-        exp_trans_zn_znp1 = self.sc_hmm.expected_trans_from_za_to_zb(xi)
+        exp_trans_zn = self.hmm_scaled.expected_trans_from_z(gamma)
+        exp_trans_zn_znp1 = self.hmm_scaled.expected_trans_from_za_to_zb(xi)
 
-        res = self.sc_hmm.new_transition_matrix(
+        res = self.hmm_scaled.new_transition_matrix(
             exp_trans_zn,
             exp_trans_zn_znp1)
 
@@ -103,35 +112,48 @@ class TestHmmWiki(unittest.TestCase):
         result_obs_matrix = np.array([[0.5807, 0.0010, 0.4183],
                                [0.000, 0.7621, 0.2379]])
 
-        for i in range(0,20):
-            self.sc_hmm.training_step(obs_seq)
-            print(self.sc_hmm.pi_to_df())
-            print(self.sc_hmm.transitions_to_df())
-            print(self.sc_hmm.emissions_to_df())
-            print("Prob of seq:\t" + str(self.sc_hmm.prob_X(self.sc_hmm.forward(obs_seq))))
+        for i in range(0,2):
+            self.hmm_scaled.training_step(obs_seq)
+            print(self.hmm_scaled)
+            print("Prob of seq:\t" + str(self.hmm_scaled.forward_backward(obs_seq)))
             print('*#'*50)
+        print('~'*10)
+        #print(result_trans_matrix)
+        #print(result_obs_matrix)
+        ##self.assertTrue((result_trans_matrix == self.hmmA).all())
+        ## todo change
+        ##self.assertTrue((result_obs_matrix == self._E).all())
+        #print('\n~*'*10)
+        #obs_seq2 = self.obs_seq2
+        #lst = []
+        #for i in range(0,20):
+        #    lst.append(math.exp(self.hmm2.forwardbackward(obs_seq2)))
+        #    self.hmm2.trainiter(obs_seq2)
+        #print(self.hmm2.pi)
+        #print(self.hmm2.A)
+        #print(self.hmm2.B)
+        #print(lst)
+        #for i in range(1,len(lst)):
+        #    self.assertGreater(lst[i], lst[i-1])
+        #print(math.exp(self.hmm2.forwardbackward(obs_seq2)))
+        #print(result_trans_matrix)
+        #print(result_obs_matrix)
 
-
-        #self.assertTrue((result_trans_matrix == self.hmmA).all())
-        # todo change
-        #self.assertTrue((result_obs_matrix == self._E).all())
 
     def test_gamma(self):
         """
         slide 16
         test the probability of being in a state distribution after 20 observations
         gamma_20 = (0.16667, 0.8333)
-        :return:
         """
         obs_seq = self.obs_seq
-        alpha_matrix = self.sc_hmm.forward(obs_seq)
-        beta_matrix = self.sc_hmm.backward(obs_seq)
-        res = self.sc_hmm.gamma(alpha_matrix, beta_matrix)
-        print('*'*100)
-        print(res)
-        gamma_20 = res[20-1]
-        print('*'*100)
-        print(gamma_20)
+        n_alpha, cn= self.hmm_scaled.forward(obs_seq)
+        n_beta = self.hmm_scaled.backward(obs_seq, cn)
+        n_gamma = self.hmm_scaled.gamma(n_alpha, n_beta, cn[20-1])
+        gamma_20 = n_gamma[20-1]
+
+        print('--')
+        print(n_gamma)
         self.assertEqual(round(gamma_20[0],4),0.1667)
         self.assertEqual(round(gamma_20[1],4),0.8333)
 
@@ -147,40 +169,101 @@ class TestHmmWiki(unittest.TestCase):
 
     def test_train_transition(self):
         obs_seq = self.obs_seq
-        alpha_matrix = self.sc_hmm.forward(obs_seq)
-        beta_matrix = self.sc_hmm.backward(obs_seq)
-        gamma = self.sc_hmm.gamma(alpha_matrix, beta_matrix)
-        xi = self.sc_hmm.xi(alpha_matrix, beta_matrix, obs_seq)
+        alpha_matrix = self.hmm_scaled.forward(obs_seq)
+        beta_matrix = self.hmm_scaled.backward(obs_seq)
+        gamma = self.hmm_scaled.gamma(alpha_matrix, beta_matrix)
+        xi = self.hmm_scaled.xi(alpha_matrix, beta_matrix, obs_seq)
         print(gamma)
         print('-'*10)
         print(xi)
 
     def test_train_emission(self):
         obs_seq = self.obs_seq
-        alpha_matrix = self.sc_hmm.forward(obs_seq)
-        beta_matrix = self.sc_hmm.backward(obs_seq)
-        gamma = self.sc_hmm.gamma(alpha_matrix, beta_matrix)
+        alpha_matrix = self.hmm_scaled.forward(obs_seq)
+        beta_matrix = self.hmm_scaled.backward(obs_seq)
+        gamma = self.hmm_scaled.gamma(alpha_matrix, beta_matrix)
 
-        new_em_matrix = self.sc_hmm.new_emissions(gamma, obs_seq)
-        print(self.sc_hmm.emissions_to_df())
-        self.sc_hmm.set_emission_matrix(new_em_matrix)
-        print(self.sc_hmm.emissions_to_df())
+        new_em_matrix = self.hmm_scaled.new_emissions(gamma, obs_seq)
+        print(self.hmm_scaled.emissions_to_df())
+        self.hmm_scaled.set_emission_matrix(new_em_matrix)
+        print(self.hmm_scaled.emissions_to_df())
 
 
-    def test_cn(self):
+    def test_forward(self):
+        """
+        compute alpha, normalized alpha then unnormalize it and compare the
+        unnormalized version with the original alpha
+        """
         obs_seq = [NY, NY, NY, NULL, NY, NY, NULL, LA, NULL, LA, NY, NY, NY]
-        cn = self.sc_hmm.calc_cn(obs_seq)
+        alpha = self.hmm.forward(obs_seq)
+        n_alpha , cn = self.hmm_scaled.forward(obs_seq)
+        re_alpha = self.hmm_scaled.nalpha_to_alpha(n_alpha, cn)
+        for n in range(0, len(obs_seq)):
+            for zn in range(0, len(self.hmm._z)):
+                self.assertAlmostEqual(re_alpha[n][zn], alpha[n][zn])
 
+        obs_seq2 = [1, 1, 1, 2, 1, 1, 2, 0, 2, 0, 1, 1, 1]
+        hmm2_alpha = self.hmm2.calcalpha(obs_seq2)
+        for n in range(0, len(obs_seq)):
+            print(alpha[n])
+            print(hmm2_alpha[n])
+            #print(hmm2_re_beta[n])
+            #print(re_beta[n])
+            print('-')
+
+    def test_backward(self):
+        obs_seq = [NY, NY, NY, NULL, NY, NY, NULL, LA, NULL, LA, NY, NY, NY]
+        #obs_seq2 = [1, 1, 1, 2, 1, 1, 2, 0, 2, 0, 1, 1, 1]
+        #obs_seq = self.obs_seq
+        #obs_seq2 = self.obs_seq2
+        beta = self.hmm.backward(obs_seq)
+        n_alpha, cn = self.hmm_scaled.forward(obs_seq)
+        n_beta = self.hmm_scaled.backward(obs_seq, cn)
+        re_beta = self.hmm_scaled.nbeta_to_beta(n_beta, cn)
+        #hmm2_beta = self.hmm2.calcbeta(obs_seq2)
+        #hmm2_re_beta = self.hmm_scaled.nbeta_to_beta(hmm2_beta, cn)
+
+        print('-'*100)
+        print(self.hmm)
+        print('-'*100)
+        print(n_beta)
+        #print(self.hmm2.A)
+        #print(self.hmm2.B)
+        for n in range(0, len(obs_seq)):
+            print(beta[n])
+            #print(hmm2_beta[n])
+            #print(hmm2_re_beta[n])
+            print(re_beta[n])
+            print('-')
+
+    def test_prob_X(self):
+        #obs_seq = [NY, NY, NY, NULL, NY, NY, NULL, LA, NULL, LA, NY, NY, NY]
+        obs_seq = self.obs_seq
         alpha = self.hmm.forward(obs_seq)
         beta = self.hmm.backward(obs_seq)
         prob_X0 = self.hmm.prob_X(alpha, beta)
-        prob_X1 = self.sc_hmm.norm_prob_X(cn)
 
+        n_alpha , cn = self.hmm_scaled.forward(obs_seq)
+        prob_X1 = self.hmm_scaled._prob_X(cn)
+        print(prob_X0, prob_X1)
+        self.assertAlmostEqual(prob_X1, prob_X0)
 
-        n_alpha = self.sc_hmm.norm_forward(obs_seq, cn)
-        n_beta = self.sc_hmm.norm_backward(obs_seq, cn)
+    def test_cn(self):
+        obs_seq = [NY, NY, NY, NULL, NY, NY, NULL, LA, NULL, LA, NY, NY, NY]
+
+        alpha = self.hmm.forward(obs_seq)
+        beta = self.hmm.backward(obs_seq)
+
+        n_alpha , cn = self.hmm_scaled.forward(obs_seq)
+        n_beta = self.hmm_scaled.backward(obs_seq, cn)
+
+        prob_X0 = self.hmm.prob_X(alpha, beta)
+        prob_X1 = self.hmm_scaled._prob_X(cn)
+
+        print(prob_X0, prob_X1)
+        #print(n_beta)
         gamma = self.hmm.gamma(alpha, beta)
-        n_gamma = self.sc_hmm.norm_gamma(n_alpha, n_beta)
+        n_gamma = self.hmm_scaled.gamma(n_alpha, n_beta, cn[len(cn)-1])
 
 
         #print(cn)
@@ -189,52 +272,48 @@ class TestHmmWiki(unittest.TestCase):
         #print('-'*100)
 
         print(alpha)
-        print(n_alpha)
-        print('-'*100)
+        #print(n_alpha)
+        print(self.hmm_scaled.nalpha_to_alpha(n_alpha, cn))
+        #print('-'*100)
 
-        print(beta)
-        print(n_beta)
-        print('-'*100)
+        #print(beta)
+        #print(n_beta)
+        #print('-'*100)
 
-        print(gamma)
-        print(n_gamma)
-
-
-    def test_prob_X(self):
-        """
-        slide 16
-        the probablity of getting that particular observation sequence given the model
-        :return:
-        """
-        obs_seq = self.obs_seq
-        alpha_matrix = self.sc_hmm.forward(obs_seq)
-        beta_matrix = self.sc_hmm.backward(obs_seq)
-        res = self.sc_hmm.prob_X(alpha_matrix)
-        self.assertEqual(round(res,11), 0.00000000019)
+        #print(gamma)
+        #print(n_gamma)
+        for n in range(0, len(obs_seq)):
+            for k in range(0,len(self.hmm._z)):
+                self.assertAlmostEqual(n_gamma[n][k], gamma[n][k])
+                #print(gamma[n][k], n_gamma[n][k])
 
 
-    def test_forward(self):
-        obs_seq = [NY, NY, NY, NY, NY, LA, LA, NY, NY, NY]
-        #result = np.array([[1.0, 0.48, 0.2304, 0.027648],
-        #                   [0.0, 0.12, 0.0936, 0.130032]])
-        forward_matrix = self.sc_hmm.forward(obs_seq)
-        print(forward_matrix)
-        #self.assertTrue(np.allclose(result, forward_matrix))
+#    def test_prob_X(self):
+#        """
+#        slide 16
+#        the probablity of getting that particular observation sequence given the model
+#        :return:
+#        """
+#        obs_seq = self.obs_seq
+#        alpha_matrix = self.hmm_scaled.forward(obs_seq)
+#        beta_matrix = self.hmm_scaled.backward(obs_seq)
+#        res = self.hmm_scaled.prob_X(alpha_matrix)
+#        self.assertEqual(round(res,11), 0.00000000019)
 
 
     def test_getter_emission(self):
-        self.assertEqual(self.sc_hmm.prob_x_given_z(NY, NY), 0.5)
-        self.assertEqual(self.sc_hmm.prob_x_given_z(LA, NY), 0.1)
-        self.assertEqual(self.sc_hmm.prob_x_given_z(NY, LA), 0.1)
-        self.assertEqual(self.sc_hmm.prob_x_given_z(LA, LA), 0.4)
-        self.assertEqual(self.sc_hmm.prob_x_given_z(NULL, NY), 0.4)
-        self.assertEqual(self.sc_hmm.prob_x_given_z(NULL, LA), 0.5)
+        self.assertEqual(self.hmm_scaled.prob_x_given_z(NY, NY), 0.5)
+        self.assertEqual(self.hmm_scaled.prob_x_given_z(LA, NY), 0.1)
+        self.assertEqual(self.hmm_scaled.prob_x_given_z(NY, LA), 0.1)
+        self.assertEqual(self.hmm_scaled.prob_x_given_z(LA, LA), 0.4)
+        self.assertEqual(self.hmm_scaled.prob_x_given_z(NULL, NY), 0.4)
+        self.assertEqual(self.hmm_scaled.prob_x_given_z(NULL, LA), 0.5)
 
     def test_getter_transition(self):
-        self.assertEqual(self.sc_hmm.prob_za_given_zb(NY, NY), 0.5)
-        self.assertEqual(self.sc_hmm.prob_za_given_zb(NY, LA), 0.5)
-        self.assertEqual(self.sc_hmm.prob_za_given_zb(LA, NY), 0.5)
-        self.assertEqual(self.sc_hmm.prob_za_given_zb(LA, LA), 0.5)
+        self.assertEqual(self.hmm_scaled.prob_za_given_zb(NY, NY), 0.5)
+        self.assertEqual(self.hmm_scaled.prob_za_given_zb(NY, LA), 0.5)
+        self.assertEqual(self.hmm_scaled.prob_za_given_zb(LA, NY), 0.5)
+        self.assertEqual(self.hmm_scaled.prob_za_given_zb(LA, LA), 0.5)
 
     def test_viterbi(self):
         #todo
@@ -243,7 +322,7 @@ class TestHmmWiki(unittest.TestCase):
         best_state_seq = [NY,LA,LA,LA,LA,NY,LA,NY,NY,NY,LA,NY,NY,NY,NY,NY,LA,LA,LA,NY]
 
         # test
-        res = self.sc_hmm.viterbi(seq=obs_seq)
+        res = self.hmm_scaled.viterbi(seq=obs_seq)
         print(len(best_state_seq))
         print(len(obs_seq))
         print(len(res))
