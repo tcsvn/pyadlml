@@ -1,20 +1,26 @@
+import os
 import unittest
+
+from sklearn import preprocessing
+
 from algorithms.benchmarks.benchmark import Bench
 from algorithms.benchmarks.benchmark import Dataset
+from algorithms.benchmarks.mnist import DatasetMNIST
 from algorithms.hmm.hmm import HiddenMarkovModel
 from algorithms.hmm.distributions import ProbabilityMassFunction
 import pandas as pd
 import numpy as np
 from algorithms.model import HMM_Model
-from algorithms.benchmarks.mnist_data.analysis import training
+#from algorithms.benchmarks.mnist_data.analysis import training
 
 
 class TestMNIST(unittest.TestCase):
     def setUp(self):
         # set of observations
-        self._bench = Bench()
-        self._bench.load_dataset(Dataset.MNIST)
-        self._mnist_obj = self._bench._loaded_datasets[Dataset.MNIST.name]
+        #self._bench = Bench()
+        #self._bench.load_dataset(Dataset.MNIST)
+        #self._mnist_obj = self._bench._loaded_datasets[Dataset.MNIST.name]
+        pass
 
 
 
@@ -22,10 +28,79 @@ class TestMNIST(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_own_parser(self):
+        dirname = os.path.dirname(__file__)[:-25]
+        print(dirname)
+        MNIST_LABEL_FILE = dirname + '/datasets/mnist_sequences/trainlabels.txt'
+        MNIST_DATA_FILES = dirname + '/datasets/mnist_sequences/trainimg-num-inputdata.txt'
+        dmnist = DatasetMNIST()
+        dmnist.load_files(MNIST_LABEL_FILE, MNIST_DATA_FILES, label=5)
+
+
+#    def test_own_hmm(self):
+#        n_observation_classes = 256
+#        n_hidden_states = 30
+#        n_iter = 10
+#        train_digits = self._mnist_obj.get_train_seq()
+#        centroids = training.get_digit_kmeans_centroids(
+#            train_digits, n_observation_classes - 3)
+#        training.set_digit_observations(
+#            train_digits,
+#            centroids,
+#            n_observation_classes)
+#
+#        # train digit  4
+#        DIGIT_LABEL = 4
+#
+#        # ------
+#        current_digits = []
+#        digit_observations = [] # set of observations occuring in observation sequences
+#        samples = [] # concatenated observation sequences
+#        lengths = [] # lengths of observation sequences in samples
+#        for dig in train_digits:
+#            if dig.label == DIGIT_LABEL:
+#                for observation in dig.observations:
+#                    if not observation in digit_observations:
+#                        digit_observations.append(observation)
+#                current_digits.append(dig)
+#                samples += dig.observations
+#                lengths.append(len(dig.observations))
+#
+#        """
+#        Sequence for a training image relative distance dx, dy
+#        and a marker for end of sequence (eos) and end of string (eos)
+#
+#            dx | dy | eos | eod
+#            18 |  4 |  0  |  0
+#            -1 |  1 |  0  |  0
+#            -1 |  0 |  0  |  0
+#            ...
+#            0  |  0 |  1  |  1
+#
+#        """
+#
+#        le = preprocessing.LabelEncoder()
+#        X = np.array(samples)
+#        X = le.fit_transform(X)
+#        print(X)
+#        print('-'*100)
+#        print(X)
+
+        #hmm = HiddenMarkovModel(
+        #    latent_variables=,
+        #    observations=,
+        #    em_dist=,
+        #    initial_dist=
+        #)
+
+
+
+
+
     def test_dataset(self):
         n_observation_classes = 256
         n_hidden_states = 30
-        n_iter = 10000
+        n_iter = 10
         tol = 0.1
         train_digits = self._mnist_obj.get_train_seq()
         centroids = training.get_digit_kmeans_centroids(
@@ -34,9 +109,14 @@ class TestMNIST(unittest.TestCase):
             train_digits,
             centroids,
             n_observation_classes)
+        print('-'*10)
+        print('-'*10)
         print(train_digits[0])
+        print('-'*10)
         print(type(train_digits[0]))
+        print('-'*10)
         print(train_digits[0].observations)
+        print('-'*10)
         hmm = training.train_hmm(
             train_digits,
             n_observation_classes,

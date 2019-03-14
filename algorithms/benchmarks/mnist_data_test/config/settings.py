@@ -1,0 +1,22 @@
+import os
+
+IMAGE_PLOT_X_MIN = -3.0
+IMAGE_PLOT_X_MAX = 3.0
+IMAGE_PLOT_Y_MIN = -3.0
+IMAGE_PLOT_Y_MAX = 3.0
+
+dirname = os.path.dirname(__file__)[:-18]
+CENTROIDS_DIRECTORY = dirname + '/mnist_data/data/centroids/'
+HIDDEN_MARKOV_MODE_DIRECTORY = 'data/hmm/'
+GAUSSIAN_HIDDEN_MARKOV_MODE_DIRECTORY = 'data/gaussianhmm/'
+LABELS_PROBABILITIES_DIRECTORY = 'data/labels_probabilities/'
+
+HIDDEN_MARKOV_MODEL_VERBOSE = True
+
+PEN_DOWN_LABEL_DELTA = 3
+PEN_UP_LABEL_DELTA = 2
+STOP_LABEL_DELTA = 1
+
+MAX_SAMPLE_LENGTH = 500
+
+WEIGHTED_CLASSIFIER_DELTA = 0.1

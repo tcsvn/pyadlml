@@ -31,6 +31,8 @@ class State():
     def prob_emission(self):
         pass
 
+
+
 class HiddenMarkovModel():
     """
     set of latent variables
@@ -92,6 +94,32 @@ class HiddenMarkovModel():
             tmp[idx_zn] = zn.get_probs()
         return pd.DataFrame(tmp, index=self._z, columns=self._o)
 
+    @classmethod
+    def gen_rand_transitions(cls, state_count):
+        # initalize with random hmm
+        trans_matrix = np.random.random_sample((state_count,state_count))
+        row_sums = trans_matrix.sum(axis=1)
+        trans_matrix = trans_matrix/row_sums[:, np.newaxis]
+        return trans_matrix
+    @classmethod
+    def gen_rand_emissions(cls, state_count, em_count):
+        em_matrix = np.random.random_sample((state_count, em_count))
+        row_sums = em_matrix.sum(axis=1)
+        em_matrix = em_matrix/row_sums[:, np.newaxis]
+        return em_matrix
+
+    @classmethod
+    def gen_rand_pi(cls, state_count):
+        init_pi = np.random.random_sample(state_count)
+        init_pi = init_pi/sum(init_pi)
+        return init_pi
+
+    @classmethod
+    def gen_eq_pi(cls, state_count):
+        init_val = 1./state_count
+        return np.full((state_count), init_val)
+
+
     def set_emission_matrix(self, emission_matrix):
         #print('*'*10)
         #print(self.emissions_to_df())
@@ -113,6 +141,7 @@ class HiddenMarkovModel():
         self._A = transition_matrix
 
     def draw(self): self.render_console()
+
     def plot(self): self.render_console()
 
     def generate_visualization_2(self, act_retrieval_meth):
@@ -364,9 +393,7 @@ class HiddenMarkovModel():
         # compute Initial condition (13.37)
         alpha = np.zeros((len(seq), len(self._z)))
 
-        # alpha_1z = pi(z)*p(x1|z)
         for idx_zn, zn in enumerate(self._z):
-            #print(idx_zn, zn)
             alpha[0][idx_zn] = self.prob_pi(zn)\
                                *self.prob_x_given_z(seq[0],zn)
         # alpha recursion
@@ -600,13 +627,6 @@ class HiddenMarkovModel():
             if x == xn:
                 res += gamma_val
         return res
-
-    def maximize_gaussian(self):
-        pass
-
-    def maximize_multinomial(self):
-        pass
-
 
     def predict_xnp1(self, seq):
         """

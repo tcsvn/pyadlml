@@ -10,8 +10,8 @@ import os
 from algorithms.benchmarks.mnist import DatasetMNIST
 
 dirname = os.path.dirname(__file__)[:-22]
-MNIST_TRAIN_FILE = dirname + '/algorithms/benchmarks/mnist_data/data/pendigits-train'
-MNIST_TEST_FILE = dirname + '/algorithms/benchmarks/mnist_data/data/pendigits-test'
+MNIST_LABEL_FILE = dirname + '/datasets/mnist_sequences/sequences/'
+MNIST_TEST_FILE = dirname + '/algorithms/bchmarks/mnist_data/data/pendigits-test'
 #KASTEREN_SENS_PATH = '/mnt/external_D/code/hassbrain_algorithm/datasets/kasteren/kasterenSenseData.txt'
 #KASTEREN_ACT_PATH = '/mnt/external_D/code/hassbrain_algorithm/datasets/kasteren/kasterenActData.txt'
 KASTEREN_SENS_PATH = dirname + '/datasets/kasteren/kasterenSenseData.txt'
@@ -62,7 +62,7 @@ class Bench():
             print('loading numbers...')
             mnist = DatasetMNIST()
             self._loaded_datasets[Dataset.MNIST.name] = mnist
-            mnist.load_files(MNIST_TEST_FILE, MNIST_TRAIN_FILE)
+            mnist.load_files(MNIST_TEST_FILE, MNIST_LABEL_FILE)
 
         elif data_name == Dataset.HASS:
             return
