@@ -500,7 +500,7 @@ class HiddenMarkovModel():
         :return:  1D Matrix of probabilitys for each observation
         """
         prob_X = cn.prod()
-
+        print(len(cn))
         # sum over all probab. of seeing future xnp1 for all
         # future states znp1
         sum0 = 0
@@ -524,21 +524,28 @@ class HiddenMarkovModel():
         """
         alpha = np.zeros((len(seq),len(self._z)))
         cn = np.zeros((len(seq)))
-
+        print('-'*100)
         # calculate c1 and alpha_hat 1
         x1 = seq[0]
         for idx, zn in enumerate(self._z):
             cn[0] += self.prob_x_given_z(x1, zn)*self.prob_pi(zn)
 
+        print(cn)
+        print('-'*100)
         for idx, zn in enumerate(self._z):
             alpha[0][idx] = self.prob_pi(zn)*self.prob_x_given_z(x1,zn)\
                             *(1/cn[0])
 
+        print(alpha)
+        print('-'*100)
         #eq 13.55alpha_znm1, zn, seq, xn, cn):
         for n in range(1,len(seq)):
             #calculate cn
             xn = seq[n]
+            print('--')
+            print(n)
             cn[n] = self.calc_cn(alpha[n-1], cn[:n], xn)
+            print('--')
             for idx, zn in enumerate(self._z):
                 sum = 0
                 # sum over preceding alpha values of the incident states multiplicated with the transition
@@ -589,30 +596,19 @@ class HiddenMarkovModel():
         N = len(seq)-1
         if cn is not None:
             for k in range(0, len(self._z)):
-                beta[N][k] = 1*(1/cn[N])
+                # error location
+                beta[N][k] = 1#*(1/cn[N])
 
             # start with beta_(znk) and calculate the betas backwards
             for n in range(N-1, -1, -1):
                 for zn_k, zn in enumerate(self._z):
                     xnp1 = seq[n+1]
                     sum1 = 0
-                    #if n == 0 and zn_k == 0:
-                    #    print('hmm_scaled')
-                    #    print(seq)
-                    #    print(xnp1)
-                    #s ="["
                     for znp1_k, znp1 in enumerate(self._z):
                         sum1 += self.prob_za_given_zb(znp1, zn) \
                                *self.prob_x_given_z(xnp1, znp1) \
                                *beta[n+1][znp1_k]
-                        #if n == 0 and zn_k == 0:
-                            #s+="(" + str(self.prob_za_given_zb(znp1, zn))+"*"+str(self.prob_x_given_z(xnp1, znp1)) +"*"+str(beta[n+1][znp1_k]) +")\n"
-                    #s+="]*(1/" + str(cn[n+1]) + ")"
                     beta[n][zn_k] = sum1*(1/cn[n+1])
-                    #if n == 0 and zn_k ==0:
-                        #print(s)
-                        #print(beta[n][zn_k])
-                        #print('-'*10)
             return beta
 
 
@@ -624,18 +620,22 @@ class HiddenMarkovModel():
         # reverse cn, compute cumulative product then reverse again
         # multiply cumprod with corresp. beta value
         for k in range(0, len(self._z)):
-            beta[N][k] = 1
-        cum_cn =  cn[N]
+            beta[N][k] = nbeta[N][k]
 
+        cum_cn = 1
         for n in range(N-1, -1, -1):
-            cum_cn = cum_cn*cn[n+1]
+            cum_cn = cn[n+1]*cum_cn
             for k in range(0, len(self._z)):
                 beta[n][k] = cum_cn * nbeta[n][k]
         return beta
 
     def gamma(self, n_alpha, n_beta, cN):
         #return n_alpha * n_beta * cN
-        return n_alpha * n_beta
+        #gamma = np.zeros((len(n_alpha), len(self._z)))
+        #for n in range(0, len(n_alpha)):
+        #    for k in range(0, len(self._z)):
+        #        gamma[n][k] = n_alpha[n][k] * n_beta[n][k]
+        return n_alpha * n_beta #*cN
 
 
     def xi(self, alpha, beta, cn, obs_seq):
@@ -662,22 +662,10 @@ class HiddenMarkovModel():
         for n in range(1, len(obs_seq)):
             for znm1_idx, znm1 in enumerate(self._z):
                 for zn_idx, zn in enumerate(self._z):
-                    d = 1
-                    #print(1/np.cumprod(cn[n]))
-                    #if n == 1:
-                    #    d = 0.8313
-                    #if n == 2:
-                    #    d = 1.7143
-                    #if n == 3:
-                    #    d = 2.76
-                    #if n < len(obs_seq)-2:
-                    #    d = 1/cn[n+1]
-
                     xi[n][znm1_idx][zn_idx] = \
                         alpha[n-1][znm1_idx] \
                         * self.prob_x_given_z(obs_seq[n], zn) \
                         * self.prob_za_given_zb(zn, znm1) \
                         * beta[n][zn_idx] \
-                        * d \
                         * cn[n]
         return xi

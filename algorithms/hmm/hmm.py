@@ -397,18 +397,18 @@ class HiddenMarkovModel():
             alpha[0][idx_zn] = self.prob_pi(zn)\
                                *self.prob_x_given_z(seq[0],zn)
         # alpha recursion
-        for t in range(1,len(seq)):
+        for n in range(1,len(seq)):
             for idx_zn, zn in enumerate(self._z):
-                xn = seq[t]
+                xn = seq[n]
                 # sum over preceding alpha values of the incident states multiplicated with the transition
                 # probability into the current state
                 for idx_znm1, znm1 in enumerate(self._z):
                     # alpha value of prec state * prob of transitioning into current state * prob of emitting the observation
-                    alpha[t][idx_zn] += alpha[t-1][idx_znm1]\
+                    alpha[n][idx_zn] += alpha[n-1][idx_znm1]\
                         *self.prob_za_given_zb(zn, znm1)
 
                 # multiply by the data contribution the prob of observing the current observation
-                alpha[t][idx_zn] *= self.prob_x_given_z(xn, zn)
+                alpha[n][idx_zn] *= self.prob_x_given_z(xn, zn)
         return alpha
 
 
@@ -432,7 +432,6 @@ class HiddenMarkovModel():
         beta = np.zeros((len(seq), len(self._z)))
         for idx_zn, z in enumerate(self._z):
             beta[N][idx_zn] = 1
-
         # start with beta_(znk) and calculate the betas backwards
         for n in range(N-1, -1, -1):
             for zn_idx, zn in enumerate(self._z):
@@ -451,7 +450,6 @@ class HiddenMarkovModel():
                 #if n == 0 and zn_idx == 0:
                 #    print(beta[n][zn_idx])
                 #    print('-'*10)
-
                     #self._A[zn_idx][znp1_idx] \
         return beta
 
