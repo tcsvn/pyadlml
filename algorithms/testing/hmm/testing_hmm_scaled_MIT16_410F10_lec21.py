@@ -4,7 +4,7 @@ import numpy as np
 from algorithms.hmm.hmm_scaled import HiddenMarkovModel as ScaledHMM
 from algorithms.hmm.hmm import HiddenMarkovModel as hMM
 from algorithms.hmm.distributions import ProbabilityMassFunction
-from algorithms.testing.hmm.hmm2.discrete.DiscreteHMM import DiscreteHMM
+from algorithms.testing.hmm.hmm2.hmm.discrete.DiscreteHMM import DiscreteHMM
 
 LA = 'Los Angeles'
 NY = 'New York'
@@ -55,20 +55,26 @@ class TestHmmWiki(unittest.TestCase):
         n_beta = self.hmm_scaled.backward(obs_seq, cn)
         n_xi = self.hmm_scaled.xi(n_alpha, n_beta, cn, obs_seq)
 
+
+        #print(n_xi)
         alpha = self.hmm.forward(obs_seq)
         beta = self.hmm.backward(obs_seq)
         prob_X = self.hmm.prob_X(alpha,beta)
         xi = self.hmm.xi(obs_seq, alpha, beta, prob_X)
-        print(xi)
+        #print('#'*100)
+        #print(xi)
         print("~"*10)
-        for i in range(0, len(self.hmm._z)):
-            for j in range(0, len(self.hmm._z)):
-                print('-'*10)
-                print(i,j)
-                print('--')
-                #print(np.sum(xi,axis=0)[i][j])
-                for n in range(0, len(obs_seq)-1):
-                    print(xi[n][i][j], n_xi[n][i][j])
+        K = len(self.hmm._z)
+        N = len(obs_seq)
+
+        for n in range(0, N-1):
+            for i in range(0, K):
+                for j in range(0, K):
+                    #print('-'*10)
+                    #print(i,j)
+                    #print('--')
+                    #print(xi[n][i][j], n_xi[n][i][j])
+                    self.assertAlmostEqual(xi[n][i][j], n_xi[n][i][j])
 
 
 
@@ -105,6 +111,7 @@ class TestHmmWiki(unittest.TestCase):
         test if the training converges
         :return:
         """
+        print()
         # todo check if true
         obs_seq = self.obs_seq
         # transition matrix after convergence
@@ -113,14 +120,18 @@ class TestHmmWiki(unittest.TestCase):
         result_obs_matrix = np.array([[0.5807, 0.0010, 0.4183],
                                [0.000, 0.7621, 0.2379]])
 
-        for i in range(0,2):
+        print("Prob of seq:\t" + str(self.hmm_scaled.forward_backward(obs_seq)))
+        for i in range(0,200):
             self.hmm_scaled.training_step(obs_seq)
-            print(self.hmm_scaled)
-            print("Prob of seq:\t" + str(self.hmm_scaled.forward_backward(obs_seq)))
-            print('*#'*50)
+            #print(self.hmm_scaled)
+            #print("Prob of seq:\t" + str(self.hmm_scaled.forward_backward(obs_seq)))
+            #print('*#'*50)
+        print(self.hmm_scaled)
+        print("Prob of seq:\t" + str(self.hmm_scaled.forward_backward(obs_seq)))
+        print('*#'*50)
         print('~'*10)
-        #print(result_trans_matrix)
-        #print(result_obs_matrix)
+        print(result_trans_matrix)
+        print(result_obs_matrix)
         ##self.assertTrue((result_trans_matrix == self.hmmA).all())
         ## todo change
         ##self.assertTrue((result_obs_matrix == self._E).all())
@@ -154,14 +165,15 @@ class TestHmmWiki(unittest.TestCase):
         gamma = self.hmm.gamma(alpha,beta)
         n_alpha, cn= self.hmm_scaled.forward(obs_seq)
         n_beta = self.hmm_scaled.backward(obs_seq, cn)
-        n_gamma = self.hmm_scaled.gamma(n_alpha, n_beta, cn[20-1])
+        n_gamma = self.hmm_scaled.gamma(n_alpha, n_beta)
         gamma_20 = n_gamma[20-1]
 
-        print(gamma)
-        print('--')
-        print(n_gamma)
-        #self.assertEqual(round(gamma_20[0],4),0.1667)
-        #self.assertEqual(round(gamma_20[1],4),0.8333)
+        for n in range(0, len(obs_seq)):
+            for k, zn in enumerate(self.hmm._z):
+                self.assertAlmostEqual(n_gamma[n][k], gamma[n][k])
+
+        self.assertEqual(round(gamma_20[0],4),0.1667)
+        self.assertEqual(round(gamma_20[1],4),0.8333)
 
     def test_pred_step(self):
         """

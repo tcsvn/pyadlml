@@ -257,7 +257,7 @@ class HiddenMarkovModel():
         diff_arr = np.full((100), 10.0)
         while(diff_arr.mean() > epsilon and steps > 0):
             self.training_step(seq)
-            new_prob_X = self._prob_X(self.forward(seq), self.backward(seq))
+            new_prob_X = self.forward_backward(seq)
             diff = new_prob_X - old_prob_X
             if diff < 0:
                 # todo VERY IMPORTANT!!!
@@ -292,14 +292,8 @@ class HiddenMarkovModel():
 
         # marginal posterior dist of latent variable z_n
         # prob of being in state z at time t
-        gamma = self.gamma(alpha, beta, cn[N])
-        #print(gamma)
-        #print('-'*100)
-
-        prob_X = self._prob_X(cn)
+        gamma = self.gamma(alpha, beta)
         xi = self.xi(alpha, beta, cn, seq)
-        #print(xi)
-        #print('-'*100)
 
         exp_trans_zn = self.expected_trans_from_zn(gamma)
         exp_trans_zn_znp1 = self.expected_trans_from_za_to_zb(xi)
@@ -310,6 +304,7 @@ class HiddenMarkovModel():
         # maximize \pi initial distribution
         # calculate expected number of times in state i at time t=1
         self._pi = self.new_initial_distribution(gamma)
+
         # calculate new emission probabilities
         self.set_emission_matrix(self.new_emissions(gamma, seq))
 
@@ -328,7 +323,6 @@ class HiddenMarkovModel():
     def new_transition_matrix(self, exp_trans_zn, exp_trans_znm1_zn):
         """
         Bishop eq. 13.19
-        todo check why indizies start at 2 (pairwise)?
         :param exp_trans_zn:
         :param exp_tranz_zn_znp1: 2D array of transition from state
         :return: 2D k X k array of new statetransitions
@@ -500,7 +494,7 @@ class HiddenMarkovModel():
         :return:  1D Matrix of probabilitys for each observation
         """
         prob_X = cn.prod()
-        print(len(cn))
+        #print(len(cn))
         # sum over all probab. of seeing future xnp1 for all
         # future states znp1
         sum0 = 0
@@ -524,28 +518,28 @@ class HiddenMarkovModel():
         """
         alpha = np.zeros((len(seq),len(self._z)))
         cn = np.zeros((len(seq)))
-        print('-'*100)
+        #print('-'*100)
         # calculate c1 and alpha_hat 1
         x1 = seq[0]
         for idx, zn in enumerate(self._z):
             cn[0] += self.prob_x_given_z(x1, zn)*self.prob_pi(zn)
 
-        print(cn)
-        print('-'*100)
+        #print(cn)
+        #print('-'*100)
         for idx, zn in enumerate(self._z):
             alpha[0][idx] = self.prob_pi(zn)*self.prob_x_given_z(x1,zn)\
                             *(1/cn[0])
 
-        print(alpha)
-        print('-'*100)
+        #print(alpha)
+        #print('-'*100)
         #eq 13.55alpha_znm1, zn, seq, xn, cn):
         for n in range(1,len(seq)):
             #calculate cn
             xn = seq[n]
-            print('--')
-            print(n)
+            #print('--')
+            #print(n)
             cn[n] = self.calc_cn(alpha[n-1], cn[:n], xn)
-            print('--')
+            #print('--')
             for idx, zn in enumerate(self._z):
                 sum = 0
                 # sum over preceding alpha values of the incident states multiplicated with the transition
@@ -629,13 +623,8 @@ class HiddenMarkovModel():
                 beta[n][k] = cum_cn * nbeta[n][k]
         return beta
 
-    def gamma(self, n_alpha, n_beta, cN):
-        #return n_alpha * n_beta * cN
-        #gamma = np.zeros((len(n_alpha), len(self._z)))
-        #for n in range(0, len(n_alpha)):
-        #    for k in range(0, len(self._z)):
-        #        gamma[n][k] = n_alpha[n][k] * n_beta[n][k]
-        return n_alpha * n_beta #*cN
+    def gamma(self, n_alpha, n_beta):
+        return n_alpha*n_beta
 
 
     def xi(self, alpha, beta, cn, obs_seq):
@@ -645,27 +634,28 @@ class HiddenMarkovModel():
         :param beta:
         :param cn:
         :param obs_seq:
-        :return:  3D array (N x K x K)
+        :return:  3D array (N-1 x K x K)
         """
-        K = len(self._z)
         N = len(obs_seq)
+        K = len(self._z)
+        #print(N)
         #print(alpha)
-        #print('--')
         #print(beta)
-        #print('--')
         #print(cn)
-        #print(np.cumsum(cn))
-        #print(np.cumprod(cn))
-        #print('--')
-        xi = np.zeros((N, K, K))
-        #print(xi)
-        for n in range(1, len(obs_seq)):
-            for znm1_idx, znm1 in enumerate(self._z):
-                for zn_idx, zn in enumerate(self._z):
-                    xi[n][znm1_idx][zn_idx] = \
-                        alpha[n-1][znm1_idx] \
+        #print(len(cn))
+
+        xi = np.zeros((N-1, K, K))
+        for n in range(1, N):
+            for knm1, znm1 in enumerate(self._z):
+                for kn, zn in enumerate(self._z):
+                    xi[n-1][knm1][kn] = \
+                        (alpha[n-1][knm1] \
                         * self.prob_x_given_z(obs_seq[n], zn) \
                         * self.prob_za_given_zb(zn, znm1) \
-                        * beta[n][zn_idx] \
-                        * cn[n]
+                        * beta[n][kn]) \
+                        /cn[n]
+                    #print('~'*100)
+                    #print(xi)
+                    #print('~'*100)
+        #print(xi)
         return xi

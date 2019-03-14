@@ -288,47 +288,25 @@ class HiddenMarkovModel():
         # prob(X) = \sum_zn(\alpha(z_n))
         # todo do this with np.sum which looks better and is faster
         sum = 0
-        for idx_zn in range(0, len(self._z)):
-            sum += alpha[len(alpha)-1][idx_zn]
-        if sum != 0:
-            return sum
+        #for idx_zn in range(0, len(self._z)):
+        #    sum += alpha[len(alpha)-1][idx_zn]
+        #if sum != 0:
+        #    return sum
 
         n = 0
-        while sum == 0:
+        nparr = np.zeros((len(alpha)))
+        #while sum == 0:
+        for n in range(0, len(alpha)):
             if n > len(alpha-1):
                 # something has went terribly wrong
                 # because every
                 raise ValueError
-            sum = self.prob_X_n(alpha,beta, n)
+            sum = np.sum((alpha*beta), axis=1)[n]
+            nparr[n] = sum
             n +=1
+        print(nparr)
+        print(nparr.var())
         return sum
-
-
-    def prob_X_n(self, alpha, beta, n):
-        """
-        computes the probability of observing a sequence given the Model
-        by summing over the n-th place for alpha time beta values
-        # seq length of 200 leads to prob values beeing lower than 0.1*e^-323 which
-        # is rounded by numpy to 0.0 leading to wrong equations
-        :param alpha:
-        :return: a float value
-        """
-        sum = 0
-        for idx_zn in range(0, len(self._z)):
-            sum += alpha[n][idx_zn]*beta[n][idx_zn]
-        return sum
-
-    #def prob_X(self, alpha):
-    #    """
-    #    computes the probability of observing a sequence given the Model
-    #    by summing over the last alphavalues for every zn: alpha(z_nk)
-    #    :param alpha:
-    #    :return: a float value
-    #    """
-    #    sum = 0
-    #    for idx_zn in range(0, len(self._z)):
-    #        sum += alpha[len(alpha)-1][idx_zn]
-    #    return sum
 
     def gamma(self, alpha, beta):
         """
@@ -352,9 +330,9 @@ class HiddenMarkovModel():
         :param alpha:
         :param beta:
         :param prob_X:
-        :return:  3D matrix (T-1 x Z x Z)
+        :return:  3D matrix (N-1 x Z x Z)
         """
-        N = len(obs_seq)-1
+        N = len(obs_seq)
         K = len(self._z)
         if alpha is None:
             alpha = self.forward(obs_seq)
@@ -363,16 +341,15 @@ class HiddenMarkovModel():
         if prob_X is None:
             prob_X = self.prob_X(alpha, beta)
 
-        xi = np.zeros((N, K, K))
-
-        for n in range(1, len(obs_seq)):
-            for znm1_idx, znm1 in enumerate(self._z):
-                for zn_idx, zn in enumerate(self._z):
-                    xi[n-1][znm1_idx][zn_idx] = \
-                        (alpha[n-1][znm1_idx] \
-                         * beta[n][zn_idx]\
-                         * self.prob_x_given_z(obs_seq[n],zn) \
-                         * self.prob_za_given_zb(zn, znm1)) \
+        xi = np.zeros((N-1, K, K))
+        for n in range(1, N):
+            for knm1, znm1 in enumerate(self._z):
+                for kn, zn in enumerate(self._z):
+                    xi[n-1][knm1][kn] = \
+                        (alpha[n-1][knm1] \
+                        * self.prob_x_given_z(obs_seq[n],zn) \
+                        * self.prob_za_given_zb(zn, znm1)\
+                        * beta[n][kn])\
                         /prob_X
         return xi
 
