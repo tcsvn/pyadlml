@@ -172,19 +172,19 @@ class HiddenMarkovModel():
         dot = Digraph()
         for z in self._z:
             dot.node(str(z),str(z))
-        print(dot)
+        #print(dot)
         it = np.nditer(self._A, flags=['multi_index'])
-        print(type(it))
-        print(self._A)
+        #print(type(it))
+        #print(self._A)
         while not it.finished:
             tail_name = str(self._z[it.multi_index[0]])
             head_name = str(self._z[it.multi_index[1]])
             label = str(it[0])
             #label = str('{:10.4e}'.format(it[0]))
-            print(tail_name)
-            print(head_name)
-            print(label)
-            print('-----')
+            #print(tail_name)
+            #print(head_name)
+            #print(label)
+            #print('-----')
             dot.edge(
                 tail_name=tail_name,
                 head_name=head_name,
@@ -195,7 +195,7 @@ class HiddenMarkovModel():
 
     def render_console(self):
         vis = self.generate_visualization()
-        print(vis)
+        #print(vis)
 
     def render_graph(self):
         """ renders the graph of the hmm
@@ -304,8 +304,8 @@ class HiddenMarkovModel():
             sum = np.sum((alpha*beta), axis=1)[n]
             nparr[n] = sum
             n +=1
-        print(nparr)
-        print(nparr.var())
+        #print(nparr)
+        #print(nparr.var())
         return sum
 
     def gamma(self, alpha, beta):

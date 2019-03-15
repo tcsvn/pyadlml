@@ -80,6 +80,31 @@ class HiddenMarkovModel():
         s += '\n'
         return s
 
+    @classmethod
+    def gen_rand_transitions(cls, state_count):
+        # initalize with random hmm
+        trans_matrix = np.random.random_sample((state_count,state_count))
+        row_sums = trans_matrix.sum(axis=1)
+        trans_matrix = trans_matrix/row_sums[:, np.newaxis]
+        return trans_matrix
+    @classmethod
+    def gen_rand_emissions(cls, state_count, em_count):
+        em_matrix = np.random.random_sample((state_count, em_count))
+        row_sums = em_matrix.sum(axis=1)
+        em_matrix = em_matrix/row_sums[:, np.newaxis]
+        return em_matrix
+
+    @classmethod
+    def gen_rand_pi(cls, state_count):
+        init_pi = np.random.random_sample(state_count)
+        init_pi = init_pi/sum(init_pi)
+        return init_pi
+
+    @classmethod
+    def gen_eq_pi(cls, state_count):
+        init_val = 1./state_count
+        return np.full((state_count), init_val)
+
     def pi_to_df(self):
         return pd.DataFrame(self._pi, index=self._z)
 
@@ -143,19 +168,19 @@ class HiddenMarkovModel():
         dot = Digraph()
         for z in self._z:
             dot.node(str(z),str(z))
-        print(dot)
+        #print(dot)
         it = np.nditer(self._A, flags=['multi_index'])
-        print(type(it))
-        print(self._A)
+        #print(type(it))
+        #print(self._A)
         while not it.finished:
             tail_name = str(self._z[it.multi_index[0]])
             head_name = str(self._z[it.multi_index[1]])
             label = str(it[0])
             #label = str('{:10.4e}'.format(it[0]))
-            print(tail_name)
-            print(head_name)
-            print(label)
-            print('-----')
+            #print(tail_name)
+            #print(head_name)
+            #print(label)
+            #print('-----')
             dot.edge(
                 tail_name=tail_name,
                 head_name=head_name,
@@ -166,7 +191,7 @@ class HiddenMarkovModel():
 
     def render_console(self):
         vis = self.generate_visualization()
-        print(vis)
+        #print(vis)
 
     def render_graph(self):
         """ renders the graph of the hmm
@@ -270,7 +295,7 @@ class HiddenMarkovModel():
             old_prob_X = new_prob_X
             diffcounter+=1
             diff_arr[diffcounter%len(diff_arr)] = diff
-            self.logger.debug(new_prob_X)
+            #self.logger.debug(new_prob_X)
             #print(diff_arr)
             #print(diff_arr.mean())
             #print(steps)

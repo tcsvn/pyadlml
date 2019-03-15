@@ -6,7 +6,7 @@
 """
 
 from algorithms.hmm.distributions import ProbabilityMassFunction
-from algorithms.hmm.hmm import HiddenMarkovModel
+from algorithms.hmm.hmm_scaled import HiddenMarkovModel
 import numpy as np
 
 class Model():
