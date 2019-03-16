@@ -42,32 +42,6 @@ class TestMIT16_410F10(unittest.TestCase):
         pass
 
 
-    def test_xi(self):
-        obs_seq = self.obs_seq
-        alpha = self.hmm.forward(obs_seq)
-        beta = self.hmm.backward(obs_seq)
-        prob_X = self.hmm._prob_X(alpha)
-        xi = self.hmm.xi(obs_seq,
-                         alpha,
-                         beta,
-                         prob_X)
-
-        hmm2_xi = self.hmm2.calcxi(
-            self.obs_seq2,
-            self.hmm2.calcalpha(self.obs_seq2),
-            self.hmm2.calcbeta(self.obs_seq2))
-
-
-        for t in range(1,len(obs_seq)):
-            for znm1_idx, znm1 in enumerate(self.hmm._z):
-                for zn_idx, zn in enumerate(self.hmm._z):
-                    hmm2_val = hmm2_xi[t][znm1_idx][zn_idx]
-                    hmm_val = xi[t][znm1_idx][zn_idx]
-                    #print(str(hmm_val) + " == " + str(hmm2_val))
-                    self.assertAlmostEqual(hmm2_val, hmm_val)
-
-        # todo add assertion
-
 
     def test_train_transitions(self):
         obs_seq = self.obs_seq
@@ -212,6 +186,27 @@ class TestMIT16_410F10(unittest.TestCase):
         #self.assertTrue((result_obs_matrix == self._E).all())
 
 
+    def test_train_transition(self):
+        obs_seq = self.obs_seq
+        alpha_matrix = self.hmm.forward(obs_seq)
+        beta_matrix = self.hmm.backward(obs_seq)
+        gamma = self.hmm.gamma(alpha_matrix, beta_matrix)
+        xi = self.hmm.xi(alpha_matrix, beta_matrix, obs_seq)
+        #print(gamma)
+        #print('-'*10)
+        #print(xi)
+
+    def test_train_emission(self):
+        obs_seq = self.obs_seq
+        alpha_matrix = self.hmm.forward(obs_seq)
+        beta_matrix = self.hmm.backward(obs_seq)
+        gamma = self.hmm.gamma(alpha_matrix, beta_matrix)
+
+        new_em_matrix = self.hmm.new_emissions(gamma, obs_seq)
+        #print(self.hmm.emissions_to_df())
+        self.hmm.set_emission_matrix(new_em_matrix)
+        #print(self.hmm.emissions_to_df())
+
     def test_training(self):
         """
         slide 22
@@ -249,6 +244,32 @@ class TestMIT16_410F10(unittest.TestCase):
             for em in range(0, len(res_E)):
                 self.assertAlmostEqual(res_E[zn][em], round(pd_em[zn][em],4))
 
+
+    def test_xi(self):
+        obs_seq = self.obs_seq
+        obs_seq2 = self.obs_seq2
+
+        alpha = self.hmm.forward(obs_seq)
+        beta = self.hmm.backward(obs_seq)
+        prob_X = self.hmm._prob_X(alpha, beta)
+        xi = self.hmm.xi(obs_seq, alpha, beta, prob_X)
+
+        hmm2_xi = self.hmm2.calcxi(
+            obs_seq2,
+            self.hmm2.calcalpha(obs_seq2),
+            self.hmm2.calcbeta(obs_seq2))
+
+        K = len(self.hmm._z)
+        N = len(obs_seq)
+
+        for n in range(0,N-1):
+            for znm1k in range(0, K):
+                for znk in range(0, K):
+                    hmm2_val = hmm2_xi[n][znm1k][znk]
+                    hmm_val = xi[n][znm1k][znk]
+                    self.assertAlmostEqual(hmm2_val, hmm_val)
+
+
     def test_gamma(self):
         """
         slide 16
@@ -261,12 +282,6 @@ class TestMIT16_410F10(unittest.TestCase):
         beta = self.hmm.backward(obs_seq)
         gamma = self.hmm.gamma(alpha, beta)
 
-
-        #print(gamma)
-        gamma_20 = gamma[20-1]
-        # todo check with hmm2
-
-
         hmm2_gamma = self.hmm2.calcgamma(self.hmm2.calcxi(
                 self.obs_seq2,
                 self.hmm2.calcalpha(self.obs_seq2),
@@ -274,34 +289,54 @@ class TestMIT16_410F10(unittest.TestCase):
             ),
             len(self.obs_seq2)
         )
-        #print(hmm2_gamma)
+
+
+        gamma_20 = gamma[20-1]
         self.assertEqual(round(gamma_20[0],4),0.1667)
         self.assertEqual(round(gamma_20[1],4),0.8333)
 
-        #self.assertTrue(np.allclose(hmm2_gamma, gamma))
+        # unfortunately the other rep doesn't calculate the last value
+        # and is therefore wrong
+        test_gamma = gamma[:len(gamma)-1]
+        test_hmm2_gamma = hmm2_gamma[:len(gamma)-1]
+        self.assertTrue(np.allclose(test_gamma,test_hmm2_gamma ))
 
 
-    def test_train_transition(self):
+
+
+
+    def print_hmm2(self):
+        print(self.hmm2.A)
+        print(self.hmm2.B)
+        print(self.hmm2.pi)
+
+    def test_forward(self):
         obs_seq = self.obs_seq
-        alpha_matrix = self.hmm.forward(obs_seq)
-        beta_matrix = self.hmm.backward(obs_seq)
-        gamma = self.hmm.gamma(alpha_matrix, beta_matrix)
-        xi = self.hmm.xi(alpha_matrix, beta_matrix, obs_seq)
-        #print(gamma)
-        #print('-'*10)
-        #print(xi)
+        obs_seq2 = self.obs_seq2
 
-    def test_train_emission(self):
+        alpha = self.hmm.forward(obs_seq)
+
+        hmm2_alpha = self.hmm2.calcalpha(obs_seq2)
+
+        N = len(obs_seq)
+        K = len(self.hmm._z)
+        for n in range(0, N):
+            for k in range(0,K):
+                self.assertAlmostEqual(hmm2_alpha[n][k], alpha[n][k])
+
+        self.assertTrue(np.allclose(alpha, hmm2_alpha))
+
+    def test_backward(self):
         obs_seq = self.obs_seq
-        alpha_matrix = self.hmm.forward(obs_seq)
-        beta_matrix = self.hmm.backward(obs_seq)
-        gamma = self.hmm.gamma(alpha_matrix, beta_matrix)
+        obs_seq2 = self.obs_seq2
+        beta = self.hmm.backward(obs_seq)
+        hmm2_beta = self.hmm2.calcbeta(obs_seq2)
 
-        new_em_matrix = self.hmm.new_emissions(gamma, obs_seq)
-        #print(self.hmm.emissions_to_df())
-        self.hmm.set_emission_matrix(new_em_matrix)
-        #print(self.hmm.emissions_to_df())
+        for n in range(0, len(obs_seq)):
+            for k in range(0,len(self.hmm._z)):
+                self.assertAlmostEqual(hmm2_beta[n][k], beta[n][k])
 
+        self.assertTrue(np.allclose(beta, hmm2_beta))
 
     def test_prob_X(self):
         """
@@ -317,58 +352,7 @@ class TestMIT16_410F10(unittest.TestCase):
         hmm2_prob_x = np.exp(self.hmm2.forwardbackward(self.obs_seq2))
 
         self.assertAlmostEqual(hmm2_prob_x, hmm_prob_x)
-        self.assertEqual(0.00000000019, round(hmm2_prob_x,11))
-
-    def print_hmm2(self):
-        print(self.hmm2.A)
-        print(self.hmm2.B)
-        print(self.hmm2.pi)
-
-    def test_forward(self):
-        #obs_seq = [NY, NY, NY, NULL, NY, NY, NULL, LA, NULL, LA, NY, NY, NY]
-        #obs_seq2 = [1, 1, 1, 2, 1, 1, 2, 0, 2, 0, 1, 1, 1]
-        obs_seq = self.obs_seq
-        obs_seq2 = self.obs_seq2
-        alpha = self.hmm.forward(obs_seq)
-        hmm2_alpha = self.hmm2.calcalpha(obs_seq2)
-        print(self.hmm)
-        self.print_hmm2()
-
-        print(hmm2_alpha)
-        print(len(hmm2_alpha))
-        print(len(alpha))
-        print(alpha)
-
-
-        N = len(obs_seq)
-        K = len(self.hmm._z)
-        for n in range(0, N):
-            for k in range(0,K):
-                self.assertAlmostEqual(hmm2_alpha[n][k], alpha[n][k])
-
-        #self.assertTrue(np.allclose(result, forward_matrix))
-
-    def test_backward(self):
-        #print()
-        obs_seq = [NY, NY, NY, NULL, NY, NY, NULL, LA, NULL, LA, NY, NY, NY]
-        obs_seq2 = [1, 1, 1, 2, 1, 1, 2, 0, 2, 0, 1, 1, 1]
-        #obs_seq = self.obs_seq
-        #obs_seq2 = self.obs_seq2
-        beta = self.hmm.backward(obs_seq)
-        hmm2_beta = self.hmm2.calcbeta(obs_seq2)
-
-        print(beta)
-        print('-'*100)
-        print(self.hmm)
-        print('-'*100)
-        #print(self.hmm2.A)
-        #print(self.hmm2.B)
-        for n in range(0, len(obs_seq)):
-            #for k in range(0,len(self.hmm._z)):
-                #self.assertAlmostEqual(hmm2_beta[n][k], beta[n][k])
-            print(beta[n])
-            print(hmm2_beta[n])
-        #self.assertTrue(np.allclose(backward_matrix, beta2))
+        #self.assertEqual(0.00000000019, round(hmm2_prob_x,11))
 
     def test_getter_emission(self):
         self.assertEqual(self.hmm.prob_x_given_z(NY, NY), 0.5)

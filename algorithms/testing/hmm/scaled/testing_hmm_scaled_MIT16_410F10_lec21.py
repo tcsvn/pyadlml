@@ -49,21 +49,23 @@ class TestMIT16_410F10_scaled(unittest.TestCase):
 
 
     def test_xi(self):
-        print()
         obs_seq = self.obs_seq
+        obs_seq2 = self.obs_seq2
+
         n_alpha, cn = self.hmm_scaled.forward(obs_seq)
         n_beta = self.hmm_scaled.backward(obs_seq, cn)
         n_xi = self.hmm_scaled.xi(n_alpha, n_beta, cn, obs_seq)
 
-
-        #print(n_xi)
         alpha = self.hmm.forward(obs_seq)
         beta = self.hmm.backward(obs_seq)
         prob_X = self.hmm._prob_X(alpha, beta)
         xi = self.hmm.xi(obs_seq, alpha, beta, prob_X)
-        #print('#'*100)
-        #print(xi)
-        print("~"*10)
+
+        hmm2_xi = self.hmm2.calcxi(
+            obs_seq2,
+            self.hmm2.calcalpha(obs_seq2),
+            self.hmm2.calcbeta(obs_seq2))
+
         K = len(self.hmm._z)
         N = len(obs_seq)
 
@@ -71,37 +73,7 @@ class TestMIT16_410F10_scaled(unittest.TestCase):
             for i in range(0, K):
                 for j in range(0, K):
                     self.assertAlmostEqual(xi[n][i][j], n_xi[n][i][j])
-
-    def test_training(self):
-        """
-        slide 22
-        test if the training converges
-        :return:
-        """
-        # todo check if true
-        obs_seq = self.obs_seq
-        # transition matrix after convergence
-        result_trans_matrix = np.array([[0.6909, 0.3091],
-                                 [0.0934, 0.9066]])
-        result_obs_matrix = np.array([[0.5807, 0.0010, 0.4183],
-                               [0.000, 0.7621, 0.2379]])
-
-        #print("Prob of seq:\t" + str(self.hmm_scaled.forward_backward(obs_seq)))
-        for i in range(0,200):
-            self.hmm_scaled.training_step(obs_seq)
-            #print(self.hmm_scaled)
-            #print("Prob of seq:\t" + str(self.hmm_scaled.forward_backward(obs_seq)))
-            #print('*#'*50)
-        #print(self.hmm_scaled)
-        #print("Prob of seq:\t" + str(self.hmm_scaled.forward_backward(obs_seq)))
-        #print('*#'*50)
-        #print('~'*10)
-        #print(result_trans_matrix)
-        #print(result_obs_matrix)
-        ##self.assertTrue((result_trans_matrix == self.hmmA).all())
-        ## todo change
-        ##self.assertTrue((result_obs_matrix == self._E).all())
-        #print('\n~*'*10)
+                    self.assertAlmostEqual(hmm2_xi[n][i][j], n_xi[n][i][j])
 
 
     def test_gamma(self):
@@ -118,14 +90,30 @@ class TestMIT16_410F10_scaled(unittest.TestCase):
         n_alpha, cn= self.hmm_scaled.forward(obs_seq)
         n_beta = self.hmm_scaled.backward(obs_seq, cn)
         n_gamma = self.hmm_scaled.gamma(n_alpha, n_beta)
+
+
         gamma_20 = n_gamma[20-1]
+        self.assertEqual(round(gamma_20[0],4),0.1667)
+        self.assertEqual(round(gamma_20[1],4),0.8333)
+
+
+        hmm2_gamma = self.hmm2.calcgamma(self.hmm2.calcxi(
+            self.obs_seq2,
+            self.hmm2.calcalpha(self.obs_seq2),
+            self.hmm2.calcbeta(self.obs_seq2)
+        ),
+            len(self.obs_seq2)
+        )
 
         for n in range(0, len(obs_seq)):
             for k, zn in enumerate(self.hmm._z):
                 self.assertAlmostEqual(n_gamma[n][k], gamma[n][k])
 
-        self.assertEqual(round(gamma_20[0],4),0.1667)
-        self.assertEqual(round(gamma_20[1],4),0.8333)
+        # unfortunately the other rep doesn't calculate the last value
+        # and is therefore wrong
+        test_gamma = gamma[:len(gamma)-1]
+        test_hmm2_gamma = hmm2_gamma[:len(gamma)-1]
+        self.assertTrue(np.allclose(test_gamma,test_hmm2_gamma ))
 
 
     def test_forward(self):
@@ -133,88 +121,50 @@ class TestMIT16_410F10_scaled(unittest.TestCase):
         compute alpha, normalized alpha then unnormalize it and compare the
         unnormalized version with the original alpha
         """
-        obs_seq = [NY, NY, NY, NULL, NY, NY, NULL, LA, NULL, LA, NY, NY, NY]
+        obs_seq = self.obs_seq
+        obs_seq2 = self.obs_seq2
+
         alpha = self.hmm.forward(obs_seq)
         n_alpha , cn = self.hmm_scaled.forward(obs_seq)
         re_alpha = self.hmm_scaled.nalpha_to_alpha(n_alpha, cn)
+
+
+        hmm2_alpha = self.hmm2.calcalpha(obs_seq2)
+
         for n in range(0, len(obs_seq)):
             for zn in range(0, len(self.hmm._z)):
                 self.assertAlmostEqual(re_alpha[n][zn], alpha[n][zn])
+                self.assertAlmostEqual(re_alpha[n][zn], hmm2_alpha[n][zn])
 
-        obs_seq2 = [1, 1, 1, 2, 1, 1, 2, 0, 2, 0, 1, 1, 1]
-        hmm2_alpha = self.hmm2.calcalpha(obs_seq2)
-        for n in range(0, len(obs_seq)):
-            #print(alpha[n])
-            #print(hmm2_alpha[n])
-            #print(re_alpha[n])
-            #print(hmm2_re_beta[n])
-            #print(re_beta[n])
-            print('-')
 
     def test_backward(self):
-        print()
-        obs_seq = [NY, NY, NY, NULL, NY, NY, NULL, LA, NULL, LA, NY, NY, NY]
-        #obs_seq2 = [1, 1, 1, 2, 1, 1, 2, 0, 2, 0, 1, 1, 1]
-        #obs_seq = self.obs_seq
-        #obs_seq2 = self.obs_seq2
+        obs_seq = self.obs_seq
+        obs_seq2 = self.obs_seq2
         beta = self.hmm.backward(obs_seq)
+
         n_alpha, cn = self.hmm_scaled.forward(obs_seq)
         n_beta = self.hmm_scaled.backward(obs_seq, cn)
         re_beta = self.hmm_scaled.nbeta_to_beta(n_beta, cn)
-        #hmm2_beta = self.hmm2.calcbeta(obs_seq2)
-        #hmm2_re_beta = self.hmm_scaled.nbeta_to_beta(hmm2_beta, cn)
 
-        print(beta)
-        print('-'*100)
-        print(self.hmm)
-        print('-'*100)
-        print(n_beta)
-        #print(self.hmm2.A)
-        #print(self.hmm2.B)
+        hmm2_beta = self.hmm2.calcbeta(obs_seq2)
         for n in range(0, len(obs_seq)):
-            print(beta[n])
-            #print(hmm2_beta[n])
-            #print(hmm2_re_beta[n])
-            print(re_beta[n])
-            print('-')
+            for k in range(0,len(self.hmm._z)):
+                self.assertAlmostEqual(re_beta[n][k], beta[n][k])
+                self.assertAlmostEqual(re_beta[n][k], hmm2_beta[n][k])
 
     def test_prob_X(self):
-        #obs_seq = [NY, NY, NY, NULL, NY, NY, NULL, LA, NULL, LA, NY, NY, NY]
         obs_seq = self.obs_seq
         alpha = self.hmm.forward(obs_seq)
         beta = self.hmm.backward(obs_seq)
-        prob_X0 = self.hmm._prob_X(alpha, beta)
+        hmm_prob_X = self.hmm._prob_X(alpha, beta)
 
         n_alpha , cn = self.hmm_scaled.forward(obs_seq)
-        prob_X1 = self.hmm_scaled._prob_X(cn)
-        print(prob_X0, prob_X1)
-        self.assertAlmostEqual(prob_X1, prob_X0)
+        hmm_scaled_prob_X = self.hmm_scaled._prob_X(cn)
 
-    def test_cn(self):
-        obs_seq = [NY, NY, NY, NULL, NY, NY, NULL, LA, NULL, LA, NY, NY, NY]
+        hmm2_prob_x = np.exp(self.hmm2.forwardbackward(self.obs_seq2))
 
-        alpha = self.hmm.forward(obs_seq)
-        beta = self.hmm.backward(obs_seq)
-
-        n_alpha , cn = self.hmm_scaled.forward(obs_seq)
-        n_beta = self.hmm_scaled.backward(obs_seq, cn)
-
-        prob_X0 = self.hmm._prob_X(alpha, beta)
-        prob_X1 = self.hmm_scaled._prob_X(cn)
-
-        print(prob_X0, prob_X1)
-        gamma = self.hmm.gamma(alpha, beta)
-        n_gamma = self.hmm_scaled.gamma(n_alpha, n_beta)
-
-
-        print(alpha)
-        print(self.hmm_scaled.nalpha_to_alpha(n_alpha, cn))
-
-        for n in range(0, len(obs_seq)):
-            for k in range(0,len(self.hmm._z)):
-                self.assertAlmostEqual(n_gamma[n][k], gamma[n][k])
-                #print(gamma[n][k], n_gamma[n][k])
-
+        self.assertAlmostEqual(hmm_scaled_prob_X, hmm_prob_X)
+        self.assertAlmostEqual(hmm_scaled_prob_X, hmm2_prob_x)
 
     def test_getter_emission(self):
         self.assertEqual(self.hmm_scaled.prob_x_given_z(NY, NY), 0.5)
@@ -238,14 +188,14 @@ class TestMIT16_410F10_scaled(unittest.TestCase):
 
         # test
         res = self.hmm_scaled.viterbi(seq=obs_seq)
-        print(len(best_state_seq))
-        print(len(obs_seq))
-        print(len(res))
-        print("best_seq\t    viterbi_seq")
-        print('-'*30)
+        #print(len(best_state_seq))
+        #print(len(obs_seq))
+        #print(len(res))
+        #print("best_seq\t    viterbi_seq")
+        #print('-'*30)
         i=0
         for item1, item2 in zip(best_state_seq,res):
             i+=1
-            print(str(i) + " " + item1 + "\t == " + item2)
-        print(res)
+            #print(str(i) + " " + item1 + "\t == " + item2)
+        #print(res)
         #self.assertListEqual(best_state_seq, res)
