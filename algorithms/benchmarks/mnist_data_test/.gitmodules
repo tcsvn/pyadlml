@@ -1,3 +1,0 @@
-[submodule "lib/billboard"]
-path = speech_dtw
-url = git@github.com:kamperh/speech_dtw.git

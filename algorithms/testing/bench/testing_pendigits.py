@@ -6,7 +6,7 @@ from sklearn import preprocessing
 
 from algorithms.benchmarks.benchmark import Bench
 from algorithms.benchmarks.benchmark import Dataset
-from algorithms.hmm.hmm import HiddenMarkovModel
+from algorithms.hmm._hmm_base import HiddenMarkovModel
 from algorithms.benchmarks.pendigits import DatasetPendigits
 from algorithms.hmm.distributions import ProbabilityMassFunction
 import pandas as pd

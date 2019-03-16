@@ -6,7 +6,7 @@
 """
 
 from algorithms.hmm.distributions import ProbabilityMassFunction
-from algorithms.hmm.hmm_scaled import HiddenMarkovModel
+from algorithms.hmm.hmm_scaled import HMM_Scaled
 import numpy as np
 
 class Model():
@@ -48,10 +48,10 @@ class HMM_Model(Model):
        init_pi = init_pi/sum(init_pi)
 
        # init markov model
-       self.hmm = HiddenMarkovModel(activity_list,
-                               observation_list,
-                              ProbabilityMassFunction,
-                              init_pi)
+       self.hmm = HMM_Scaled(activity_list,
+                             observation_list,
+                             ProbabilityMassFunction,
+                             init_pi)
        self.hmm.set_emission_matrix(em_matrix)
        self.hmm.set_transition_matrix(trans_matrix)
 

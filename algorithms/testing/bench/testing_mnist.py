@@ -6,7 +6,7 @@ from sklearn import preprocessing
 from algorithms.benchmarks.benchmark import Bench
 from algorithms.benchmarks.benchmark import Dataset
 from algorithms.benchmarks.mnist import DatasetMNIST
-from algorithms.hmm.hmm import HiddenMarkovModel
+from algorithms.hmm._hmm_base import HiddenMarkovModel
 from algorithms.hmm.distributions import ProbabilityMassFunction
 import pandas as pd
 import numpy as np
@@ -159,7 +159,7 @@ class TestMNIST(unittest.TestCase):
         print(len(obs_seq))
         alpha = hmm.forward(obs_seq)
         beta = hmm.backward(obs_seq)
-        hmm.prob_X(alpha, beta)
+        hmm._prob_X(alpha, beta)
         print('!'*100)
         hmm.train(obs_seq, None, 200)
         print('!'*100)
@@ -167,7 +167,7 @@ class TestMNIST(unittest.TestCase):
         print(hmm)
         alpha = hmm.forward(obs_seq)
         beta = hmm.backward(obs_seq)
-        print(hmm.prob_X(alpha, beta))
+        print(hmm._prob_X(alpha, beta))
 
         #for i in range(0,300):
         #    alpha_before = hmm.forward(obs_seq)
@@ -227,10 +227,10 @@ class TestMNIST(unittest.TestCase):
 
         obs_seq = self._kast_obj.get_train_seq()[:19]
         alpha_before = hmm.forward(obs_seq)
-        prob_x_before = hmm.prob_X(alpha_before)
+        prob_x_before = hmm._prob_X(alpha_before)
         hmm.training_step(obs_seq)
         alpha_after = hmm.forward(obs_seq)
-        prob_x_after = hmm.prob_X(alpha_after)
+        prob_x_after = hmm._prob_X(alpha_after)
         self.print_full(hmm.emissions_to_df())
         print('~'*10)
         #print(alpha_before)

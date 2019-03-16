@@ -4,7 +4,7 @@ from algorithms.benchmarks.pendigit.plotting import plotUniPenData
 from algorithms.benchmarks.pendigit.normalize import normalize_example
 from hmmlearn.hmm import MultinomialHMM
 #from algorithms.hmm.hmm_scaled import HiddenMarkovModel
-from algorithms.hmm.hmm import HiddenMarkovModel
+from algorithms.hmm._hmm_base import HiddenMarkovModel
 from algorithms.hmm.distributions import ProbabilityMassFunction
 import math
 import joblib
