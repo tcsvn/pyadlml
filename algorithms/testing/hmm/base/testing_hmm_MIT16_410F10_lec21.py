@@ -3,7 +3,8 @@ import numpy as np
 from algorithms.hmm._hmm_base import HiddenMarkovModel
 from algorithms.hmm.distributions import ProbabilityMassFunction
 import math
-from algorithms.testing.hmm.hmm2.hmm.discrete.DiscreteHMM import DiscreteHMM
+#from algorithms.testing.hmm.hmm2.hmm.discrete.DiscreteHMM import DiscreteHMM
+from algorithms.testing.hmm.hmm2.discrete.DiscreteHMM import DiscreteHMM
 
 LA = 'Los Angeles'
 NY = 'New York'
@@ -55,7 +56,10 @@ class TestMIT16_410F10(unittest.TestCase):
         alpha = self.hmm.forward(obs_seq)
         beta = self.hmm.backward(obs_seq)
         gamma = self.hmm.gamma(alpha, beta)
-        exp_trans_zn = self.hmm.expected_trans_from_z(gamma)
+        print()
+        print(gamma)
+        exp_trans_zn = self.hmm.expected_trans_from_zn(gamma)
+        print(exp_trans_zn)
 
 
     def test_expected_trans_from_znm1_to_zn(self):
@@ -70,6 +74,28 @@ class TestMIT16_410F10(unittest.TestCase):
 
         #exp_trans_zn_znp1 = self.hmm.expected_trans_from_za_to_zb(xi)
 
+    def test_exp_trans_znm1_to_zn_eq_to_exp_trans_(self):
+        obs_seq = self.obs_seq
+        alpha = self.hmm.forward(obs_seq)
+        beta = self.hmm.backward(obs_seq)
+        gamma = self.hmm.gamma(alpha,beta)
+        prob_X = self.hmm._prob_X(alpha,beta)
+        xi = self.hmm.xi(obs_seq, alpha, beta, prob_X)
+
+
+        exp_za_to_zb = self.hmm.expected_trans_from_za_to_zb(xi)
+        exp_trans_zn = self.hmm.expected_trans_from_zn(gamma)
+        old_new_A = self.hmm.new_transition_matrix(exp_trans_zn,exp_za_to_zb)
+        new_A = self.hmm.new_A(obs_seq, xi)
+
+        print(new_A)
+        print(old_new_A)
+        #print(self.hmm)
+        #print(exp_za_to_zb)
+        #print('-'*100)
+        #print(exp_trans_zn)
+        #print('-'*100)
+        #print(np.sum(exp_za_to_zb, axis=1))
 
     def test_transition_matrix(self):
         obs_seq = self.obs_seq

@@ -4,6 +4,7 @@ from typing import Dict, Any
 import numpy as np
 from graphviz import Digraph
 import pandas as pd
+import math
 
 
 class State():
@@ -429,6 +430,7 @@ class HiddenMarkovModel():
         diffcounter = 0
         old_prob_X = 0
         diff_arr = np.full((100), 10.0)
+        old_q = 1
         while (diff_arr.mean() > epsilon and steps > 0):
             self.training_step(seq)
             new_prob_X = self._prob_X(self.forward(seq), self.backward(seq))
@@ -449,6 +451,16 @@ class HiddenMarkovModel():
             # print(diff_arr.mean())
             # print(steps)
             steps -= 1
+            # debug
+
+            gamma = self.gamma(self.forward(seq), self.backward(seq))
+            xi = self.xi(seq)
+            new_q = self.q_energy_function(seq, gamma, xi)
+            if old_q < new_q:
+                print('todo')
+            else:
+                print('something went terribly wrong as the energy of the fcts can\'t be lesser')
+            old_q = new_q
 
     def _e_step(self, seq):
         # Filtering
@@ -492,7 +504,54 @@ class HiddenMarkovModel():
         :param gamma:
         :return:
         """
-        return gamma[0]
+        # test
+        new_pi = np.zeros((len(self._z)))
+        sum_gamma = gamma[0].sum()
+        for k in range(0, len(self._z)):
+            new_pi[k] = gamma[k]/sum_gamma
+        return new_pi
+        #return gamma[0]
+
+    def reestimate_transitions(self, seq, xi, gamma):
+        k = len(self._z)
+        new_A = np.zeros((k,k))
+        for knm1 in range(0, k):
+            for kn in range(0,k):
+                numer = 0.0
+                denom = 0.0
+                for n in range(0, len(seq)-1):
+                    numer += xi[n][knm1][kn]
+                    denom += gamma[n][knm1]
+            new_A[knm1][k] = numer/denom
+        return new_A
+
+    def new_A(self, obs_seq, xi):
+        """
+            computes a new transition matrix
+            xi[n][j][k] = the probability of being in state j at time t-1 and
+            in state k at time n given the entire observation sequence
+        :param xi:
+        :param obs_seq:
+        :return:
+        """
+        K = len(self._z)
+        N = len(obs_seq)
+
+        new_A = np.zeros((K, K))
+        for j in range(0, K):
+            denom = 0.0
+            for l in range(0, K):
+                for n in range(0, N-1):
+                    denom += xi[n][j][l]
+
+            for k in range(0, K):
+                num = 0.0
+                for n in range(0, N-1):
+                    num += xi[n][j][k]
+
+                new_A[j][k] = num/denom
+        return new_A
+
 
     def new_transition_matrix(self, exp_trans_zn, exp_trans_znm1_zn):
         """
@@ -504,8 +563,6 @@ class HiddenMarkovModel():
         """
         k = len(self._z)
         res = np.zeros((k, k))
-        # print(exp_trans_znm1_zn)
-        # print(exp_trans_zn)
         for idx_znm1, znm1 in enumerate(self._z):
             for idx_zn, zn in enumerate(self._z):
                 # print(str(exp_trans_znm1_zn[idx_znm1][idx_zn]) + "/" + str(exp_trans_zn[idx_znm1]))
@@ -524,8 +581,9 @@ class HiddenMarkovModel():
         # 1.  calculate expected number of transitions from state i in O
         res = np.zeros(len(self._z))
         gammaT = gamma.T
-        res = np.sum(gamma, axis=0)
         # res = np.einsum('ij->j', gamma)
+
+        res = np.sum(gamma, axis=0)
         return res
 
     def expected_trans_from_za_to_zb(self, xi):
@@ -614,13 +672,65 @@ class HiddenMarkovModel():
 
     def viterbi(self, seq):
         """
+        computes the most likely path of states that generated the given sequence
+        :param seq: list or np.array of symbols
+        :return: list of states
+        """
+        N = len(seq)
+        K = len(self._z)
+        # matrix contains the log lattice probs for each step
+        omega = np.zeros((N, K))
+
+         # init
+        for k, z1 in enumerate(self._z):
+            omega[0][k] = math.log(self.prob_z1(z1), math.e) \
+                        + math.log(self.prob_x_given_z(seq[0], z1), math.e)
+
+        # recursion
+        for n in range(1, N):
+            xnp1 = seq[n]
+            for k, zn in enumerate(self._z):
+                # find max
+                max_future_prob = self.viterbi_max(omega[n-2:n], xnp1)
+                omega[n][k] = math.log(self.prob_x_given_z(xnp1, zn), math.e) \
+                            + max_future_prob
+
+        # backtrack the most probable states and generate a list
+        res = []
+        for n in omega:
+            res.append(self._z[n.argmax()])
+        return res
+
+    def viterbi_max(self, omega_slice, xnp1):
+        """
+
+        :param omega_slice: the last lattice values of omegas
+        :return:
+        """
+        max = 0.0
+        for k, zn in enumerate(self._z):
+            val = math.log(self.prob_x_given_z(xnp1, zn), math.e) \
+                + omega_slice[k]
+            if val > max:
+                max = val
+        return max
+
+
+
+
+
+    def old_viterbi(self, seq):
+        """
         the most likely path of states that generated the sequence
         :return: a list of states
         """
         # seq x states
         max_prob_matrix = np.zeros((len(self._z), len(seq)))
+        # init
         for idx, state in enumerate(self._z):
             max_prob_matrix[idx][0] = self.prob_z1(state) * self.prob_x_given_z(seq[0], state)
+
+        # recursion
         for seq_counter in range(1, len(seq)):
             for idx, act_state in enumerate(self._z):
                 tmp = np.zeros(len(self._z))
@@ -631,8 +741,40 @@ class HiddenMarkovModel():
                                 * self.prob_x_given_z(seq[seq_counter], act_state)
                 max_prob_matrix[idx][seq_counter] = tmp.max()
 
-        # generate/backtrack state sequence
+        # backtrack state sequence
         res = []
         for timestep in max_prob_matrix.T:
             res.append(self._z[timestep.argmax()])
         return res
+
+
+    def q_energy_function(self, seq, gamma, xi):
+        """
+        computes the energy of the model given the old and new parameters
+        the energy always has to erfuellen" q_old > q_new !!!
+        :return: the difference of energies
+        """
+        K = len(self._z)
+        N = len(seq)
+
+        # compute first term
+        first_term = 0.0
+        for k in range(0, K):
+            first_term += gamma[0][k] * math.log(self._pi[k], math.e)
+
+        # compute second term
+        second_term = 0.0
+        for n in range(0, N-1):
+            for j in range(0, K):
+                for k in range(0, K):
+                    second_term += xi[n][j][k] * math.log(self._A[j][k], math.e)
+
+        # compute third term
+        third_term = 0.0
+        for n in range(0, N):
+            for k, zn in enumerate(self._z):
+                third_term += gamma[n][k] \
+                              * math.log(self.prob_x_given_z(seq[n], zn), math.e)
+
+        return first_term + second_term + third_term
+
