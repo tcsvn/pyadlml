@@ -4,7 +4,9 @@
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/algorithms/benchmarks/mnist/pendigits-hmm" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/algorithms/benchmarks/test/python-mnist" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/algorithms/hmm/testing/hmm2" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/algorithms/testing/hmm/hmm2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/algorithms/testing/hmm2" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/datasets/pendigits/HMM-Pendigits" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/testing/hmm/hmm2" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/testing/hmm/hmm2/HMM" vcs="Git" />

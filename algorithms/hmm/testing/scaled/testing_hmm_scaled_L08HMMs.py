@@ -4,7 +4,7 @@ from math import exp
 from algorithms.hmm._hmm_base import HiddenMarkovModel as norm_HMM
 from algorithms.hmm.hmm_scaled import HMM_Scaled as sc_HMM
 from algorithms.hmm.distributions import ProbabilityMassFunction
-from algorithms.testing.hmm.hmm2.hmm.discrete.DiscreteHMM import DiscreteHMM
+from algorithms.hmm.testing.hmm2.hmm.discrete.DiscreteHMM import DiscreteHMM
 
 S0 = 'S0'
 S1 = 'S1'

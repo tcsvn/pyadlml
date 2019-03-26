@@ -1,8 +1,8 @@
 import unittest
 
 from algorithms.model import HMM_Model
-from algorithms.benchmarks.benchmark import Bench
-from algorithms.benchmarks.benchmark import Dataset
+from benchmarks import Bench
+from benchmarks import Dataset
 
 
 class TestBench(unittest.TestCase):

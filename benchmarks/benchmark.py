@@ -1,13 +1,12 @@
 import logging
 from enum import Enum
 
-import matplotlib
 from numpy import genfromtxt
 import  matplotlib.pyplot as plt
-from algorithms.benchmarks.kasteren import DatasetKasteren
+from benchmarks import DatasetKasteren
 import os
 
-from algorithms.benchmarks.mnist import DatasetMNIST
+from benchmarks import DatasetMNIST
 
 dirname = os.path.dirname(__file__)[:-22]
 MNIST_LABEL_FILE = dirname + '/datasets/mnist_sequences/sequences/'

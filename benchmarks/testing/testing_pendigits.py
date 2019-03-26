@@ -1,17 +1,9 @@
-import math
 import os
 import unittest
 
-from sklearn import preprocessing
+from benchmarks import DatasetPendigits
 
-from algorithms.benchmarks.benchmark import Bench
-from algorithms.benchmarks.benchmark import Dataset
-from algorithms.hmm._hmm_base import HiddenMarkovModel
-from algorithms.benchmarks.pendigits import DatasetPendigits
-from algorithms.hmm.distributions import ProbabilityMassFunction
-import pandas as pd
-import numpy as np
-from algorithms.model import HMM_Model
+
 #from algorithms.benchmarks.mnist_data.analysis import training
 
 

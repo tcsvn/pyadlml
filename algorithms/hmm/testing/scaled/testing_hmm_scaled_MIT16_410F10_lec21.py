@@ -1,10 +1,9 @@
-import math
 import unittest
 import numpy as np
 from algorithms.hmm.hmm_scaled import HMM_Scaled as ScaledHMM
 from algorithms.hmm._hmm_base import HiddenMarkovModel as hMM
 from algorithms.hmm.distributions import ProbabilityMassFunction
-from algorithms.testing.hmm.hmm2.hmm.discrete.DiscreteHMM import DiscreteHMM
+from algorithms.hmm.testing.hmm2.hmm.discrete.DiscreteHMM import DiscreteHMM
 
 LA = 'Los Angeles'
 NY = 'New York'
