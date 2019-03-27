@@ -8,24 +8,14 @@ class Benchmark():
     def __init__(self, model):
         self._model = model
         self._model_was_trained = False
+        self._conv_plot = None
+        self._conv_data = None
         self._model_metrics = False
+        self._conf_matrix = None
         self._accuracy = None
         self._recall = None
         self._precision = None
-        self._conv_plot = None
-        self._conv_data = None
-
-    def set_accuracy(self, val):
-        self._model_metrics = True
-        self._accuracy = val
-
-    def set_recall(self, val):
-        self._model_metrics = True
-        self._recall = val
-
-    def set_precision(self, val):
-        self._model_metrics = True
-        self._precision = val
+        self._f1_score = None
 
     def notify_model_was_trained(self):
         self._model_was_trained = True
@@ -67,6 +57,7 @@ class Benchmark():
         creates a report including accuracy, precision, recall, training convergence
         :return:
         """
+        decimals = 4
         s = "Report"
         s += "\n"
         if self._model_was_trained:
@@ -78,24 +69,77 @@ class Benchmark():
             s += "Start\t" + str_Y + " = " + str(start_Y) + "\n"
             s += "Trained\t" + str_Y + " = " + str(end_Y) + "\n"
 
-        s += "_"*100
-        s += "\n"
-        s += "Metrics test dataset:" + "\n"
-        if self._model_metrics:
-            if self._accuracy is not None:
-                s += "\tAccuracy: \t" + str(self._accuracy) + "\n"
-            else:
-                s += "\tAccuracy: \t" + "not implemented" + "\n"
-            if self._precision is not None:
-                s += "\tPrecision: \t" + str(self._precision) + "\n"
-            else:
-                s += "\tPrecision: \t" + "not implemented" + "\n"
-            if self._recall is not None:
-                s += "\tRecall: \t" + str(self._recall) + "\n"
-            else:
-                s += "\tRecall: \t" + "not implemented" + "\n"
 
-        else:
-            s += "no model metrics where calculated\n"
+        if self._model_metrics:
+            s += "_"*100
+            s += "\n"
+            s += "Metrics test dataset:" + "\n"
+            if self._conf_matrix is not None:
+                s += "Confusion matrix\n"
+                s += str(self._model.get_label_list()) + "\n"
+                s += str(self._conf_matrix) + "\n"
+                s += ""
+                s += "-"*20
+                s += "\n"
+            if self._accuracy is not None:
+                s += "\tAccuracy: \t" + str(round(self._accuracy, decimals)) + "\n"
+            if self._precision is not None:
+                s += "\tPrecision: \t" + str(round(self._precision, decimals)) + "\n"
+            if self._recall is not None:
+                s += "\tRecall: \t" + str(round(self._recall, decimals)) + "\n"
+            if self._f1_score is not None:
+                s += "\tF1-Score: \t" + str(round(self._f1_score, decimals)) + "\n"
+
         s += "*"*100
         return s
+
+    def calc_conf_matrix(self, y_true, y_pred):
+        #conf_mat = self.tmp_create_confusion_matrix(test_obs_arr)
+        if y_pred is not None and y_true is not None:
+            from sklearn.metrics import confusion_matrix
+            self._model_metrics = True
+            self._conf_matrix = confusion_matrix(y_pred, y_true)
+
+
+
+    def calc_f1_score(self, y_true=None, y_pred=None):
+        from sklearn.metrics import f1_score
+        self._model_metrics = True
+        if y_pred is not None and y_true is not None:
+            """
+            micro counts the total true positives, false pos, ...
+            """
+            self._f1_score = f1_score(y_true, y_pred,
+                                      average='macro')
+
+    def calc_precision(self, y_true=None, y_pred=None):
+        from sklearn.metrics import precision_score
+        self._model_metrics = True
+        if y_pred is not None and y_true is not None:
+            """
+            macro makes scores for each label and than does an
+            unweighted average
+            """
+            self._precision = precision_score(y_true, y_pred,
+                                              average='macro')
+
+    def calc_recall(self, y_true=None, y_pred=None):
+        from sklearn.metrics import recall_score
+        self._model_metrics = True
+        if y_pred is not None and y_true is not None:
+            self._recall = recall_score(y_true, y_pred,
+                                            average='macro')
+
+    def calc_accuracy(self, y_true=None, y_pred=None):
+        """
+        calculates accuracy for each state
+        :return:
+        """
+        self._model_metrics = True
+        from sklearn.metrics import accuracy_score
+        if y_pred is not None and y_true is not None:
+            self._accuracy = accuracy_score(y_true, y_pred,
+                                            normalize=True)
+        else:
+            #todo calculate anew
+            raise ValueError

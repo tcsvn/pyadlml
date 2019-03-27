@@ -1,7 +1,6 @@
 import os
 import yaml
 from enum import Enum
-
 from benchmarks.benchmark import Benchmark
 from benchmarks.kasteren import DatasetKasteren
 from benchmarks.pendigits import DatasetPendigits
@@ -27,7 +26,7 @@ class Dataset(Enum):
 class Controller():
     def __init__(self):
         self._model = None
-        self._bench = None
+        self._bench = None # type: Benchmark
         self._loaded_datasets = {}
 
         # if set true this is used to log training convergence to a file
@@ -53,11 +52,11 @@ class Controller():
         """
         if data_name == Dataset.KASTEREN:
             print('loading sensors...')
-            kasteren = DatasetKasteren()
-            self._loaded_datasets[Dataset.KASTEREN.name] = kasteren
             kast_sens_path, kast_act_path = self.load_paths(Dataset.KASTEREN)
-            kasteren.load_sensors(kast_sens_path)
-            kasteren.load_activitys(kast_act_path)
+            kasteren = DatasetKasteren(kast_sens_path, kast_act_path)
+            self._loaded_datasets[Dataset.KASTEREN.name] = kasteren
+            kasteren.load_sensors()
+            kasteren.load_activitys()
 
         elif data_name == Dataset.PENDIGITS:
             print('loading numbers...')
@@ -134,25 +133,24 @@ class Controller():
     def show_plot(self):
         self._bench.show_plot()
 
-    def create_report(self, accuracy=False, precision=False, recall=False):
+    def decode_state(self, state_number, dk):
+        dataset = self._loaded_datasets[dk.name]
+        return dataset.get_activity_label_from_id(state_number)
+
+    def create_report(self, conf_matrix=False, accuracy=False, precision=False, recall=False, f1=False):
+        kasteren = self._loaded_datasets[Dataset.KASTEREN.name]
+        test_seq = kasteren.get_test_arr()
+        if accuracy or precision or recall or conf_matrix:
+            y_true, y_pred = self._model.create_pred_act_seqs(test_seq)
         if accuracy:
-            acc = self._calc_accuracy(Dataset.KASTEREN)
-            self._bench.set_accuracy(acc)
+            self._bench.calc_accuracy(y_true, y_pred)
         if precision:
-            pass
+            self._bench.calc_precision(y_true, y_pred)
         if recall:
-            pass
+            self._bench.calc_recall(y_true, y_pred)
+        if conf_matrix:
+            self._bench.calc_conf_matrix(y_true, y_pred)
+        if f1:
+            self._bench.calc_f1_score(y_true, y_pred)
+
         return self._bench.create_report()
-
-    def _calc_accuracy(self, data_name : Dataset):
-        if data_name == Dataset.KASTEREN:
-            kasteren = self._loaded_datasets[Dataset.KASTEREN.name]
-            test_seq = kasteren.get_test_seq()
-            return self._model.calc_accuracy(test_seq)
-
-    def _calc_precision(self, prec):
-        pass
-
-    def _calc_recall(self, recall):
-        pass
-

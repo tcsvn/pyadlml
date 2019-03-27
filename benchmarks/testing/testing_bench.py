@@ -13,7 +13,7 @@ class TestController(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_bench(self):
+    def test_bench_reports_conf_matrix(self):
         hmm_model = Proxy_HMM(self.ctrl)
         dk = Dataset.KASTEREN
         self.ctrl.load_dataset(dk)
@@ -21,7 +21,24 @@ class TestController(unittest.TestCase):
         self.ctrl.init_model_on_dataset(dk)
         self.ctrl.enable_benchmark()
         self.ctrl.train_model(dk)
-        report = self.ctrl.create_report(accuracy=True)
+        report = self.ctrl.create_report(
+            conf_matrix=True)
+        print(report)
+
+    def test_bench_reports(self):
+        hmm_model = Proxy_HMM(self.ctrl)
+        dk = Dataset.KASTEREN
+        self.ctrl.load_dataset(dk)
+        self.ctrl.register_model(hmm_model)
+        self.ctrl.init_model_on_dataset(dk)
+        self.ctrl.enable_benchmark()
+        self.ctrl.train_model(dk)
+        report = self.ctrl.create_report(
+            conf_matrix=True,
+            accuracy=True,
+            precision=True,
+            recall=True,
+            f1=True)
         print(report)
         #self.ctrl.show_plot()
 

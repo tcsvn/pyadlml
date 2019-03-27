@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 START_TIME = 'Start time'
 END_TIME = 'End time'
@@ -7,7 +8,9 @@ VAL = 'Val'
 NAME = 'Name'
 
 class DatasetKasteren():
-    def __init__(self):
+    def __init__(self, sensor_file_path, activity_file_path):
+        self._sens_file_path = sensor_file_path
+        self._act_file_path = activity_file_path
         self._train_seq = []
         self._test_seq = []
         self._df = None
@@ -20,8 +23,8 @@ class DatasetKasteren():
         self._activity_label_reverse_hashmap = None
 
 
-    def get_test_seq(self):
-        return self._test_seq
+    def get_test_arr(self):
+        return self._test_arr
 
     def get_train_seq(self):
         return self._train_seq
@@ -79,17 +82,21 @@ class DatasetKasteren():
 
 
 
-    def load_sensors(self, path_to_file):
-        labels, df = self._sensor_file_to_df(path_to_file)
+    def load_sensors(self):
+        labels, df = self._sensor_file_to_df(self._sens_file_path)
         self._df_to_seq(labels, df)
 
-    def load_activitys(self, path_to_file):
+    def load_activitys(self):
         """
         todo load data too
         :param path_to_file:
         :return:
         """
-        act_label = pd.read_csv(path_to_file,
+        self._load_activity_labels()
+        self._load_activity_data()
+
+    def _load_activity_labels(self):
+        act_label = pd.read_csv(self._act_file_path,
                                  sep=":",
                                  skiprows=5,
                                  nrows=7,
@@ -101,6 +108,8 @@ class DatasetKasteren():
         act_label[NAME] = act_label[NAME].apply(lambda x: x[1:-1])
         act_label[ID] = pd.to_numeric(act_label[ID])
 
+
+        # create encoded mapping
         self._activity_label_hashmap = {}
         self._activity_label_reverse_hashmap = {}
         for row in act_label.iterrows():
@@ -108,9 +117,67 @@ class DatasetKasteren():
             value = row[1][0]
             self._activity_label_hashmap[name] = value
             self._activity_label_reverse_hashmap[value] = name
-        self._activity_labe = act_label
+        self._activity_label = act_label
 
-        # todo add activity data
+    def _load_activity_data(self):
+        act_data = pd.read_csv(self._act_file_path,
+            sep="\t",
+            skiprows=23,
+            skipfooter=1,
+            parse_dates=True,
+            names=[START_TIME, END_TIME, ID],
+            engine='python' #to ignore warning for fallback to python engine because skipfooter
+            #dtype=[]
+            )
+        act_data[START_TIME] = pd.to_datetime(act_data[START_TIME])
+        act_data[END_TIME] = pd.to_datetime(act_data[END_TIME])
+
+
+        #reformating datetime
+        df_start = act_data.copy()
+        df_end = act_data.copy()
+        df_end = df_end.loc[:, df_end.columns != START_TIME]
+        df_start = df_start.loc[:, df_start.columns != END_TIME]
+        TIME = 'time'
+        # rename column 'End Time' and 'Start Time' to 'Time'
+        new_columns = df_end.columns.values
+        new_columns[0] = TIME
+        df_end.columns = new_columns
+        df_start.columns = new_columns
+
+        new_df = pd.concat([df_end, df_start])
+        act_data = new_df.sort_values(TIME)
+        act_data[TIME] = pd.to_datetime(act_data[TIME])
+
+        # label test sequence
+        self._test_arr = np.zeros((len(self._test_seq), 2))
+        """
+        offset is used to correct index if an observation falls out of the 
+        measuered range
+        """
+        offset = 0
+        for idx in range(0, len(self._test_seq)):
+            entry = self._test_seq.pop(0)
+            timestamp = entry[1]
+            #mask = (act_data[TIME] > timestamp) & (act_data[TIME] <= timestamp)
+            mask_lower = (act_data[TIME] <= timestamp)
+            lower_slice = act_data.loc[mask_lower][-1:]
+            lidx = int(lower_slice.index[0])
+            test = act_data.loc[lidx]
+
+            # time of the next value above lower_slice
+            upper_time = test[-1:].loc[lidx][TIME]
+            if not upper_time >= timestamp:
+                offset += 1
+            else:
+                idea = int(test[-1:].loc[lidx][ID])
+                self._test_arr[idx-offset][0] = entry[0]
+                self._test_arr[idx-offset][1] = idea
+
+        self._test_arr = self._test_arr[:-offset]
+
+
+
 
 
     def _activity_file_to_df(self, path_to_file):
@@ -198,25 +265,28 @@ class DatasetKasteren():
         new_df = pd.concat([df_end, df_start])
         new_df = new_df.sort_values('Time')
         #print(df.head(10))
-        #print(new_df.head(20))
 
-        lst = []
+        cut = int(len(new_df.index)*0.8)
+        idx = 0
         for row in new_df.iterrows():
             label =row[1][0]
+            time = row[1][1]
             value = row[1][2]
             # lookup id in new_label
             correct_row = new_label[(new_label[NAME] == label) \
                                     & (new_label[VAL] == value)]
             ide = correct_row.index[0]
-            lst.append(ide)
+            if idx < cut:
+                self._train_seq.append(ide)
+            else:
+                self._test_seq.append((ide, time))
+            idx += 1
         #new_label[NAME] = new_label[NAME].str.strip()
         #print(lst)
         #print(len(lst))
         #print(len(new_df.index))
-        cut = int(len(lst)*0.8)
-        self._train_seq = lst[:cut]
-        self._test_seq = lst[cut:]
-
+        #self._train_seq = lst[:cut]
+        #self._test_seq = lst[cut:]
 
 
         self._df = new_df

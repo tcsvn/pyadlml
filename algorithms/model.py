@@ -4,6 +4,7 @@
     model is also called from hmm events
 """
 from algorithms.hmm._hmm_base import HiddenMarkovModel
+from benchmarks.controller import Controller, Dataset
 
 
 class Model():
@@ -52,8 +53,8 @@ import numpy as np
 class Proxy_HMM(Model):
 
     def __init__(self, controller):
-        self._cm = controller
-        self._hmm = None
+        self._cm = controller # type: Controller
+        self._hmm = None # type: HiddenMarkovModel
 
         # training parameters
         self._training_steps = 100
@@ -104,8 +105,61 @@ class Proxy_HMM(Model):
                         self._training_steps,
                         self._use_q_fct)
 
-    def calc_accuracy(self, test_obs_seq):
-        return 3.5
+    def get_label_list(self):
+        lst = []
+        for state_nr in self._hmm._z:
+            lst.append(self._cm.decode_state(state_nr, dk=Dataset.KASTEREN))
+        return lst
+
+    # todo flag deletion
+    # works but use sklearn instead
+    #def tmp_create_confusion_matrix(self, test_obs_arr):
+    #    K = len(self._hmm._z)
+    #    N = len(test_obs_arr)
+    #    print(K)
+    #    print(N)
+    #    #print(test_obs_arr)
+    #    # predicted class X actual class
+    #    conf_mat = np.zeros((K, K))
+    #    obs_seq = []
+    #    for n in range(N):
+    #        obs_seq.append(int(test_obs_arr[n][0]))
+    #        state_seq = self._hmm.viterbi(obs_seq)
+    #        predicted_state = state_seq[-1:][0]
+    #        actual_state = int(test_obs_arr[n][1])
+    #        idx_pred_state = self._hmm._idx_state(predicted_state)
+    #        idx_act_state = self._hmm._idx_state(actual_state)
+    #        conf_mat[idx_act_state][idx_pred_state] += 1
+
+    #        #print(self._cm.decode_state(predicted_state, Dataset.KASTEREN))
+    #    return conf_mat
+
+    def create_pred_act_seqs(self, test_obs_arr):
+        """
+
+        :param test_obs_arr:
+            N x 2 numpy array
+            first value is id of observation
+            second value is id of state
+        """
+        K = len(self._hmm._z)
+        N = len(test_obs_arr)
+        #print(test_obs_arr)
+        obs_seq = []
+        y_pred = np.zeros((N))
+        y_true = np.zeros((N))
+
+        for n in range(N):
+            obs_seq.append(int(test_obs_arr[n][0]))
+            state_seq = self._hmm.viterbi(obs_seq)
+            predicted_state = state_seq[-1:][0]
+            actual_state = int(test_obs_arr[n][1])
+            idx_pred_state = self._hmm._idx_state(predicted_state)
+            idx_act_state = self._hmm._idx_state(actual_state)
+
+            y_pred[n] = idx_pred_state
+            y_true[n] = idx_act_state
+        return y_true, y_pred
 
 
     def predict_next_observation(self, obs_seq):

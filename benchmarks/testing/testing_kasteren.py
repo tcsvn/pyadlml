@@ -15,7 +15,7 @@ class TestKasteren(unittest.TestCase):
         # set of observations
         self._bench = Controller()
         self._bench.load_dataset(Dataset.KASTEREN)
-        self._kast_obj = self._bench._loaded_datasets[Dataset.KASTEREN.name]
+        self._kast_obj = self._bench._loaded_datasets[Dataset.KASTEREN.name] # type: DatasetKasteren
 
     def tearDown(self):
         pass
@@ -153,6 +153,12 @@ class TestKasteren(unittest.TestCase):
     #    print(df)
     #    df['e'] = df.sum(axis=1)
     #    print(df['e'])
+
+    def test_test_list(self):
+        test_arr = self._kast_obj.get_test_arr()
+        #print(test_arr)
+        #self._kast_obj.load_activitys()
+
 
     def print_full(self, x):
         pd.set_option('display.max_rows', len(x))
