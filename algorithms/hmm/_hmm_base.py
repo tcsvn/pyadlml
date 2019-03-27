@@ -66,14 +66,14 @@ class HiddenMarkovModel():
         # represents the prob from going from state i to j
         # a_ij = P(z_(k+1) = j | z_k=i)
         # initialize uniformely
-        self._A = np.full((k, k), 1. / k)
+        self._A = np.full((k, k), 1./k)
         self._o = observations
 
         # initial state probabilities even
         if initial_dist is not None:
             self._pi = initial_dist
         else:
-            self._pi = np.full(k, 1. / k)
+            self._pi = np.full(k, 1./k)
 
     def __str__(self):
         s = ""
@@ -443,17 +443,16 @@ class HiddenMarkovModel():
             old_prob_X = 0.
 
         while (diff_arr.mean() > epsilon and steps > 0):
-            self.training_step(seq)
+            alpha, beta, gamma, prob_X, xi = self._e_step(seq)
+            self._m_step(seq, gamma, xi)
 
             if q_fct:
-                gamma = self.gamma(self.forward(seq), self.backward(seq))
-                xi = self.xi(seq)
                 new_q = self.q_energy_function(seq, gamma, xi)
                 diff = new_q - old_q
                 old_q = new_q
                 self.logger.debug(new_q)
             else:
-                new_prob_X = self._prob_X(self.forward(seq), self.backward(seq))
+                new_prob_X = prob_X
                 diff = new_prob_X - old_prob_X
                 old_prob_X = new_prob_X
                 self.logger.debug(new_prob_X)
@@ -490,6 +489,18 @@ class HiddenMarkovModel():
 
         return alpha, beta, gamma, prob_X, xi
 
+    def _m_step(self, seq, gamma, xi):
+        self._pi = self.new_pi(gamma)
+
+        # calculate new emission probabilities
+        #new_em = self.new_emissions(seq, gamma)
+        new_em =self.new_emissions(gamma, seq)
+        self.set_emission_matrix(new_em)
+
+        # calculate new transition probability from state i to j
+        #self._A = self.new_transition_matrix(exp_trans_zn, exp_trans_zn_znp1)
+        self._A = self.new_A(seq, xi)
+
     def training_step(self, seq):
         # E-Step ----------------------------------------------------------------
         # -----------------------------------------------------------------------
@@ -512,6 +523,7 @@ class HiddenMarkovModel():
         # calculate new transition probability from state i to j
         #self._A = self.new_transition_matrix(exp_trans_zn, exp_trans_zn_znp1)
         self._A = self.new_A(seq, xi)
+
 
     def new_pi(self, gamma):
         """

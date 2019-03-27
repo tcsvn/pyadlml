@@ -1,123 +1,50 @@
 import logging
-from enum import Enum
-
+import matplotlib.pyplot as plt
 from numpy import genfromtxt
-import  matplotlib.pyplot as plt
-from benchmarks import DatasetKasteren
-import os
-
-from benchmarks import DatasetMNIST
-
-dirname = os.path.dirname(__file__)[:-22]
-MNIST_LABEL_FILE = dirname + '/datasets/mnist_sequences/sequences/'
-MNIST_TEST_FILE = dirname + '/algorithms/bchmarks/mnist_data/data/pendigits-test'
-#KASTEREN_SENS_PATH = '/mnt/external_D/code/hassbrain_algorithm/datasets/kasteren/kasterenSenseData.txt'
-#KASTEREN_ACT_PATH = '/mnt/external_D/code/hassbrain_algorithm/datasets/kasteren/kasterenActData.txt'
-KASTEREN_SENS_PATH = dirname + '/datasets/kasteren/kasterenSenseData.txt'
-KASTEREN_ACT_PATH = dirname + '/datasets/kasteren/kasterenActData.txt'
-HASS_PATH = ''
 
 LOGGING_FILENAME='train_model.log'
 
-class Dataset(Enum):
-    HASS = 'hass'
-    KASTEREN = 'kasteren'
-    MAVPAD2005 = 'mavpad'
-    ARAS = 'aras'
-    CASAS_ARUBA = 'CASAS'
-    MNIST = 'mnist_data'
-
-class Bench():
-    def __init__(self):
-        self._model = None
-        self._loaded_datasets = {}
+class Benchmark():
+    def __init__(self, model):
+        self._model = model
+        self._model_was_trained = False
+        self._model_metrics = False
+        self._accuracy = None
+        self._recall = None
+        self._precision = None
         self._conv_plot = None
         self._conv_data = None
 
-    def setup_training_logging(self):
+    def set_accuracy(self, val):
+        self._model_metrics = True
+        self._accuracy = val
+
+    def set_recall(self, val):
+        self._model_metrics = True
+        self._recall = val
+
+    def set_precision(self, val):
+        self._model_metrics = True
+        self._precision = val
+
+    def notify_model_was_trained(self):
+        self._model_was_trained = True
+
+    def enable_logging(self):
         logging.basicConfig(
             level=logging.DEBUG,
             filename=LOGGING_FILENAME,
             filemode='w',
             format='%(message)s'
         )
-
-
-
-    def load_dataset(self, data_name):
-        """
-        loads the dataset into ram
-        :param data_name:
-        :return:
-        """
-        if data_name == Dataset.KASTEREN:
-            print('loading sensors...')
-            kasteren = DatasetKasteren()
-            self._loaded_datasets[Dataset.KASTEREN.name] = kasteren
-            kasteren.load_sensors(KASTEREN_SENS_PATH)
-            kasteren.load_activitys(KASTEREN_ACT_PATH)
-
-        elif data_name == Dataset.MNIST:
-            print('loading numbers...')
-            mnist = DatasetMNIST()
-            self._loaded_datasets[Dataset.MNIST.name] = mnist
-            mnist.load_files(MNIST_TEST_FILE, MNIST_LABEL_FILE)
-
-        elif data_name == Dataset.HASS:
-            return
-        elif data_name == Dataset.MAVPAD2005:
-            return
-        elif data_name == Dataset.ARAS:
-            return
-        elif data_name == Dataset.CASAS_ARUBA:
-            return
-
-    def register_model(self, model):
-        """
-        setter for model
-        :param model:
-        """
-        self._model = model
-
-    def init_model_on_dataset(self, data_name):
-        if data_name == Dataset.KASTEREN:
-            kasteren = self._loaded_datasets[Dataset.KASTEREN.name]
-            self._model.model_init(
-                kasteren.get_activity_list(),
-                kasteren.get_sensor_list()
-            )
-        elif data_name == Dataset.MNIST:
-            mnist = self._loaded_datasets[Dataset.MNIST.name]
-            self._model.model_init(
-                activity_list = mnist.get_state_list(),
-                observation_list=mnist.get_observations_list()
-            )
-
-
-
-    def train_model(self, data_name):
-        """
-        trains the model on the sequence of the data
-        :param data_name:
-        :return:
-        """
-        # enable
-        self.setup_training_logging()
         logger = logging.getLogger()
         logger.disabled = False
 
-        # train on given dataset
-        if data_name == Dataset.KASTEREN:
-            kasteren = self._loaded_datasets[Dataset.KASTEREN.name]
-            train_seq = kasteren.get_train_seq()[:19]
-            self._model.train(train_seq)
-        elif data_name == Dataset.HASS:
-            pass
-
+    def disable_logging(self):
         logger = logging.getLogger()
         logger.disabled = True
 
-
+    def read_in_conv_plot(self):
         # read logged file and read in data for plotting
         data = genfromtxt(LOGGING_FILENAME, delimiter='\n')
         self._conv_data = data
@@ -127,52 +54,48 @@ class Bench():
         #matplotlib.rcParams['text.usetex'] = True
         plt.plot(data)
         #plt.ylabel('$P(X|\Theta)$')
-        plt.ylabel('P(X|Theta)')
-        plt.xlabel('training steps')
+        ylabel = self._model.get_conv_plot_y_label()
+        xlabel = self._model.get_conv_plot_x_label()
+        plt.ylabel(ylabel)
+        plt.xlabel(xlabel)
 
+    def show_plot(self):
+        plt.show()
 
     def create_report(self):
         """
         creates a report including accuracy, precision, recall, training convergence
         :return:
         """
-        start_prob_X = self._conv_data[0]
-        end_prob_X = self._conv_data[len(self._conv_data)-1]
         s = "Report"
         s += "\n"
+        if self._model_was_trained:
+            s += "_"*100
+            s += "\n"
+            start_Y = self._conv_data[0]
+            end_Y = self._conv_data[len(self._conv_data)-1]
+            str_Y = self._model.get_conv_plot_y_label()
+            s += "Start\t" + str_Y + " = " + str(start_Y) + "\n"
+            s += "Trained\t" + str_Y + " = " + str(end_Y) + "\n"
+
         s += "_"*100
         s += "\n"
-        s += "Start\tP( X|Theta ) = " + str(start_prob_X) + "\n"
-        s += "Trained\tP( X|Theta ) = " + str(end_prob_X) +"\n"
-        s += "_"*100
-        s += "\n"
-        s += "Metric on test dataset:" + "\n"
-        s += "\tAccuracy: \t" + "todo" + "\n"
-        s += "\tPrecision: \t" + "todo" + "\n"
-        s += "\tRecall: \t" + "todo" + "\n"
+        s += "Metrics test dataset:" + "\n"
+        if self._model_metrics:
+            if self._accuracy is not None:
+                s += "\tAccuracy: \t" + str(self._accuracy) + "\n"
+            else:
+                s += "\tAccuracy: \t" + "not implemented" + "\n"
+            if self._precision is not None:
+                s += "\tPrecision: \t" + str(self._precision) + "\n"
+            else:
+                s += "\tPrecision: \t" + "not implemented" + "\n"
+            if self._recall is not None:
+                s += "\tRecall: \t" + str(self._recall) + "\n"
+            else:
+                s += "\tRecall: \t" + "not implemented" + "\n"
+
+        else:
+            s += "no model metrics where calculated\n"
         s += "*"*100
         return s
-
-    def render_model(self, data_name):
-        if data_name == Dataset.KASTEREN:
-            kasteren = self._loaded_datasets[Dataset.KASTEREN.name]
-            dot = self._model.draw(kasteren.get_activity_label_from_id)
-        return dot
-
-    def show_plot(self):
-        plt.show()
-
-    def calc_accuracy(self, acc):
-        pass
-
-
-    def calc_precision(self, prec):
-        pass
-
-
-    def calc_recall(self, recall):
-        pass
-
-
-    def plot_convergence(self, conv_seq):
-        pass

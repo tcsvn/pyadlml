@@ -1,37 +1,64 @@
 import unittest
 
-from algorithms.model import HMM_Model
-from benchmarks import Bench
-from benchmarks import Dataset
+from algorithms.model import Proxy_HMM
+from benchmarks.controller import Controller
+from benchmarks.controller import Dataset
 
 
-class TestBench(unittest.TestCase):
+class TestController(unittest.TestCase):
     def setUp(self):
         # set of observations
-        self._bench = Bench()
+        self.ctrl = Controller()
 
     def tearDown(self):
         pass
 
+    def test_bench(self):
+        hmm_model = Proxy_HMM(self.ctrl)
+        dk = Dataset.KASTEREN
+        self.ctrl.load_dataset(dk)
+        self.ctrl.register_model(hmm_model)
+        self.ctrl.init_model_on_dataset(dk)
+        self.ctrl.enable_benchmark()
+        self.ctrl.train_model(dk)
+        report = self.ctrl.create_report(accuracy=True)
+        print(report)
+        #self.ctrl.show_plot()
+
+    def test_bench_q_fct(self):
+        hmm_model = Proxy_HMM(self.ctrl)
+        dk = Dataset.KASTEREN
+        self.ctrl.load_dataset(dk)
+        self.ctrl.register_model(hmm_model)
+        self.ctrl.init_model_on_dataset(dk)
+        self.ctrl.enable_benchmark()
+        # use dataset Kasteren and q_fct
+        self.ctrl.train_model(dk, True)
+        report = self.ctrl.create_report()
+        print(report)
+        self.ctrl.show_plot()
+
+
     def test_om(self):
         #plt.figure(figsize=(10,6))
         #self.pom.plot()
-        hmm_model = HMM_Model()
+        hmm_model = Proxy_HMM(self.ctrl)
         dk = Dataset.KASTEREN
-        self._bench.load_dataset(dk)
-        self._bench.register_model(hmm_model)
-        self._bench.init_model_on_dataset(dk)
-        dot = self._bench.render_model(dk)
+        self.ctrl.load_dataset(dk)
+        self.ctrl.register_model(hmm_model)
+        self.ctrl.init_model_on_dataset(dk)
+        dot = self.ctrl.render_model(dk)
         dot.render('test.gv', view=True)
 
 
-    def test_train_model(self):
-        hmm_model = HMM_Model()
+    def test_train_model_kasteren(self):
+        hmm_model = Proxy_HMM(self.ctrl)
         dk = Dataset.KASTEREN
-        self._bench.load_dataset(dk)
-        self._bench.register_model(hmm_model)
-        self._bench.init_model_on_dataset(dk)
+        self.ctrl.load_dataset(dk)
+        self.ctrl.register_model(hmm_model)
+        self.ctrl.init_model_on_dataset(dk)
+
+        self.ctrl.train_model(dk)
         #self._bench._model.draw()
-        #self._bench.train_model(dk)
         #report = self._bench.create_report()
         #self._bench.show_plot()

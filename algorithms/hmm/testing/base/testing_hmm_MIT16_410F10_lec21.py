@@ -82,15 +82,16 @@ class TestMIT16_410F10(unittest.TestCase):
                 self.assertAlmostEqual(hmm2_new_A[znm1][zn], hmm_new_A[znm1][zn])
 
     def test_gamma_xi_relation(self):
+        # todo make use to speed up calculation
         obs_seq = self.obs_seq
-        alpha = self.hmm.forward_backward(obs_seq)
+        alpha = self.hmm.forward(obs_seq)
         beta = self.hmm.backward(obs_seq)
         xi = self.hmm.xi(obs_seq, alpha, beta)
         gamma = self.hmm.gamma(alpha, beta)
 
         K = len(self.hmm._z)
         N = len(obs_seq)
-        for n in range(N):
+        for n in range(N-1):
             for i in range(K):
                 sum_xi = xi[n][i].sum()
                 self.assertAlmostEqual(gamma[n][i], sum_xi)
