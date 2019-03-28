@@ -80,14 +80,14 @@ class HMM_Scaled(HiddenMarkovModel):
         for idx, zn in enumerate(self._z):
             cn[0] += self.prob_x_given_z(x1, zn)*self.prob_pi(zn)
 
-        if cn[0] == 0.0:
-            print('#'*100)
-            for idx, zn in enumerate(self._z):
-                print('--'*10)
-                print(self.prob_x_given_z(x1, zn))
-                print(self.prob_pi(zn))
-            print('#'*100)
-            exit(-1)
+        #if cn[0] == 0.0:
+        #    print('#'*100)
+        #    for idx, zn in enumerate(self._z):
+        #        print('--'*10)
+        #        print(self.prob_x_given_z(x1, zn))
+        #        print(self.prob_pi(zn))
+        #    print('#'*100)
+        #    exit(-1)
         #print(cn)
         #print('-'*100)
         for idx, zn in enumerate(self._z):

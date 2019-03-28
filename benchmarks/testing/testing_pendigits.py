@@ -32,18 +32,33 @@ class TestPendigits(unittest.TestCase):
         self.pd.load_files()
         self.pd.load_models()
 
+    def test_bench_hmm(self):
+        self.pd.load_files()
+        self.pd.load_models()
+        y_true, y_pred = self.pd.benchmark(10)
+        print(y_true)
+        print(y_pred)
+
     def test_train_hmm(self):
         self.pd.load_files()
         self.pd.init_models()
         self.pd.train_models()
-        #self.pd.save_models()
+        self.pd.save_models()
 
     def test_plotting(self):
         self.pd.load_files()
         self.pd.load_models()
         self.pd.plot_example(12)
 
+    def test_create_train_sequences(self):
+        self.pd.load_files()
+        enc_data, lengths = self.pd._create_train_seq(1)
 
+    def test_create_test_sequences(self):
+        self.pd.load_files()
+        enc_data, lengths = self.pd._create_test_seq(0)
+        self.assertEqual(59, len(enc_data))
+        self.assertEqual(59, lengths[0])
 
     def test_points_to_direction(self):
         # directions 0 - 7

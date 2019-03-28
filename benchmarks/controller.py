@@ -126,7 +126,7 @@ class Controller():
             train_seq_4 = train_dump[90:120]
             train_seq_5 = train_dump[120:150]
             self._model.train(train_seq_1, args)
-            self._model.train(train_seq_2, args)
+            #self._model.train(train_seq_2, args)
             #self._model.train(train_seq_3, args)
             #self._model.train(train_seq_4, args)
             #self._model.train(train_seq_5, args)

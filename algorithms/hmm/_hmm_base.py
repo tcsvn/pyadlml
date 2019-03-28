@@ -318,10 +318,7 @@ class HiddenMarkovModel():
             prob = joint_dist[n]
             if prob != 0:
                 return prob
-        if prob == 0:
-            raise ValueError
-        else:
-            return prob
+        return prob
 
     def prob_pi(self, zn):
         idx = self._idx_state(zn)
@@ -614,6 +611,7 @@ class HiddenMarkovModel():
                 if denom == 0.0:
                     new_A[j][k] = 0.0
                 else:
+                    # todo maybe the error is here
                     new_A[j][k] = numer/denom
         """
         as numbers are rounded A doesn't sum up to 1 equally 
@@ -664,30 +662,30 @@ class HiddenMarkovModel():
         return new_A
 
     # todo hmm2
-    def new_emissions(self, gamma, observations):
-        '''
-        Helper method that performs the Baum-Welch 'M' step
-        for the matrix 'B'.
-        '''
-        n = len(self._z)
-        m = len(self._o)
-        new_E = np.zeros((n,m))
+    #def new_emissions(self, gamma, observations):
+    #    '''
+    #    Helper method that performs the Baum-Welch 'M' step
+    #    for the matrix 'B'.
+    #    '''
+    #    n = len(self._z)
+    #    m = len(self._o)
+    #    new_E = np.zeros((n,m))
 
-        for j in range(n):
-            for k in range(m):
-                numer = 0.0
-                denom = 0.0
-                for t in range(len(observations)):
-                    if observations[t] == k:
-                        numer += gamma[t][j]
-                    denom += gamma[t][j]
-                new_E[j][k] = numer/denom
+    #    for j in range(n):
+    #        for k in range(m):
+    #            numer = 0.0
+    #            denom = 0.0
+    #            for t in range(len(observations)):
+    #                if observations[t] == k:
+    #                    numer += gamma[t][j]
+    #                denom += gamma[t][j]
+    #            new_E[j][k] = numer/denom
+   #
 
+   #     if not self.verify_emission_matrix(new_E):
+   #         new_E = self.correct_emissions(new_E)
 
-        if not self.verify_emission_matrix(new_E):
-            new_E = self.correct_emissions(new_E)
-
-        return new_E
+    #    return new_E
 
     #    B_new = np.zeros((self.n,self.m))
 
@@ -729,40 +727,40 @@ class HiddenMarkovModel():
     #    if xn == x: return 1
     #    else: return 0
 
-    #def num_times_in_state_zn_and_xn(self, gamma_zn, obs_seq, xn):
-    #    res = 0
-    #    for gamma_val, x in zip(gamma_zn, obs_seq):
-    #        # equal to multiplying with 1 if observation is the same
-    #        if x == xn:
-    #            res += gamma_val
-    #    return res
+    def num_times_in_state_zn_and_xn(self, gamma_zn, obs_seq, xn):
+        res = 0
+        for gamma_val, x in zip(gamma_zn, obs_seq):
+            # equal to multiplying with 1 if observation is the same
+            if x == xn:
+                res += gamma_val
+        return res
 
     # todo self before
-    #def new_emissions(self, gamma, obs_seq):
-    #    """
-    #    equation 13.23
-    #    :param gamma:
-    #    :param obs_seq:
-    #    :return: matrix (Z x O)
-    #    """
-    #    new_E = np.zeros((len(self._z), len(self._o)))
-    #    for idx_zn, zn in enumerate(self._z):
-    #        # calculate number of times in state zn by summing over all
-    #        # timestep gamma values
-    #        num_times_in_zn = gamma.T[idx_zn].sum()
-    #        # print(zn)
-    #        # print('--'*10)
-    #        for idx_o, xn in enumerate(self._o):
-    #            # calc number of times ni state s,
-    #            # when observation  was  xn
-    #            num_in_zn_and_obs_xn = self.num_times_in_state_zn_and_xn(
-    #                gamma.T[idx_zn], obs_seq, xn)
-    #            # print(str(num_in_zn_and_obs_xn) + "/" + str(num_times_in_zn))
-    #            new_E[idx_zn][idx_o] = num_in_zn_and_obs_xn / num_times_in_zn
-    #    if not self.verify_emission_matrix(new_E):
-    #        new_E = self.correct_emissions(new_E)
-    #
-    #    return new_E
+    def new_emissions(self, gamma, obs_seq):
+        """
+        equation 13.23
+        :param gamma:
+        :param obs_seq:
+        :return: matrix (Z x O)
+        """
+        new_E = np.zeros((len(self._z), len(self._o)))
+        for idx_zn, zn in enumerate(self._z):
+            # calculate number of times in state zn by summing over all
+            # timestep gamma values
+            num_times_in_zn = gamma.T[idx_zn].sum()
+            # print(zn)
+            # print('--'*10)
+            for idx_o, xn in enumerate(self._o):
+                # calc number of times ni state s,
+                # when observation  was  xn
+                num_in_zn_and_obs_xn = self.num_times_in_state_zn_and_xn(
+                    gamma.T[idx_zn], obs_seq, xn)
+                # print(str(num_in_zn_and_obs_xn) + "/" + str(num_times_in_zn))
+                new_E[idx_zn][idx_o] = num_in_zn_and_obs_xn / num_times_in_zn
+        if not self.verify_emission_matrix(new_E):
+            new_E = self.correct_emissions(new_E)
+
+        return new_E
 
     def correct_emissions(self, new_E):
         raise ValueError

@@ -207,6 +207,8 @@ class TestMIT16_410F10(unittest.TestCase):
         #print(res_A)
         #print('-'*2)
         #print(res_E)
+        self.hmm.draw()
+        vg.render('test.gv', view=True)
 
         # assert pi
         for zn in range(0, len(res_pi)):

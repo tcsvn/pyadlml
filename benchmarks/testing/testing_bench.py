@@ -20,6 +20,10 @@ class TestController(unittest.TestCase):
         self.ctrl.register_model(hmm_model)
         self.ctrl.init_model_on_dataset(dk)
         self.ctrl.enable_benchmark()
+        # render
+        dot = self.ctrl.render_model(dk)
+        dot.render('test.gv', view=True)
+
         self.ctrl.train_model(dk, True)
         report = self.ctrl.create_report(
             conf_matrix=True,

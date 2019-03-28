@@ -6,7 +6,8 @@ from benchmarks.pendigit.normalize import normalize_example
 from benchmarks.pendigit.plotting import plotUniPenData
 
 from hmmlearn.hmm import MultinomialHMM
-from algorithms.hmm.hmm_scaled import HMM_Scaled as HiddenMarkovModel
+#from algorithms.hmm.hmm_scaled import HMM_Scaled as HiddenMarkovModel
+from algorithms.hmm._hmm_base import  HiddenMarkovModel
 from algorithms.hmm.distributions import ProbabilityMassFunction
 import math
 import joblib
@@ -18,7 +19,8 @@ class DatasetPendigits():
         # the number of classes that should the directions should be
         # divided into
         self._resolution = 8
-        self._training_steps_per_digit = 10
+        # todo doesn't work for 30 training steps why!!!
+        self._training_steps_per_digit = 20
 
         self._train_label_path = train_path
         self._train_labels = None
@@ -40,6 +42,9 @@ class DatasetPendigits():
 
         # load testdata
         test_data, test_labels = loadUnipenData(self._test_label_path)
+        self._test_labels = test_labels
+
+        #tdata is data without penUp and penDown
         test_data, ptest_data = normalize_example(test_data)
         self._test_data = test_data
 
@@ -82,8 +87,6 @@ class DatasetPendigits():
             model.set_emission_matrix(em_mat)
 
             self._model_dict[i] = model
-            # todo debug
-            break
 
     def init_models_hmmlearn(self):
         # generate
@@ -153,21 +156,39 @@ class DatasetPendigits():
                 #print('hmm info:')
                 #print(type(curr_hmm))
                 #print(curr_hmm)
-            # todo debug
+                # todo debug only learn one digit
+                if j == 0:
+                    break
             print('~'*100)
             print(len(lengths))
             print(digits_skipped)
             print(curr_hmm)
-            break
 
     def _create_train_seq(self, number):
-        #print('-'*100)
+        """
+        extracts a number and appends
+        :param number:
+        :return:
+        """
+        # create array of positions of number in self._train_labels
+        # [14 ,... ] means that the first "number" is at indici 14
         ind = np.where(np.array(self._train_labels) == number)
-        #print(ind)
         digit_data = np.array(self._train_data)[ind]
-        #print(digit_data)
         enc_data, lengths = self._encode_direction(digit_data)
         return enc_data, lengths
+
+    def _create_test_seq(self, index):
+        """
+        computes one direction sequence for a given number
+        :param index:
+            index of the number in train_sequence to return
+        :return:
+            one sequence of the number
+        """
+        digit_data = np.array([self._test_data[index],])
+        enc_data, lengths = self._encode_direction(digit_data)
+        return enc_data, lengths
+
 
     def load_models(self):
         for key in range(0,10):
@@ -264,7 +285,46 @@ class DatasetPendigits():
                 yp = y
         return sq
 
-    def benchmark(self):
+
+    def benchmark(self, length=None):
+        # for the test sequence stores the predicted number
+        # by determening which hmm scored most on number
+        predicted_labels = []
+        numbers = 10
+        test_seq_length = len(self._test_labels)
+        if length is not None:
+            test_seq_length = length
+        else:
+            test_seq_length = 10
+
+        # for every number
+        for i in range(test_seq_length):
+            # stores prob_x of each hmm number on the number
+            llks = np.zeros(numbers)
+
+            # get test data for one number
+            # lengths should be 0
+            seq, lengths = self._create_test_seq(i)
+
+
+            # let each model score on the number
+            for j in range(numbers):
+                try:
+                    llks[j] = self._model_dict[j].forward_backward(seq)
+                except ValueError:
+                    break
+
+            # get highest average probX of all different hmms for the
+            # type of number i
+            # save number/index of hmm that scored the most
+            predicted_labels.append(np.argmax(llks))
+
+        y_true = self._test_labels[test_seq_length:]
+        y_pred = predicted_labels
+        # calculate accuracy
+        return y_true, y_pred
+
+    def benchmark_hmmlearn(self):
         plabels = []
         for j in range(len(self._test_data)):
             llks = np.zeros(10)
