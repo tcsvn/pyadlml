@@ -3,20 +3,11 @@
   <component name="ChangeListManager">
     <list default="true" id="5b1d4ea4-e931-4d76-bc0c-90991e2dc3e4" name="Default Changelist" comment="">
       <change afterPath="$PROJECT_DIR$/algorithms/hmm/testing/hmm2/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/benchmarks/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/testing/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/benchmarks/benchmark.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/benchmarks/dataset.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/benchmarks/kasteren.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/benchmarks/pendigit/MULTINOMIAL_DIRECTION.ipynb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/benchmarks/pendigit/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/testing/base/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/benchmarks/pendigit/encode.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/benchmarks/pendigit/loadUniPenData.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/benchmarks/pendigit/normalize.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/benchmarks/pendigit/plotting.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/benchmarks/pendigit/tp5.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/benchmarks/pendigits.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/algorithms/hmm/_hmm_base.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/_hmm_base.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/algorithms/hmm/hmm_scaled.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/hmm_scaled.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/algorithms/hmm/testing/base/testing_hmm_MIT16_410F10_lec21.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/testing/base/testing_hmm_MIT16_410F10_lec21.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/algorithms/hmm/testing/hmm2" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/testing/hmm2" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/algorithms/hmm/testing/hmm2/.gitignore" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/algorithms/hmm/testing/hmm2/.project" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/algorithms/hmm/testing/hmm2/.pydevproject" beforeDir="false" />
@@ -28,54 +19,28 @@
       <change beforePath="$PROJECT_DIR$/algorithms/hmm/testing/hmm2/hmm/discrete/DiscreteHMM.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/testing/hmm2/hmm/discrete/DiscreteHMM.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/algorithms/hmm/testing/hmm2/hmm/examples/tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/testing/hmm2/hmm/examples/tests.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/algorithms/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/testing/scaled/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/data/hmm/centroids_253/hidden_states_30/n_iter_10/tol_0.1/digit_label_0.dat" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/data/hmm/centroids_253/hidden_states_30/n_iter_10/tol_0.1/digit_label_0.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/data/hmm/centroids_253/hidden_states_30/n_iter_10/tol_0.1/digit_label_1.dat" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/data/hmm/centroids_253/hidden_states_30/n_iter_10/tol_0.1/digit_label_1.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/data/hmm/centroids_253/hidden_states_30/n_iter_10/tol_0.1/digit_label_2.dat" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/data/hmm/centroids_253/hidden_states_30/n_iter_10/tol_0.1/digit_label_2.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/data/hmm/centroids_253/hidden_states_30/n_iter_10/tol_0.1/digit_label_3.dat" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/data/hmm/centroids_253/hidden_states_30/n_iter_10/tol_0.1/digit_label_3.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/data/hmm/centroids_253/hidden_states_30/n_iter_10/tol_0.1/digit_label_4.dat" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/data/hmm/centroids_253/hidden_states_30/n_iter_10/tol_0.1/digit_label_4.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/data/hmm/centroids_253/hidden_states_30/n_iter_10/tol_0.1/digit_label_5.dat" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/data/hmm/centroids_253/hidden_states_30/n_iter_10/tol_0.1/digit_label_5.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/data/hmm/centroids_253/hidden_states_30/n_iter_10/tol_0.1/digit_label_6.dat" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/data/hmm/centroids_253/hidden_states_30/n_iter_10/tol_0.1/digit_label_6.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/data/hmm/centroids_253/hidden_states_30/n_iter_10/tol_0.1/digit_label_7.dat" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/data/hmm/centroids_253/hidden_states_30/n_iter_10/tol_0.1/digit_label_7.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/data/hmm/centroids_253/hidden_states_30/n_iter_10/tol_0.1/digit_label_8.dat" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/data/hmm/centroids_253/hidden_states_30/n_iter_10/tol_0.1/digit_label_8.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/data/hmm/centroids_253/hidden_states_30/n_iter_10/tol_0.1/digit_label_9.dat" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/data/hmm/centroids_253/hidden_states_30/n_iter_10/tol_0.1/digit_label_9.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/data/hmm/centroids_253/hidden_states_30/n_iter_10000/tol_0.1/digit_label_1.dat" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/data/hmm/centroids_253/hidden_states_30/n_iter_10000/tol_0.1/digit_label_1.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/data/hmm/centroids_253/hidden_states_30/n_iter_10000/tol_0.1/digit_label_2.dat" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/data/hmm/centroids_253/hidden_states_30/n_iter_10000/tol_0.1/digit_label_2.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/data/hmm/centroids_253/hidden_states_30/n_iter_10000/tol_0.1/digit_label_3.dat" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/data/hmm/centroids_253/hidden_states_30/n_iter_10000/tol_0.1/digit_label_3.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/data/hmm/centroids_253/hidden_states_30/n_iter_10000/tol_0.1/digit_label_4.dat" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/data/hmm/centroids_253/hidden_states_30/n_iter_10000/tol_0.1/digit_label_4.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/data/hmm/centroids_253/hidden_states_30/n_iter_10000/tol_0.1/digit_label_5.dat" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/data/hmm/centroids_253/hidden_states_30/n_iter_10000/tol_0.1/digit_label_5.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/data/hmm/centroids_253/hidden_states_30/n_iter_10000/tol_0.1/digit_label_6.dat" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/data/hmm/centroids_253/hidden_states_30/n_iter_10000/tol_0.1/digit_label_6.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/data/hmm/centroids_253/hidden_states_30/n_iter_10000/tol_0.1/digit_label_7.dat" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/data/hmm/centroids_253/hidden_states_30/n_iter_10000/tol_0.1/digit_label_7.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/data/hmm/centroids_253/hidden_states_30/n_iter_10000/tol_0.1/digit_label_8.dat" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/data/hmm/centroids_253/hidden_states_30/n_iter_10000/tol_0.1/digit_label_8.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/mnHmm_0.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/mnHmm_0.joblib" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/mnHmm_1.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/mnHmm_1.joblib" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/mnHmm_2.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/mnHmm_2.joblib" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/mnHmm_3.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/mnHmm_3.joblib" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/mnHmm_4.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/mnHmm_4.joblib" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/mnHmm_5.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/mnHmm_5.joblib" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/mnHmm_6.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/mnHmm_6.joblib" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/mnHmm_7.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/mnHmm_7.joblib" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/mnHmm_8.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/mnHmm_8.joblib" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/mnHmm_9.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/mnHmm_9.joblib" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/test.gv" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/test.gv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/test.gv.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/test.gv.pdf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/testing_bench.py" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/testing_bench.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/testing_kasteren.py" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/testing_kasteren.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/testing_mnist.py" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/testing_mnist.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/testing_pendigits.py" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/testing_pendigits.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/bench/train_model.log" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/train_model.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/hmm/MIT16_410F10_lec21.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/testing/MIT16_410F10_lec21.pdf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/hmm/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/hmm/base/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/hmm/base/testing_hmm_L08HMMs.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/testing/base/testing_hmm_L08HMMs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/hmm/base/testing_hmm_MIT16_410F10_lec21.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/testing/base/testing_hmm_MIT16_410F10_lec21.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/hmm/base/testing_hmm_wiki.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/testing/base/testing_hmm_wiki.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/hmm/hmm2" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/hmm/scaled/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/hmm/scaled/testing_hmm_scaled_L08HMMs.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/testing/scaled/testing_hmm_scaled_L08HMMs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/hmm/scaled/testing_hmm_scaled_MIT16_410F10_lec21.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/testing/scaled/testing_hmm_scaled_MIT16_410F10_lec21.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/testing/hmm/testing_PMF.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/hmm/testing/testing_PMF.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/config.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/config.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/controller.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/pendigit/loadUniPenData.py" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/pendigit/loadUniPenData.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/pendigits.py" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/pendigits.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/testing/mnHmm_0.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/mnHmm_0.joblib" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/testing/mnHmm_1.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/mnHmm_1.joblib" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/testing/mnHmm_2.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/mnHmm_2.joblib" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/testing/mnHmm_3.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/mnHmm_3.joblib" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/testing/mnHmm_4.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/mnHmm_4.joblib" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/testing/mnHmm_5.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/mnHmm_5.joblib" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/testing/mnHmm_6.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/mnHmm_6.joblib" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/testing/mnHmm_7.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/mnHmm_7.joblib" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/testing/mnHmm_8.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/mnHmm_8.joblib" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/testing/mnHmm_9.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/mnHmm_9.joblib" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/testing/test.gv" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/test.gv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/testing/test.gv.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/test.gv.pdf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/testing/testing_bench.py" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/testing_bench.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/testing/testing_kasteren.py" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/testing_kasteren.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/testing/testing_pendigits.py" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/testing_pendigits.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/testing/train_model.log" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/testing/train_model.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/data/kasteren.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/data/kasteren.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/docker-compose.yml" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -85,43 +50,50 @@
   </component>
   <component name="CoverageDataManager">
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_viterbi.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi Coverage Results" MODIFIED="1553599527279" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_bench_TestController_test_bench_reports.coverage" NAME="Unittests for testing_bench.TestController.test_bench_reports Coverage Results" MODIFIED="1553700129133" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_exp_trans_znm1_to_zn_eq_to_exp_trans_.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_exp_trans_znm1_to_zn_eq_to_exp_trans_ Coverage Results" MODIFIED="1553601055034" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_mnist_TestMNIST_test_train_model.coverage" NAME="Unittests for testing_mnist.TestMNIST.test_train_model Coverage Results" MODIFIED="1551887795256" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/bench" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_new_pi.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_new_pi Coverage Results" MODIFIED="1553601579853" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_vs_hmm2_MIT16_410F10_lec21_TestHmmWiki_test_forward.coverage" NAME="Unittests for testing_hmm_vs_hmm2_MIT16_410F10_lec21.TestHmmWiki.test_forward Coverage Results" MODIFIED="1551556719932" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/hmm" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_pendigits_TestMNIST_test_own_parser.coverage" NAME="Unittests for testing_pendigits.TestMNIST.test_own_parser Coverage Results" MODIFIED="1552465845006" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/bench" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_verify_A.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_verify_A Coverage Results" MODIFIED="1553722151857" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/hmm/testing/base" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_scaled_MIT16_410F10_lec21_TestHmmWiki_test_train_transitions.coverage" NAME="Unittests for testing_hmm_scaled_MIT16_410F10_lec21.TestHmmWiki.test_train_transitions Coverage Results" MODIFIED="1552660672773" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$DiscreteHMM.coverage" NAME="DiscreteHMM Coverage Results" MODIFIED="1551778764423" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/hmm2/hmm/discrete" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_new_emission.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_new_emission Coverage Results" MODIFIED="1553610093685" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_scaled_MIT16_410F10_lec21_TestMIT16_410F10_scaled.coverage" NAME="Unittests for testing_hmm_scaled_MIT16_410F10_lec21.TestMIT16_410F10_scaled Coverage Results" MODIFIED="1552737324086" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/scaled" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_train_transitions.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_train_transitions Coverage Results" MODIFIED="1552726917655" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_get_sensor_list.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_get_sensor_list Coverage Results" MODIFIED="1551688448380" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/bench" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_bench_TestController_test_bench_q_fct.coverage" NAME="Unittests for testing_bench.TestController.test_bench_q_fct Coverage Results" MODIFIED="1553690292866" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_scaled_MIT16_410F10_lec21_TestHmmWiki.coverage" NAME="Unittests for testing_hmm_scaled_MIT16_410F10_lec21.TestHmmWiki Coverage Results" MODIFIED="1552660474660" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_PMF_TestPMF_test_setter.coverage" NAME="Unittests for testing_PMF.TestPMF.test_setter Coverage Results" MODIFIED="1552729240407" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_get_sensor_list.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_get_sensor_list Coverage Results" MODIFIED="1553626566894" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_train_model.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_train_model Coverage Results" MODIFIED="1551690990192" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/bench" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_bench_TestBench_test_train_model.coverage" NAME="Unittests for testing_bench.TestBench.test_train_model Coverage Results" MODIFIED="1551715961870" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/bench" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_bench_TestBench_test_om.coverage" NAME="Unittests for testing_bench.TestBench.test_om Coverage Results" MODIFIED="1551723785680" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/bench" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_bench_TestBench_test_train_model.coverage" NAME="Unittests for testing_bench.TestBench.test_train_model Coverage Results" MODIFIED="1553628819996" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_bench_TestBench_test_om.coverage" NAME="Unittests for testing_bench.TestBench.test_om Coverage Results" MODIFIED="1553630957805" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_mnist_TestMNIST_test_own_parser.coverage" NAME="Unittests for testing_mnist.TestMNIST.test_own_parser Coverage Results" MODIFIED="1552465597138" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/bench" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_label_from_id.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_label_from_id Coverage Results" MODIFIED="1551551908799" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/bench" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_label_from_id.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_label_from_id Coverage Results" MODIFIED="1553626414793" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_2_TestHmmSunnyRainyExample_test_pom.coverage" NAME="Unittests for testing_hmm_2.TestHmmSunnyRainyExample.test_pom Coverage Results" MODIFIED="1551723038036" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_pendigits_TestPendigits_test_hmmlearn.coverage" NAME="Unittests for testing_pendigits.TestPendigits.test_hmmlearn Coverage Results" MODIFIED="1553705613153" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_scaled_L08HMMs_TestHmmScaledExampleL08HMM_test_backward.coverage" NAME="Unittests for testing_hmm_scaled_L08HMMs.TestHmmScaledExampleL08HMM.test_backward Coverage Results" MODIFIED="1552742305985" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/scaled" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_training_step_model.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_training_step_model Coverage Results" MODIFIED="1551724679925" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/bench" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_load_df.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_load_df Coverage Results" MODIFIED="1551553367813" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/bench" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_training_step_model.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_training_step_model Coverage Results" MODIFIED="1553626589907" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_prob_X.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_prob_X Coverage Results" MODIFIED="1552739521188" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_load_df.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_load_df Coverage Results" MODIFIED="1553626466668" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_bench_TestController_test_ctrl_presentation.coverage" NAME="Unittests for testing_bench.TestController.test_ctrl_presentation Coverage Results" MODIFIED="1553764154909" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_scaled_L08HMMs_TestHmmScaledExampleL08HMM_test_prob_X.coverage" NAME="Unittests for testing_hmm_scaled_L08HMMs.TestHmmScaledExampleL08HMM.test_prob_X Coverage Results" MODIFIED="1552742309397" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/scaled" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_pendigits_TestPendigits_test_asdf.coverage" NAME="Unittests for testing_pendigits.TestPendigits.test_asdf Coverage Results" MODIFIED="1552477531071" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/bench" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_vs_hmm2_MIT16_410F10_lec21_TestHmmWiki_test_new_transition_matrix.coverage" NAME="Unittests for testing_hmm_vs_hmm2_MIT16_410F10_lec21.TestHmmWiki.test_new_transition_matrix Coverage Results" MODIFIED="1551856924555" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_getter_emission.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_getter_emission Coverage Results" MODIFIED="1552739500783" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_training_q.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_training_q Coverage Results" MODIFIED="1553614276447" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_getter_emission.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_getter_emission Coverage Results" MODIFIED="1552737723076" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_pendigits_TestPendigits_test_own_parser.coverage" NAME="Unittests for testing_pendigits.TestPendigits.test_own_parser Coverage Results" MODIFIED="1552469822500" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/bench" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_pendigits_TestPendigits_test_train_hmm.coverage" NAME="Unittests for testing_pendigits.TestPendigits.test_train_hmm Coverage Results" MODIFIED="1552480072157" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/bench" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_training_q.coverage" NAME="Unittests for algorithms.hmm.testing.base.testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_training_q Coverage Results" MODIFIED="1553620480015" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/hmm/testing/base" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_getter_emission.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_getter_emission Coverage Results" MODIFIED="1553625195503" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/hmm/testing/base" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_pendigits_TestPendigits_test_own_parser.coverage" NAME="Unittests for testing_pendigits.TestPendigits.test_own_parser Coverage Results" MODIFIED="1553705147669" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_pendigits_TestPendigits_test_train_hmm.coverage" NAME="Unittests for testing_pendigits.TestPendigits.test_train_hmm Coverage Results" MODIFIED="1553726042486" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_vs_hmm2_MIT16_410F10_lec21_TestHmmWiki_test_xi.coverage" NAME="Unittests for testing_hmm_vs_hmm2_MIT16_410F10_lec21.TestHmmWiki.test_xi Coverage Results" MODIFIED="1552660523838" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_vs_hmm2_MIT16_410F10_lec21_TestHmmWiki.coverage" NAME="Unittests for testing_hmm_vs_hmm2_MIT16_410F10_lec21.TestHmmWiki Coverage Results" MODIFIED="1551604095489" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/hmm" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_vs_hmm2_MIT16_410F10_lec21_TestHmmWiki_test_gamma.coverage" NAME="Unittests for testing_hmm_vs_hmm2_MIT16_410F10_lec21.TestHmmWiki.test_gamma Coverage Results" MODIFIED="1551858775207" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10 Coverage Results" MODIFIED="1553611927673" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10 Coverage Results" MODIFIED="1553625402637" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/hmm/testing/base" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_scaled_L08HMMs_TestHmmScaledExampleL08HMM_test_forward.coverage" NAME="Unittests for testing_hmm_scaled_L08HMMs.TestHmmScaledExampleL08HMM.test_forward Coverage Results" MODIFIED="1552740959667" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/scaled" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_scaled_L08HMMs_TestHmmScaledExampleL08HMM_test_cn.coverage" NAME="Unittests for testing_hmm_scaled_L08HMMs.TestHmmScaledExampleL08HMM.test_cn Coverage Results" MODIFIED="1552742295892" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/scaled" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren.coverage" NAME="Unittests for testing_kasteren.TestKasteren Coverage Results" MODIFIED="1553624195537" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_pendigits_TestPendigits_test_load_models.coverage" NAME="Unittests for testing_pendigits.TestPendigits.test_load_models Coverage Results" MODIFIED="1553705160998" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_vs_hmm2_MIT16_410F10_lec21_TestHmmWiki_test_expected_trans_from_znm1_to_zn.coverage" NAME="Unittests for testing_hmm_vs_hmm2_MIT16_410F10_lec21.TestHmmWiki.test_expected_trans_from_znm1_to_zn Coverage Results" MODIFIED="1551603515420" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/hmm" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_scaled_L08HMMs_TestHmmScaledExampleL08HMM_test_xi.coverage" NAME="Unittests for testing_hmm_scaled_L08HMMs.TestHmmScaledExampleL08HMM.test_xi Coverage Results" MODIFIED="1552744161815" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/scaled" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_getter_transition.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_getter_transition Coverage Results" MODIFIED="1552737724775" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
@@ -129,6 +101,7 @@
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_scaled_MIT16_410F10_lec21_TestHmmWiki_test_xi.coverage" NAME="Unittests for testing_hmm_scaled_MIT16_410F10_lec21.TestHmmWiki.test_xi Coverage Results" MODIFIED="1552662972473" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_forward.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_forward Coverage Results" MODIFIED="1552739657946" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_asdf.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_asdf Coverage Results" MODIFIED="1553600094145" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_pendigits_TestPendigits_test_points_to_direction.coverage" NAME="Unittests for testing_pendigits.TestPendigits.test_points_to_direction Coverage Results" MODIFIED="1553705793693" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_xi.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_xi Coverage Results" MODIFIED="1552744082623" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_scaled_MIT16_410F10_lec21_TestHmmWiki_test_cn.coverage" NAME="Unittests for testing_hmm_scaled_MIT16_410F10_lec21.TestHmmWiki.test_cn Coverage Results" MODIFIED="1552659274443" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_train_emission.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_train_emission Coverage Results" MODIFIED="1553608667914" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
@@ -139,29 +112,38 @@
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_backward.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_backward Coverage Results" MODIFIED="1552737155405" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_predict_next_x.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_predict_next_x Coverage Results" MODIFIED="1551521539035" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_vs_hmm2_MIT16_410F10_lec21_TestHmmWiki_test_new_pi.coverage" NAME="Unittests for testing_hmm_vs_hmm2_MIT16_410F10_lec21.TestHmmWiki.test_new_pi Coverage Results" MODIFIED="1551856882260" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_forward.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_forward Coverage Results" MODIFIED="1552740512335" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_pendigits_TestPendigits_test_load_hmm.coverage" NAME="Unittests for testing_pendigits.TestPendigits.test_load_hmm Coverage Results" MODIFIED="1553705687482" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_forward.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_forward Coverage Results" MODIFIED="1553625191131" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/hmm/testing/base" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_vs_hmm2_MIT16_410F10_lec21_TestHmmWiki_test_pred_step.coverage" NAME="Unittests for testing_hmm_vs_hmm2_MIT16_410F10_lec21.TestHmmWiki.test_pred_step Coverage Results" MODIFIED="1551863594218" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_training.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_training Coverage Results" MODIFIED="1553614271285" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_bench_TestBench_test_train_model_kasteren.coverage" NAME="Unittests for testing_bench.TestBench.test_train_model_kasteren Coverage Results" MODIFIED="1553630899175" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_vs_hmm2_MIT16_410F10_lec21_TestHmmWiki_test_new_emission_probs.coverage" NAME="Unittests for testing_hmm_vs_hmm2_MIT16_410F10_lec21.TestHmmWiki.test_new_emission_probs Coverage Results" MODIFIED="1551856927629" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_new_transition_matrix.coverage" NAME="Unittests for algorithms.testing.hmm.base.testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_new_A Coverage Results" MODIFIED="1553601997417" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_state_sequence.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_state_sequence Coverage Results" MODIFIED="1552737730631" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_pendigits_TestPendigits_test_coded_directions.coverage" NAME="Unittests for testing_pendigits.TestPendigits.test_coded_directions Coverage Results" MODIFIED="1552480073724" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/bench" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_verify_emissions.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_verify_emissions Coverage Results" MODIFIED="1553722458372" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/hmm/testing/base" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_getter_transition.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_getter_transition Coverage Results" MODIFIED="1552739508733" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_scaled_L08HMMs_TestHmmScaledExampleL08HMM_test_train.coverage" NAME="Unittests for testing_hmm_scaled_L08HMMs.TestHmmScaledExampleL08HMM.test_train Coverage Results" MODIFIED="1552744288104" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/scaled" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_train.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_train Coverage Results" MODIFIED="1551896373447" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/bench" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_predict_xnp1.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_predict_xnp1 Coverage Results" MODIFIED="1552731269904" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_backward.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_backward Coverage Results" MODIFIED="1552738051803" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_scaled_L08HMMs_TestHmmScaledExampleL08HMM_test_gamma.coverage" NAME="Unittests for testing_hmm_scaled_L08HMMs.TestHmmScaledExampleL08HMM.test_gamma Coverage Results" MODIFIED="1552742604274" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/scaled" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_gamma_xi_relation.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_gamma_xi_relation Coverage Results" MODIFIED="1553609357085" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_train.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_train Coverage Results" MODIFIED="1553725077889" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_bench_TestController_test_bench.coverage" NAME="Unittests for testing_bench.TestController.test_bench Coverage Results" MODIFIED="1553690498701" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_prob_X.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_prob_X Coverage Results" MODIFIED="1552740611386" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_gamma.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_gamma Coverage Results" MODIFIED="1552742641071" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_bench_TestController_test_bench_reports_conf_matrix.coverage" NAME="Unittests for testing_bench.TestController.test_bench_reports_conf_matrix Coverage Results" MODIFIED="1553699949325" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_mnist_TestMNIST_test_dataset.coverage" NAME="Unittests for testing_mnist.TestMNIST.test_dataset Coverage Results" MODIFIED="1552396137841" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/bench" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_mnist_TestMNIST_test_own_hmm.coverage" NAME="Unittests for testing_mnist.TestMNIST.test_own_hmm Coverage Results" MODIFIED="1552397915058" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/bench" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_id_from_label.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_id_from_label Coverage Results" MODIFIED="1551548452887" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/bench" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_id_from_label.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_id_from_label Coverage Results" MODIFIED="1553626368277" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$testing_kasteren.coverage" NAME="testing_kasteren Coverage Results" MODIFIED="1553625164890" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="/mnt/external_D/code/hassbrain_algorithm/benchmarks/testing" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_pendigits_TestPendigits_test_load_hmmlearn.coverage" NAME="Unittests for testing_pendigits.TestPendigits.test_load_hmmlearn Coverage Results" MODIFIED="1553726267795" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_gamma.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_gamma Coverage Results" MODIFIED="1553526230375" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_get_activity_list.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_get_activity_list Coverage Results" MODIFIED="1551553897351" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/bench" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM Coverage Results" MODIFIED="1553600246491" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_get_activity_list.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_get_activity_list Coverage Results" MODIFIED="1553626494609" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM Coverage Results" MODIFIED="1553625201605" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/hmm/testing/base" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_viterbi.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_viterbi Coverage Results" MODIFIED="1553600034790" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms/testing/hmm/base" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_test_list.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_test_list Coverage Results" MODIFIED="1553690269294" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_bench_TestController_test_bench_accuracy.coverage" NAME="Unittests for testing_bench.TestController.test_bench_accuracy Coverage Results" MODIFIED="1553699393374" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/benchmarks/testing" />
   </component>
   <component name="DatabaseView">
     <option name="SHOW_INTERMEDIATE" value="true" />
@@ -178,14 +160,38 @@
     <select />
   </component>
   <component name="FileEditorManager">
-    <splitter split-orientation="horizontal" split-proportion="0.5">
+    <splitter split-orientation="horizontal" split-proportion="0.5203928">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
           <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/benchmarks/controller.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="425">
+                  <caret line="128" column="12" selection-start-line="128" selection-start-column="12" selection-end-line="128" selection-end-column="12" />
+                  <folding>
+                    <element signature="e#0#9#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/benchmarks/testing/testing_kasteren.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="591">
+                  <caret line="60" column="20" selection-start-line="60" selection-start-column="20" selection-end-line="60" selection-end-column="20" />
+                  <folding>
+                    <element signature="e#0#15#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/algorithms/hmm/_hmm_base.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="612">
-                  <caret line="466" column="36" selection-start-line="466" selection-start-column="36" selection-end-line="466" selection-end-column="36" />
+                <state relative-caret-position="238">
+                  <caret line="666" column="28" selection-start-line="666" selection-start-column="28" selection-end-line="666" selection-end-column="28" />
                   <folding>
                     <element signature="e#0#14#0" expanded="true" />
                   </folding>
@@ -193,25 +199,67 @@
               </provider>
             </entry>
           </file>
-          <file pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/algorithms/model.py">
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/algorithms/hmm/testing/hmm2/hmm/_BaseHMM.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="544">
-                  <caret line="51" column="33" selection-start-line="51" selection-start-column="33" selection-end-line="51" selection-end-column="33" />
+                <state relative-caret-position="340">
+                  <caret line="20" column="18" selection-start-line="20" selection-start-column="18" selection-end-line="20" selection-end-column="18" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/algorithms/hmm/testing/hmm2/hmm/discrete/DiscreteHMM.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="437">
+                  <caret line="87" selection-start-line="87" selection-end-line="87" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/benchmarks/pendigits.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="17">
+                  <caret line="112" selection-start-line="112" selection-end-line="112" />
                   <folding>
-                    <element signature="e#814#878#0" expanded="true" />
+                    <element signature="e#0#11#0" expanded="true" />
                   </folding>
                 </state>
               </provider>
             </entry>
           </file>
           <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/benchmarks/pendigits.py">
+            <entry file="file://$PROJECT_DIR$/algorithms/hmm/hmm_scaled.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="289">
-                  <caret line="17" column="21" selection-start-line="17" selection-start-column="21" selection-end-line="17" selection-end-column="21" />
+                <state>
+                  <caret line="67" column="21" selection-start-line="67" selection-start-column="21" selection-end-line="67" selection-end-column="21" />
                   <folding>
                     <element signature="e#0#18#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/benchmarks/benchmark.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="17">
+                  <caret line="79" column="21" selection-start-line="79" selection-start-column="21" selection-end-line="79" selection-end-column="21" />
+                  <folding>
+                    <element signature="e#0#14#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/algorithms/model.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="825">
+                  <caret line="101" column="24" selection-start-line="101" selection-start-column="24" selection-end-line="101" selection-end-column="24" />
+                  <folding>
+                    <element signature="e#149#203#0" expanded="true" />
                   </folding>
                 </state>
               </provider>
@@ -220,33 +268,59 @@
         </leaf>
       </split-first>
       <split-second>
-        <leaf>
+        <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
           <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/benchmarks/benchmark.py">
+            <entry file="file://$PROJECT_DIR$/benchmarks/testing/testing_bench.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="170">
-                  <caret line="10" selection-start-line="10" selection-end-line="10" />
+                <state relative-caret-position="425">
+                  <caret line="31" column="20" selection-start-line="31" selection-start-column="20" selection-end-line="31" selection-end-column="20" />
                   <folding>
-                    <element signature="e#0#14#0" expanded="true" />
+                    <element signature="e#0#15#0" expanded="true" />
                   </folding>
                 </state>
               </provider>
             </entry>
           </file>
           <file pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/benchmarks/kasteren.py">
+            <entry file="file://$PROJECT_DIR$/benchmarks/testing/testing_pendigits.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="255">
-                  <caret line="27" selection-start-line="27" selection-end-line="27" />
+                <state relative-caret-position="408">
+                  <caret line="24" column="8" selection-start-line="24" selection-start-column="8" selection-end-line="24" selection-end-column="8" />
+                  <folding>
+                    <element signature="e#0#9#0" expanded="true" />
+                  </folding>
                 </state>
               </provider>
             </entry>
           </file>
           <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/benchmarks/dataset.py">
+            <entry file="file://$PROJECT_DIR$/benchmarks/testing/testing_mnist.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="68">
-                  <caret line="4" selection-start-line="4" selection-end-line="4" />
+                <state>
+                  <folding>
+                    <element signature="e#0#9#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/benchmarks/pendigit/loadUniPenData.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="51">
+                  <caret line="3" selection-start-line="3" selection-end-line="3" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/algorithms/hmm/testing/base/testing_hmm_MIT16_410F10_lec21.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="612">
+                  <caret line="36" column="33" selection-start-line="36" selection-start-column="33" selection-end-line="36" selection-end-column="33" />
+                  <folding>
+                    <element signature="e#0#15#0" expanded="true" />
+                  </folding>
                 </state>
               </provider>
             </entry>
@@ -274,7 +348,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="/mnt/external_D/code/hassbrain_algorithm/algorithms/testing/bench/testing_kasteren.py" />
         <option value="$PROJECT_DIR$/algorithms/testing/hmm/hmm2/hmm/discrete/DiscreteHMM.py" />
         <option value="$PROJECT_DIR$/algorithms/hmm/hmm_scaled_v0.py" />
         <option value="/mnt/external_D/code/hassbrain_algorithm/algorithms/testing/hmm/testing_hmm_vs_hmm2_MIT16_410F10_lec21.py" />
@@ -299,25 +372,41 @@
         <option value="$PROJECT_DIR$/algorithms/benchmarks/pendigits.py" />
         <option value="$PROJECT_DIR$/algorithms/testing/bench/testing_pendigits.py" />
         <option value="$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_scaled_MIT16_410F10_lec21.py" />
-        <option value="$PROJECT_DIR$/algorithms/hmm/hmm_scaled.py" />
         <option value="$PROJECT_DIR$/algorithms/testing/hmm/base/testing_hmm_vs_hmm2_MIT16_410F10_lec21.py" />
-        <option value="$PROJECT_DIR$/algorithms/hmm/distributions.py" />
         <option value="$PROJECT_DIR$/algorithms/testing/hmm/testing_PMF.py" />
         <option value="/mnt/external_D/code/hassbrain_algorithm/algorithms/testing/hmm/base/testing_hmm_L08HMMs.py" />
         <option value="$PROJECT_DIR$/algorithms/testing/hmm/scaled/testing_hmm_scaled_MIT16_410F10_lec21.py" />
         <option value="$PROJECT_DIR$/algorithms/testing/hmm/scaled/testing_hmm_scaled_L08HMMs.py" />
         <option value="$PROJECT_DIR$/algorithms/testing/hmm/base/testing_hmm_L08HMMs.py" />
         <option value="$PROJECT_DIR$/algorithms/testing/hmm/base/testing_hmm_MIT16_410F10_lec21.py" />
-        <option value="$PROJECT_DIR$/algorithms/hmm/_hmm_base.py" />
+        <option value="$PROJECT_DIR$/algorithms/hmm/distributions.py" />
+        <option value="/mnt/external_D/code/hassbrain_algorithm/benchmarks/testing/testing_kasteren.py" />
+        <option value="/mnt/external_D/code/hassbrain_algorithm/benchmarks/testing/testing_bench.py" />
+        <option value="$PROJECT_DIR$/benchmarks/dataset.py" />
+        <option value="$PROJECT_DIR$/benchmarks/kasteren.py" />
+        <option value="$PROJECT_DIR$/benchmarks/benchmark.py" />
+        <option value="$PROJECT_DIR$/benchmarks/pendigit/loadUniPenData.py" />
+        <option value="$PROJECT_DIR$/benchmarks/config.yaml" />
+        <option value="/mnt/external_D/code/hassbrain_algorithm/benchmarks/testing/testing_pendigits.py" />
+        <option value="$PROJECT_DIR$/algorithms/hmm/testing/base/testing_hmm_MIT16_410F10_lec21.py" />
+        <option value="/mnt/external_D/code/hassbrain_algorithm/algorithms/hmm/testing/base/testing_hmm_MIT16_410F10_lec21.py" />
         <option value="$PROJECT_DIR$/algorithms/model.py" />
+        <option value="$PROJECT_DIR$/benchmarks/testing/testing_kasteren.py" />
+        <option value="$PROJECT_DIR$/benchmarks/testing/testing_pendigits.py" />
+        <option value="$PROJECT_DIR$/benchmarks/pendigits.py" />
+        <option value="$PROJECT_DIR$/benchmarks/testing/testing_bench.py" />
+        <option value="$PROJECT_DIR$/benchmarks/controller.py" />
+        <option value="$PROJECT_DIR$/algorithms/hmm/testing/hmm2/hmm/_BaseHMM.py" />
+        <option value="$PROJECT_DIR$/algorithms/hmm/_hmm_base.py" />
+        <option value="$PROJECT_DIR$/algorithms/hmm/hmm_scaled.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="2883" />
-    <option name="y" value="40" />
+    <option name="x" value="1933" />
+    <option name="y" value="16" />
     <option name="width" value="944" />
-    <option name="height" value="1027" />
+    <option name="height" value="1051" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
     <ConfirmationsSetting value="2" id="Add" />
@@ -343,6 +432,46 @@
             <path>
               <item name="hassbrain_algorithm" type="b2602c69:ProjectViewProjectNode" />
               <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
+              <item name="algorithms" type="462c0819:PsiDirectoryNode" />
+              <item name="hmm" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="hassbrain_algorithm" type="b2602c69:ProjectViewProjectNode" />
+              <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
+              <item name="algorithms" type="462c0819:PsiDirectoryNode" />
+              <item name="hmm" type="462c0819:PsiDirectoryNode" />
+              <item name="testing" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="hassbrain_algorithm" type="b2602c69:ProjectViewProjectNode" />
+              <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
+              <item name="algorithms" type="462c0819:PsiDirectoryNode" />
+              <item name="hmm" type="462c0819:PsiDirectoryNode" />
+              <item name="testing" type="462c0819:PsiDirectoryNode" />
+              <item name="hmm2" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="hassbrain_algorithm" type="b2602c69:ProjectViewProjectNode" />
+              <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
+              <item name="algorithms" type="462c0819:PsiDirectoryNode" />
+              <item name="hmm" type="462c0819:PsiDirectoryNode" />
+              <item name="testing" type="462c0819:PsiDirectoryNode" />
+              <item name="hmm2" type="462c0819:PsiDirectoryNode" />
+              <item name="hmm" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="hassbrain_algorithm" type="b2602c69:ProjectViewProjectNode" />
+              <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
+              <item name="algorithms" type="462c0819:PsiDirectoryNode" />
+              <item name="hmm" type="462c0819:PsiDirectoryNode" />
+              <item name="testing" type="462c0819:PsiDirectoryNode" />
+              <item name="hmm2" type="462c0819:PsiDirectoryNode" />
+              <item name="hmm" type="462c0819:PsiDirectoryNode" />
+              <item name="discrete" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="hassbrain_algorithm" type="b2602c69:ProjectViewProjectNode" />
+              <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
               <item name="benchmarks" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
@@ -357,7 +486,7 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="WebServerToolWindowFactoryState" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="WebServerToolWindowPanel.toolwindow.highlight.mappings" value="true" />
     <property name="WebServerToolWindowPanel.toolwindow.highlight.symlinks" value="true" />
     <property name="WebServerToolWindowPanel.toolwindow.show.date" value="false" />
@@ -391,26 +520,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python tests.Unittests for algorithms.hmm.testing.base.testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_training_q">
-    <configuration name="_hmm_base" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="hassbrain_algorithm" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/algorithms/hmm" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/algorithms/hmm/_hmm_base.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="true" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
+  <component name="RunManager" selected="Python tests.Unittests for testing_bench.TestController.test_ctrl_presentation">
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <module name="hassbrain_algorithm" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -433,7 +543,22 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="Unittests for algorithms.hmm.testing.base.testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+    <configuration name="Unittests for testing_bench.TestController.test_ctrl_presentation" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+      <module name="hassbrain_algorithm" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/benchmarks/testing" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;testing_bench.TestController.test_ctrl_presentation&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_verify_emissions" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
       <module name="hassbrain_algorithm" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -444,62 +569,69 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;algorithms.hmm.testing.base.testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10&quot;" />
+      <option name="_new_target" value="&quot;testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_verify_emissions&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Unittests for algorithms.hmm.testing.base.testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_new_emission" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+    <configuration name="Unittests for testing_kasteren.TestKasteren.test_train" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
       <module name="hassbrain_algorithm" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/algorithms/hmm/testing/base" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/benchmarks/testing" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;algorithms.hmm.testing.base.testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_new_emission&quot;" />
+      <option name="_new_target" value="&quot;testing_kasteren.TestKasteren.test_train&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Unittests for algorithms.hmm.testing.base.testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_training" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+    <configuration name="Unittests for testing_pendigits.TestPendigits.test_load_hmmlearn" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
       <module name="hassbrain_algorithm" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/algorithms/hmm/testing/base" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/benchmarks/testing" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;algorithms.hmm.testing.base.testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_training&quot;" />
+      <option name="_new_target" value="&quot;testing_pendigits.TestPendigits.test_load_hmmlearn&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Unittests for algorithms.hmm.testing.base.testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_training_q" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+    <configuration name="Unittests for testing_pendigits.TestPendigits.test_train_hmm" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
       <module name="hassbrain_algorithm" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/algorithms/hmm/testing/base" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/benchmarks/testing" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;algorithms.hmm.testing.base.testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_training_q&quot;" />
+      <option name="_new_target" value="&quot;testing_pendigits.TestPendigits.test_train_hmm&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
+    <list>
+      <item itemvalue="Python tests.Unittests for testing_pendigits.TestPendigits.test_train_hmm" />
+      <item itemvalue="Python tests.Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_verify_emissions" />
+      <item itemvalue="Python tests.Unittests for testing_kasteren.TestKasteren.test_train" />
+      <item itemvalue="Python tests.Unittests for testing_pendigits.TestPendigits.test_load_hmmlearn" />
+      <item itemvalue="Python tests.Unittests for testing_bench.TestController.test_ctrl_presentation" />
+    </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python tests.Unittests for algorithms.hmm.testing.base.testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_training_q" />
-        <item itemvalue="Python tests.Unittests for algorithms.hmm.testing.base.testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_training" />
-        <item itemvalue="Python tests.Unittests for algorithms.hmm.testing.base.testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10" />
-        <item itemvalue="Python._hmm_base" />
-        <item itemvalue="Python tests.Unittests for algorithms.hmm.testing.base.testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_new_emission" />
+        <item itemvalue="Python tests.Unittests for testing_bench.TestController.test_ctrl_presentation" />
+        <item itemvalue="Python tests.Unittests for testing_pendigits.TestPendigits.test_load_hmmlearn" />
+        <item itemvalue="Python tests.Unittests for testing_pendigits.TestPendigits.test_train_hmm" />
+        <item itemvalue="Python tests.Unittests for testing_kasteren.TestKasteren.test_train" />
+        <item itemvalue="Python tests.Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_verify_emissions" />
       </list>
     </recent_temporary>
   </component>
@@ -541,103 +673,160 @@
       <workItem from="1552659203745" duration="5034000" />
       <workItem from="1552723970652" duration="13781000" />
       <workItem from="1553526207160" duration="6479000" />
-      <workItem from="1553597906953" duration="13858000" />
+      <workItem from="1553597906953" duration="18219000" />
+      <workItem from="1553624604379" duration="336000" />
+      <workItem from="1553624958049" duration="7768000" />
+      <workItem from="1553672251473" duration="1535000" />
+      <workItem from="1553673803880" duration="177000" />
+      <workItem from="1553673996860" duration="38365000" />
+      <workItem from="1553758532651" duration="2646000" />
+      <workItem from="1553761750978" duration="2602000" />
     </task>
     <servers />
   </component>
   <component name="TestHistory">
-    <history-entry file="Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_training - 2019.03.26 at 16h 22m 40s.xml">
-      <configuration name="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_training" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_bench_TestController_test_ctrl_presentation - 2019.03.28 at 09h 31m 53s.xml">
+      <configuration name="Unittests for testing_bench.TestController.test_ctrl_presentation" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_training - 2019.03.26 at 16h 23m 33s.xml">
-      <configuration name="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_training" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_bench_TestController_test_ctrl_presentation - 2019.03.28 at 09h 33m 12s.xml">
+      <configuration name="Unittests for testing_bench.TestController.test_ctrl_presentation" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_training - 2019.03.26 at 16h 24m 06s.xml">
-      <configuration name="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_training" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_bench_TestController_test_ctrl_presentation - 2019.03.28 at 09h 46m 07s.xml">
+      <configuration name="Unittests for testing_bench.TestController.test_ctrl_presentation" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_training - 2019.03.26 at 16h 24m 31s.xml">
-      <configuration name="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_training" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_bench_TestController_test_ctrl_presentation - 2019.03.28 at 09h 46m 39s.xml">
+      <configuration name="Unittests for testing_bench.TestController.test_ctrl_presentation" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_training - 2019.03.26 at 16h 25m 05s.xml">
-      <configuration name="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_training" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_bench_TestController_test_ctrl_presentation - 2019.03.28 at 09h 46m 47s.xml">
+      <configuration name="Unittests for testing_bench.TestController.test_ctrl_presentation" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_training - 2019.03.26 at 16h 25m 52s.xml">
-      <configuration name="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_training" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_bench_TestController_test_ctrl_presentation - 2019.03.28 at 09h 53m 15s.xml">
+      <configuration name="Unittests for testing_bench.TestController.test_ctrl_presentation" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_training - 2019.03.26 at 16h 26m 16s.xml">
-      <configuration name="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_training" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_bench_TestController_test_ctrl_presentation - 2019.03.28 at 09h 53m 53s.xml">
+      <configuration name="Unittests for testing_bench.TestController.test_ctrl_presentation" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_training - 2019.03.26 at 16h 26m 46s.xml">
-      <configuration name="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_training" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_bench_TestController_test_ctrl_presentation - 2019.03.28 at 10h 03m 07s.xml">
+      <configuration name="Unittests for testing_bench.TestController.test_ctrl_presentation" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_training - 2019.03.26 at 16h 31m 12s.xml">
-      <configuration name="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_training" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_bench_TestController_test_ctrl_presentation - 2019.03.28 at 10h 03m 38s.xml">
+      <configuration name="Unittests for testing_bench.TestController.test_ctrl_presentation" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_training_q - 2019.03.26 at 16h 31m 18s.xml">
-      <configuration name="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_training_q" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_bench_TestController_test_ctrl_presentation - 2019.03.28 at 10h 09m 23s.xml">
+      <configuration name="Unittests for testing_bench.TestController.test_ctrl_presentation" configurationId="tests" />
     </history-entry>
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="182530000" />
+    <option name="totallyTimeSpent" value="240320000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="1933" y="40" width="1894" height="1027" extended-state="6" />
+    <frame x="1933" y="16" width="1894" height="1051" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.49945474" visible="true" weight="0.2132753" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49945474" weight="0.21817192" />
       <window_info id="Structure" order="1" sideWeight="0.50054526" side_tool="true" weight="0.22470076" />
       <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info id="Run" order="3" sideWeight="0.49945474" weight="0.27149075" />
-      <window_info id="Debug" order="4" weight="0.30032644" />
-      <window_info id="Python Console" order="5" weight="0.32916212" />
+      <window_info active="true" id="Run" order="3" sideWeight="0.49945474" visible="true" weight="0.3297062" />
+      <window_info id="Debug" order="4" weight="0.242111" />
+      <window_info id="Python Console" order="5" weight="0.304679" />
       <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.32698768" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.32586786" />
       <window_info anchor="bottom" id="Cvs" order="2" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="3" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="4" weight="0.3293348" />
       <window_info anchor="bottom" id="Docker" order="5" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Version Control" order="6" weight="0.3293348" />
-      <window_info anchor="bottom" id="Database Changes" order="7" />
-      <window_info anchor="bottom" id="Event Log" order="8" sideWeight="0.5003381" side_tool="true" weight="0.36008677" />
+      <window_info anchor="bottom" id="Database Changes" order="6" />
+      <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.5003381" side_tool="true" weight="0.3594625" />
+      <window_info anchor="bottom" id="Version Control" order="8" weight="0.3281075" />
+      <window_info anchor="bottom" id="Terminal" order="9" weight="0.32715377" />
+      <window_info anchor="bottom" id="File Transfer" order="10" sideWeight="0.49966192" weight="0.20084865" />
+      <window_info anchor="right" id="Commander" order="0" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" x="965" y="40" width="470" height="1025" id="Remote Host" order="3" type="WINDOWED" weight="0.3297062" />
+      <window_info anchor="right" x="2885" y="40" width="940" height="1025" id="SciView" order="4" type="WINDOWED" weight="0.32154515" />
+      <window_info anchor="right" id="Database" order="5" weight="0.3297062" />
+      <window_info anchor="right" x="0" y="0" width="337" height="637" id="Documentation" order="6" side_tool="true" weight="0.19315895" />
+    </layout>
+    <layout-to-restore>
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49945474" weight="0.21545158" />
+      <window_info id="Structure" order="1" sideWeight="0.50054526" side_tool="true" weight="0.22470076" />
+      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info active="true" id="Run" order="3" sideWeight="0.49945474" visible="true" weight="0.23993471" />
+      <window_info id="Debug" order="4" weight="0.30032644" />
+      <window_info id="Python Console" order="5" weight="0.304679" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.32586786" />
+      <window_info anchor="bottom" id="Cvs" order="2" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="4" weight="0.3293348" />
+      <window_info anchor="bottom" id="Docker" order="5" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Database Changes" order="6" />
+      <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.5003381" side_tool="true" weight="0.3594625" />
+      <window_info anchor="bottom" id="Version Control" order="8" weight="0.32921812" />
       <window_info anchor="bottom" id="Terminal" order="9" weight="0.32715377" />
       <window_info anchor="bottom" id="File Transfer" order="10" sideWeight="0.49966192" weight="0.20084865" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="right" id="Remote Host" order="3" weight="0.3297062" />
-      <window_info anchor="right" id="SciView" order="4" weight="0.21926007" />
-      <window_info anchor="right" id="Database" order="5" weight="0.3297062" />
-      <window_info anchor="right" x="0" y="0" width="337" height="637" id="Documentation" order="6" side_tool="true" weight="0.19315895" />
-    </layout>
-    <layout-to-restore>
-      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.49945474" visible="true" weight="0.22687703" />
-      <window_info id="Structure" order="1" sideWeight="0.50054526" side_tool="true" weight="0.22470076" />
-      <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info id="Run" order="3" sideWeight="0.49945474" weight="0.3101197" />
-      <window_info id="Debug" order="4" weight="0.30032644" />
-      <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.32715377" />
-      <window_info anchor="bottom" id="Cvs" order="2" weight="0.25" />
-      <window_info anchor="bottom" id="Inspection" order="3" weight="0.4" />
-      <window_info anchor="bottom" id="TODO" order="4" weight="0.3293348" />
-      <window_info anchor="bottom" id="Docker" order="5" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Version Control" order="6" weight="0.3293348" />
-      <window_info anchor="bottom" id="Database Changes" order="7" />
-      <window_info anchor="bottom" id="Event Log" order="8" sideWeight="0.5003381" side_tool="true" weight="0.36008677" />
-      <window_info anchor="bottom" id="Terminal" order="9" weight="0.32715377" />
-      <window_info anchor="bottom" id="Python Console" order="10" weight="0.3293348" />
-      <window_info anchor="bottom" id="File Transfer" order="11" sideWeight="0.49966192" weight="0.20084865" />
-      <window_info anchor="right" id="Commander" order="0" weight="0.4" />
-      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
-      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
-      <window_info anchor="right" id="Remote Host" order="3" weight="0.3297062" />
-      <window_info anchor="right" id="SciView" order="4" weight="0.21926007" />
+      <window_info anchor="right" id="SciView" order="4" weight="0.32154515" />
       <window_info anchor="right" id="Database" order="5" weight="0.3297062" />
       <window_info anchor="right" x="0" y="0" width="337" height="637" id="Documentation" order="6" side_tool="true" weight="0.19315895" />
     </layout-to-restore>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
+  </component>
+  <component name="Vcs.Log.History.Properties">
+    <option name="COLUMN_ORDER">
+      <list>
+        <option value="0" />
+        <option value="2" />
+        <option value="3" />
+        <option value="1" />
+      </list>
+    </option>
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="RECENTLY_FILTERED_USER_GROUPS">
+                <collection />
+              </option>
+              <option name="RECENTLY_FILTERED_BRANCH_GROUPS">
+                <collection />
+              </option>
+              <option name="COLUMN_ORDER">
+                <list>
+                  <option value="0" />
+                  <option value="1" />
+                  <option value="2" />
+                  <option value="3" />
+                </list>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="RECENT_FILTERS">
+      <map>
+        <entry key="Branch">
+          <value>
+            <list />
+          </value>
+        </entry>
+        <entry key="User">
+          <value>
+            <list />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -651,124 +840,6 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/algorithms/benchmarks/mnist_data_test/parsing/parser.py" />
-    <entry file="file:///usr/lib/python3.7/site-packages/sklearn/preprocessing/label.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="825">
-          <caret line="242" column="17" selection-start-line="242" selection-start-column="17" selection-end-line="242" selection-end-column="17" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/algorithms/benchmarks/mnist_data_test/parsing/digit.py" />
-    <entry file="file://$PROJECT_DIR$/benchmarks/pendigit/tp5.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <folding>
-            <element signature="e#0#41#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/lib/python3.7/site-packages/numpy/core/fromnumeric.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="286">
-          <caret line="2504" selection-start-line="2504" selection-end-line="2504" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/algorithms/benchmarks/mnist.py" />
-    <entry file="file://$PROJECT_DIR$/benchmarks/testing/testing_mnist.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="272">
-          <caret line="28" column="11" selection-start-line="28" selection-start-column="11" selection-end-line="28" selection-end-column="11" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/algorithms/benchmarks/mnist_data_test/analysis/training.py" />
-    <entry file="file:///usr/lib/python3.7/site-packages/sklearn/utils/validation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="825">
-          <caret line="780" column="10" selection-start-line="780" selection-start-column="10" selection-end-line="780" selection-end-column="10" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/benchmarks/pendigit/encode.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <folding>
-            <element signature="e#0#34#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/algorithms/benchmarks/pendigit/HMMClass.py" />
-    <entry file="file://$PROJECT_DIR$/benchmarks/pendigit/loadUniPenData.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="680">
-          <caret line="40" column="22" selection-start-line="40" selection-start-column="22" selection-end-line="40" selection-end-column="22" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/datasets/pendigits/pendigits-orig.tra">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-4471">
-          <caret line="7" column="8" selection-start-line="7" selection-start-column="8" selection-end-line="7" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/benchmarks/pendigit/normalize.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1122">
-          <caret line="66" column="25" selection-start-line="66" selection-start-column="25" selection-end-line="66" selection-end-column="25" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///mnt/external_D/code/hassbrain_algorithm/algorithms/testing/bench/testing_pendigits.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="561">
-          <caret line="45" column="28" selection-start-line="45" selection-start-column="28" selection-end-line="45" selection-end-column="28" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/benchmarks/testing/testing_kasteren.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="442">
-          <caret line="37" column="23" lean-forward="true" selection-start-line="37" selection-start-column="23" selection-end-line="37" selection-end-column="23" />
-          <folding>
-            <element signature="e#0#15#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///mnt/external_D/code/hassbrain_algorithm/algorithms/testing/hmm/testing_hmm_scaled_MIT16_410F10_lec21.py" />
-    <entry file="file:///mnt/external_D/code/hassbrain_algorithm/algorithms/testing/hmm/testing_hmm_vs_hmm2_MIT16_410F10_lec21.py" />
-    <entry file="file://$PROJECT_DIR$/benchmarks/testing/testing_pendigits.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="867">
-          <caret line="51" column="12" selection-start-line="51" selection-start-column="12" selection-end-line="51" selection-end-column="12" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/algorithms/hmm/hmm_scaled.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-289">
-          <caret line="4" column="6" selection-start-line="4" selection-start-column="6" selection-end-line="4" selection-end-column="6" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_L08HMMs.py" />
     <entry file="file://$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_MIT16_410F10_lec21.py" />
     <entry file="file://$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_scaled_L08HMMs.py" />
     <entry file="file://$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_scaled_MIT16_410F10_lec21.py" />
@@ -780,13 +851,7 @@
     <entry file="file://$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_2.py" />
     <entry file="file://$PROJECT_DIR$/algorithms/testing/hmm/testing_hmm_coin.py" />
     <entry file="file://$PROJECT_DIR$/algorithms/testing/hmm/base/testing_hmm_vs_hmm2_MIT16_410F10_lec21.py" />
-    <entry file="file:///mnt/external_D/code/hassbrain_algorithm/algorithms/testing/hmm/testing_PMF.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="442">
-          <caret line="28" selection-start-line="28" selection-end-line="28" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file:///mnt/external_D/code/hassbrain_algorithm/algorithms/testing/hmm/testing_PMF.py" />
     <entry file="file://$PROJECT_DIR$/algorithms/hmm/testing/testing_PMF.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="272">
@@ -797,20 +862,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/algorithms/hmm/distributions.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="425">
-          <caret line="25" column="10" selection-start-line="25" selection-start-column="10" selection-end-line="25" selection-end-column="10" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///mnt/external_D/code/hassbrain_algorithm/algorithms/testing/hmm/base/testing_hmm_L08HMMs.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="397">
-          <caret line="108" column="20" lean-forward="true" selection-start-line="108" selection-start-column="20" selection-end-line="108" selection-end-column="20" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file:///mnt/external_D/code/hassbrain_algorithm/algorithms/testing/hmm/base/testing_hmm_L08HMMs.py" />
     <entry file="file://$PROJECT_DIR$/algorithms/hmm/testing/scaled/testing_hmm_scaled_MIT16_410F10_lec21.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="2482">
@@ -821,13 +873,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file:///mnt/external_D/code/hassbrain_algorithm/algorithms/testing/hmm/scaled/testing_hmm_scaled_L08HMMs.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="85">
-          <caret line="5" column="20" selection-start-line="5" selection-start-column="20" selection-end-line="5" selection-end-column="20" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file:///mnt/external_D/code/hassbrain_algorithm/algorithms/testing/hmm/scaled/testing_hmm_scaled_L08HMMs.py" />
     <entry file="file://$PROJECT_DIR$/algorithms/hmm/testing/scaled/testing_hmm_scaled_L08HMMs.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="578">
@@ -835,6 +881,21 @@
           <folding>
             <element signature="e#0#15#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///mnt/external_D/code/hassbrain_algorithm/algorithms/testing/hmm/base/testing_hmm_MIT16_410F10_lec21.py" />
+    <entry file="file:///usr/lib/python3.7/unittest/case.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="295">
+          <caret line="892" selection-start-line="892" selection-end-line="892" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/lib/python3.7/site-packages/pandas/io/common.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="695">
+          <caret line="426" selection-start-line="426" selection-end-line="426" />
         </state>
       </provider>
     </entry>
@@ -848,94 +909,260 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/algorithms/hmm/testing/hmm2/hmm/_BaseHMM.py">
+    <entry file="file:///mnt/external_D/code/hassbrain_algorithm/benchmarks/testing/testing_kasteren.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4114">
-          <caret line="251" column="68" lean-forward="true" selection-start-line="251" selection-start-column="68" selection-end-line="251" selection-end-column="68" />
+        <state>
+          <caret line="23" column="10" selection-start-line="23" selection-start-column="10" selection-end-line="23" selection-end-column="10" />
         </state>
       </provider>
     </entry>
-    <entry file="file:///mnt/external_D/code/hassbrain_algorithm/algorithms/testing/hmm/base/testing_hmm_MIT16_410F10_lec21.py">
+    <entry file="file://$PROJECT_DIR$/algorithms/hmm/distributions.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-612">
-          <caret line="84" column="18" lean-forward="true" selection-start-line="84" selection-start-column="18" selection-end-line="84" selection-end-column="18" />
+        <state relative-caret-position="136">
+          <caret line="8" selection-start-line="8" selection-end-line="8" />
         </state>
       </provider>
     </entry>
-    <entry file="file:///usr/lib/python3.7/unittest/case.py">
+    <entry file="file:///usr/lib/python3.7/site-packages/yaml/constructor.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="295">
-          <caret line="892" selection-start-line="892" selection-end-line="892" />
+        <state relative-caret-position="287">
+          <caret line="125" selection-start-line="125" selection-end-line="125" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/algorithms/hmm/testing/hmm2/hmm/discrete/DiscreteHMM.py">
+    <entry file="file:///usr/lib/python3.7/site-packages/pandas/core/generic.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="325">
-          <caret line="81" column="39" selection-start-line="81" selection-start-column="39" selection-end-line="81" selection-end-column="39" />
+        <state relative-caret-position="287">
+          <caret line="1478" selection-start-line="1478" selection-end-line="1478" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/algorithms/hmm/testing/base/testing_hmm_MIT16_410F10_lec21.py">
+    <entry file="file:///mnt/external_D/code/hassbrain_algorithm/benchmarks/testing/testing_bench.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="340">
-          <caret line="166" column="20" selection-start-line="166" selection-start-column="20" selection-end-line="166" selection-end-column="20" />
+        <state relative-caret-position="527">
+          <caret line="35" selection-start-line="35" selection-end-line="35" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/benchmarks/dataset.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="17">
+          <caret line="1" column="17" selection-start-line="1" selection-start-column="17" selection-end-line="1" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///mnt/external_D/code/hassbrain_algorithm/benchmarks/testing/testing_pendigits.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="187">
+          <caret line="15" column="12" selection-start-line="15" selection-start-column="12" selection-end-line="15" selection-end-column="12" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/lib/python3.7/enum.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="287">
+          <caret line="310" selection-start-line="310" selection-end-line="310" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/benchmarks/config.yaml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="85">
+          <caret line="5" column="5" selection-start-line="5" selection-start-column="5" selection-end-line="5" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///mnt/external_D/code/hassbrain_algorithm/algorithms/hmm/testing/base/testing_hmm_MIT16_410F10_lec21.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="510">
+          <caret line="101" column="29" selection-start-line="101" selection-start-column="29" selection-end-line="101" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pycharm/teamcity/common.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="782">
+          <caret line="48" selection-start-line="48" selection-end-line="48" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/lib/python3.7/site-packages/numpy/core/fromnumeric.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="525">
+          <caret line="2075" selection-start-line="2075" selection-end-line="2075" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/lib/python3.7/site-packages/sklearn/utils/validation.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="287">
+          <caret line="551" selection-start-line="551" selection-end-line="551" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/lib/python3.7/site-packages/hmmlearn/base.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="287">
+          <caret line="422" selection-start-line="422" selection-end-line="422" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="uml://Python/benchmarks.controller.Controller">
+      <provider selected="true" editor-type-id="UmlEditorProvider">
+        <state>
+          <ID>Python</ID>
+          <OriginalElement>benchmarks.controller.Controller</OriginalElement>
+          <nodes>
+            <node x="" y="">object</node>
+            <node x="" y="">benchmarks.controller.Controller</node>
+          </nodes>
+          <notes />
+          <edges />
+          <settings layout="Hierarchic Group" zoom="1.0" x="136.0" y="59.0" />
+          <SelectedNodes />
+          <Categories>
+            <Category>Fields</Category>
+          </Categories>
+          <SCOPE>All</SCOPE>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/benchmarks/testing/testing_bench.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="425">
+          <caret line="31" column="20" selection-start-line="31" selection-start-column="20" selection-end-line="31" selection-end-column="20" />
           <folding>
             <element signature="e#0#15#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/benchmarks/pendigits.py">
+    <entry file="file://$PROJECT_DIR$/benchmarks/kasteren.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="289">
-          <caret line="17" column="21" selection-start-line="17" selection-start-column="21" selection-end-line="17" selection-end-column="21" />
+        <state relative-caret-position="1683">
+          <caret line="177" selection-start-line="177" selection-end-line="177" />
           <folding>
-            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#0#19#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/algorithms/hmm/_hmm_base.py">
+    <entry file="file://$PROJECT_DIR$/algorithms/model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="612">
-          <caret line="466" column="36" selection-start-line="466" selection-start-column="36" selection-end-line="466" selection-end-column="36" />
+        <state relative-caret-position="825">
+          <caret line="101" column="24" selection-start-line="101" selection-start-column="24" selection-end-line="101" selection-end-column="24" />
           <folding>
-            <element signature="e#0#14#0" expanded="true" />
+            <element signature="e#149#203#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/benchmarks/benchmark.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="170">
-          <caret line="10" selection-start-line="10" selection-end-line="10" />
+        <state relative-caret-position="17">
+          <caret line="79" column="21" selection-start-line="79" selection-start-column="21" selection-end-line="79" selection-end-column="21" />
           <folding>
             <element signature="e#0#14#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/benchmarks/dataset.py">
+    <entry file="file://$PROJECT_DIR$/benchmarks/controller.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="68">
-          <caret line="4" selection-start-line="4" selection-end-line="4" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/benchmarks/kasteren.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="27" selection-start-line="27" selection-end-line="27" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/algorithms/model.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="544">
-          <caret line="51" column="33" selection-start-line="51" selection-start-column="33" selection-end-line="51" selection-end-column="33" />
+        <state relative-caret-position="425">
+          <caret line="128" column="12" selection-start-line="128" selection-start-column="12" selection-end-line="128" selection-end-column="12" />
           <folding>
-            <element signature="e#814#878#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithms/hmm/testing/hmm2/hmm/discrete/DiscreteHMM.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="437">
+          <caret line="87" selection-start-line="87" selection-end-line="87" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithms/hmm/testing/hmm2/hmm/_BaseHMM.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="340">
+          <caret line="20" column="18" selection-start-line="20" selection-start-column="18" selection-end-line="20" selection-end-column="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithms/hmm/_hmm_base.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="238">
+          <caret line="666" column="28" selection-start-line="666" selection-start-column="28" selection-end-line="666" selection-end-column="28" />
+          <folding>
+            <element signature="e#0#14#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithms/hmm/testing/base/testing_hmm_MIT16_410F10_lec21.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="612">
+          <caret line="36" column="33" selection-start-line="36" selection-start-column="33" selection-end-line="36" selection-end-column="33" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/benchmarks/pendigit/loadUniPenData.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="51">
+          <caret line="3" selection-start-line="3" selection-end-line="3" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/benchmarks/testing/testing_mnist.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/benchmarks/testing/testing_pendigits.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="408">
+          <caret line="24" column="8" selection-start-line="24" selection-start-column="8" selection-end-line="24" selection-end-column="8" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/benchmarks/testing/testing_kasteren.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="591">
+          <caret line="60" column="20" selection-start-line="60" selection-start-column="20" selection-end-line="60" selection-end-column="20" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithms/hmm/hmm_scaled.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret line="67" column="21" selection-start-line="67" selection-start-column="21" selection-end-line="67" selection-end-column="21" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/benchmarks/pendigits.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="17">
+          <caret line="112" selection-start-line="112" selection-end-line="112" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
           </folding>
         </state>
       </provider>

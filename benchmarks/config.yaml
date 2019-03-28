@@ -3,7 +3,6 @@ datasets:
     sens_file_path: '/home/chris/code2/hassbrain_algorithm/datasets/kasteren/kasterenSenseData.txt'
     act_file_path: '/home/chris/code2/hassbrain_algorithm/datasets/kasteren/kasterenActData.txt'
 
-  pen_digit:
-    test_file_path: ''
-    train_file_path: ''
-
+  pendigit:
+    test_file_path: '/home/chris/code2/hassbrain_algorithm/datasets/pendigits/pendigits-orig.tes'
+    train_file_path: '/home/chris/code2/hassbrain_algorithm/datasets/pendigits/pendigits-orig.tra'

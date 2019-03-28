@@ -99,7 +99,7 @@ class Proxy_HMM(Model):
         if use_q_fct == True or use_q_fct == False:
             self.use_q_fct(use_q_fct)
 
-        obs_seq = obs_seq[:30]
+        obs_seq = obs_seq
         self._hmm.train(obs_seq,
                         self._epsilon,
                         self._training_steps,

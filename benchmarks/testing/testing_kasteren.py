@@ -52,22 +52,25 @@ class TestKasteren(unittest.TestCase):
 
         import math
         # do stuff
-        obs_seq = self._kast_obj.get_train_seq()[:19]  # [:250]#[:19]
+        #obs_seq = self._kast_obj.get_train_seq()[:19]  # [:250]#[:19]
+        obs_seq = self._kast_obj.get_train_seq()[:250]  # [:250]#[:19]
         print(math.exp(hmm2.forwardbackward(obs_seq)))
         hmm2.mapB(obs_seq)
         hmm2.train(obs_seq, training_steps)
+        print(hmm2.pi)
+        print(hmm2.A)
         print(math.exp(hmm2.forwardbackward(obs_seq)))
 
-        print('-'*100)
-        print(hmm)
-        print(obs_seq)
+        #print('-'*100)
+        #print(hmm)
+        #print(obs_seq)
 
-        print(hmm.forward_backward(obs_seq))
-        hmm.train(obs_seq, None, training_steps)
-        #hmm.train(obs_seq, 0.000001, None)
-        print(hmm)
+        #print(hmm.forward_backward(obs_seq))
+        #hmm.train(obs_seq, None, training_steps)
+        ##hmm.train(obs_seq, 0.000001, None)
+        #print(hmm)
 
-        print(hmm.forward_backward(obs_seq))
+        #print(hmm.forward_backward(obs_seq))
 
         # for i in range(0,300):
         #    alpha_before = hmm.forward(obs_seq)

@@ -4,6 +4,7 @@ services:
       build: .
       volumes:
         - /home/chris/code2/hassbrain_algorithm/notebooks/data:/home/jovyan/notebooks
+        - /home/chris/code2/hassbrain_algorithm/benchmarks:/home/jovyan/benchmarks
         - /home/chris/code2/hassbrain_algorithm/algorithms:/home/jovyan/algorithms
         - /home/chris/code2/hassbrain_algorithm/datasets:/home/jovyan/datasets
       ports:

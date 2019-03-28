@@ -1,9 +1,12 @@
+import copy
+
 import numpy as np
-from benchmarks.pendigit import loadUniPenData
-from benchmarks.pendigit import normalize
+from benchmarks.pendigit.loadUniPenData import loadUnipenData
+from benchmarks.pendigit.normalize import normalize_example
+from benchmarks.pendigit.plotting import plotUniPenData
+
 from hmmlearn.hmm import MultinomialHMM
-#from algorithms.hmm.hmm_scaled import HiddenMarkovModel
-from algorithms.hmm._hmm_base import HiddenMarkovModel
+from algorithms.hmm.hmm_scaled import HMM_Scaled as HiddenMarkovModel
 from algorithms.hmm.distributions import ProbabilityMassFunction
 import math
 import joblib
@@ -11,23 +14,24 @@ import joblib
 MODEL_NAME="mnHmm_%s.joblib"
 
 class DatasetPendigits():
-    def __init__(self):
-
+    def __init__(self, train_path, test_path):
         # the number of classes that should the directions should be
         # divided into
         self._resolution = 8
+        self._training_steps_per_digit = 10
 
+        self._train_label_path = train_path
         self._train_labels = None
         self._train_data = None
 
+        self._test_label_path = test_path
         self._test_labels = None
         self._test_data = None
 
         self._model_dict = {}
 
-
-    def load_files(self, training_file, test_file):
-        train_data, train_labels = loadUnipenData(training_file)
+    def load_files(self):
+        train_data, train_labels = loadUnipenData(self._train_label_path)
         self._train_labels = train_labels
 
         #tdata is data without penUp and penDown
@@ -35,7 +39,7 @@ class DatasetPendigits():
         self._train_data = train_data
 
         # load testdata
-        test_data, test_labels = loadUnipenData(test_file)
+        test_data, test_labels = loadUnipenData(self._test_label_path)
         test_data, ptest_data = normalize_example(test_data)
         self._test_data = test_data
 
@@ -78,6 +82,8 @@ class DatasetPendigits():
             model.set_emission_matrix(em_mat)
 
             self._model_dict[i] = model
+            # todo debug
+            break
 
     def init_models_hmmlearn(self):
         # generate
@@ -101,25 +107,32 @@ class DatasetPendigits():
             model.transmat_ = np.full((n_classes, n_classes), init)
             self._model_dict[i] = model
 
+    def train_models_hmmlearn(self):
+        for i in range(10):
+            enc_data, lengths = self._create_train_seq(i)
+            self._model_dict[i].fit(enc_data, lengths)
+            break
+
     def save_models(self):
         # save models
         for key, model in self._model_dict.items():
             joblib.dump(model, MODEL_NAME%(key))
 
     def train_models(self):
-
         # train 10 models for each digit one
         for i in range(0, 10):
             print('-'*100)
             print('training model nr %s for digit %s '%(i,i))
             enc_data, lengths = self._create_train_seq(i)
             print("\ntraining %s digits for number %s"%(len(lengths), i) )
-            print("total lenght of sequence %s observations"%(sum(lengths)))
-            # train every sequence 20 steps longs
+            print("total length of sequence %s observations"%(sum(lengths)))
             #print(enc_data)
             #print(lengths)
             idx = 0
+            curr_hmm = self._model_dict[i]
+            digits_skipped = 0
             for j in range(0, len(lengths)):
+
                 new_idx = idx + lengths[j]
                 seq = enc_data[idx:new_idx]
                 #print('--'*10)
@@ -127,17 +140,25 @@ class DatasetPendigits():
                 #print(idx)
                 #print(new_idx)
                 #print(seq)
-                #print(self._model_dict)
-                self._model_dict[i].train(seq, steps=20)
+                tmp_hmm = copy.deepcopy(curr_hmm)
+                try:
+                    curr_hmm.train(seq, steps=self._training_steps_per_digit)
+                except:
+                    digits_skipped += 1
+                    print('sequence to long => model crashes')
+                    # rollback changes
+                    curr_hmm = tmp_hmm
                 idx = new_idx
-            print(self._model_dict[i])
+                #print('~'*100)
+                #print('hmm info:')
+                #print(type(curr_hmm))
+                #print(curr_hmm)
+            # todo debug
+            print('~'*100)
+            print(len(lengths))
+            print(digits_skipped)
+            print(curr_hmm)
             break
-
-
-    def train_models_hmmlearn(self):
-        for i in range(10):
-            enc_data, lengths = self._create_train_seq(i)
-            self._model_dict[i].fit(enc_data, lengths)
 
     def _create_train_seq(self, number):
         #print('-'*100)
@@ -156,7 +177,7 @@ class DatasetPendigits():
         data, tdata = normalize_example(self._train_data)
         plotUniPenData(data[number])
 
-    def points_to_direction(self, c, x1, y1, x2, y2):
+    def _points_to_direction(self, c, x1, y1, x2, y2):
         """
         :param c:
             number of classes
@@ -212,7 +233,7 @@ class DatasetPendigits():
                         #dx = xp - x
                         #dy = yp - y
                         #direction = (int(math.ceil(math.atan2(dy, dx) / (2 * math.pi / 8))) + 8) % 8
-                        direction = self.points_to_direction(C, xp, yp, x, y)
+                        direction = self._points_to_direction(C, xp, yp, x, y)
                         #sq.append([direction])
                         sq.append(direction)
                     xp = x

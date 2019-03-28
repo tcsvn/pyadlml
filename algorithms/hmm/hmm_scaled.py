@@ -80,14 +80,20 @@ class HMM_Scaled(HiddenMarkovModel):
         for idx, zn in enumerate(self._z):
             cn[0] += self.prob_x_given_z(x1, zn)*self.prob_pi(zn)
 
+        if cn[0] == 0.0:
+            print('#'*100)
+            for idx, zn in enumerate(self._z):
+                print('--'*10)
+                print(self.prob_x_given_z(x1, zn))
+                print(self.prob_pi(zn))
+            print('#'*100)
+            exit(-1)
         #print(cn)
         #print('-'*100)
         for idx, zn in enumerate(self._z):
             alpha[0][idx] = self.prob_pi(zn)*self.prob_x_given_z(x1,zn)\
                             *(1/cn[0])
 
-        #print(alpha)
-        #print('-'*100)
         #eq 13.55alpha_znm1, zn, seq, xn, cn):
         for n in range(1,len(seq)):
             #calculate cn
@@ -95,6 +101,9 @@ class HMM_Scaled(HiddenMarkovModel):
             #print('--')
             #print(n)
             cn[n] = self.calc_cn(alpha[n-1], cn[:n], xn)
+            #print(cn)
+            if cn[n] == 0.0:
+                raise ValueError
             #print('--')
             for idx, zn in enumerate(self._z):
                 sum = 0
@@ -106,7 +115,13 @@ class HMM_Scaled(HiddenMarkovModel):
                            *self.prob_za_given_zb(zn, znm1)
 
                 # multiply by the data contribution the prob of observing the current observation
-                sum *= self.prob_x_given_z(xn, zn)*(1/cn[n])
+                #print(sum, self.prob_x_given_z(xn, zn), cn[n])
+                # todo remove cause it is unecessary
+                prob_x_given_z = self.prob_x_given_z(xn, zn)
+                #if prob_x_given_z == 0.0:
+                #    sum = 0.0
+                #else:
+                sum *= prob_x_given_z*(1/cn[n])
                 alpha[n][idx] = sum
 
         return alpha, cn

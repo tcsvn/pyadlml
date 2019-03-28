@@ -43,6 +43,10 @@ class Controller():
                 kast_sens_path = data['datasets']['kasteren']['sens_file_path']
                 kast_act_path = data['datasets']['kasteren']['act_file_path']
                 return kast_sens_path, kast_act_path
+            if data_name == Dataset.PENDIGITS:
+                train_path = data['datasets']['pendigit']['train_file_path']
+                test_path = data['datasets']['pendigit']['test_file_path']
+                return train_path, test_path
 
     def load_dataset(self, data_name):
         """
@@ -60,10 +64,10 @@ class Controller():
 
         elif data_name == Dataset.PENDIGITS:
             print('loading numbers...')
-            pd = Dataset()
+            pd_train_path, pd_test_path = self.load_paths(Dataset.PENDIGITS)
+            pd = DatasetPendigits(pd_train_path, pd_test_path)
             self._loaded_datasets[Dataset.PENDIGITS.name] = pd
-            pd_test_path, pd_lbl_path = self.load_paths(Dataset.PENDIGITS)
-            pd.load_files(pd_test_path, pd_lbl_path)
+            pd.load_files()
 
         elif data_name == Dataset.HASS:
             return
@@ -115,8 +119,17 @@ class Controller():
         # train on given dataset
         if data_name == Dataset.KASTEREN:
             kasteren = self._loaded_datasets[Dataset.KASTEREN.name]
-            train_seq = kasteren.get_train_seq()
-            self._model.train(train_seq, args)
+            train_dump = kasteren.get_train_seq()
+            train_seq_1 = train_dump[:30]
+            train_seq_2 = train_dump[30:60]
+            train_seq_3 = train_dump[60:90]
+            train_seq_4 = train_dump[90:120]
+            train_seq_5 = train_dump[120:150]
+            self._model.train(train_seq_1, args)
+            self._model.train(train_seq_2, args)
+            #self._model.train(train_seq_3, args)
+            #self._model.train(train_seq_4, args)
+            #self._model.train(train_seq_5, args)
         elif data_name == Dataset.HASS:
             pass
 

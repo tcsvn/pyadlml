@@ -1,6 +1,4 @@
 import re
-import numpy as np
-
 
 def loadUnipenData(filename):
     fid = open(filename,'r')

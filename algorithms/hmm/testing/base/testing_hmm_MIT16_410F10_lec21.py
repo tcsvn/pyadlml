@@ -41,6 +41,39 @@ class TestMIT16_410F10(unittest.TestCase):
         pass
 
 
+    def test_verify_A(self):
+        """
+        check if after each training step the transition matrix
+        is valid
+        :return: None
+        """
+        bol_verify = self.hmm.verify_transistion_matrix()
+        self.assertTrue(bol_verify)
+        obs_seq = self.obs_seq
+
+        for i in range(0,100):
+            self.hmm.training_step(obs_seq)
+            bol_verify = self.hmm.verify_transistion_matrix()
+            #if not bol_verify:
+                #bol_verify = self.hmm.verify_transistion_matrix()
+
+            self.assertTrue(bol_verify)
+
+    def test_verify_emissions(self):
+        """
+        check if after each training step the transition matrix
+        is valid
+        :return: None
+        """
+        bol_verify = self.hmm.verify_emission_matrix()
+        self.assertTrue(bol_verify)
+        obs_seq = self.obs_seq
+
+        for i in range(0,100):
+            self.hmm.training_step(obs_seq)
+            bol_verify = self.hmm.verify_emission_matrix()
+            self.assertTrue(bol_verify)
+
     def test_new_pi(self):
         alpha = self.hmm.forward(self.obs_seq)
         beta = self.hmm.backward(self.obs_seq)

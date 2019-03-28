@@ -75,6 +75,16 @@ class HiddenMarkovModel():
         else:
             self._pi = np.full(k, 1./k)
 
+        # is used to check after a training step if the sum
+        # of all outgoing trans probabilities of one state
+        # sum up to unity, when diff greater than the tolerance
+        # a correction is made
+        self._transition_tolerance = 0.000001
+
+        # is used to check after a training step if the sum
+        # of emissions from one state sum up to 1
+        self._emission_tolerance = 0.000001
+
     def __str__(self):
         s = ""
         s += '*' * 50
@@ -137,6 +147,47 @@ class HiddenMarkovModel():
 
     def set_transition_matrix(self, transition_matrix):
         self._A = transition_matrix
+
+    def verify_transistion_matrix(self, trans_mat=None):
+        """
+        checks if all rows sum up to unity
+        in other words all outgoing transition probs have to sum up to 1.
+        Do this either for the own matrix if no parameter is passed or for the
+        matrix given in parameter
+        :return:
+        """
+        if trans_mat is None:
+            trans_mat = self._A
+
+        row_sums = np.sum(trans_mat, axis=1)
+        for sum in row_sums:
+            if abs(1-sum) > self._transition_tolerance:
+                return False
+        return True
+
+    def verify_emission_matrix(self, em_mat=None):
+        """
+        checks if all emission probabilities of the states sum to unity 1
+        :return:
+            True if the emission matrix is correct
+            False if at least one doesn't sum up correctly
+        """
+        # if deviation greater than tolerance
+        if em_mat is None:
+            for idx, label in enumerate(self._z):
+                em_arr = self.states[label].get_probs()
+                sum = np.sum(em_arr)
+                if abs(1-sum) > self._emission_tolerance:
+                    return False
+            return True
+        else:
+            row_sums = np.sum(em_mat, axis=1)
+            for sum in row_sums:
+                if abs(1-sum) > self._emission_tolerance:
+                    return False
+            return True
+
+
 
     def draw(self):
         self.render_console()
@@ -560,10 +611,98 @@ class HiddenMarkovModel():
                 numer = 0.0
                 for n in range(0, N-1):
                     numer += xi[n][j][k]
-
-                new_A[j][k] = numer/denom
+                if denom == 0.0:
+                    new_A[j][k] = 0.0
+                else:
+                    new_A[j][k] = numer/denom
+        """
+        as numbers are rounded A doesn't sum up to 1 equally 
+        over many iterations the error cumullates and leads to destruction
+        therefore correct A
+        """
+        if not self.verify_transistion_matrix(new_A):
+            new_A = self._correct_A(new_A)
         return new_A
 
+    def _correct_A(self, new_A):
+        """
+        as numbers are rounded A doesn't sum up to 1 equally
+        over many iterations the error cumullates and leads to destruction
+        therefore correct A
+        :param new_A:
+        :return:
+        """
+        #print('~'*100)
+        #print(new_A)
+        faulty_row = []
+        tolerance = 0.1
+
+        # get faulty rows
+        row_sums = np.sum(new_A, axis=0)
+        for idx, sum in enumerate(row_sums):
+            diff = sum-1
+            if abs(diff) > tolerance:
+                faulty_row.append((idx, diff))
+        row_length = len(self._z)
+        for tupel in faulty_row:
+            idx = tupel[0]
+            diff = tupel[1]
+            correction = diff/row_length
+            #print('~'*100)
+            #print(idx)
+            #print(diff)
+            #print(correction)
+            #print(new_A[idx])
+            #print(np.sum(new_A[idx]))
+            #print(1-np.sum(new_A[idx]))
+            #print('--')
+            #new_A[idx] = new_A[idx] + correction
+            #print(new_A[idx])
+            #print(np.sum(new_A[idx], axis=0))
+        # todo this can't be happening
+        raise ValueError
+        return new_A
+
+    # todo hmm2
+    def new_emissions(self, gamma, observations):
+        '''
+        Helper method that performs the Baum-Welch 'M' step
+        for the matrix 'B'.
+        '''
+        n = len(self._z)
+        m = len(self._o)
+        new_E = np.zeros((n,m))
+
+        for j in range(n):
+            for k in range(m):
+                numer = 0.0
+                denom = 0.0
+                for t in range(len(observations)):
+                    if observations[t] == k:
+                        numer += gamma[t][j]
+                    denom += gamma[t][j]
+                new_E[j][k] = numer/denom
+
+
+        if not self.verify_emission_matrix(new_E):
+            new_E = self.correct_emissions(new_E)
+
+        return new_E
+
+    #    B_new = np.zeros((self.n,self.m))
+
+    #    for j in range(self.n):
+    #        for k in range(self.m):
+    #            numer = 0.0
+    #            denom = 0.0
+    #            for t in range(len(observations)):
+    #                if observations[t] == k:
+    #                    numer += gamma[t][j]
+    #                denom += gamma[t][j]
+    #            B_new[j][k] = numer/denom
+    #
+    #    return B_new
+    # todo book
     #def new_emissions(self, obs_seq, gamma):
     #    K = len(self._z)
     #    N = len(obs_seq)
@@ -590,37 +729,44 @@ class HiddenMarkovModel():
     #    if xn == x: return 1
     #    else: return 0
 
-    def num_times_in_state_zn_and_xn(self, gamma_zn, obs_seq, xn):
-        res = 0
-        for gamma_val, x in zip(gamma_zn, obs_seq):
-            # equal to multiplying with 1 if observation is the same
-            if x == xn:
-                res += gamma_val
-        return res
+    #def num_times_in_state_zn_and_xn(self, gamma_zn, obs_seq, xn):
+    #    res = 0
+    #    for gamma_val, x in zip(gamma_zn, obs_seq):
+    #        # equal to multiplying with 1 if observation is the same
+    #        if x == xn:
+    #            res += gamma_val
+    #    return res
 
-    def new_emissions(self, gamma, obs_seq):
-        """
-        equation 13.23
-        :param gamma:
-        :param obs_seq:
-        :return: matrix (Z x O)
-        """
-        res = np.zeros((len(self._z), len(self._o)))
-        for idx_zn, zn in enumerate(self._z):
-            # calculate number of times in state zn by summing over all
-            # timestep gamma values
-            num_times_in_zn = gamma.T[idx_zn].sum()
-            # print(zn)
-            # print('--'*10)
-            for idx_o, xn in enumerate(self._o):
-                # calc number of times ni state s,
-                # when observation  was  xn
-                num_in_zn_and_obs_xn = self.num_times_in_state_zn_and_xn(
-                    gamma.T[idx_zn], obs_seq, xn)
-                # print(str(num_in_zn_and_obs_xn) + "/" + str(num_times_in_zn))
-                res[idx_zn][idx_o] = num_in_zn_and_obs_xn / num_times_in_zn
-        return res
+    # todo self before
+    #def new_emissions(self, gamma, obs_seq):
+    #    """
+    #    equation 13.23
+    #    :param gamma:
+    #    :param obs_seq:
+    #    :return: matrix (Z x O)
+    #    """
+    #    new_E = np.zeros((len(self._z), len(self._o)))
+    #    for idx_zn, zn in enumerate(self._z):
+    #        # calculate number of times in state zn by summing over all
+    #        # timestep gamma values
+    #        num_times_in_zn = gamma.T[idx_zn].sum()
+    #        # print(zn)
+    #        # print('--'*10)
+    #        for idx_o, xn in enumerate(self._o):
+    #            # calc number of times ni state s,
+    #            # when observation  was  xn
+    #            num_in_zn_and_obs_xn = self.num_times_in_state_zn_and_xn(
+    #                gamma.T[idx_zn], obs_seq, xn)
+    #            # print(str(num_in_zn_and_obs_xn) + "/" + str(num_times_in_zn))
+    #            new_E[idx_zn][idx_o] = num_in_zn_and_obs_xn / num_times_in_zn
+    #    if not self.verify_emission_matrix(new_E):
+    #        new_E = self.correct_emissions(new_E)
+    #
+    #    return new_E
 
+    def correct_emissions(self, new_E):
+        raise ValueError
+        return new_E
 
     def predict_xnp1(self, seq):
         """
