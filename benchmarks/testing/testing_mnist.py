@@ -138,7 +138,7 @@ class TestMNIST(unittest.TestCase):
         init_pi = init_pi/sum(init_pi)
 
         observation_alphabet =  self._kast_obj.get_sensor_list()
-        states = self._kast_obj.get_activity_list()
+        states = self._kast_obj.get_state_list()
         # init markov model
         hmm = HiddenMarkovModel(states,
                                 observation_alphabet,
@@ -210,7 +210,7 @@ class TestMNIST(unittest.TestCase):
         init_pi = init_pi/sum(init_pi)
 
         observation_alphabet =  self._kast_obj.get_sensor_list()
-        states = self._kast_obj.get_activity_list()
+        states = self._kast_obj.get_state_list()
         # init markov model
         hmm = HiddenMarkovModel(states,
                                 observation_alphabet,
@@ -235,7 +235,7 @@ class TestMNIST(unittest.TestCase):
         print(prob_x_after)
         print('~'*10)
         print(hmm._z)
-        print(self._kast_obj.get_activity_label_from_id(hmm._z[6]))
+        print(self._kast_obj.decode_state_label(hmm._z[6]))
         print(obs_seq)
         print('#'*100)
 
@@ -252,11 +252,11 @@ class TestMNIST(unittest.TestCase):
 
 
     def test_id_from_label(self):
-        id1 = self._kast_obj.get_sensor_id_from_label('Cups cupboard', 0)
-        id2 = self._kast_obj.get_sensor_id_from_label('Cups cupboard', 1)
-        id3 = self._kast_obj.get_sensor_id_from_label('Washingmachine', 1)
-        id4 = self._kast_obj.get_sensor_id_from_label('Groceries Cupboard', 1)
-        id5 = self._kast_obj.get_sensor_id_from_label('Hall-Bathroom door', 0)
+        id1 = self._kast_obj.encode_obs_lbl('Cups cupboard', 0)
+        id2 = self._kast_obj.encode_obs_lbl('Cups cupboard', 1)
+        id3 = self._kast_obj.encode_obs_lbl('Washingmachine', 1)
+        id4 = self._kast_obj.encode_obs_lbl('Groceries Cupboard', 1)
+        id5 = self._kast_obj.encode_obs_lbl('Hall-Bathroom door', 0)
         self.assertEqual(1, id1)
         self.assertEqual(0, id2)
         self.assertEqual(26, id3)
@@ -266,11 +266,11 @@ class TestMNIST(unittest.TestCase):
     def test_label_from_id(self):
         print(self._kast_obj._label)
         print(self._kast_obj._label_hashmap)
-        id1 = self._kast_obj.get_sensor_label_from_id(0)
-        id2 = self._kast_obj.get_sensor_label_from_id(11)
-        id3 = self._kast_obj.get_sensor_label_from_id(10)
-        id4 = self._kast_obj.get_sensor_label_from_id(27)
-        id5 = self._kast_obj.get_sensor_label_from_id(5)
+        id1 = self._kast_obj.decode_obs_label(0)
+        id2 = self._kast_obj.decode_obs_label(11)
+        id3 = self._kast_obj.decode_obs_label(10)
+        id4 = self._kast_obj.decode_obs_label(27)
+        id5 = self._kast_obj.decode_obs_label(5)
         self.assertEqual('Cups cupboard', id1)
         self.assertEqual('Groceries Cupboard', id2)
         self.assertEqual('Groceries Cupboard', id3)

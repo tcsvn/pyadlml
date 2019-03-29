@@ -33,7 +33,7 @@ class TestKasteren(unittest.TestCase):
         init_pi = HiddenMarkovModel.gen_rand_pi(state_count)
 
         observation_alphabet = self._kast_obj.get_sensor_list()
-        states = self._kast_obj.get_activity_list()
+        states = self._kast_obj.get_state_list()
 
         print(states)
         print(observation_alphabet)
@@ -202,11 +202,11 @@ class TestKasteren(unittest.TestCase):
     #    self.assertSetEqual(set(res), set(result))
 
     def test_id_from_label(self):
-        id1 = self._kast_obj.get_sensor_id_from_label('Cups cupboard', 0)
-        id2 = self._kast_obj.get_sensor_id_from_label('Cups cupboard', 1)
-        id3 = self._kast_obj.get_sensor_id_from_label('Washingmachine', 1)
-        id4 = self._kast_obj.get_sensor_id_from_label('Groceries Cupboard', 1)
-        id5 = self._kast_obj.get_sensor_id_from_label('Hall-Bathroom door', 0)
+        id1 = self._kast_obj.encode_obs_lbl('Cups cupboard', 0)
+        id2 = self._kast_obj.encode_obs_lbl('Cups cupboard', 1)
+        id3 = self._kast_obj.encode_obs_lbl('Washingmachine', 1)
+        id4 = self._kast_obj.encode_obs_lbl('Groceries Cupboard', 1)
+        id5 = self._kast_obj.encode_obs_lbl('Hall-Bathroom door', 0)
         self.assertEqual(1, id1)
         self.assertEqual(0, id2)
         self.assertEqual(26, id3)
@@ -214,11 +214,11 @@ class TestKasteren(unittest.TestCase):
         self.assertEqual(13, id5)
 
     def test_label_from_id(self):
-        id1 = self._kast_obj.get_sensor_label_from_id(0)
-        id2 = self._kast_obj.get_sensor_label_from_id(11)
-        id3 = self._kast_obj.get_sensor_label_from_id(10)
-        id4 = self._kast_obj.get_sensor_label_from_id(27)
-        id5 = self._kast_obj.get_sensor_label_from_id(5)
+        id1 = self._kast_obj.decode_obs_label(0)
+        id2 = self._kast_obj.decode_obs_label(11)
+        id3 = self._kast_obj.decode_obs_label(10)
+        id4 = self._kast_obj.decode_obs_label(27)
+        id5 = self._kast_obj.decode_obs_label(5)
         self.assertEqual('Cups cupboard', id1)
         self.assertEqual('Groceries Cupboard', id2)
         self.assertEqual('Groceries Cupboard', id3)

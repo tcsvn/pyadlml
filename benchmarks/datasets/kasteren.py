@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from benchmarks.datasets.dataset import DataInterfaceHMM
 
 START_TIME = 'Start time'
 END_TIME = 'End time'
@@ -7,13 +8,20 @@ ID = 'Idea'
 VAL = 'Val'
 NAME = 'Name'
 
-class DatasetKasteren():
-    def __init__(self, sensor_file_path, activity_file_path):
-        self._sens_file_path = sensor_file_path
-        self._act_file_path = activity_file_path
+class DatasetKasteren(DataInterfaceHMM):
+    def __init__(self):
+        self._sens_file_path = None
+        self._act_file_path = None
         self._train_seq = []
         self._test_seq = []
+
+        #N x 2 numpy array
+        #first value is id of observation
+        #second value is id of state
+        self._test_arr = None
+
         self._df = None
+
         self._sensor_label = None
         self._sensor_label_hashmap = None
         self._sensor_label_reverse_hashmap = None
@@ -22,23 +30,23 @@ class DatasetKasteren():
         self._activity_label_hashmap = None
         self._activity_label_reverse_hashmap = None
 
+    def set_file_paths(self, dict):
+        self._sens_file_path = dict['sens_file_path']
+        self._act_file_path = dict['act_file_path']
 
-    def get_test_arr(self):
-        return self._test_arr
+    def get_test_labels_and_seq(self):
+        """
+        :return:
+            list of observations,
+            list of states
+        """
+        tmp = self._test_arr.T
+        return tmp[0], tmp[1]
 
     def get_train_seq(self):
         return self._train_seq
 
-    def get_sensor_labels(self):
-        lst = []
-        modu = 0
-        for key, value in self._sensor_label_reverse_hashmap.items():
-            if modu%2 == 0:
-                lst.append(value)
-            modu +=1
-        return lst
-
-    def get_sensor_list(self):
+    def get_obs_list(self):
         """
         returns the set of encoded observations that one can make
         :return:
@@ -48,23 +56,28 @@ class DatasetKasteren():
             lst.append(key)
         return lst
 
-    def get_activity_list(self):
+    def load_data(self):
+        self._load_sensors()
+        self._load_activitys()
+
+    def get_state_list(self):
         """
         retrievie all encoded activity
-        :return:  list
+        :return:
+            sorted list of all states
         """
         lst = []
         for key, value in self._activity_label_reverse_hashmap.items():
             lst.append(key)
         return lst
 
-    def get_activity_id_from_label(self, label):
-        return self._activity_label_hashmap[label]
-
-    def get_activity_label_from_id(self, id):
+    def decode_state_label(self, id):
         return self._activity_label_reverse_hashmap[id]
 
-    def get_sensor_id_from_label(self, label, state):
+    def encode_state_label(self, label):
+        return self._activity_label_hashmap[label]
+
+    def encode_obs_lbl(self, label, state):
         """
         returns the id of a sensor given a label
         :param label:
@@ -72,7 +85,7 @@ class DatasetKasteren():
         """
         return self._sensor_label_hashmap[label][state]
 
-    def get_sensor_label_from_id(self, id):
+    def decode_obs_label(self, id):
         """
         retrieves the label given a sensor id
         :param id:
@@ -81,12 +94,25 @@ class DatasetKasteren():
         return self._sensor_label_reverse_hashmap[id]
 
 
+    # todo flag for deletion
+    #def get_sensor_labels(self):
+    #    lst = []
+    #    modu = 0
+    #    for key, value in self._sensor_label_reverse_hashmap.items():
+    #        if modu%2 == 0:
+    #            lst.append(value)
+    #        modu +=1
+    #    return lst
 
-    def load_sensors(self):
+
+
+
+
+    def _load_sensors(self):
         labels, df = self._sensor_file_to_df(self._sens_file_path)
         self._df_to_seq(labels, df)
 
-    def load_activitys(self):
+    def _load_activitys(self):
         """
         todo load data too
         :param path_to_file:

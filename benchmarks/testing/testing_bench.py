@@ -18,13 +18,13 @@ class TestController(unittest.TestCase):
         dk = Dataset.KASTEREN
         self.ctrl.load_dataset(dk)
         self.ctrl.register_model(hmm_model)
-        self.ctrl.init_model_on_dataset(dk)
-        self.ctrl.enable_benchmark()
+        self.ctrl.init_model_on_dataset()
+        self.ctrl.register_benchmark()
         # render
-        dot = self.ctrl.render_model(dk)
-        dot.render('test.gv', view=True)
+        #dot = self.ctrl.render_model()
+        #dot.render('test.gv', view=True)
 
-        self.ctrl.train_model(dk, True)
+        self.ctrl.train_model(True)
         report = self.ctrl.create_report(
             conf_matrix=True,
             accuracy=True,
@@ -34,20 +34,20 @@ class TestController(unittest.TestCase):
 
         print(self.ctrl._model)
         print(report)
-        self.ctrl.show_plot()
+        #self.ctrl.show_plot()
 
         # render
-        dot = self.ctrl.render_model(dk)
-        dot.render('test.gv', view=True)
+        #dot = self.ctrl.render_model()
+        #dot.render('test.gv', view=True)
 
     def test_bench_reports_conf_matrix(self):
         hmm_model = Proxy_HMM(self.ctrl)
         dk = Dataset.KASTEREN
         self.ctrl.load_dataset(dk)
         self.ctrl.register_model(hmm_model)
-        self.ctrl.init_model_on_dataset(dk)
-        self.ctrl.enable_benchmark()
-        self.ctrl.train_model(dk)
+        self.ctrl.init_model_on_dataset()
+        self.ctrl.register_benchmark()
+        self.ctrl.train_model()
         report = self.ctrl.create_report(
             conf_matrix=True)
         print(report)
@@ -57,9 +57,9 @@ class TestController(unittest.TestCase):
         dk = Dataset.KASTEREN
         self.ctrl.load_dataset(dk)
         self.ctrl.register_model(hmm_model)
-        self.ctrl.init_model_on_dataset(dk)
-        self.ctrl.enable_benchmark()
-        self.ctrl.train_model(dk)
+        self.ctrl.init_model_on_dataset()
+        self.ctrl.register_benchmark()
+        self.ctrl.train_model()
         report = self.ctrl.create_report(
             conf_matrix=True,
             accuracy=True,
@@ -75,11 +75,11 @@ class TestController(unittest.TestCase):
         dk = Dataset.KASTEREN
         self.ctrl.load_dataset(dk)
         self.ctrl.register_model(hmm_model)
-        self.ctrl.init_model_on_dataset(dk)
-        self.ctrl.enable_benchmark()
+        self.ctrl.init_model_on_dataset()
+        self.ctrl.register_benchmark()
         print(self.ctrl._model)
         # use dataset Kasteren and q_fct
-        self.ctrl.train_model(dk, True)
+        self.ctrl.train_model(True)
         report = self.ctrl.create_report()
         print(self.ctrl._model)
         print(report)
@@ -92,8 +92,8 @@ class TestController(unittest.TestCase):
         dk = Dataset.KASTEREN
         self.ctrl.load_dataset(dk)
         self.ctrl.register_model(hmm_model)
-        self.ctrl.init_model_on_dataset(dk)
-        dot = self.ctrl.render_model(dk)
+        self.ctrl.init_model_on_dataset()
+        dot = self.ctrl.render_model()
         dot.render('test.gv', view=True)
 
 
@@ -102,9 +102,9 @@ class TestController(unittest.TestCase):
         dk = Dataset.KASTEREN
         self.ctrl.load_dataset(dk)
         self.ctrl.register_model(hmm_model)
-        self.ctrl.init_model_on_dataset(dk)
+        self.ctrl.init_model_on_dataset()
 
-        self.ctrl.train_model(dk)
+        self.ctrl.train_model()
         #self._bench._model.draw()
         #report = self._bench.create_report()
         #self._bench.show_plot()
