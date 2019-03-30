@@ -98,6 +98,13 @@ class Controller():
             self._bench.disable_logging()
             self._bench.read_in_conv_plot()
 
+    def generate_observations(self):
+        return self._model.gen_obs()
+
+    def plot_observations(self):
+        obs_seq = self._model.gen_obs()
+        self._dataset.plot_obs_seq(obs_seq, 3)
+
     def save_model(self):
         self._model.save_model(1)
 

@@ -105,6 +105,36 @@ class DatasetPendigits(DataInterfaceHMM):
         """
         return self._test_labels
 
+
+    def _contains_double_strokes(self, my_arr, list_arrays):
+        from numpy import array_equal
+        cnt = 0
+        for elem in list_arrays:
+            if array_equal(elem, my_arr):
+                cnt +=1
+                if cnt == 2:
+                    return True
+        return False
+
+        #return next((True for elem in list_arrays \
+        #             if array_equal(elem, my_arr)), False)
+
+
+    def _get_train_data_by_number(self, number):
+        ind = np.where(np.array(self._train_labels) == number)
+        digit_data = np.array(self._train_data)[ind]
+        return digit_data
+
+    def _get_train_data_where_double_strokes(self, num):
+        digit_data = self._get_train_data_by_number(num)
+        lst_with = []
+        for exmp in digit_data:
+            if self._contains_double_strokes(
+                np.array([-1., -1.]), exmp):
+                lst_with.append(exmp)
+        return lst_with
+        #print(np.isin(np.array(np.array([-1., 2])), digit_data[0]))
+
     def _create_train_seq(self, number):
         """
         extracts a number and appends
@@ -158,13 +188,18 @@ class DatasetPendigits(DataInterfaceHMM):
     def _encode_direction(self, raw_data):
         """
         :param raw_data:
+            array of arrays
+            an example of raw_data is
+                N x 2 array
+                tupel of sequence where raw_data[n][0] = x coordinate
+                and raw_data[n][1] = y coordinate
         :return:
             enc_data:
                 contains all sequences in a single sequence
             lenghts:
                 list [..., i, ...] i is length of the sequences
         """
-        C = 8
+        C = self._resolution
         enc_data = []
         lengths = []
         for example in raw_data:
@@ -174,14 +209,14 @@ class DatasetPendigits(DataInterfaceHMM):
                 y = point[1]
                 # the observation that the pen is set on the tablet
                 if x == -1 and y == 1:
-                    #sq.append([C])
                     sq.append(C)
-                    xp = float('inf')
+                    #xp = float('inf')
+                    xp, yp = 0,0
                 # the observation that the pen is removed from tablet
                 elif x == -1 and y == -1:
-                    #sq.append([C+1])
                     sq.append(C+1)
-                    xp = float('inf')
+                    #xp = float('inf')
+                    xp, yp = 0,0
                 else:
                     if xp != float('inf'):
                         #dx = xp - x
@@ -241,20 +276,140 @@ class DatasetPendigits(DataInterfaceHMM):
 
 
     def plot_example(self, number):
-        data, tdata = normalize_example(self._train_data)
-        self._plotUniPenData(data[number])
+        self._plotUniPenData(self._train_data[number])
+
+    def get_symbol_pen_up(self):
+        return self._resolution +1
+
+    def get_symbol_pen_down(self):
+        return self._resolution
+
+    def plot_obs_seq(self, seq, n):
+        """
+        make a plot of a direction sequence that looks like a number
+        :param seq:
+        :param n: the number that should be displayed
+        :return:
+        """
+        import matplotlib.pyplot as plt
+        # initial starting point
+        x_point = 500
+        y_point = 500
+        pen_down = self.get_symbol_pen_down()
+        pen_up = self.get_symbol_pen_up()
+        # set starting point depending on number
+        stepsize = 10
+        # array containing sequences representing strokes
+        x_seqs = []
+        y_seqs = []
+        # counter for amount of strokes
+        ind = 0
+        # point sequence for one stroke
+        x = []
+        y = []
+        # if seq. doesn't end with pen_up add it
+        if seq[:-1] != pen_up:
+            seq.append(pen_up)
+        # remove first pen_down
+        if seq[0] == pen_down:
+            seq = seq[1:]
+
+
+        for i, direc in enumerate(seq):
+            # start new line if pen is hold up
+            if direc == pen_up:
+                x_seqs.append(x)
+                y_seqs.append(y)
+                x = []
+                y = []
+                ind += 1
+                continue
+
+            if direc == pen_down and seq[i-1] == pen_up \
+                    and (i-1) >= 0 and (i+1) < len(seq):
+                """
+                condition captures new stroke
+                last observation that pen was removed and
+                this observation that pen was set on tablet
+                and it is not the first or the last observation
+                
+                if a new stroke is made the new point has to be set
+                accordingly for nice looking plots
+                
+                """
+                x_seq = np.array(x_seqs[-1:])
+                y_seq = np.array(y_seqs[-1:])
+                x_point, y_point = self._get_new_xy_for_new_stroke(x_seq, y_seq, n)
+            else:
+                """
+                normal case where the line is drawn
+                """
+                x_point = self._new_point_x(x_point, direc, stepsize)
+                y_point = self._new_point_y(y_point, direc, stepsize)
+            x.append(x_point)
+            y.append(y_point)
+
+        for i in range(ind):
+            plt.plot(x_seqs[i], y_seqs[i])
+        plt.show()
+
+    def _get_new_xy_for_new_stroke(self, x_seq, y_seq, num):
+            x_min = x_seq.min()
+            x_max = x_seq.max()
+            x_diff = abs(x_max - x_min)
+            y_min = y_seq.min()
+            y_max = y_seq.max()
+            y_diff = abs(y_max - y_min)
+            # rearange for new stroke
+            if num == 0:
+                #x_point = x_min + 0.75*x_diff
+                #y_point = y_min + 0.75*y_diff
+                x_point = x_min + 0.15*x_diff
+                y_point = y_min + 0.15*y_diff
+            elif num == 1:
+                x_point = x_min - 0.8*x_diff
+                y_point = y_min + 0.1*y_diff
+            elif num == 4:
+                x_point = x_min + 0.6*x_diff
+                y_point = y_max - 0.4*y_diff
+            elif num == 5:
+                x_point = x_min + 0.05*x_diff
+                y_point = y_max + 0.05*y_diff
+            elif num == 7:
+                x_point = x_min + 0.1*x_diff
+                y_point = y_max - 0.6*y_diff
+            elif num == 8:
+                x_point = x_min + 0.0*x_diff
+                y_point = y_min - 0.3*y_diff
+            elif num == 9:
+                x_point = x_max - 0.3*x_diff
+                y_point = y_max - 0.6*y_diff
+            else:
+                x_point = 0.
+                y_point = 0.
+            return x_point, y_point
+
+    def _new_point_x(self, prev_x, direction, stepsize):
+        degree = (360/self._resolution)*direction
+        return prev_x + stepsize*np.cos(np.deg2rad(degree))
+
+
+    def _new_point_y(self, prev_y, direction, stepsize):
+        degree = (360/self._resolution)*direction
+        return prev_y + stepsize*np.sin(np.deg2rad(degree))
 
     """
     this method is copied from github
     todo insert author + weblink to rep
     """
-    def _plotUniPenData(points):
+    def _plotUniPenData(self, points):
         import matplotlib.pyplot as plt
         xs = []
         ys = []
         ind = 0
         x = []
         y = []
+        print(points)
         if isinstance(points, list):
             for point in points:
                 if (point[0] == -1):

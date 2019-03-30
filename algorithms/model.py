@@ -325,8 +325,6 @@ class ModelPendigits(Model):
             lst.append(str(i))
         return lst
 
-    def predict_next_observation(self, obs_seq):
-        pass
 
     def get_models(self):
         return self._model_dict
@@ -348,10 +346,9 @@ class ModelPendigits(Model):
 
     def create_pred_act_seqs(self, dataset : DatasetPendigits):
         """
-        for a given list of states ans observation compute the predicted states given
-        the list of observations
-        :param state_list:
-        :param obs_list:
+        for a given list of observations predict states and return the sequence
+        :param: dataset
+            get observation sequence from dataset
         :return:
             y_true: list of true states
             y_pred: list of predicted states
@@ -386,3 +383,43 @@ class ModelPendigits(Model):
             y_pred.append(np.argmax(llks))
 
         return y_true, y_pred
+
+    def gen_obs(self):
+        number_of_obs_to_gen = 20
+        num = 3
+        return self.generate_observations(num, number_of_obs_to_gen)
+
+    def generate_observations(self, num, n):
+        """
+        todo maybe this should also be part of the hmm class
+        :param: num
+            is the number to draw/ the generative hmm to use
+        :param: n
+            n is the number of steps to generate in the future
+        :return:
+        """
+        hmm = self._model_dict[num] # type: HMM_Scaled
+
+        # in the pendigit dataset a digit always begins
+        # with pen down, get symbols for these operations
+        pen_down = hmm._o[-2:][0]
+        pen_up = hmm._o[-1:]
+        """
+        the prediction process ends when the pen_up symbol is predicted
+        but for numbers as 4, 5, 7 the prediction process should end after
+        two pen_up are observed
+        """
+        retouch = num in [4,5,7]
+        seq = [pen_down]
+        for i in range(n):
+            new_symbol = hmm.predict_xnp1(seq)
+            seq.append(new_symbol)
+            if new_symbol == pen_up:
+                if retouch:
+                    retouch = False
+                else:
+                    break
+        return seq
+
+    def predict_next_observation(self, obs_seq):
+        pass
