@@ -136,7 +136,7 @@ class TestMIT16_410F10(unittest.TestCase):
         alpha = self.hmm.forward(self.obs_seq)
         beta = self.hmm.backward(self.obs_seq)
         gamma = self.hmm.gamma(alpha, beta)
-        hmm_new_em = self.hmm.new_emissions(obs_seq, gamma)
+        hmm_new_em = self.hmm.new_emissions(gamma, obs_seq)
 
         obs_seq2 = self.obs_seq2
         hmm2_xi = self.hmm2.calcxi(

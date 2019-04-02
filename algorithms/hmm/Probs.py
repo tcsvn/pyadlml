@@ -2,11 +2,15 @@
 # as the model is unstable create an
 # own data type to emulate numeric type
 # of a probability
+import operator as op
 import numpy as np
 import sys
 from scipy.special import logsumexp
+PROBS_MAX_MIN = -sys.float_info.max
+
 
 class Probs(object):
+
 
     def __init__(self, prob):
         try:
@@ -16,17 +20,25 @@ class Probs(object):
         if prob < 0.0 or 1.0 < prob:
             raise ValueError
         if prob == 0.0:
-            self.prob = - sys.float_info.max
+            self.prob = PROBS_MAX_MIN
         else:
             self.prob = np.log(prob) # normal case
 
+    @classmethod
+    def np_prob_arr2R(cls, np_arr):
+        return np.exp(np_arr).astype(np.float, copy=False)
 
     def prob_to_norm(self):
-        if self.prob == - sys.float_info.max:
-            print('went here')
+        return self.exp()
+
+    def exp(self):
+        """
+        required for np.exp(arr)
+        :return:
+        """
+        if self.prob == PROBS_MAX_MIN:
             return np.nextafter(0, 1)
-        else:
-            return np.exp(self.prob)
+        return np.exp(self.prob)
 
     def __str__(self):
         s = ""
@@ -55,7 +67,6 @@ class Probs(object):
     #    res = Probs(1.0)
     #    res.prob = a + np.log(1 + np.exp(b)/np.exp(a))
     #    return res
-
 
     def __add__(self, other):
         """
@@ -99,14 +110,14 @@ class Probs(object):
         #    a = other.prob
         #    b = self.prob
 
-        #res = Probs(1.0)
-        #res.prob = a + np.log(1 - np.exp(b)/np.exp(a))
-        #res = Probs(1.0)
-        #res.prob = logsumexp(self.prob, other.prob)
-        #res.prob = np.logaddexp(self.prob,other.prob) # numpy's version of log add
-        #res.prob = np.logaddexp(self.prob,-other.prob) # numpy's version of log add
-        #res.prob = np.logaddexp() # numpy's version of log add
-        #return res
+        # res = Probs(1.0)
+        # res.prob = a + np.log(1 - np.exp(b)/np.exp(a))
+        # res = Probs(1.0)
+        # res.prob = logsumexp(self.prob, other.prob)
+        # res.prob = np.logaddexp(self.prob,other.prob) # numpy's version of log add
+        # res.prob = np.logaddexp(self.prob,-other.prob) # numpy's version of log add
+        # res.prob = np.logaddexp() # numpy's version of log add
+        # return res
         # todo verify
         # stackoverflow:  https://stackoverflow.com/questions/778047/we-know-log-add-but-how-to-do-log-subtract
         res = Probs(1.0)
@@ -114,8 +125,11 @@ class Probs(object):
         return res
 
     def _logsubexp(self, a, b):
+        # todo this is very dangerous change it !!!
+        #if a < b:
+        #    raise ValueError
         if a < b:
-            raise ValueError
+            return PROBS_MAX_MIN
         if np.isneginf(b):
             return a
         else:
@@ -128,7 +142,10 @@ class Probs(object):
         :return:
         """
         res = Probs(1.0)
-        res.prob = self.prob + other.prob
+        if self.prob == PROBS_MAX_MIN:
+            res.prob = PROBS_MAX_MIN
+        else:
+            res.prob = self.prob + other.prob
         return res
 
     def __truediv__(self, other):
@@ -173,8 +190,10 @@ class Probs(object):
         :param other:
         :return:
         """
-
-        self.prob = logsumexp([self.prob, other.prob])
+        if type(other) in [float, int]:
+            self.prob = logsumexp([self.prob, np.log(other)])
+        else:
+            self.prob = logsumexp([self.prob, other.prob])
         # obligatory return statement
         return self
 
@@ -205,18 +224,16 @@ class Probs(object):
         self.prob = self.prob - other
         return self
 
-    def __ipow__(self,power, modulo=None):
+    def __ipow__(self, power, modulo=None):
         """
         x **= y     | x = x^y
-        :param other:
+        :param power:
         :return:
         """
         self.prob = power * self.prob
         return self
 
-
     # todo add all arithmetic but inplace
-
     """
     implement unary artihmetic operations
     """
@@ -242,7 +259,6 @@ class Probs(object):
         :return:
         """
         return abs(self.prob)
-
 
     """
     implement built-in functions
@@ -273,6 +289,11 @@ class Probs(object):
     comparision operators below
     the order is in log space is equal to real space
     """
+    def comp_helper(self, fct, other):
+        if type(other) in [float, int]:
+            return fct(self.prob, other)
+        else:
+            return fct(self.prob, other.prob)
 
     def __lt__(self, other):
         """
@@ -280,7 +301,7 @@ class Probs(object):
         :param other:
         :return:
         """
-        return self.prob < other.prob
+        return self.comp_helper(op.lt, other)
 
     def __le__(self, other):
         """
@@ -304,7 +325,7 @@ class Probs(object):
         :param other:
         :return:
         """
-        return self.prob != other.prob
+        return self.comp_helper(op.ne, other)
 
     def __gt__(self, other):
         """
@@ -312,7 +333,7 @@ class Probs(object):
         :param other:
         :return:
         """
-        return self.prob > other.prob
+        return self.comp_helper(op.gt, other)
 
     def __ge__(self, other):
         """

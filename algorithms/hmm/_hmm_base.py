@@ -103,6 +103,33 @@ class HiddenMarkovModel():
         s += '\n'
         return s
 
+    def np_zeros(self, dim):
+        """
+
+        :param dim:
+        :return:
+        """
+        return np.zeros(dim)
+
+    def np_full(self, dim, val):
+        """
+
+        :param dim:
+        :return:
+        """
+        return np.full(dim, val)
+    def ln2prob(self, val):
+        return val
+
+    def single_prob(self, val):
+        """
+        abstraction over the datatype of probabilities
+
+        :param val:
+        :return:
+        """
+        return val
+
     @classmethod
     def gen_rand_transitions(cls, state_count):
         # initalize with random hmm
@@ -136,7 +163,7 @@ class HiddenMarkovModel():
         return pd.DataFrame(self._A, index=self._z, columns=self._z)
 
     def emissions_to_df(self):
-        tmp = np.zeros((len(self._z), len(self._o)))
+        tmp = self.np_zeros((len(self._z), len(self._o)))
         for idx, label in enumerate(self._z):
             tmp[idx] = self.states[label].get_probs()
         return pd.DataFrame(tmp, index=self._z, columns=self._o)
@@ -333,12 +360,12 @@ class HiddenMarkovModel():
         #    sum += alpha[len(alpha)-1][idx_zn]
         # if sum != 0:
         #    return sum
-
-        n = 0
-        nparr = np.zeros((len(alpha)))
+        N = len(alpha)
+        nparr = self.np_zeros((N))
         # while sum == 0:
-        for n in range(0, len(alpha)):
-            if n > len(alpha - 1):
+        for n in range(0, N):
+            # todo what happened below
+            if n >= N:
                 # something has went terribly wrong
                 # because every
                 raise ValueError
@@ -381,7 +408,7 @@ class HiddenMarkovModel():
         if prob_X is None:
             prob_X = self._prob_X(alpha, beta)
 
-        xi = np.zeros((N - 1, K, K))
+        xi = self.np_zeros((N - 1, K, K))
         for n in range(1, N):
             for knm1, znm1 in enumerate(self._z):
                 for kn, zn in enumerate(self._z):
@@ -408,7 +435,7 @@ class HiddenMarkovModel():
         # alpha(z12) | alpha(z22) | alpha(z32) | ... |
 
         # compute Initial condition (13.37)
-        alpha = np.zeros((len(seq), len(self._z)))
+        alpha = self.np_zeros((len(seq), len(self._z)))
 
         for k, zn in enumerate(self._z):
             for pik, pizn in enumerate(self._z):
@@ -445,9 +472,9 @@ class HiddenMarkovModel():
         """
         N = len(seq) - 1
         # initialize first
-        beta = np.zeros((len(seq), len(self._z)))
+        beta = self.np_zeros((len(seq), len(self._z)))
         for idx_zn, z in enumerate(self._z):
-            beta[N][idx_zn] = 1
+            beta[N][idx_zn] = self.single_prob(1)
         # start with beta_(znk) and calculate the betas backwards
         for n in range(N-1, -1, -1):
             for zn_idx, zn in enumerate(self._z):
@@ -488,7 +515,7 @@ class HiddenMarkovModel():
         if q_fct:
             old_q = self.min_num()
         else:
-            old_prob_X = 0.
+            old_prob_X = self.single_prob(0.0)
 
         while (diff_arr.mean() > epsilon and steps > 0):
             alpha, beta, gamma, prob_X, xi = self._e_step(seq)
@@ -578,7 +605,7 @@ class HiddenMarkovModel():
         :param gamma:
         :return:
         """
-        new_pi = np.zeros((len(self._z)))
+        new_pi = self.np_zeros((len(self._z)))
         # todo sum_gamma is always 1.0
         sum_gamma = gamma[0].sum()
         for k in range(0, len(self._z)):
@@ -597,29 +624,29 @@ class HiddenMarkovModel():
         K = len(self._z)
         N = len(obs_seq)
 
-        new_A = np.zeros((K, K))
+        new_A = self.np_zeros((K, K))
         for j in range(0, K):
-            denom = 0.0
+            denom = self.single_prob(0.0)
             for l in range(0, K):
                 for n in range(0, N-1):
                     denom += xi[n][j][l]
 
             for k in range(0, K):
-                numer = 0.0
+                numer = self.single_prob(0.0)
                 for n in range(0, N-1):
                     numer += xi[n][j][k]
-                if denom == 0.0:
-                    new_A[j][k] = 0.0
-                else:
-                    # todo maybe the error is here
-                    new_A[j][k] = numer/denom
+                #if denom == 0.0:
+                #    new_A[j][k] = 0.0
+                #else:
+                #    # todo maybe the error is here
+                new_A[j][k] = numer/denom
         """
         as numbers are rounded A doesn't sum up to 1 equally 
         over many iterations the error cumullates and leads to destruction
         therefore correct A
         """
-        if not self.verify_transistion_matrix(new_A):
-            new_A = self._correct_A(new_A)
+        #if not self.verify_transistion_matrix(new_A):
+        #    new_A = self._correct_A(new_A)
         return new_A
 
     def _correct_A(self, new_A):
@@ -727,15 +754,16 @@ class HiddenMarkovModel():
     #    if xn == x: return 1
     #    else: return 0
 
-    def num_times_in_state_zn_and_xn(self, gamma_zn, obs_seq, xn):
-        res = 0
+    def _num_times_in_state_zn_and_xn(self, gamma_zn, obs_seq, xn):
+        res = self.single_prob(0)
         for gamma_val, x in zip(gamma_zn, obs_seq):
             # equal to multiplying with 1 if observation is the same
             if x == xn:
                 res += gamma_val
         return res
 
-    # todo self before
+
+        # todo self before
     def new_emissions(self, gamma, obs_seq):
         """
         equation 13.23
@@ -743,7 +771,7 @@ class HiddenMarkovModel():
         :param obs_seq:
         :return: matrix (Z x O)
         """
-        new_E = np.zeros((len(self._z), len(self._o)))
+        new_E = self.np_zeros((len(self._z), len(self._o)))
         for idx_zn, zn in enumerate(self._z):
             # calculate number of times in state zn by summing over all
             # timestep gamma values
@@ -753,12 +781,14 @@ class HiddenMarkovModel():
             for idx_o, xn in enumerate(self._o):
                 # calc number of times ni state s,
                 # when observation  was  xn
-                num_in_zn_and_obs_xn = self.num_times_in_state_zn_and_xn(
+                num_in_zn_and_obs_xn = self._num_times_in_state_zn_and_xn(
                     gamma.T[idx_zn], obs_seq, xn)
-                # print(str(num_in_zn_and_obs_xn) + "/" + str(num_times_in_zn))
-                new_E[idx_zn][idx_o] = num_in_zn_and_obs_xn / num_times_in_zn
-        if not self.verify_emission_matrix(new_E):
-            new_E = self.correct_emissions(new_E)
+                #print(str(num_in_zn_and_obs_xn) + "/" + str(num_times_in_zn))
+                new_prob = num_in_zn_and_obs_xn / num_times_in_zn
+                # todo rename ln2prob
+                new_E[idx_zn][idx_o] = new_prob
+        #if not self.verify_emission_matrix(new_E):
+        #    new_E = self.correct_emissions(new_E)
 
         return new_E
 
@@ -789,7 +819,7 @@ class HiddenMarkovModel():
         normalizing_constant = 1 / (self._prob_X(alpha, beta))
         alpha_zn = alpha[len(seq) - 1]
 
-        result = np.zeros(len(self._o))
+        result = self.np_zeros(len(self._o))
         for idx_xnp1, xnp1 in enumerate(self._o):
             # sum over all probab. of seeing future xnp1 for all
             # future states znp1
@@ -855,7 +885,7 @@ class HiddenMarkovModel():
         N = len(seq)
         K = len(self._z)
         # matrix contains the log lattice probs for each step
-        omega = np.zeros((N, K))
+        omega = self.np_zeros((N, K))
          # init
         for k, z1 in enumerate(self._z):
             prob_x_given_z = self.prob_x_given_z(seq[0], z1)

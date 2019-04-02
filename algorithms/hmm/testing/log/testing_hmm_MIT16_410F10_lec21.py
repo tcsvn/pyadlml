@@ -1,6 +1,8 @@
 import unittest
 import numpy as np
 from algorithms.hmm._hmm_base import HiddenMarkovModel
+from algorithms.hmm.Probs import Probs
+from algorithms.hmm._hmm_log import HMM_log as HMM_log
 from algorithms.hmm.distributions import ProbabilityMassFunction
 from algorithms.hmm.testing.hmm2.hmm.discrete.DiscreteHMM import DiscreteHMM
 
@@ -27,7 +29,11 @@ class TestMIT16_410F10(unittest.TestCase):
         self.obs_seq = [NULL, LA, LA, NULL, NY, NULL, NY, NY, NY, NULL,
                 NY, NY, NY, NY, NY, NULL, NULL, LA, LA, NY]
 
-        # init markov model
+        # init markov model log
+        self.hmm_log = HMM_log(states, observation_alphabet, ProbabilityMassFunction, init_dist)
+        self.hmm_log.set_transition_matrix(trans_matrix)
+        self.hmm_log.set_emission_matrix(em_matrix)
+
         self.hmm = HiddenMarkovModel(states, observation_alphabet, ProbabilityMassFunction, init_dist)
         self.hmm.set_transition_matrix(trans_matrix)
         self.hmm.set_emission_matrix(em_matrix)
@@ -47,13 +53,13 @@ class TestMIT16_410F10(unittest.TestCase):
         is valid
         :return: None
         """
-        bol_verify = self.hmm.verify_transistion_matrix()
+        bol_verify = self.hmm_log.verify_transistion_matrix()
         self.assertTrue(bol_verify)
         obs_seq = self.obs_seq
 
         for i in range(0,100):
-            self.hmm.training_step(obs_seq)
-            bol_verify = self.hmm.verify_transistion_matrix()
+            self.hmm_log.training_step(obs_seq)
+            bol_verify = self.hmm_log.verify_transistion_matrix()
             #if not bol_verify:
                 #bol_verify = self.hmm.verify_transistion_matrix()
 
@@ -65,20 +71,36 @@ class TestMIT16_410F10(unittest.TestCase):
         is valid
         :return: None
         """
-        bol_verify = self.hmm.verify_emission_matrix()
+        bol_verify = self.hmm_log.verify_emission_matrix()
         self.assertTrue(bol_verify)
         obs_seq = self.obs_seq
 
         for i in range(0,100):
-            self.hmm.training_step(obs_seq)
-            bol_verify = self.hmm.verify_emission_matrix()
+            self.hmm_log.training_step(obs_seq)
+            bol_verify = self.hmm_log.verify_emission_matrix()
             self.assertTrue(bol_verify)
 
+    def test_gamma_xi_relation(self):
+        # todo make use to speed up calculation
+        obs_seq = self.obs_seq
+        alpha = self.hmm_log.forward(obs_seq)
+        beta = self.hmm_log.backward(obs_seq)
+        xi = self.hmm_log.xi(obs_seq, alpha, beta)
+        gamma = self.hmm_log.gamma(alpha, beta)
+
+        K = len(self.hmm_log._z)
+        N = len(obs_seq)
+        for n in range(N-1):
+            for i in range(K):
+                sum_xi = xi[n][i].sum()
+                self.assertAlmostEqual(gamma[n][i], sum_xi)
+
     def test_new_pi(self):
-        alpha = self.hmm.forward(self.obs_seq)
-        beta = self.hmm.backward(self.obs_seq)
-        gamma = self.hmm.gamma(alpha, beta)
-        hmm_new_pi = self.hmm.new_pi(gamma)
+        alpha = self.hmm_log.forward(self.obs_seq)
+        beta = self.hmm_log.backward(self.obs_seq)
+        gamma = self.hmm_log.gamma(alpha, beta)
+        hmm_new_pi = self.hmm_log.new_pi(gamma)
+        hmm_new_pi = Probs.np_prob_arr2R(hmm_new_pi)
 
 
         hmm2_gamma = self.hmm2.calcgamma(self.hmm2.calcxi(
@@ -90,16 +112,17 @@ class TestMIT16_410F10(unittest.TestCase):
         hmm2_new_pi = hmm2_gamma[0]
 
 
-        for zn in range(0,len(self.hmm._z)):
+        for zn in range(0, len(self.hmm_log._z)):
             self.assertAlmostEqual(hmm2_new_pi[zn], hmm_new_pi[zn])
 
 
     def test_new_A(self):
         obs_seq = self.obs_seq
-        alpha = self.hmm.forward(obs_seq)
-        beta = self.hmm.backward(obs_seq)
-        xi = self.hmm.xi(obs_seq, alpha, beta)
-        hmm_new_A = self.hmm.new_A(obs_seq, xi)
+        alpha = self.hmm_log.forward(obs_seq)
+        beta = self.hmm_log.backward(obs_seq)
+        xi = self.hmm_log.xi(obs_seq, alpha, beta)
+        hmm_new_A = self.hmm_log.new_A(obs_seq, xi)
+        hmm_new_A = Probs.np_prob_arr2R(hmm_new_A)
 
 
         hmm2_xi = self.hmm2.calcxi(
@@ -110,33 +133,24 @@ class TestMIT16_410F10(unittest.TestCase):
         hmm2_new_A = self.hmm2.reestimateA(self.obs_seq2, hmm2_xi, hmm2_gamma)
 
 
-        for znm1 in range(0,len(self.hmm._z)):
-            for zn in range(0,len(self.hmm._z)):
+        for znm1 in range(0, len(self.hmm_log._z)):
+            for zn in range(0, len(self.hmm_log._z)):
                 self.assertAlmostEqual(hmm2_new_A[znm1][zn], hmm_new_A[znm1][zn])
-
-    def test_gamma_xi_relation(self):
-        # todo make use to speed up calculation
-        obs_seq = self.obs_seq
-        alpha = self.hmm.forward(obs_seq)
-        beta = self.hmm.backward(obs_seq)
-        xi = self.hmm.xi(obs_seq, alpha, beta)
-        gamma = self.hmm.gamma(alpha, beta)
-
-        K = len(self.hmm._z)
-        N = len(obs_seq)
-        for n in range(N-1):
-            for i in range(K):
-                sum_xi = xi[n][i].sum()
-                self.assertAlmostEqual(gamma[n][i], sum_xi)
 
 
 
     def test_new_emission(self):
         obs_seq = self.obs_seq
-        alpha = self.hmm.forward(self.obs_seq)
-        beta = self.hmm.backward(self.obs_seq)
-        gamma = self.hmm.gamma(alpha, beta)
-        hmm_new_em = self.hmm.new_emissions(obs_seq, gamma)
+        alpha = self.hmm_log.forward(self.obs_seq)
+        beta = self.hmm_log.backward(self.obs_seq)
+        gamma = self.hmm_log.gamma(alpha, beta)
+        new_em = self.hmm_log.new_emissions(gamma, obs_seq)
+        new_em = Probs.np_prob_arr2R(new_em)
+
+        hmm_alpha = self.hmm.forward(obs_seq)
+        hmm_beta = self.hmm.backward(obs_seq)
+        hmm_gamma = self.hmm.gamma(hmm_alpha, hmm_beta)
+        hmm_new_em = self.hmm.new_emissions(hmm_gamma, obs_seq)
 
         obs_seq2 = self.obs_seq2
         hmm2_xi = self.hmm2.calcxi(
@@ -147,14 +161,18 @@ class TestMIT16_410F10(unittest.TestCase):
         hmm2_new_ems = self.hmm2._reestimateB(obs_seq2, hmm2_gamma)
 
         print()
+        print('~'*100)
+        print(new_em)
+        print('~'*100)
         print(hmm_new_em)
         print('~'*100)
         print(hmm2_new_ems)
         print('~'*100)
 
-        for znm1 in range(0,len(self.hmm._z)):
-            for zn in range(0,len(self.hmm._z)):
-                self.assertAlmostEqual(hmm2_new_ems[znm1][zn], hmm_new_em[znm1][zn])
+        for znm1 in range(0, len(self.hmm_log._z)):
+            for zn in range(0, len(self.hmm_log._z)):
+                #self.assertAlmostEqual(hmm2_new_ems[znm1][zn], hmm_new_em[znm1][zn])
+                self.assertAlmostEqual(new_em[znm1][zn], hmm_new_em[znm1][zn])
 
 
 
@@ -165,9 +183,9 @@ class TestMIT16_410F10(unittest.TestCase):
         # transition matrix after convergence
 
         for i in range(0,20):
-            self.hmm.training_step(obs_seq)
+            self.hmm_log.training_step(obs_seq)
 
-
+        print(self.hmm_log)
         self.hmm2.train(self.obs_seq2, 20, 0.001)
 
         #print(math.exp(self.hmm2.forwardbackward(self.obs_seq2)))
@@ -191,7 +209,7 @@ class TestMIT16_410F10(unittest.TestCase):
                           [0.000, 0.7621, 0.2379]])
         steps = 500
         obs_seq = self.obs_seq
-        self.hmm.train(obs_seq, steps=steps, q_fct=True)
+        self.hmm_log.train(obs_seq, steps=steps, q_fct=True)
         self.hmm2.train(self.obs_seq2, iterations=steps)
 
         #print(self.hmm)
@@ -207,24 +225,24 @@ class TestMIT16_410F10(unittest.TestCase):
         #print(res_A)
         #print('-'*2)
         #print(res_E)
-        self.hmm.draw()
-        vg.render('test.gv', view=True)
+        #self.hmm.draw()
+        #vg.render('test.gv', view=True)
 
         # assert pi
         for zn in range(0, len(res_pi)):
-            hmm_pi = round(self.hmm._pi[zn],4)
+            hmm_pi = round(self.hmm_log._pi[zn], 4)
             self.assertAlmostEqual(res_pi[zn], hmm_pi, 2)
 
         # assert A
         for znm1 in range(0, len(res_A)):
             for zn in range(0,len(res_A[0])):
-                hmm_val = round(self.hmm._A[znm1][zn],4)
+                hmm_val = round(self.hmm_log._A[znm1][zn], 4)
                 self.assertAlmostEqual(res_A[znm1][zn], hmm_val, 2)
 
         # assert Emissions
-        pd_em = self.hmm.emissions_to_df()
-        for k, zn in enumerate(self.hmm._z):
-            for i, em in enumerate(self.hmm._o):
+        pd_em = self.hmm_log.emissions_to_df()
+        for k, zn in enumerate(self.hmm_log._z):
+            for i, em in enumerate(self.hmm_log._o):
                 hmm_val = round(pd_em[em][zn], 4)
                 self.assertAlmostEqual(res_E[k][i], hmm_val, 2)
 
@@ -240,59 +258,70 @@ class TestMIT16_410F10(unittest.TestCase):
                           [0.0934, 0.9066]])
         res_E = np.array([[0.5807, 0.0010, 0.4183],
                           [0.000, 0.7621, 0.2379]])
-        steps = 500
+        steps = 100
         obs_seq = self.obs_seq
+        self.hmm_log.train(obs_seq, steps=steps)
         self.hmm.train(obs_seq, steps=steps)
         self.hmm2.train(self.obs_seq2, iterations=steps)
 
-        #print(self.hmm)
-        #print('~'*100)
-        #print(self.hmm2.pi)
-        #print('-'*2)
-        #print(self.hmm2.A)
-        #print('-'*2)
-        #print(self.hmm2.B)
-        #print('~'*100)
-        #print(res_pi)
-        #print('-'*2)
-        #print(res_A)
-        #print('-'*2)
-        #print(res_E)
-
+        self.hmm_log.set_str_exp(True)
+        print('~'*100)
+        print(res_pi)
+        print('-'*2)
+        print(res_A)
+        print('-'*2)
+        print(res_E)
+        print('~'*100)
+        print(self.hmm_log)
+        print('~'*100)
+        print(self.hmm)
+        print('~'*100)
+        print(self.hmm2.pi)
+        print('-'*2)
+        print(self.hmm2.A)
+        print('-'*2)
+        print(self.hmm2.B)
+        print('~'*100)
+        print(res_pi)
+        print('-'*2)
+        print(res_A)
+        print('-'*2)
+        print(res_E)
         # assert pi
-        for zn in range(0, len(res_pi)):
-            hmm_pi = round(self.hmm._pi[zn],4)
-            self.assertAlmostEqual(res_pi[zn], hmm_pi, 2)
+        #for zn in range(0, len(res_pi)):
+        #    hmm_pi = round(self.hmm_log._pi[zn], 4)
+        #    self.assertAlmostEqual(res_pi[zn], hmm_pi, 2)
 
-        # assert A
-        for znm1 in range(0, len(res_A)):
-            for zn in range(0,len(res_A[0])):
-                hmm_val = round(self.hmm._A[znm1][zn],4)
-                self.assertAlmostEqual(res_A[znm1][zn], hmm_val, 2)
+        ## assert A
+        #for znm1 in range(0, len(res_A)):
+        #    for zn in range(0,len(res_A[0])):
+        #        hmm_val = round(self.hmm_log._A[znm1][zn], 4)
+        #        self.assertAlmostEqual(res_A[znm1][zn], hmm_val, 2)
 
-        # assert Emissions
-        pd_em = self.hmm.emissions_to_df()
-        for k, zn in enumerate(self.hmm._z):
-            for i, em in enumerate(self.hmm._o):
-                hmm_val = round(pd_em[em][zn], 4)
-                self.assertAlmostEqual(res_E[k][i], hmm_val, 2)
+        ## assert Emissions
+        #pd_em = self.hmm_log.emissions_to_df()
+        #for k, zn in enumerate(self.hmm_log._z):
+        #    for i, em in enumerate(self.hmm_log._o):
+        #        hmm_val = round(pd_em[em][zn], 4)
+        #        self.assertAlmostEqual(res_E[k][i], hmm_val, 2)
 
 
     def test_xi(self):
         obs_seq = self.obs_seq
         obs_seq2 = self.obs_seq2
 
-        alpha = self.hmm.forward(obs_seq)
-        beta = self.hmm.backward(obs_seq)
-        prob_X = self.hmm._prob_X(alpha, beta)
-        xi = self.hmm.xi(obs_seq, alpha, beta, prob_X)
+        alpha = self.hmm_log.forward(obs_seq)
+        beta = self.hmm_log.backward(obs_seq)
+        prob_X = self.hmm_log._prob_X(alpha, beta)
+        xi = self.hmm_log.xi(obs_seq, alpha, beta, prob_X)
+        xi = Probs.np_prob_arr2R(xi)
 
         hmm2_xi = self.hmm2.calcxi(
             obs_seq2,
             self.hmm2.calcalpha(obs_seq2),
             self.hmm2.calcbeta(obs_seq2))
 
-        K = len(self.hmm._z)
+        K = len(self.hmm_log._z)
         N = len(obs_seq)
 
         for n in range(0,N-1):
@@ -311,9 +340,10 @@ class TestMIT16_410F10(unittest.TestCase):
         :return:
         """
         obs_seq = self.obs_seq
-        alpha = self.hmm.forward(obs_seq)
-        beta = self.hmm.backward(obs_seq)
-        gamma = self.hmm.gamma(alpha, beta)
+        alpha = self.hmm_log.forward(obs_seq)
+        beta = self.hmm_log.backward(obs_seq)
+        gamma = self.hmm_log.gamma(alpha, beta)
+        gamma = Probs.np_prob_arr2R(gamma)
 
         hmm2_gamma = self.hmm2.calcgamma(self.hmm2.calcxi(
                 self.obs_seq2,
@@ -347,12 +377,13 @@ class TestMIT16_410F10(unittest.TestCase):
         obs_seq = self.obs_seq
         obs_seq2 = self.obs_seq2
 
-        alpha = self.hmm.forward(obs_seq)
+        alpha = self.hmm_log.forward(obs_seq)
+        alpha = Probs.np_prob_arr2R(alpha)
 
         hmm2_alpha = self.hmm2.calcalpha(obs_seq2)
 
         N = len(obs_seq)
-        K = len(self.hmm._z)
+        K = len(self.hmm_log._z)
         for n in range(0, N):
             for k in range(0,K):
                 self.assertAlmostEqual(hmm2_alpha[n][k], alpha[n][k])
@@ -362,11 +393,12 @@ class TestMIT16_410F10(unittest.TestCase):
     def test_backward(self):
         obs_seq = self.obs_seq
         obs_seq2 = self.obs_seq2
-        beta = self.hmm.backward(obs_seq)
+        beta = self.hmm_log.backward(obs_seq)
+        beta = Probs.np_prob_arr2R(beta)
         hmm2_beta = self.hmm2.calcbeta(obs_seq2)
 
         for n in range(0, len(obs_seq)):
-            for k in range(0,len(self.hmm._z)):
+            for k in range(0, len(self.hmm_log._z)):
                 self.assertAlmostEqual(hmm2_beta[n][k], beta[n][k])
 
         self.assertTrue(np.allclose(beta, hmm2_beta))
@@ -378,28 +410,28 @@ class TestMIT16_410F10(unittest.TestCase):
         :return:
         """
         obs_seq = self.obs_seq
-        alpha = self.hmm.forward(obs_seq)
-        beta = self.hmm.backward(obs_seq)
-        hmm_prob_x = self.hmm._prob_X(alpha, beta)
+        alpha = self.hmm_log.forward(obs_seq)
+        beta = self.hmm_log.backward(obs_seq)
+        hmm_prob_x = float(self.hmm_log._prob_X(alpha, beta))
 
-        hmm2_prob_x = np.exp(self.hmm2.forwardbackward(self.obs_seq2))
+        hmm2_prob_x = self.hmm2.forwardbackward(self.obs_seq2)
 
         self.assertAlmostEqual(hmm2_prob_x, hmm_prob_x)
         #self.assertEqual(0.00000000019, round(hmm2_prob_x,11))
 
     def test_getter_emission(self):
-        self.assertEqual(self.hmm.prob_x_given_z(NY, NY), 0.5)
-        self.assertEqual(self.hmm.prob_x_given_z(LA, NY), 0.1)
-        self.assertEqual(self.hmm.prob_x_given_z(NY, LA), 0.1)
-        self.assertEqual(self.hmm.prob_x_given_z(LA, LA), 0.4)
-        self.assertEqual(self.hmm.prob_x_given_z(NULL, NY), 0.4)
-        self.assertEqual(self.hmm.prob_x_given_z(NULL,LA ), 0.5)
+        self.assertEqual(np.log(0.5), float(self.hmm_log.prob_x_given_z(NY, NY)))
+        self.assertEqual(np.log(0.1), float(self.hmm_log.prob_x_given_z(LA, NY)))
+        self.assertEqual(np.log(0.1), float(self.hmm_log.prob_x_given_z(NY, LA)))
+        self.assertEqual(np.log(0.4), float(self.hmm_log.prob_x_given_z(LA, LA)))
+        self.assertEqual(np.log(0.4), float(self.hmm_log.prob_x_given_z(NULL, NY)))
+        self.assertEqual(np.log(0.5), float(self.hmm_log.prob_x_given_z(NULL, LA)))
 
     def test_getter_transition(self):
-        self.assertEqual(self.hmm.prob_za_given_zb(NY, NY), 0.5)
-        self.assertEqual(self.hmm.prob_za_given_zb(NY, LA), 0.5)
-        self.assertEqual(self.hmm.prob_za_given_zb(LA, NY), 0.5)
-        self.assertEqual(self.hmm.prob_za_given_zb(LA, LA), 0.5)
+        self.assertEqual(np.log(0.5), float(self.hmm_log.prob_za_given_zb(NY, NY)))
+        self.assertEqual(np.log(0.5), float(self.hmm_log.prob_za_given_zb(NY, LA)))
+        self.assertEqual(np.log(0.5), float(self.hmm_log.prob_za_given_zb(LA, NY)))
+        self.assertEqual(np.log(0.5), float(self.hmm_log.prob_za_given_zb(LA, LA)))
 
     def test_viterbi(self):
         obs_seq = self.obs_seq
@@ -407,16 +439,5 @@ class TestMIT16_410F10(unittest.TestCase):
         best_state_seq = [NY,LA,LA,LA,NY,LA,NY,NY,NY,LA,NY,NY,NY,NY,NY,LA,LA,LA,LA,NY]
 
         # test
-        res = self.hmm.viterbi(seq=obs_seq)
-        print(len(best_state_seq))
-        print(len(obs_seq))
-        print(len(res))
-        print("best_seq\t    viterbi_seq")
-        print('-'*30)
-        i=0
-        for item1, item2 in zip(best_state_seq,res):
-            print(str(i) + " " + item1 + "\t == " + item2)
-            i+=1
-        print(best_state_seq)
-        print(res)
+        res = self.hmm_log.viterbi(seq=obs_seq)
         self.assertListEqual(best_state_seq, res)
