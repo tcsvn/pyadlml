@@ -38,6 +38,9 @@ class TestMIT16_410F10(unittest.TestCase):
         self.hmm.set_transition_matrix(trans_matrix)
         self.hmm.set_emission_matrix(em_matrix)
 
+        self.hmm3 = HiddenMarkovModel(states, observation_alphabet, ProbabilityMassFunction, init_dist)
+        self.hmm3.set_transition_matrix(trans_matrix)
+        self.hmm3.set_emission_matrix(em_matrix)
 
         self.obs_seq2 = [2,0,0,2,1,2,1,1,1,2,1,1,1,1,1,2,2,0,0,1]
         self.hmm2 = DiscreteHMM(2, 3, trans_matrix, em_matrix, init_dist2, init_type='user')
@@ -53,13 +56,13 @@ class TestMIT16_410F10(unittest.TestCase):
         is valid
         :return: None
         """
-        bol_verify = self.hmm_log.verify_transistion_matrix()
+        bol_verify = self.hmm_log.verify_transition_matrix()
         self.assertTrue(bol_verify)
         obs_seq = self.obs_seq
 
         for i in range(0,100):
             self.hmm_log.training_step(obs_seq)
-            bol_verify = self.hmm_log.verify_transistion_matrix()
+            bol_verify = self.hmm_log.verify_transition_matrix()
             #if not bol_verify:
                 #bol_verify = self.hmm.verify_transistion_matrix()
 
@@ -245,6 +248,74 @@ class TestMIT16_410F10(unittest.TestCase):
             for i, em in enumerate(self.hmm_log._o):
                 hmm_val = round(pd_em[em][zn], 4)
                 self.assertAlmostEqual(res_E[k][i], hmm_val, 2)
+
+
+    def test_training_seqs(self):
+        """
+        slide 22
+        test if the training converges
+        test 3 times the observant sequence and if this works
+        :return:
+        """
+        res_pi = np.array([1,0])
+        res_A = np.array([[0.6909, 0.3091],
+                          [0.0934, 0.9066]])
+        res_E = np.array([[0.5807, 0.0010, 0.4183],
+                          [0.000, 0.7621, 0.2379]])
+        steps = 50
+        obs_seq = self.obs_seq
+        obs_seq1 = obs_seq
+        obs_seq2 = obs_seq
+        #obs_seq_1 = [LA, NY, NY, LA, NULL, NULL, LA, NY, NULL, NY, LA, LA,
+        #                NY, NY, NULL, NULL, LA, LA, NY]
+        #obs_seq_2 = [NY, NY, LA, NULL, LA, NY, LA, LA, LA, NULL, NULL, NY, LA,
+        #                NY, NY, NULL, NULL, LA, LA, NY]
+        seqs = [obs_seq, obs_seq1, obs_seq2]
+        self.hmm3.train(obs_seq, steps=steps)
+        print('#'*100)
+        self.hmm.train_seqs(seqs, steps=steps)
+        #self.hmm_log.train_seqs(seqs, steps=steps)
+        print('~'*100)
+        print('ready with trainning')
+        print('~'*100)
+        print('~'*100)
+        print(self.hmm)
+        print('~'*100)
+        print(self.hmm3)
+
+        #self.hmm_log.set_str_exp(True)
+        #print(self.hmm_log)
+        #print(np.exp(self.hmm_log.forward_backward(self.obs_seq)))
+        #print(np.exp(self.hmm_log.forward_backward(obs_seq1)))
+        #print(np.exp(self.hmm_log.forward_backward(obs_seq2)))
+        #print('~'*100)
+        print(res_pi)
+        print('-'*2)
+        print(res_A)
+        print('-'*2)
+        print(res_E)
+
+        # assert pi
+        for zn in range(0, len(res_pi)):
+            hmm_pi = round(self.hmm._pi[zn],4)
+            self.assertAlmostEqual(self.hmm3._pi[zn], self.hmm._pi[zn])
+            #self.assertAlmostEqual(res_pi[zn], hmm_pi, 2)
+
+        # assert A
+        for znm1 in range(0, len(res_A)):
+            for zn in range(0,len(res_A[0])):
+                hmm_val = round(self.hmm._A[znm1][zn],4)
+                self.assertAlmostEqual(self.hmm3._A[znm1][zn], self.hmm._A[znm1][zn])
+                #self.assertAlmostEqual(res_A[znm1][zn], hmm_val, 2)
+
+        # assert Emissions
+        pd_em = self.hmm.emissions_to_df()
+        pd_em3 = self.hmm3.emissions_to_df()
+        for k, zn in enumerate(self.hmm._z):
+            for i, em in enumerate(self.hmm._o):
+                hmm_val = round(pd_em[em][zn], 4)
+                self.assertAlmostEqual(pd_em[em][zn], pd_em3[em][zn])
+                #self.assertAlmostEqual(res_E[k][i], hmm_val, 2)
 
 
     def test_training(self):

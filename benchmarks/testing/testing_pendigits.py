@@ -42,7 +42,6 @@ class TestPendigitsModel(unittest.TestCase):
     def test_bench_hmms(self):
         self.ctrl.load_model()
         self.pd_model = self.ctrl._model
-        y_true, y_pred = self.pd_model.create_pred_act_seqs(self.dset)
         self.ctrl.register_benchmark()
         rep = self.ctrl.create_report(
             conf_matrix=True,
@@ -59,11 +58,26 @@ class TestPendigitsModel(unittest.TestCase):
         self.ctrl.generate_observations()
 
     def test_generate_obs_n_plot(self):
+        # numbers that were good in benchmark (desc):
+        # [0,8,4,9,3,7]
         self.ctrl.load_model()
-        self.pd_model = self.ctrl._model
-        #pd = self.ctrl._dataset
-        #pd.plot_example(12)
-        self.ctrl.plot_observations()
+        ds = self.ctrl._dataset # type: DatasetPendigits
+        pdmod = self.ctrl._model # type: ModelPendigits
+
+        num = 1
+        zero_start = [8,1,1]
+        one_start = [8,2,1,1,1]
+        start_seq =  one_start
+
+
+        hmm = pdmod._model_dict[num]
+        hmm.set_format_full(True)
+        print(hmm)
+
+        pdmod.select_number(num)
+        seq = pdmod.generate_observations(start_seq)
+
+        ds.plot_obs_seq(seq, num)
 
     def tearDown(self):
         pass

@@ -9,9 +9,12 @@ from benchmarks.controller import Controller
 import copy
 import numpy as np
 from hmmlearn.hmm import MultinomialHMM
-#from algorithms.hmm.hmm_scaled import HMM_Scaled as HiddenMarkovModel
 from algorithms.hmm._hmm_base import  HiddenMarkovModel
 from algorithms.hmm.distributions import ProbabilityMassFunction
+from algorithms.hmm.hmm_scaled import HMM_Scaled
+from algorithms.hmm._hmm_log import HMM_log
+from algorithms.hmm._hmm_log import HMM_log_scaled
+import numpy as np
 from benchmarks.datasets.kasteren import DatasetKasteren
 from benchmarks.datasets.pendigits import DatasetPendigits
 import math
@@ -67,23 +70,21 @@ class Model():
         """
         pass
 
-from algorithms.hmm.distributions import ProbabilityMassFunction
-from algorithms.hmm.hmm_scaled import HMM_Scaled
-import numpy as np
 
 
 
 # wrapper class for hmm
-class Proxy_HMM(Model):
+class ModelHMM(Model):
 
     def __init__(self, controller):
         self._cm = controller # type: Controller
         self._hmm = None # type: HiddenMarkovModel
 
         # training parameters
-        self._training_steps = 100
+        self._training_steps = 20
         self._epsilon = None
         self._use_q_fct = False
+        Model.__init__(self, "Test", controller)
 
     def __str__(self):
         return self._hmm.__str__()
@@ -97,13 +98,23 @@ class Proxy_HMM(Model):
     def model_init(self, dataset):
         state_list = dataset.get_state_list()
         observation_list = dataset.get_obs_list()
-
-        init_pi = HiddenMarkovModel.gen_rand_pi(len(state_list))
+        K = len(state_list)
+        D = len(observation_list)
         # init markov model in normal way
-        self._hmm = HMM_Scaled(state_list,
+        #self._hmm = HMM_Scaled(state_list,
+        #self._hmm = HMM_log(state_list,
+        self._hmm = HiddenMarkovModel(state_list,
                                observation_list,
                                ProbabilityMassFunction,
-                               init_pi)
+                               initial_dist=None)
+        init_pi = HiddenMarkovModel.gen_rand_pi(K)
+        self._hmm.set_pi(init_pi)
+
+        em_matrix = HiddenMarkovModel.gen_rand_emissions(K,D)
+        self._hmm.set_emission_matrix(em_matrix)
+
+        trans_mat = HiddenMarkovModel.gen_rand_transitions(K)
+        self._hmm.set_transition_matrix(trans_mat)
 
     def get_conv_plot_y_label(self):
         if self._use_q_fct:
@@ -124,19 +135,22 @@ class Proxy_HMM(Model):
         if use_q_fct == True or use_q_fct == False:
             self.use_q_fct(use_q_fct)
 
-        obs_seq = obs_seq
-        train_seq_1 = obs_seq[:30]
-        train_seq_2 = obs_seq[30:60]
-        train_seq_3 = obs_seq[60:90]
-        train_seq_4 = obs_seq[120:150]
-        self._hmm.train(train_seq_1,
-                        self._epsilon,
-                        self._training_steps,
-                        self._use_q_fct)
-        #self._hmm.train(train_seq_2,
-        #                self._epsilon,
-        #                self._training_steps,
-        #                self._use_q_fct)
+        seq_lst = [obs_seq[:30], obs_seq[30:60], obs_seq[60:90], obs_seq[120:150]]
+        self._hmm.train_seqs(seq_lst,
+                            self._epsilon,
+                            self._training_steps)
+
+        #for i, subseq  in enumerate(lst):
+        #    print(self._hmm)
+        #    self._hmm.train(subseq,
+        #                    self._epsilon,
+        #                    self._training_steps,
+        #                    self._use_q_fct)
+        #self._hmm.train(obs_seq,
+        #                     self._epsilon,
+        #                     self._training_steps,
+        #                     self._use_q_fct)
+
 
     def get_label_list(self):
         lst = []
@@ -208,7 +222,78 @@ class Proxy_HMM(Model):
         pass
 
 
+class ModelHMM_log(ModelHMM):
+    def __init__(self, controller):
+        ModelHMM.__init__(self, controller)
 
+    def model_init(self, dataset):
+        state_list = dataset.get_state_list()
+        observation_list = dataset.get_obs_list()
+        K = len(state_list)
+        D = len(observation_list)
+        # init markov model in normal way
+        #self._hmm = HMM_Scaled(state_list,
+        self._hmm = HMM_log(state_list,
+                                      observation_list,
+                                      ProbabilityMassFunction,
+                                      initial_dist=None)
+        init_pi = HMM_log.gen_rand_pi(K)
+        self._hmm.set_pi(init_pi)
+
+        em_matrix = HMM_log.gen_rand_emissions(K,D)
+        self._hmm.set_emission_matrix(em_matrix)
+
+        trans_mat = HMM_log.gen_rand_transitions(K)
+        self._hmm.set_transition_matrix(trans_mat)
+
+
+class ModelHMM_log_scaled(ModelHMM):
+    def __init__(self, controller):
+        ModelHMM.__init__(self, controller)
+
+    def model_init(self, dataset):
+        state_list = dataset.get_state_list()
+        observation_list = dataset.get_obs_list()
+        K = len(state_list)
+        D = len(observation_list)
+        # init markov model in normal way
+        #self._hmm = HMM_Scaled(state_list,
+        self._hmm = HMM_log_scaled(state_list,
+                            observation_list,
+                            ProbabilityMassFunction,
+                            initial_dist=None)
+        init_pi = HMM_log.gen_rand_pi(K)
+        self._hmm.set_pi(init_pi)
+
+        em_matrix = HMM_log.gen_rand_emissions(K,D)
+        self._hmm.set_emission_matrix(em_matrix)
+
+        trans_mat = HMM_log.gen_rand_transitions(K)
+        self._hmm.set_transition_matrix(trans_mat)
+
+class ModelHMM_scaled(ModelHMM):
+    def __init__(self, controller):
+        ModelHMM.__init__(self, controller)
+
+    def model_init(self, dataset):
+        state_list = dataset.get_state_list()
+        observation_list = dataset.get_obs_list()
+        K = len(state_list)
+        D = len(observation_list)
+        # init markov model in normal way
+        #self._hmm = HMM_Scaled(state_list,
+        self._hmm = HMM_Scaled(state_list,
+                            observation_list,
+                            ProbabilityMassFunction,
+                            initial_dist=None)
+        init_pi = HMM_Scaled.gen_rand_pi(K)
+        self._hmm.set_pi(init_pi)
+
+        em_matrix = HMM_Scaled.gen_rand_emissions(K,D)
+        self._hmm.set_emission_matrix(em_matrix)
+
+        trans_mat = HMM_Scaled.gen_rand_transitions(K)
+        self._hmm.set_transition_matrix(trans_mat)
 
 class ModelPendigits(Model):
     """
@@ -223,6 +308,9 @@ class ModelPendigits(Model):
         self._epsilon = None
         self._use_q_fct = False
 
+        # is used to know what to plot or generate sequence about
+        self._selected_number = 0
+
         # dictionary to hold all 10 models each representing a number
         self._model_dict = {}
         Model.__init__(self, name, controller)
@@ -234,6 +322,13 @@ class ModelPendigits(Model):
         s += self._model_name + "\n"
         s += str(self._model_dict)
         return s
+
+    def select_number(self, num):
+        if 0 <= num <= 9:
+            self._selected_number = int(num)
+        else:
+            raise ValueError
+
 
     def _use_q_fct(self, value):
         if value is True or value is False:
@@ -248,14 +343,19 @@ class ModelPendigits(Model):
         em_count = len(obs_list)
 
         for i in range(0, 10):
-            init_dist = HiddenMarkovModel.gen_eq_pi(state_count)
+            #cls = HiddenMarkovModel
+            cls = HMM_log
+            #cls = HMM_Scaled
+            #cls = HMM_log_scaled
+
+            init_dist = cls.gen_eq_pi(state_count)
             # generate equal sized start probabilitys
-            em_mat = HiddenMarkovModel.gen_rand_emissions(state_count, em_count)
+            em_mat = cls.gen_rand_emissions(state_count, em_count)
             # generate equal sized transition probabilitys
-            trans_mat = HiddenMarkovModel.gen_rand_transitions(state_count)
+            trans_mat = cls.gen_rand_transitions(state_count)
             em_dist = ProbabilityMassFunction
 
-            model = HiddenMarkovModel(
+            model = cls(
                 latent_variables=state_list,
                 observations=obs_list,
                 em_dist=em_dist,
@@ -293,27 +393,21 @@ class ModelPendigits(Model):
             #print("\ntraining %s digits for number %s" % (len(lengths), i))
             #print("total length of sequence %s observations" % (sum(lengths)))
             idx = 0
-            curr_hmm = self._model_dict[i]
+            curr_hmm = self._model_dict[i] # type: HiddenMarkovModel
             digits_skipped = 0
-            for j in range(0, len(lengths)):
+            seq_lst = []
+            N = len(lengths)
+            # todo flag for deletion
+            N = 5
+            for j in range(0, N):
                 new_idx = idx + lengths[j]
                 seq = enc_data[idx:new_idx]
-                tmp_hmm = copy.deepcopy(curr_hmm)
-                try:
-                    curr_hmm.train(seq, steps=self._training_steps)
-                except:
-                    digits_skipped += 1
-                    print('sequence to long => model crashes')
-                    # rollback changes
-                    curr_hmm = tmp_hmm
                 idx = new_idx
-                # todo debug only learn one digit
-                if j == 0:
-                    break
-            #print('~'*100)
-            #print(len(lengths))
-            #print(digits_skipped)
-            #print(curr_hmm)
+                seq_lst.append(seq)
+
+
+            curr_hmm.train_seqs(seq_lst, steps=self._training_steps)
+            print(curr_hmm)
 
     def get_label_list(self):
         """
@@ -385,11 +479,9 @@ class ModelPendigits(Model):
         return y_true, y_pred
 
     def gen_obs(self):
-        number_of_obs_to_gen = 20
-        num = 3
-        return self.generate_observations(num, number_of_obs_to_gen)
+        return self.generate_observations([])
 
-    def generate_observations(self, num, n):
+    def generate_observations(self, seq):
         """
         todo maybe this should also be part of the hmm class
         :param: num
@@ -398,22 +490,26 @@ class ModelPendigits(Model):
             n is the number of steps to generate in the future
         :return:
         """
+        num = self._selected_number
         hmm = self._model_dict[num] # type: HMM_Scaled
 
         # in the pendigit dataset a digit always begins
         # with pen down, get symbols for these operations
         pen_down = hmm._o[-2:][0]
         pen_up = hmm._o[-1:]
+        max_pred_count = 25
         """
         the prediction process ends when the pen_up symbol is predicted
         but for numbers as 4, 5, 7 the prediction process should end after
         two pen_up are observed
         """
         retouch = num in [4,5,7]
-        seq = [pen_down]
-        for i in range(n):
+        if seq is []:
+            seq = [pen_down]
+        for i in range(max_pred_count):
             new_symbol = hmm.predict_xnp1(seq)
             seq.append(new_symbol)
+            print(seq)
             if new_symbol == pen_up:
                 if retouch:
                     retouch = False
@@ -422,4 +518,4 @@ class ModelPendigits(Model):
         return seq
 
     def predict_next_observation(self, obs_seq):
-        pass
+        new_symbol = self._hmm.predict_xnp1(obs_seq)

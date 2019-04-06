@@ -103,6 +103,8 @@ class Controller():
 
     def plot_observations(self):
         obs_seq = self._model.gen_obs()
+        print(obs_seq)
+        exit(-1)
         self._dataset.plot_obs_seq(obs_seq, 3)
 
     def save_model(self):

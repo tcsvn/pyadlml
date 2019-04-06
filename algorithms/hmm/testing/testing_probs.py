@@ -76,6 +76,15 @@ class TestPMF(unittest.TestCase):
         p_sub_1 = Probs(0.6) - Probs(0.3)
         self.assertAlmostEqual(0.3, p_sub_1.prob_to_norm())
 
+        p_sub_2 = Probs(0.45) - Probs(0.2)
+        self.assertAlmostEqual(0.25, p_sub_2.prob_to_norm())
+
+        p_sub_3 = Probs(0.1) - Probs(0.09)
+        self.assertAlmostEqual(0.01, p_sub_3.prob_to_norm())
+
+        p_sub_4 = Probs(1.0) - Probs(0.3)
+        self.assertAlmostEqual(0.7, p_sub_4.prob_to_norm())
+
     def test_mul(self):
         p_mul_0 = self.p1 * self.p2
         self.assertEqual(0.02, round(p_mul_0.prob_to_norm(), 10))

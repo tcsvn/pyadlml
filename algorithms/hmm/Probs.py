@@ -3,10 +3,12 @@
 # own data type to emulate numeric type
 # of a probability
 import operator as op
+from typing import List
+
 import numpy as np
 import sys
 from scipy.special import logsumexp
-PROBS_MAX_MIN = -sys.float_info.max
+LOGZERO = -sys.float_info.max
 
 
 class Probs(object):
@@ -17,33 +19,50 @@ class Probs(object):
             prob = float(prob)
         except:
             raise ValueError
-        if prob < 0.0 or 1.0 < prob:
+        if prob > 1.0:
             raise ValueError
-        if prob == 0.0:
-            self.prob = PROBS_MAX_MIN
         else:
-            self.prob = np.log(prob) # normal case
+            self.prob = self.eln(prob)
 
     @classmethod
     def np_prob_arr2R(cls, np_arr):
         return np.exp(np_arr).astype(np.float, copy=False)
 
-    def prob_to_norm(self):
-        return self.exp()
 
     def exp(self):
+        """
+        fct is called by np.exp(x) from numpy
+        :return:
+        """
+        return self.eexp(self.prob)
+
+    @ classmethod
+    def eexp(cls, x : float):
         """
         required for np.exp(arr)
         :return:
         """
-        if self.prob == PROBS_MAX_MIN:
-            return np.nextafter(0, 1)
-        return np.exp(self.prob)
+        if x == LOGZERO:
+            return 0
+        else:
+            return np.exp(x)
+
+    @ classmethod
+    def eln(self, x : float):
+        if x == 0.0:
+            return LOGZERO
+        elif x > 0.0:
+            return np.log(x)
+        else:
+            raise ValueError
 
     def __str__(self):
         s = ""
         s += str(self.prob)
         return s
+
+    def prob_to_norm(self):
+        return self.eexp(self.prob)
 
     """
     implement arithmetic operations
@@ -75,24 +94,24 @@ class Probs(object):
         #log(a + b) = log(a * (1 + b / a)) = log(a) + log(1 + b / a)
         :return: new Probs object
         """
-        # choose least negative operater to be a
-        #a = max(self.prob, other.prob)
-        #b = min(self.prob, other.prob)
-
         res = Probs(1.0)
-        res.prob = logsumexp([self.prob, other.prob])
-        #res.prob = np.logaddexp(a,b) # numpy's version of log add
+        if other.prob == LOGZERO or self.prob == LOGZERO:
+            if self.prob == LOGZERO:
+                res.prob = other.prob
+            else:
+                res.prob = self.prob
+        else:
+            res.prob = logsumexp([self.prob, other.prob])
+            # todo why does above work at all???
+            # stackoverflow:  https://stackoverflow.com/questions/778047/we-know-log-add-but-how-to-do-log-subtract
+            #if self.prob > other.prob:
+            #    a = self.prob
+            #    b = other.prob
+            #else:
+            #    a = other.prob
+            #    b = self.prob
+            #res.prob = a + np.log1p(np.exp(b-a))
         return res
-
-    # stackoverflow:  https://stackoverflow.com/questions/778047/we-know-log-add-but-how-to-do-log-subtract
-#      double log_add(double x, double y) {
-#    if(x == neginf)
-#      return y;
-#    if(y == neginf)
-#      return x;
-#    return max(x, y) + log1p(exp( -fabs(x - y) ));
-#  }
-
 
 
     def __sub__(self, other):
@@ -121,19 +140,88 @@ class Probs(object):
         # todo verify
         # stackoverflow:  https://stackoverflow.com/questions/778047/we-know-log-add-but-how-to-do-log-subtract
         res = Probs(1.0)
-        res.prob = self._logsubexp(self.prob, other.prob)
+        #res.prob = self._logsubexp(self.prob, other.prob)
+        a = self.prob
+        #print(a)
+        b = other.prob
+        #print(b)
+        #b = -b
+        #print(b)
+        #res.prob = logsumexp(a,b)
+        res.prob = self._logsubexp(a,b)
         return res
 
     def _logsubexp(self, a, b):
-        # todo this is very dangerous change it !!!
-        #if a < b:
-        #    raise ValueError
+        #return self._logsubexp_factor_method(a,b)
+        #return self._logsubexp_factor_method2(a,b)
+        return self._logsubexp_stackoverflow_method(a,b)
+
+    def _logsubexp_factor_method(self, a, b):
+        """
+
+        :param a:
+        :param b:
+        :return:
+        """
+        z = min(a,b)
+        a = a - z
+        b = b - z
         if a < b:
-            return PROBS_MAX_MIN
-        if np.isneginf(b):
-            return a
+            raise ValueError
+        #print('--'*20)
+        #print(a,b)
+        #print(np.exp(a) - np.exp(b))
+        res = np.log(np.exp(a) - np.exp(b))
+        #print(res)
+        return res + z
+
+
+
+    def _logsubexp_stackoverflow_method(self, a, b):
+        """
+            https://stats.stackexchange.com/questions/383523/subtracting-very-small-probabilities-how-to-compute
+
+        :param a: self.prob
+        :param b: other.prob
+        :return:
+        """
+        if a == LOGZERO or b == LOGZERO:
+            if a == LOGZERO:
+                return b
+            else:
+                return a
         else:
-            return a + np.log1p(-np.exp(b - a))
+            # swap the variables in order that
+            if a <= b:
+                c = a
+                a = b
+                b = c
+            suma1 = a
+            suma2 = np.log1p(-np.exp(b-a))
+            if suma2 == np.NaN or suma2 == np.NAN:
+                print('lalalala'*100)
+            res = suma1 + suma2
+            return res
+
+    def _logsubexp_wiki_method(self, a, b):
+        """
+        method log-probabilities in
+        :param a:
+        :param b:
+        :return:
+        """
+        return a + np.log1p(-np.exp(b-a))
+
+    #def _logsubexp(self, X : [float]) -> float:
+    #    # todo this is very dangerous change it !!!
+    #    #if a < b:
+    #    #    raise ValueError
+    #    if sum(X) < 0:
+    #        raise ValueError
+    #    X = np.array(X)
+    #    c = max(X)
+    #    return np.log(np.sum(np.exp(X-c))) + c
+
 
     def __mul__(self, other):
         """
@@ -142,10 +230,12 @@ class Probs(object):
         :return:
         """
         res = Probs(1.0)
-        if self.prob == PROBS_MAX_MIN:
-            res.prob = PROBS_MAX_MIN
+        if self.prob == LOGZERO:
+            res.prob = LOGZERO
+            #raise ValueError
         else:
-            res.prob = self.prob + other.prob
+            res.prob = self.comp_helper(op.add, other)
+            #res.prob = self.prob + other.prob
         return res
 
     def __truediv__(self, other):
@@ -212,7 +302,11 @@ class Probs(object):
         :param other:
         :return:
         """
-        self.prob = self.prob + other.prob
+        # todo sometimes here is an overflow
+        if self.prob == LOGZERO or other.prob == LOGZERO:
+            self.prob = LOGZERO
+        else:
+            self.prob = self.prob + other.prob
         return self
 
     def __idiv__(self, other):
@@ -239,12 +333,13 @@ class Probs(object):
     """
     def __neq__(self):
         """
-        - x
+        raises Error
         :return:
         """
-        # todo look up if ok !!!
-        self.prob = -self.prob
-        return self
+        #self.prob = -self.prob
+        # a = -c <=> ln(a) = ln(-c) = ln(-1) + ln(c) Error
+        print('this action is not allowed ')
+        raise ValueError
 
     def __pos__(self):
         """
@@ -259,6 +354,8 @@ class Probs(object):
         :return:
         """
         return abs(self.prob)
+        #print('this action is not allowed')
+        #raise ValueError
 
     """
     implement built-in functions
@@ -309,7 +406,7 @@ class Probs(object):
         :param other:
         :return:
         """
-        return self.prob <= other.prob
+        return self.comp_helper(op.le, other)
 
     def __eq__(self, other):
         """
@@ -317,7 +414,7 @@ class Probs(object):
         :param other:
         :return:
         """
-        return self.prob == other.prob
+        return self.comp_helper(op.eq, other)
 
     def __ne__(self, other):
         """
@@ -341,4 +438,4 @@ class Probs(object):
         :param other:
         :return:
         """
-        return self.prob >= other.prob
+        return self.comp_helper(op.ge, other)

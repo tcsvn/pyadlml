@@ -53,9 +53,9 @@ class HMM_Scaled(HiddenMarkovModel):
         #print(len(cn))
         # sum over all probab. of seeing future xnp1 for all
         # future states znp1
-        sum0 = 0
+        sum0 = self.single_prob(0.)
         for idx_znp1, znp1 in enumerate(self._z):
-            sum1 = 0
+            sum1 = self.single_prob(0.)
             for idx_zn, zn in enumerate(self._z):
                 sum1 += self.prob_za_given_zb(znp1, zn)\
                         *alpha_zn[idx_zn]
@@ -72,8 +72,8 @@ class HMM_Scaled(HiddenMarkovModel):
         :param cn:
         :return:
         """
-        alpha = np.zeros((len(seq),len(self._z)))
-        cn = np.zeros((len(seq)))
+        alpha = self.np_zeros((len(seq),len(self._z)))
+        cn = self.np_zeros((len(seq)))
         #print('-'*100)
         # calculate c1 and alpha_hat 1
         x1 = seq[0]
@@ -92,7 +92,7 @@ class HMM_Scaled(HiddenMarkovModel):
         #print('-'*100)
         for idx, zn in enumerate(self._z):
             alpha[0][idx] = self.prob_pi(zn)*self.prob_x_given_z(x1,zn)\
-                            *(1/cn[0])
+                            *(self.single_prob(1.)/cn[0])
 
         #eq 13.55alpha_znm1, zn, seq, xn, cn):
         for n in range(1,len(seq)):
@@ -102,11 +102,20 @@ class HMM_Scaled(HiddenMarkovModel):
             #print(n)
             cn[n] = self.calc_cn(alpha[n-1], cn[:n], xn)
             #print(cn)
-            if cn[n] == 0.0:
+            #if cn[n] == 0.0:
+            if 0.0 == cn[n]:
+                print('-0'*100)
+                print(cn)
+                s = ""
+                for i, item in enumerate(cn):
+                    s += str(item) + " , "
+                    if i % 3  == 0: s += "\n"
+                print(s)
+                print('-0'*100)
                 raise ValueError
             #print('--')
             for idx, zn in enumerate(self._z):
-                sum = 0
+                sum = self.single_prob(0.)
                 # sum over preceding alpha values of the incident states multiplicated with the transition
                 # probability into the current state
                 for idx_znm1, znm1 in enumerate(self._z):
@@ -121,7 +130,7 @@ class HMM_Scaled(HiddenMarkovModel):
                 #if prob_x_given_z == 0.0:
                 #    sum = 0.0
                 #else:
-                sum *= prob_x_given_z*(1/cn[n])
+                sum *= prob_x_given_z*(self.single_prob(1.)/cn[n])
                 alpha[n][idx] = sum
 
         return alpha, cn
@@ -135,7 +144,7 @@ class HMM_Scaled(HiddenMarkovModel):
         todo test function and confirm correct
         """
         N=len(norm_alpha)
-        alpha = np.zeros((N,len(self._z)))
+        alpha = self.np_zeros((N,len(self._z)))
 
         # first compute the cumulative product values for each zn of the cns
         cumprod_cn = np.cumprod(cn)
@@ -156,28 +165,28 @@ class HMM_Scaled(HiddenMarkovModel):
         # represents beta_(zn1) is the probability that z1 emitted the observations
         # beta_1(z11) | beta_(z21) | ... | beta_(zn1)=1
         # beta_1(z12) | beta_(z22) | ... | beta_(zn2)=1
-        beta = np.zeros((len(seq), len(self._z)))
+        beta = self.np_zeros((len(seq), len(self._z)))
         N = len(seq)-1
         if cn is not None:
             for k in range(0, len(self._z)):
                 # error location
-                beta[N][k] = 1#*(1/cn[N])
+                beta[N][k] = self.single_prob(1.)
 
             # start with beta_(znk) and calculate the betas backwards
             for n in range(N-1, -1, -1):
                 for zn_k, zn in enumerate(self._z):
                     xnp1 = seq[n+1]
-                    sum1 = 0
+                    sum1 = self.single_prob(0.)
                     for znp1_k, znp1 in enumerate(self._z):
                         sum1 += self.prob_za_given_zb(znp1, zn) \
                                *self.prob_x_given_z(xnp1, znp1) \
                                *beta[n+1][znp1_k]
-                    beta[n][zn_k] = sum1*(1/cn[n+1])
+                    beta[n][zn_k] = sum1*(self.single_prob(1.)/cn[n+1])
             return beta
 
 
     def nbeta_to_beta(self, nbeta, cn):
-        beta = np.zeros((len(nbeta), len(self._z)))
+        beta = self.np_zeros((len(nbeta), len(self._z)))
         N = len(nbeta)-1
 
         # first compute the cumulative product values for each zn of the cns
@@ -186,7 +195,7 @@ class HMM_Scaled(HiddenMarkovModel):
         for k in range(0, len(self._z)):
             beta[N][k] = nbeta[N][k]
 
-        cum_cn = 1
+        cum_cn = self.single_prob(1.)
         for n in range(N-1, -1, -1):
             cum_cn = cn[n+1]*cum_cn
             for k in range(0, len(self._z)):
@@ -209,7 +218,7 @@ class HMM_Scaled(HiddenMarkovModel):
         N = len(obs_seq)
         K = len(self._z)
 
-        xi = np.zeros((N-1, K, K))
+        xi = self.np_zeros((N-1, K, K))
         for n in range(1, N):
             for knm1, znm1 in enumerate(self._z):
                 for kn, zn in enumerate(self._z):

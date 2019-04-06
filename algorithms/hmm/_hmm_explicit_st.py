@@ -6,40 +6,13 @@ from graphviz import Digraph
 import pandas as pd
 import math
 
-CNT = 1
-
-class State():
-    def __init__(self, name, probability_dist):
-        self._name = name
-        self._prob_dist = probability_dist
-
-    def is_state(self, state_label):
-        return self._name == state_label
-
-    def set_emission(self, arr):
-        self._prob_dist.set_probs(arr)
-
-    def em_prob(self, xn):
-        """
-        computes the probability for emitting a the observation xn
-        :param xn:
-        :return:
-        """
-        return self._prob_dist.prob(xn)
-
-    def get_probs(self):
-        return self._prob_dist.get_probs()
-
-    def prob_emission(self):
-        pass
 
 
-class HiddenMarkovModel():
+class Hmm_eplicist_state_duration(HiddenMarkovModel):
     """
     set of latent variables
     set of observations
     """
-    states: Dict[Any, State]
 
     def __init__(self, latent_variables, observations, em_dist, initial_dist=None):
         # list of latent variables
@@ -76,6 +49,8 @@ class HiddenMarkovModel():
         else:
             self._pi = np.full(k, 1./k)
 
+
+
         # is used to check after a training step if the sum
         # of all outgoing trans probabilities of one state
         # sum up to unity, when diff greater than the tolerance
@@ -106,12 +81,12 @@ class HiddenMarkovModel():
             A = self._format_mat_full(A)
             E = self._format_mat_full(E)
 
-        return self._str_helper(pi, A, E, "base")
+        return self._str_helper(pi, A, E)
 
-    def _str_helper(self, pi, A, E, extra):
+    def _str_helper(self, pi, A, E):
         s = ""
         s += '*' * 50
-        s += '\nHidden Markov Model:\t' + str(extra) + '\n'
+        s += '\nHidden Markov Model:\t with log\n'
         s += "_" * 50
         s += '\n\nPi\n'
         s += str(pi)
@@ -527,145 +502,6 @@ class HiddenMarkovModel():
                         * beta[n+1][znp1_idx]
         return beta
 
-
-    def train_seqs(self, set, epsilon = None, steps=None):
-        """
-        this follows the original rabiner script equation 109/ 110
-        :param set:
-        :param epsilon:
-        :param steps:
-        :param q_fct:
-        :return:
-        """
-        if steps is None:
-            steps = 1000000
-        if epsilon is None:
-            epsilon = -1
-        # set to default values if both values are not given
-        if epsilon is None and steps is None:
-            epsilon = 0.00001
-            steps = 10000
-
-        diffcounter = 0
-        len_diff_arr = 100
-        diff_arr = np.full((len_diff_arr), float(len_diff_arr))
-
-        old_prob_Ok = self.single_prob(0.0)
-        OK = len(set)
-        # todo remove debug
-        cnt = 0
-        while (diff_arr.mean() > epsilon and steps > 0):
-            new_em_arr = np.zeros((OK), dtype=object)
-            new_a_arr = np.zeros((OK), dtype=object)
-            new_pi_arr = np.zeros((OK), dtype=object)
-            P = np.zeros((OK), dtype=object)
-            # for each sequence
-            for d, o_seq in enumerate(set):
-                # do e step
-                alpha, beta, gamma, prob_X, xi = self._e_step(o_seq)
-
-                new_pi_arr[d] = self.new_pi(gamma)
-
-                # calc contrib of o_d to E
-                #new_em_arr[d] = self.new_emissions_numer_denom(gamma, o_seq)
-                tmp = self.new_emissions_numer_denom(gamma, o_seq)
-                new_em_arr[d] = tmp
-                # calc contrib of o_d to A
-                new_a_arr[d] = self.new_A_numer_denom(o_seq, xi)
-
-                P[d] = prob_X
-
-
-            # todo debug
-            #if cnt == CNT:
-                #print('~%s'%(cnt)*50)
-                #print(self.new_A_nd2new_A(new_a_arr[0]))
-                #print(self.new_A_nd2new_A(new_a_arr[1]))
-                #print(self.new_A_nd2new_A(new_a_arr[2]))
-                #print(self.new_em_nd2_new_em(new_em_arr[0]))
-                #print(self.new_em_nd2_new_em(new_em_arr[1]))
-                #print(self.new_em_nd2_new_em(new_em_arr[2]))
-                #print('~0~'*100)
-
-
-            # -----------------------------------------------------
-            # M - Step
-
-
-            K = len(self._z)
-            D = len(self._o)
-            # todo use numpy slicing instead of loop
-            #selector = np.ones((K), dtype=np.int).cumsum()-1
-            #denoms = new_a_arr[selector,selector,[1]]
-            #print(selector)
-            #print('-!'*100)
-            #print(new_em_arr)
-            #print(new_a_arr)
-            # compute new pi
-            # just the average from the pi's
-            new_pi = new_pi_arr.sum(axis=0)*(1./OK)
-            self._pi = new_pi
-
-            # compute new A
-            new_A = self.np_zeros((K,K))
-            new_a_arr = new_a_arr.sum(axis=0) # type: np.ndarray
-            #if cnt == CNT:
-            #    print('*'*50)
-            #    print('after sum')
-            #    print(new_a_arr)
-            for i in range(K):
-                for j in range(K):
-                    numer = new_a_arr[i][j][0]
-                    denom = new_a_arr[i][j][1]
-                    new_A[i][j] = numer/denom
-            #print('*'*50)
-            #print('after division')
-            #print(new_A)
-            #print('*'*50)
-
-            # compute new E
-            new_E = self.np_zeros((K,D))
-            new_em_arr = new_em_arr.sum(axis=0)
-            for k in range(K):
-                for d in range(D):
-                    numer = new_em_arr[k][d][0]
-                    denom = new_em_arr[k][d][1]
-                    new_E[k][d] = numer/denom
-
-            if not self.verify_transition_matrix(new_A) \
-                and self.verify_emission_matrix(new_E):
-                print('problem')
-                raise ValueError
-
-            self._A = new_A
-            self.set_emission_matrix(new_E)
-
-
-
-            # check convergence
-                # calc prob(O_k | theta) = prod_k^K P_k
-            new_prob_Ok = P.prod()
-
-            diff = new_prob_Ok - old_prob_Ok
-            old_prob_Ok = new_prob_Ok
-            self.logger.debug(new_prob_Ok)
-            #if diff < 0:
-            #    # todo VERY IMPORTANT!!!
-            #    # this condition can't be happening because in EM
-            #    # after every step the prob_X must be equal or greater given
-            #    # the seq.
-            #    # print('fuck')
-            #    # temporal "solution"
-            #    diff = abs(diff)
-            diff_arr[diffcounter % len_diff_arr] = diff
-            diffcounter += 1
-            steps -= 1
-            #if cnt == CNT:
-            #    print(self)
-            #cnt +=1
-
-
-
     def train(self, seq, epsilon=None, steps=None, q_fct=False):
         """
         :param seq:
@@ -696,11 +532,10 @@ class HiddenMarkovModel():
             old_q = self.min_num()
         else:
             old_prob_X = self.single_prob(0.0)
-        cnt = 0
+
         while (diff_arr.mean() > epsilon and steps > 0):
             alpha, beta, gamma, prob_X, xi = self._e_step(seq)
             self._m_step(seq, gamma, xi)
-            # todo debuge remove flag
 
             if q_fct:
                 new_q = self.q_energy_function(seq, gamma, xi)
@@ -724,11 +559,6 @@ class HiddenMarkovModel():
             diff_arr[diffcounter % len_diff_arr] = diff
             diffcounter += 1
             steps -= 1
-
-            #if cnt == CNT:
-            #    print('~%s'%(cnt)*50)
-            #    print(self)
-            #cnt +=1
 
 
 
@@ -799,8 +629,8 @@ class HiddenMarkovModel():
             denom = sum_gamma
 
             # todo smooth constant
-            #numer += self._smooth_constant
-            #denom += len(self._z)*self._smooth_constant
+            numer += self._smooth_constant
+            denom += len(self._z)*self._smooth_constant
 
             new_pi[k] = numer/denom
         return new_pi
@@ -833,8 +663,8 @@ class HiddenMarkovModel():
                 #else:
                 #    # todo maybe the error is here
                 # todo smooth constant
-                #numer += self._smooth_constant
-                #denom += len(self._z)*self._smooth_constant
+                numer += self._smooth_constant
+                denom += len(self._z)*self._smooth_constant
 
                 new_A[j][k] = numer/denom
         """
@@ -915,8 +745,8 @@ class HiddenMarkovModel():
                     denom += gamma[t][j]
                 #print(str(numer) + "/" + str(denom))
                 # todo smooth constant
-                #numer += self._smooth_constant
-                #denom += len(self._o)*self._smooth_constant
+                numer += self._smooth_constant
+                denom += len(self._o)*self._smooth_constant
 
                 new_E[j][k] = numer/denom
 
@@ -958,7 +788,7 @@ class HiddenMarkovModel():
     #            for g_znk, xn in zip(gamma_slice, obs_seq):
     #                xni = self.xni(xn, obs_seq[i])
     #                numer += g_znk*xni
-    #
+
     #            em_mat[k][i] = numer/denom
     #    return em_mat
 
@@ -1017,9 +847,7 @@ class HiddenMarkovModel():
         :return: array for each xnp1 with the probability values of xn
         """
         obs_probs = self._predict_probs_xnp(seq)
-        print(np.exp(obs_probs))
         max_index = obs_probs.argmax()
-        print(max_index)
         return self._o[max_index]
 
     def _predict_probs_xnp(self, seq):
@@ -1031,16 +859,16 @@ class HiddenMarkovModel():
         """
         alpha = self.forward(seq)
         beta = self.backward(seq)
-        normalizing_constant = self.single_prob(1.)/(self._prob_X(alpha, beta))
+        normalizing_constant = 1 / (self._prob_X(alpha, beta))
         alpha_zn = alpha[len(seq) - 1]
 
         result = self.np_zeros(len(self._o))
         for idx_xnp1, xnp1 in enumerate(self._o):
             # sum over all probab. of seeing future xnp1 for all
             # future states znp1
-            sum0 = self.single_prob(0.)
+            sum0 = 0
             for idx_znp1, znp1 in enumerate(self._z):
-                sum1 = self.single_prob(0.)
+                sum1 = 0
                 for idx_zn, zn in enumerate(self._z):
                     sum1 += self.prob_za_given_zb(znp1, zn) \
                             * alpha_zn[idx_zn]
@@ -1154,101 +982,3 @@ class HiddenMarkovModel():
         return max
 
 
-# ------------ multiple sequences
-
-    def new_A_numer_denom(self, obs_seq, xi):
-        """
-            computes a new transition matrix
-            xi[n][j][k] = the probability of being in state j at time t-1 and
-            in state k at time n given the entire observation sequence
-        :param xi:
-        :param obs_seq:
-        :return:
-            3D Array (K X K X 2) the field [i][j] contains the transition i to j form of
-            to fields   [0] numer [1] denom
-        """
-        K = len(self._z)
-        N = len(obs_seq)
-
-        new_A = self.np_zeros((K, K, 2))
-        for j in range(0, K):
-            denom = self.single_prob(0.0)
-            for l in range(0, K):
-                for n in range(0, N-1):
-                    denom += xi[n][j][l]
-
-            for k in range(0, K):
-                numer = self.single_prob(0.0)
-                for n in range(0, N-1):
-                    numer += xi[n][j][k]
-                #if denom == 0.0:
-                #    new_A[j][k] = 0.0
-                #else:
-                #    # todo maybe the error is here
-                # todo smooth constant
-                #numer += self._smooth_constant
-                #denom += len(self._z)*self._smooth_constant
-
-                new_A[j][k][0] = numer
-                new_A[j][k][1] = denom
-
-        return new_A
-
-    def new_A_nd2new_A(self, new_A_nd):
-        K = len(self._z)
-        new_A = self.np_zeros((K, K))
-        for i in range(K):
-            for j in range(K):
-                numer = new_A_nd[i][j][0]
-                denom = new_A_nd[i][j][1]
-                #print(str(numer) + "/" + str(denom))
-                new_A[i][j] = numer/denom
-        return new_A
-
-
-
-    def new_emissions_numer_denom(self, gamma, observations):
-        '''
-        Helper method that performs the Baum-Welch 'M' step
-        for the matrix 'B'.
-        '''
-        # todo check why and if i have to do this
-        # normally i shouldn't do this
-        #for k in range(len(self._z)):
-        #    gamma[len(gamma)-1][k] = self.single_prob(0.0)
-
-        n = len(self._z)
-        m = len(self._o)
-        # e[i][j] := ith state, kth emission
-        new_E = self.np_zeros((n,m, 2))
-        #print('0'*100)
-        #print(gamma)
-        for j in range(n):
-            #print('---'*100)
-            for k in range(m):
-                numer = self.single_prob(0.0)
-                denom = self.single_prob(0.0)
-                for t in range(len(observations)):
-                    idx_em = self._idx_emission(observations[t])
-                    if idx_em == k:
-                        numer += gamma[t][j]
-                    denom += gamma[t][j]
-                #print(str(numer) + "/" + str(denom))
-                # todo smooth constant
-                #numer += self._smooth_constant
-                #denom += len(self._o)*self._smooth_constant
-
-                new_E[j][k][0] = numer
-                new_E[j][k][1] = denom
-        return new_E
-
-    def new_em_nd2_new_em(self, new_em_nd):
-        K = len(self._z)
-        D = len(self._o)
-        new_em = self.np_zeros((K, D))
-        for k in range(K):
-            for d in range(D):
-                numer = new_em_nd[k][d][0]
-                denom = new_em_nd[k][d][1]
-                new_em[k][d] = numer/denom
-        return new_em

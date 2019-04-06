@@ -16,13 +16,15 @@ this example is straight from lecture nodes of MIT Lec 21 Nov 24, 2010
 """
 class TestMIT16_410F10(unittest.TestCase):
     def setUp(self):
+        precision = np.double
+
         # set of observations
         observation_alphabet = [LA, NY, NULL]
         states = [LA, NY]
         init_dist = [0.2, 0.8]
         init_dist2 = np.array([0.2, 0.8])
-        trans_matrix = np.array([[0.5,0.5],[0.5,0.5]])
-        em_matrix = np.array([[0.4,0.1,0.5],[0.1,0.5,0.4]])
+        trans_matrix = np.array([[0.5,0.5],[0.5,0.5]], dtype=precision)
+        em_matrix = np.array([[0.4,0.1,0.5],[0.1,0.5,0.4]], dtype=precision)
 
         self.obs_seq = [NULL, LA, LA, NULL, NY, NULL, NY, NY, NY, NULL,
                 NY, NY, NY, NY, NY, NULL, NULL, LA, LA, NY]
@@ -47,13 +49,13 @@ class TestMIT16_410F10(unittest.TestCase):
         is valid
         :return: None
         """
-        bol_verify = self.hmm.verify_transistion_matrix()
+        bol_verify = self.hmm.verify_transition_matrix()
         self.assertTrue(bol_verify)
         obs_seq = self.obs_seq
 
         for i in range(0,100):
             self.hmm.training_step(obs_seq)
-            bol_verify = self.hmm.verify_transistion_matrix()
+            bol_verify = self.hmm.verify_transition_matrix()
             #if not bol_verify:
                 #bol_verify = self.hmm.verify_transistion_matrix()
 
@@ -132,6 +134,7 @@ class TestMIT16_410F10(unittest.TestCase):
 
 
     def test_new_emission(self):
+        # todo make that exactly the same
         obs_seq = self.obs_seq
         alpha = self.hmm.forward(self.obs_seq)
         beta = self.hmm.backward(self.obs_seq)
@@ -147,6 +150,7 @@ class TestMIT16_410F10(unittest.TestCase):
         hmm2_new_ems = self.hmm2._reestimateB(obs_seq2, hmm2_gamma)
 
         print()
+        print('#'*100)
         print(hmm_new_em)
         print('~'*100)
         print(hmm2_new_ems)
@@ -229,6 +233,59 @@ class TestMIT16_410F10(unittest.TestCase):
                 self.assertAlmostEqual(res_E[k][i], hmm_val, 2)
 
 
+    def test_training_seqs(self):
+        """
+        slide 22
+        test if the training converges
+        :return:
+        """
+        res_pi = np.array([1,0])
+        res_A = np.array([[0.6909, 0.3091],
+                          [0.0934, 0.9066]])
+        res_E = np.array([[0.5807, 0.0010, 0.4183],
+                          [0.000, 0.7621, 0.2379]])
+        steps = 1000
+        obs_seq = self.obs_seq
+        self.hmm.train(obs_seq, steps=steps)
+        self.hmm2.train(self.obs_seq2, iterations=steps)
+
+        self.hmm.train(obs_seq, steps=steps)
+        self.hmm2.train(self.obs_seq2, iterations=steps)
+
+        self.hmm.train(obs_seq, steps=steps)
+        self.hmm2.train(self.obs_seq2, iterations=steps)
+
+        print(self.hmm)
+        print('~'*100)
+        print(self.hmm2.pi)
+        print('-'*2)
+        print(self.hmm2.A)
+        print('-'*2)
+        print(self.hmm2.B)
+        print('~'*100)
+        print(res_pi)
+        print('-'*2)
+        print(res_A)
+        print('-'*2)
+        print(res_E)
+
+        # assert pi
+        for zn in range(0, len(res_pi)):
+            hmm_pi = round(self.hmm._pi[zn],4)
+            self.assertAlmostEqual(res_pi[zn], hmm_pi, 2)
+
+        # assert A
+        for znm1 in range(0, len(res_A)):
+            for zn in range(0,len(res_A[0])):
+                hmm_val = round(self.hmm._A[znm1][zn],4)
+                self.assertAlmostEqual(res_A[znm1][zn], hmm_val, 2)
+
+        # assert Emissions
+        pd_em = self.hmm.emissions_to_df()
+        for k, zn in enumerate(self.hmm._z):
+            for i, em in enumerate(self.hmm._o):
+                hmm_val = round(pd_em[em][zn], 4)
+                self.assertAlmostEqual(res_E[k][i], hmm_val, 2)
     def test_training(self):
         """
         slide 22
@@ -240,24 +297,30 @@ class TestMIT16_410F10(unittest.TestCase):
                           [0.0934, 0.9066]])
         res_E = np.array([[0.5807, 0.0010, 0.4183],
                           [0.000, 0.7621, 0.2379]])
-        steps = 500
+        steps = 1000
         obs_seq = self.obs_seq
         self.hmm.train(obs_seq, steps=steps)
         self.hmm2.train(self.obs_seq2, iterations=steps)
 
-        #print(self.hmm)
-        #print('~'*100)
-        #print(self.hmm2.pi)
-        #print('-'*2)
-        #print(self.hmm2.A)
-        #print('-'*2)
-        #print(self.hmm2.B)
-        #print('~'*100)
-        #print(res_pi)
-        #print('-'*2)
-        #print(res_A)
-        #print('-'*2)
-        #print(res_E)
+        self.hmm.train(obs_seq, steps=steps)
+        self.hmm2.train(self.obs_seq2, iterations=steps)
+
+        self.hmm.train(obs_seq, steps=steps)
+        self.hmm2.train(self.obs_seq2, iterations=steps)
+
+        print(self.hmm)
+        print('~'*100)
+        print(self.hmm2.pi)
+        print('-'*2)
+        print(self.hmm2.A)
+        print('-'*2)
+        print(self.hmm2.B)
+        print('~'*100)
+        print(res_pi)
+        print('-'*2)
+        print(res_A)
+        print('-'*2)
+        print(res_E)
 
         # assert pi
         for zn in range(0, len(res_pi)):
