@@ -22,12 +22,22 @@ class Controller():
         self._model = None
         self._bench = None # type: Benchmark
         self._dataset = None # type: DataInterfaceHMM
+        self._dataset_enm = None
 
         if path_to_config is None:
             dirname = os.path.dirname(__file__)
             self._path_to_config = dirname + '/config.yaml'
         else:
             self._path_to_config = path_to_config
+
+        md_conf_dict = self.load_md_conf()
+        self._md_folder = md_conf_dict['folder']
+
+
+    def load_md_conf(self):
+        with open(self._path_to_config) as f:
+            data = yaml.safe_load(f)
+            return data['models']
 
     def load_paths(self, dataset):
         """
@@ -53,10 +63,12 @@ class Controller():
         print(data_name)
         self.logger.info("load dataset...")
         if data_name == Dataset.KASTEREN:
+            self._dataset_enm = Dataset.KASTEREN
             self._dataset = DatasetKasteren()
             self._dataset.set_file_paths(self.load_paths(Dataset.KASTEREN))
 
         elif data_name == Dataset.PENDIGITS:
+            self._dataset_enm = Dataset.PENDIGITS
             self._dataset = DatasetPendigits()
             self._dataset.set_file_paths(self.load_paths(Dataset.PENDIGITS))
 
@@ -112,11 +124,29 @@ class Controller():
         exit(-1)
         self._dataset.plot_obs_seq(obs_seq, 3)
 
+    def _generate_file_name(self):
+        modelname = str(self._model.__class__.__name__)
+        datasetname = self._dataset_enm.value
+        return modelname + "_" + datasetname
+
+    def get_model_file_path(self):
+        filename = self._generate_file_name()
+        return self._model.generate_file_path(
+            path_to_folder=self._md_folder,
+            filename=filename)
+
+
     def save_model(self):
-        self._model.save_model(1)
+        self._model.save_model(
+            path_to_folder=self._md_folder,
+            filename=self._generate_file_name()
+        )
 
     def load_model(self):
-        self._model = self._model.load_model(1)
+        self._model = self._model.load_model(
+             path_to_folder=self._md_folder,
+            filename=self._generate_file_name()
+        )
 
     def render_model(self):
         dot = self._model.draw(self._dataset.decode_state_label)
@@ -127,6 +157,15 @@ class Controller():
 
     def decode_state(self, state_number):
         return self._dataset.decode_state_label(state_number)
+
+    def get_bench_metrics(self):
+        # only call this after creating a report
+        self.create_report(True, True, True, True, True)
+        acc = self._bench.get_accuracy()
+        prec = self._bench.get_precision()
+        rec = self._bench.get_recall()
+        f1 = self._bench.get_f1score()
+        return acc, prec, rec, f1
 
     def create_report(self, conf_matrix=False, accuracy=False, precision=False, recall=False, f1=False):
         if accuracy or precision or recall or conf_matrix:

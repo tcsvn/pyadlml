@@ -20,7 +20,7 @@ import joblib
 MD_FILE_NAME = "model_%s.joblib"
 
 
-class Model(object):
+class Model():
 
     def __init__(self, name, controller):
         self._bench = None
@@ -30,11 +30,19 @@ class Model(object):
     def register_benchmark(self, bench):
         self._bench = bench
 
-    def save_model(self, key):
-        joblib.dump(self, self._model_name%(key))
 
-    def load_model(self, key):
-        return joblib.load(self._model_name%(key))
+    def generate_file_path(self, path_to_folder, filename):
+        key = 1
+        name = path_to_folder + "/" +  filename + "_%s.joblib"%(key)
+        return name
+
+    def save_model(self, path_to_folder, filename):
+        name = self.generate_file_path(path_to_folder, filename)
+        joblib.dump(self, name)
+
+    def load_model(self, path_to_folder, filename):
+        name = self.generate_file_path(path_to_folder, filename)
+        return joblib.load(name)
 
     def model_init(self, dataset):
         """
@@ -74,17 +82,21 @@ class Model(object):
 class ModelHMM(Model):
 
     def __init__(self, controller):
-        self._cm = controller # type: Controller
+        #self._cm = controller # type: Controller
         self._hmm = None # type: HiddenMarkovModel
 
         # training parameters
         self._training_steps = 20
         self._epsilon = None
         self._use_q_fct = False
-        Model.__init__(self, "Test", controller)
+
+        Model.__init__(self, "test", controller)
 
     def __str__(self):
-        return self._hmm.__str__()
+        if self._hmm is None:
+            return "hmm has to be inits"
+        else:
+            return self._hmm.__str__()
 
     def use_q_fct(self, value):
         if value == True or value == False:

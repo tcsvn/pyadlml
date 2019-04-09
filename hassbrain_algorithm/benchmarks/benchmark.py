@@ -16,6 +16,7 @@ class Benchmark():
         self._recall = None
         self._precision = None
         self._f1_score = None
+        self._decimals = 4
 
     def notify_model_was_trained(self):
         self._model_was_trained = True
@@ -57,7 +58,6 @@ class Benchmark():
         creates a report including accuracy, precision, recall, training convergence
         :return:
         """
-        decimals = 4
         s = "Report"
         s += "\n"
         if self._model_was_trained:
@@ -82,16 +82,32 @@ class Benchmark():
                 s += "-"*20
                 s += "\n"
             if self._accuracy is not None:
-                s += "\tAccuracy: \t" + str(round(self._accuracy, decimals)) + "\n"
+                s += "\tAccuracy: \t" + str(self.get_accuracy()) + "\n"
             if self._precision is not None:
-                s += "\tPrecision: \t" + str(round(self._precision, decimals)) + "\n"
+                s += "\tPrecision: \t" + str(self.get_accuracy()) + "\n"
             if self._recall is not None:
-                s += "\tRecall: \t" + str(round(self._recall, decimals)) + "\n"
+                s += "\tRecall: \t" + str(self.get_recall()) + "\n"
             if self._f1_score is not None:
-                s += "\tF1-Score: \t" + str(round(self._f1_score, decimals)) + "\n"
+                s += "\tF1-Score: \t" + str(self.get_f1score()) + "\n"
 
         s += "*"*100
         return s
+
+    def get_accuracy(self):
+        if self._accuracy is not None:
+            return round(self._accuracy, self._decimals)
+
+    def get_recall(self):
+        if self._recall is not None:
+            return round(self._recall, self._decimals)
+
+    def get_precision(self):
+        if self._precision is not None:
+            return round(self._precision, self._decimals)
+
+    def get_f1score(self):
+        if self._f1_score is not None:
+            return round(self._f1_score, self._decimals)
 
     def calc_conf_matrix(self, y_true, y_pred):
         #conf_mat = self.tmp_create_confusion_matrix(test_obs_arr)

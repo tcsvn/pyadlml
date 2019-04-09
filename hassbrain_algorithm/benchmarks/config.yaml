@@ -1,3 +1,6 @@
+models:
+  folder: '/home/chris/code2/hassbrain_algorithm/hb_models'
+
 datasets:
   kasteren:
     sens_file_path: '/home/chris/code2/hassbrain_algorithm/datasets/kasteren/kasterenSenseData.txt'
