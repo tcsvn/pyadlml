@@ -1,38 +1,79 @@
+
 * Weekly meetings, Tuesday, 10 AM
-** Updates
-** Code browsing
-* 2019-02-26, 10 AM
-** DONE Google Calendar
-   CLOSED: [2019-02-20 Mi 11:52] SCHEDULED: <2019-02-20 Mi>
-** DONE Git repo
-   CLOSED: [2019-02-24 So 12:13]
-** TODO Ask Philipp for Bishop solutions
-   SCHEDULED: <2019-02-21 Do>
-** Minimum working example 
-*** Representation HMM
-*** Expectation Maximization
-*** Viterbi algorithm
-** Collecting data
-*** Same structure as official data sets
-* 2019-03-05, 10 AM
-** Computing/Tracking Q (log-likelihood)
-*** Plotting/Logging
-*** Use p(X) instead
-** Expectation computation + maximization
-*** Local maxima, multiple runs
-** Scaling factors (Bishop 13.2.4)
-** (Optional showcase) Handwritten digits (Bishop 615)
-*** Git repository with pen trajectory dataset
-* 2019-03-07, 8.30 AM
-** Scaling factors, Python arbitrary float precision for comparison
-*** Alternative to scaling factors: Work in log-space (numpy.logaddexp)
-*** cₙ initialization Bayesian, not frequentist
-** MNIST pen trajectory dataset, HMM repository
-** KASTEREN dataset → Home assistant dataset
-** Thoughts about performance metric (accuracy, ...)
-** Integration in application
-*** Prediction plugin for next action
-*** Train button + GUI for data selection
-*** Demo for meeting with Philipp (18.03.2019)
-** Gaussian observations (continuous)
-* Next meeting 2019-03-12, 8.30 AM
+** 2019-02-26, 10 AM
+*** DONE Google Calendar
+    CLOSED: [2019-02-20 Mi 11:52] SCHEDULED: <2019-02-20 Mi>
+*** Updates
+*** Code browsing
+*** DONE Git repo
+    CLOSED: [2019-02-24 So 12:13]
+*** DONE Ask Philipp for Bishop solutions
+    CLOSED: [2019-04-10 Mi 08:47] SCHEDULED: <2019-02-21 Do>
+*** Minimum working example 
+**** DONE Representation HMM
+     CLOSED: [2019-02-26 Di 10:48]
+**** Expectation Maximization
+**** DONE Viterbi algorithm
+     CLOSED: [2019-02-26 Di 10:48]
+*** Collecting data
+**** Same structure as official data set
+** 2019-03-05, 10 AM
+*** Computing/Tracking Q (log-likelihood)
+**** Plotting/Logging
+**** Use p(X) instead
+*** Expectation computation + maximization
+**** Local maxima, multiple runs
+*** Scaling factors (Bishop 13.2.4)
+*** (Optional showcase) Handwritten digits (Bishop 615)
+**** Git repository with pen trajectory dataset
+** 2019-03-07, 8.30 AM
+*** Scaling factors, Python arbitrary float precision for comparison
+**** Alternative to scaling factors: Work in log-space (numpy.logaddexp)
+**** cₙ initialization Bayesian, not frequentist
+*** MNIST pen trajectory dataset, HMM repository
+*** KASTEREN dataset → Home assistant dataset
+*** Thoughts about performance metric (accuracy, ...)
+*** Integration in application
+**** Prediction plugin for next action
+**** Train button + GUI for data selection
+**** Demo for meeting with Philipp (18.03.2019)
+*** Gaussian observations (continuous)
+** 2019-03-12, 8.30 AM
+*** Mail Meeting Philipp, 2019-03-18
+*** Debugging recursion/scaling factors
+** 2019-03-14, 8:00 AM
+*** DONE Move meeting with Philipp by one week → 2019-03-28
+    CLOSED: [2019-04-02 Di 08:35]
+*** DONE Bug fixing: Scaling factors
+    CLOSED: [2019-04-02 Di 08:36]
+**** Summary of computational steps
+**** α, β, γ, ξ computation works
+**** \hat{α} to α rescaling works
+**** \hat{β} to β rescaling works
+**** p(X) consistent with non-scaled result
+**** Equations in Bishop correct → a factor is missing in either \hat{α} or \hat{β}
+*** DONE New bug: ξ from rescaled quantities NOT consistent with result from unscaled quantities 
+    CLOSED: [2019-04-02 Di 08:36]
+***** DONE Check both computations
+      CLOSED: [2019-04-02 Di 08:35]
+***** DONE Check equation in Bishop → There is an error in the equation
+      CLOSED: [2019-04-02 Di 08:35]
+** 2019-03-28, 4:00 PM, Meeting with Philipp
+*** Numerical instabilities due to non-log representation of probabilities
+** 2019-04-02, 8:30 AM
+*** DONE Python data type for logarithmic presentation of probabilities
+    CLOSED: [2019-04-10 Mi 08:49]
+*** Plotting pen digits trajectories
+*** DONE Training does not work yet (probably due to non-log problem)
+    CLOSED: [2019-04-10 Mi 08:55]
+*** TODO Fix bug in training, get model predictions
+** 2019-04-10, 8:30 AM
+*** Logarithmic representation does not improve training procedure
+*** DONE Multi-observation training
+    CLOSED: [2019-04-10 Mi 09:34]
+**** Rabiner: Tutorial on HMMsk
+*** TODO Plotting of trajectories: Sample from HMM
+*** DONE Combining π from multiple observations (averaging log probabilities)
+    CLOSED: [2019-04-10 Mi 09:34]
+*** Start integration of algorithms in web interface
+
