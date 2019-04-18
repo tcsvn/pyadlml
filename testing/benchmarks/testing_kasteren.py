@@ -3,8 +3,8 @@ import unittest
 from hassbrain_algorithm.benchmarks.controller import Controller
 from hassbrain_algorithm.benchmarks.controller import Dataset
 from hassbrain_algorithm.algorithms.hmm._hmm_base import HiddenMarkovModel
-from hassbrain_algorithm.algorithms.hmm import ProbabilityMassFunction
-from testing.testing import DiscreteHMM
+#from hassbrain_algorithm.algorithms.hmm import ProbabilityMassFunction
+#from testing.testing import DiscreteHMM
 
 import pandas as pd
 
@@ -14,13 +14,22 @@ class TestKasteren(unittest.TestCase):
         # set of observations
         self._bench = Controller()
         self._bench.load_dataset(Dataset.KASTEREN)
-        self._kast_obj = self._bench._loaded_datasets[Dataset.KASTEREN.name] # type: DatasetKasteren
+        self._kast_obj = self._bench._dataset # type: DatasetKasteren
 
     def tearDown(self):
         pass
 
     def test_train_model(self):
         pass
+    def test_hashmaps(self):
+        sens_hm = self._kast_obj._sensor_label_hashmap
+        sens_rev_hm = self._kast_obj._sensor_label_reverse_hashmap
+        act_hm = self._kast_obj._activity_label_hashmap
+        act_rev_hm = self._kast_obj._activity_label_reverse_hashmap
+        print('sens_hm: ', sens_hm)
+        print('sens_rev_hm: ', sens_rev_hm)
+        print('act_hm: ', act_hm)
+        print('act_rev_hm: ', act_rev_hm)
 
     def test_train(self):
         # initalize with random hmm

@@ -53,6 +53,10 @@ class Benchmark():
     def show_plot(self):
         plt.show()
 
+
+
+
+
     def create_report(self):
         """
         creates a report including accuracy, precision, recall, training convergence

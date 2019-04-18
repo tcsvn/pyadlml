@@ -1,5 +1,5 @@
 from hassbrain_algorithm.algorithms.hmm._hmm_base import HiddenMarkovModel
-from hassbrain_algorithm.algorithms.hmm import Probs
+from hassbrain_algorithm.algorithms.hmm.Probs import Probs
 from typing import Dict, Any
 
 import numpy as np

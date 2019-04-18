@@ -20,14 +20,14 @@ class DataInterfaceHMM():
         and sensors to numbers mapping
     """
 
-    def decode_state_label(self, representant):
+    def decode_state_lbl(self, repr):
         """
         returns the correct label for the used repr
         :param label:
         :return:
         """
         raise NotImplementedError
-    def encode_state_label(self, label):
+    def encode_state_lbl(self, lbl):
         """
         returns the corresp. represenant for a given label
         :param label:
@@ -35,7 +35,7 @@ class DataInterfaceHMM():
         """
         raise NotImplementedError
 
-    def decode_obs_label(self, repr):
+    def decode_obs_lbl(self, repr):
         raise NotImplementedError
 
     def encode_obs_lbl(self, lbl):
@@ -75,6 +75,15 @@ class DataInterfaceHMM():
         raise NotImplementedError
 
     @abstractmethod
+    def get_train_seqs(self):
+        """
+        :return:
+            a list of lists.
+            [[1,2,3],[2,1,2, ... ],... ]
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def set_file_paths(self, dict):
         raise NotImplementedError
 
@@ -84,5 +93,13 @@ class DataInterfaceHMM():
         :return:
             y_labels
             y_observations
+        """
+        raise NotImplementedError
+
+    def is_multi_seq_train(self):
+        """
+        :return:
+            true if the dataset supports multiple sequences
+            false if the dataset supports only one long sequence
         """
         raise NotImplementedError

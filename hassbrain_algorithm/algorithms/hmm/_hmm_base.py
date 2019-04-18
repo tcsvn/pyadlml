@@ -541,6 +541,7 @@ class HiddenMarkovModel():
         """
         this follows the original rabiner script equation 109/ 110
         :param set:
+
         :param epsilon:
         :param steps:
         :param q_fct:
@@ -1266,3 +1267,40 @@ class HiddenMarkovModel():
                 denom = new_em_nd[k][d][1]
                 new_em[k][d] = numer/denom
         return new_em
+
+
+    def create_pred_act_seqs(self, state_list, obs_list):
+        """
+        for a given list of states ans observation compute the predicted states given
+        the list of observations
+        :param state_list:
+        :param obs_list:
+        :return:
+            y_true: list of true states
+            y_pred: list of predicted states
+        """
+
+        K = len(self._z)
+        # get length of all symbols / sequences added
+        N = len(state_list)
+        #for
+        print('-'*100)
+        print(state_list)
+        print(obs_list)
+        print('-'*100)
+        obs_seq = []
+        y_pred = np.zeros((N))
+        y_true = np.zeros((N))
+        for n in range(N):
+            obs_seq.append(int(obs_list[n]))
+            state_seq = self.viterbi(obs_seq)
+            predicted_state = state_seq[-1:][0]
+            actual_state = int(state_list[n])
+            #idx_pred_state = self._hmm._idx_state(predicted_state)
+            #idx_act_state = self._hmm._idx_state(actual_state)
+            y_pred[n] = predicted_state
+            y_true[n] = actual_state
+            #y_pred[n] = idx_pred_state
+            #y_true[n] = idx_act_state
+        return y_true, y_pred
+

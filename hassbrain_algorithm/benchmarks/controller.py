@@ -2,11 +2,7 @@ import os
 import logging
 import yaml
 from enum import Enum
-#from algorithms.model import load_model
-from hassbrain_algorithm.benchmarks.benchmark import Benchmark
 from hassbrain_algorithm.benchmarks.datasets.dataset import DataInterfaceHMM
-from hassbrain_algorithm.benchmarks.datasets.kasteren import DatasetKasteren
-from hassbrain_algorithm.benchmarks.datasets.pendigits import DatasetPendigits
 
 class Dataset(Enum):
     HASS = 'homeassistant'
@@ -20,8 +16,8 @@ class Controller():
     def __init__(self,path_to_config=None):
         self.logger = logging.getLogger(__name__)
         self._model = None
-        self._bench = None # type: Benchmark
-        self._dataset = None # type: DataInterfaceHMM
+        self._bench = None
+        self._dataset = None
         self._dataset_enm = None
 
         if path_to_config is None:
@@ -59,22 +55,27 @@ class Controller():
         :param data_name:
         :return:
         """
-        print('--'*100)
-        print(data_name)
         self.logger.info("load dataset...")
         if data_name == Dataset.KASTEREN:
+            from hassbrain_algorithm.benchmarks.datasets.kasteren import DatasetKasteren
             self._dataset_enm = Dataset.KASTEREN
             self._dataset = DatasetKasteren()
             self._dataset.set_file_paths(self.load_paths(Dataset.KASTEREN))
 
         elif data_name == Dataset.PENDIGITS:
+            from hassbrain_algorithm.benchmarks.datasets.pendigits import DatasetPendigits
             self._dataset_enm = Dataset.PENDIGITS
             self._dataset = DatasetPendigits()
             self._dataset.set_file_paths(self.load_paths(Dataset.PENDIGITS))
 
+        elif data_name == Dataset.HASS:
+            from hassbrain_algorithm.benchmarks.datasets.homeassistant import DatasetHomeassistant
+            self._dataset_enm = Dataset.HASS
+            self._dataset = DatasetHomeassistant()
+            self._dataset.set_file_paths(self.load_paths(Dataset.HASS))
+
         self._dataset.load_data()
-        #elif data_name == Dataset.HASS:
-        #    return
+
         #elif data_name == Dataset.MAVPAD2005:
         #    return
         #elif data_name == Dataset.ARAS:
@@ -89,6 +90,7 @@ class Controller():
         self._model.model_init(self._dataset)
 
     def register_benchmark(self):
+        from hassbrain_algorithm.benchmarks.benchmark import Benchmark
         self._bench = Benchmark(self._model)
         self._model.register_benchmark(self._bench)
 
@@ -149,14 +151,14 @@ class Controller():
         )
 
     def render_model(self):
-        dot = self._model.draw(self._dataset.decode_state_label)
+        dot = self._model.draw(self._dataset.decode_state_lbl)
         return dot
 
     def show_plot(self):
         self._bench.show_plot()
 
     def decode_state(self, state_number):
-        return self._dataset.decode_state_label(state_number)
+        return self._dataset.decode_state_lbl(state_number)
 
     def get_bench_metrics(self):
         # only call this after creating a report
@@ -168,8 +170,10 @@ class Controller():
         return acc, prec, rec, f1
 
     def create_report(self, conf_matrix=False, accuracy=False, precision=False, recall=False, f1=False):
+
         if accuracy or precision or recall or conf_matrix:
             y_true, y_pred = self._model.create_pred_act_seqs(self._dataset)
+            print('went here')
         if accuracy:
             self._bench.calc_accuracy(y_true, y_pred)
         if precision:

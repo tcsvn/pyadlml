@@ -1,0 +1,8 @@
+activitys: [ 'sleeping',
+             'cooking',
+             'eating']
+
+devices: [ 'binary_sensor.motion_bed',
+           'binary_sensor.motion_mirror',
+           'binary_sensor.motion_pc',
+           'binary_sensor.motion_hallway' ]

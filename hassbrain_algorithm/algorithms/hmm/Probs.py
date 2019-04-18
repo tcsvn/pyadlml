@@ -236,7 +236,7 @@ class Probs(object):
         else:
             if type(other) in [float, int]:
                 # todo do ln
-                res.prob =  self.prob + other
+                res.prob = self.prob + self.eln(other)
             else:
                 res.prob = self.prob + other.prob
         return res

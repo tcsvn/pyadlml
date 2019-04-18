@@ -27,9 +27,40 @@ class Model():
         self._cm = controller # type: Controller
         self._model_name = MD_FILE_NAME
 
+
+        """
+        these hashmaps are used to decode and encode in O(1) the numeric based
+        values of states and observations to the string based representations 
+        """
+        self._obs_lbl_hashmap = {}
+        self._obs_lbl_rev_hashmap = {}
+        self._state_lbl_hashmap = {}
+        self._state_lbl_rev_hashmap = {}
+
+    def encode_state_lbl(self, label):
+        return self._state_lbl_hashmap[label]
+
+    def decode_state_lbl(self, ide):
+        return self._state_lbl_rev_hashmap[ide]
+
+    def encode_obs_lbl(self, label, state):
+        """
+        returns the id of a sensor given a label
+        :param label:
+        :return:
+        """
+        return self._obs_lbl_hashmap[label][state]
+
+    def decode_obs_label(self, ide):
+        """
+        retrieves the label given a sensor id
+        :param id:
+        :return:
+        """
+        return self._obs_lbl_rev_hashmap[ide]
+
     def register_benchmark(self, bench):
         self._bench = bench
-
 
     def generate_file_path(self, path_to_folder, filename):
         key = 1
@@ -55,6 +86,8 @@ class Model():
     def train(self, dataset):
         """
          gets a dataset and trains the model on the data
+         Important !!!!
+         during the training the hashmaps of the model have to be filled up
         :param dataset:
         :return:
         """
@@ -64,6 +97,12 @@ class Model():
         """
 
         :param args:
+        :return:
+        """
+        pass
+    def get_state(self, seq):
+        """
+        returns the state the model is in given an observation sequence
         :return:
         """
         pass
@@ -135,30 +174,46 @@ class ModelHMM(Model):
         return 'training steps'
 
 
+    def create_pred_act_seqs(self, dataset):
+        state_lists, obs_lists = dataset.get_test_labels_and_seq()
+        y_true = []
+        y_pred = []
+        for state_list, obs_list in zip(state_lists, obs_lists):
+            tmp_true, tmp_pred = self._hmm.create_pred_act_seqs(state_list, obs_list)
+            y_true.extend(tmp_true)
+            y_pred.extend(tmp_pred)
+
+        return y_true, y_pred
+
     def draw(self, act_retrieval_meth):
         return self._hmm.generate_visualization_2(act_retrieval_meth)
         #vg.render('test.gv', view=True)
 
     def train(self, dataset, use_q_fct=False):
-        obs_seq = dataset.get_train_seq()
         if use_q_fct == True or use_q_fct == False:
             self.use_q_fct(use_q_fct)
 
-        seq_lst = [obs_seq[:30], obs_seq[30:60], obs_seq[60:90], obs_seq[120:150]]
-        self._hmm.train_seqs(seq_lst,
-                            self._epsilon,
-                            self._training_steps)
+        # update hashmaps
+        self._obs_lbl_hashmap = dataset.get_obs_lbl_hashmap()
+        self._obs_lbl_rev_hashmap = dataset.get_obs_lbl_reverse_hashmap()
+        self._state_lbl_hashmap = dataset.get_state_lbl_hashmap()
+        self._state_lbl_rev_hashmap = dataset.get_state_lbl_reverse_hashmap()
 
-        #for i, subseq  in enumerate(lst):
-        #    print(self._hmm)
-        #    self._hmm.train(subseq,
-        #                    self._epsilon,
-        #                    self._training_steps,
-        #                    self._use_q_fct)
-        #self._hmm.train(obs_seq,
-        #                     self._epsilon,
-        #                     self._training_steps,
-        #                     self._use_q_fct)
+        if dataset.is_multi_seq_train():
+            obs_seq = dataset.get_train_seqs()
+            self._hmm.train_seqs(
+                            self._epsilon,
+                            self._training_steps
+            )
+
+        else:
+            obs_seq = dataset.get_train_seq()
+            print(obs_seq)
+            self._hmm.train(obs_seq,
+                            self._epsilon,
+                            self._training_steps,
+                            self._use_q_fct
+            )
 
 
     def get_label_list(self):
@@ -167,64 +222,6 @@ class ModelHMM(Model):
             lst.append(self._cm.decode_state(state_symb))
         return lst
 
-    # todo flag deletion
-    # works but use sklearn instead
-    #def tmp_create_confusion_matrix(self, test_obs_arr):
-    #    K = len(self._hmm._z)
-    #    N = len(test_obs_arr)
-    #    print(K)
-    #    print(N)
-    #    #print(test_obs_arr)
-    #    # predicted class X actual class
-    #    conf_mat = np.zeros((K, K))
-    #    obs_seq = []
-    #    for n in range(N):
-    #        obs_seq.append(int(test_obs_arr[n][0]))
-    #        state_seq = self._hmm.viterbi(obs_seq)
-    #        predicted_state = state_seq[-1:][0]
-    #        actual_state = int(test_obs_arr[n][1])
-    #        idx_pred_state = self._hmm._idx_state(predicted_state)
-    #        idx_act_state = self._hmm._idx_state(actual_state)
-    #        conf_mat[idx_act_state][idx_pred_state] += 1
-
-    #        #print(self._cm.decode_state(predicted_state, Dataset.KASTEREN))
-    #    return conf_mat
-
-    def create_pred_act_seqs(self, dataset : DatasetKasteren):
-        """
-        for a given list of states ans observation compute the predicted states given
-        the list of observations
-        :param state_list:
-        :param obs_list:
-        :return:
-            y_true: list of true states
-            y_pred: list of predicted states
-        """
-
-        # todo is conceptual sth like score  in hmm
-        # todo therefore move into hmm_base class
-        #obs_list, state_list = self._dataset.get_test_labels_and_seq()
-        state_list, obs_list = dataset.get_test_labels_and_seq()
-        K = len(self._hmm._z)
-        N = len(state_list)
-
-        obs_seq = []
-        y_pred = np.zeros((N))
-        y_true = np.zeros((N))
-
-        for n in range(10):
-        #for n in range(N):
-            obs_seq.append(int(obs_list[n]))
-            state_seq = self._hmm.viterbi(obs_seq)
-            predicted_state = state_seq[-1:][0]
-            actual_state = int(state_list[n])
-            #idx_pred_state = self._hmm._idx_state(predicted_state)
-            #idx_act_state = self._hmm._idx_state(actual_state)
-            y_pred[n] = predicted_state
-            y_true[n] = actual_state
-            #y_pred[n] = idx_pred_state
-            #y_true[n] = idx_act_state
-        return y_true, y_pred
 
 
     def predict_next_observation(self, obs_seq):
@@ -280,6 +277,7 @@ class ModelHMM_log_scaled(ModelHMM):
         trans_mat = HMM_log.gen_rand_transitions(K)
         self._hmm.set_transition_matrix(trans_mat)
 
+
 class ModelHMM_scaled(ModelHMM):
     def __init__(self, controller):
         ModelHMM.__init__(self, controller)
@@ -303,6 +301,7 @@ class ModelHMM_scaled(ModelHMM):
 
         trans_mat = HMM_Scaled.gen_rand_transitions(K)
         self._hmm.set_transition_matrix(trans_mat)
+
 
 class ModelPendigits(Model):
     """

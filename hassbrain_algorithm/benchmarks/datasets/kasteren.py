@@ -30,6 +30,18 @@ class DatasetKasteren(DataInterfaceHMM):
         self._activity_label_hashmap = None
         self._activity_label_reverse_hashmap = None
 
+    def get_state_lbl_hashmap(self):
+        return self._activity_label_hashmap
+
+    def get_state_lbl_reverse_hashmap(self):
+        return self._activity_label_hashmap
+
+    def get_obs_lbl_hashmap(self):
+        return self._sensor_label_reverse_hashmap
+
+    def get_obs_lbl_reverse_hashmap(self):
+        return self._sensor_label_reverse_hashmap
+
     def set_file_paths(self, dict):
         self._sens_file_path = dict['sens_file_path']
         self._act_file_path = dict['act_file_path']
@@ -37,14 +49,15 @@ class DatasetKasteren(DataInterfaceHMM):
     def get_test_labels_and_seq(self):
         """
         :return:
-            list of observations,
-            list of states
+            list of lists observations, in this case exactly one list
+            list of lists of states, in this case exactly one list
         """
         tmp = self._test_arr.T
-        return tmp[0], tmp[1]
+        return [tmp[0]], [tmp[1]]
 
     def get_train_seq(self):
-        return self._train_seq
+        #todo make train seq longer
+        return self._train_seq[:30]
 
     def get_obs_list(self):
         """
@@ -66,15 +79,16 @@ class DatasetKasteren(DataInterfaceHMM):
         :return:
             sorted list of all states
         """
+        print(self._activity_label_reverse_hashmap)
         lst = []
         for key, value in self._activity_label_reverse_hashmap.items():
             lst.append(key)
         return lst
 
-    def decode_state_label(self, id):
+    def decode_state_lbl(self, id):
         return self._activity_label_reverse_hashmap[id]
 
-    def encode_state_label(self, label):
+    def encode_state_lbl(self, label):
         return self._activity_label_hashmap[label]
 
     def encode_obs_lbl(self, label, state):
@@ -85,7 +99,7 @@ class DatasetKasteren(DataInterfaceHMM):
         """
         return self._sensor_label_hashmap[label][state]
 
-    def decode_obs_label(self, id):
+    def decode_obs_lbl(self, id):
         """
         retrieves the label given a sensor id
         :param id:
@@ -93,6 +107,8 @@ class DatasetKasteren(DataInterfaceHMM):
         """
         return self._sensor_label_reverse_hashmap[id]
 
+    def is_multi_seq_train(self):
+        return False
 
     # todo flag for deletion
     #def get_sensor_labels(self):
