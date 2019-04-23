@@ -143,8 +143,8 @@ class TestController(unittest.TestCase):
         #print('-'*100)
         #hmm_model = ModelHMM(self.ctrl)
         #print(hmm_model)
-        #hmm_model = ModelHMM_log_scaled(self.ctrl)
         hmm_model = ModelHMM_log_scaled(self.ctrl)
+        #hmm_model = ModelHMM_log(self.ctrl)
         #hmm_model = ModelHMM_scaled(self.ctrl)
         dk = Dataset.KASTEREN
         self.ctrl.load_dataset(dk)

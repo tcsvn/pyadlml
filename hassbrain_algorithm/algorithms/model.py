@@ -20,7 +20,7 @@ import joblib
 MD_FILE_NAME = "model_%s.joblib"
 
 
-class Model():
+class Model(object):
 
     def __init__(self, name, controller):
         self._bench = None
@@ -59,6 +59,36 @@ class Model():
         """
         return self._obs_lbl_rev_hashmap[ide]
 
+    def get_state_label_list(self):
+        lst = []
+        for state_symb in self._hmm._z:
+            lst.append(self._cm.decode_state(state_symb))
+        return lst
+
+    def get_obs_label_list(self):
+        lst = []
+        #for item in self.o:
+        #    lst.append(self.de[])
+
+
+
+    def obs_lbl_seq2enc_obs_seq(self, obs_seq):
+        """
+        generates from labels and observations
+        :param obs_seq:
+            list of tupels with a label and a state of the observation
+            example: [('binsens.motion', 0), ('binsens.dis', 1), ... ]
+        :return:
+            list of numbers of the encoded observations
+        """
+        enc_obs_seq = []
+        for tupel in obs_seq:
+            enc_obs_seq.append(self._obs_lbl_hashmap[tupel[0]][tupel[1]])
+        return enc_obs_seq
+
+
+
+
     def register_benchmark(self, bench):
         self._bench = bench
 
@@ -75,10 +105,29 @@ class Model():
         name = self.generate_file_path(path_to_folder, filename)
         return joblib.load(name)
 
-    def model_init(self, dataset):
+    def model_init(self, dataset, state_list=None):
         """
         initialize model on dataset
         :param dataset:
+        :return:
+        """
+
+        self._obs_lbl_hashmap = dataset.get_obs_lbl_hashmap()
+        self._obs_lbl_rev_hashmap = dataset.get_obs_lbl_reverse_hashmap()
+        self._state_lbl_hashmap = dataset.get_state_lbl_hashmap()
+        self._state_lbl_rev_hashmap = dataset.get_state_lbl_reverse_hashmap()
+
+        if state_list is not None:
+            self._state_list = dataset.encode
+        else:
+            self._state_list = dataset.get_state_list()
+        self._observation_list = dataset.get_obs_list()
+
+        self._model_init(dataset)
+
+    def _model_init(self, dataset):
+        """
+        this method has to be overriden by child classes
         :return:
         """
         pass
@@ -93,13 +142,7 @@ class Model():
         """
         pass
 
-    def predict_next_observation(self, args):
-        """
 
-        :param args:
-        :return:
-        """
-        pass
     def get_state(self, seq):
         """
         returns the state the model is in given an observation sequence
@@ -114,7 +157,40 @@ class Model():
         """
         pass
 
+    def classify(self, obs_seq):
+        """
+        gets an observation sequence (at most times this is a window) and returns
+        the most likely states
+        :param obs_seq:
+        :return: np array with the most likely state
+        """
+        # encode obs_seq
+        obs_seq = self.obs_lbl_seq2enc_obs_seq(obs_seq)
+        pred_state = self._classify(obs_seq)
 
+        # decode state seq
+        res = self._state_lbl_rev_hashmap[pred_state]
+        return res
+
+    def predict_next_obs(self, obs_seq):
+        """
+        :param args:
+        :return:
+        """
+        obs_seq = self.obs_lbl_seq2enc_obs_seq(obs_seq)
+        pred_obs = self._predict_next_obs(obs_seq)
+        # hack todo make a design change
+        label = self._obs_lbl_rev_hashmap[pred_obs]
+        if pred_obs % 2 == 0:
+            return (label, 0)
+        else:
+            return (label, 1)
+
+    def _classify(self, obs_seq):
+        pass
+
+    def _predict_next_obs(self, obs_seq):
+        pass
 
 
 # wrapper class for hmm
@@ -143,16 +219,15 @@ class ModelHMM(Model):
         else:
             raise ValueError
 
-    def model_init(self, dataset):
-        state_list = dataset.get_state_list()
-        observation_list = dataset.get_obs_list()
-        K = len(state_list)
-        D = len(observation_list)
+    def _model_init(self, dataset : DatasetKasteren):
+
+        K = len(self._state_list)
+        D = len(self._observation_list)
         # init markov model in normal way
         #self._hmm = HMM_Scaled(state_list,
         #self._hmm = HMM_log(state_list,
-        self._hmm = HiddenMarkovModel(state_list,
-                               observation_list,
+        self._hmm = HiddenMarkovModel(self._state_list,
+                               self._observation_list,
                                ProbabilityMassFunction,
                                initial_dist=None)
         init_pi = HiddenMarkovModel.gen_rand_pi(K)
@@ -189,50 +264,45 @@ class ModelHMM(Model):
         return self._hmm.generate_visualization_2(act_retrieval_meth)
         #vg.render('test.gv', view=True)
 
-    def train(self, dataset, use_q_fct=False):
-        if use_q_fct == True or use_q_fct == False:
-            self.use_q_fct(use_q_fct)
+    def train(self, dataset, args):
+        if args is None:
+            use_q_fct = False
+        else:
+            use_q_fct = args[0]
 
-        # update hashmaps
-        self._obs_lbl_hashmap = dataset.get_obs_lbl_hashmap()
-        self._obs_lbl_rev_hashmap = dataset.get_obs_lbl_reverse_hashmap()
-        self._state_lbl_hashmap = dataset.get_state_lbl_hashmap()
-        self._state_lbl_rev_hashmap = dataset.get_state_lbl_reverse_hashmap()
+        self.use_q_fct(use_q_fct)
 
         if dataset.is_multi_seq_train():
+            print('went here')
             obs_seq = dataset.get_train_seqs()
-            self._hmm.train_seqs(
-                            self._epsilon,
-                            self._training_steps
+            self._hmm.train_seqs(obs_seq,
+                                self._epsilon,
+                                self._training_steps
             )
 
         else:
             obs_seq = dataset.get_train_seq()
-            print(obs_seq)
             self._hmm.train(obs_seq,
                             self._epsilon,
                             self._training_steps,
                             self._use_q_fct
             )
 
+    def _classify(self, obs_seq):
+        state_seq = self._hmm.viterbi(obs_seq)
+        pred_state = state_seq[len(state_seq)-1]
+        return pred_state
 
-    def get_label_list(self):
-        lst = []
-        for state_symb in self._hmm._z:
-            lst.append(self._cm.decode_state(state_symb))
-        return lst
-
-
-
-    def predict_next_observation(self, obs_seq):
-        pass
+    def _predict_next_obs(self, obs_seq):
+        next_obs = self._hmm.sample_observations(obs_seq, 1)[0]
+        return next_obs
 
 
 class ModelHMM_log(ModelHMM):
     def __init__(self, controller):
         ModelHMM.__init__(self, controller)
 
-    def model_init(self, dataset):
+    def _model_init(self, dataset):
         state_list = dataset.get_state_list()
         observation_list = dataset.get_obs_list()
         K = len(state_list)
@@ -257,13 +327,11 @@ class ModelHMM_log_scaled(ModelHMM):
     def __init__(self, controller):
         ModelHMM.__init__(self, controller)
 
-    def model_init(self, dataset):
+    def _model_init(self, dataset):
         state_list = dataset.get_state_list()
         observation_list = dataset.get_obs_list()
         K = len(state_list)
         D = len(observation_list)
-        # init markov model in normal way
-        #self._hmm = HMM_Scaled(state_list,
         self._hmm = HMM_log_scaled(state_list,
                             observation_list,
                             ProbabilityMassFunction,
@@ -282,7 +350,7 @@ class ModelHMM_scaled(ModelHMM):
     def __init__(self, controller):
         ModelHMM.__init__(self, controller)
 
-    def model_init(self, dataset):
+    def _model_init(self, dataset):
         state_list = dataset.get_state_list()
         observation_list = dataset.get_obs_list()
         K = len(state_list)
@@ -344,7 +412,7 @@ class ModelPendigits(Model):
         else:
             raise ValueError
 
-    def model_init(self, dataset : DatasetPendigits):
+    def _model_init(self, dataset : DatasetPendigits):
         state_list = dataset.get_state_list()
         obs_list = dataset.get_obs_list()
         state_count = len(state_list)
@@ -417,7 +485,7 @@ class ModelPendigits(Model):
             curr_hmm.train_seqs(seq_lst, steps=self._training_steps)
             print(curr_hmm)
 
-    def get_label_list(self):
+    def get_state_label_list(self):
         """
         benchmark uses this to print the labels of the model
         :return:
@@ -525,5 +593,5 @@ class ModelPendigits(Model):
                     break
         return seq
 
-    def predict_next_observation(self, obs_seq):
+    def _predict_next_observation(self, obs_seq):
         new_symbol = self._hmm.predict_xnp1(obs_seq)

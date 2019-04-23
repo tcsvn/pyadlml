@@ -19,6 +19,10 @@ class DataInterfaceHMM():
     An example is activity to numbers mapping 
         and sensors to numbers mapping
     """
+    def encode_state_lbl_list(self, list):
+        res_list = []
+        for item in list:
+            res_list.append(self.encode_state_lbl(item))
 
     def decode_state_lbl(self, repr):
         """
@@ -27,6 +31,7 @@ class DataInterfaceHMM():
         :return:
         """
         raise NotImplementedError
+
     def encode_state_lbl(self, lbl):
         """
         returns the corresp. represenant for a given label

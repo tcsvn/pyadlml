@@ -1,8 +1,8 @@
 import unittest
 import numpy as np
 from hassbrain_algorithm.algorithms.hmm._hmm_base import HiddenMarkovModel
-from hassbrain_algorithm.algorithms.hmm import ProbabilityMassFunction
-from testing.testing import DiscreteHMM
+from hassbrain_algorithm.algorithms.hmm.distributions import ProbabilityMassFunction
+#from testing.hmm.hmm2 import DiscreteHMM
 
 LA = 'Los Angeles'
 NY = 'New York'
@@ -35,9 +35,9 @@ class TestMIT16_410F10(unittest.TestCase):
         self.hmm.set_emission_matrix(em_matrix)
 
 
-        self.obs_seq2 = [2,0,0,2,1,2,1,1,1,2,1,1,1,1,1,2,2,0,0,1]
-        self.hmm2 = DiscreteHMM(2, 3, trans_matrix, em_matrix, init_dist2, init_type='user')
-        self.hmm2.mapB(self.obs_seq2)
+        #self.obs_seq2 = [2,0,0,2,1,2,1,1,1,2,1,1,1,1,1,2,2,0,0,1]
+        #self.hmm2 = DiscreteHMM(2, 3, trans_matrix, em_matrix, init_dist2, init_type='user')
+        #self.hmm2.mapB(self.obs_seq2)
 
     def tearDown(self):
         pass
@@ -161,6 +161,58 @@ class TestMIT16_410F10(unittest.TestCase):
                 self.assertAlmostEqual(hmm2_new_ems[znm1][zn], hmm_new_em[znm1][zn])
 
 
+    def test_sampling_arr(self):
+        arr = np.array([0.1,0.3,1.0])
+        eps = 0.4
+        res = self.hmm._sel_idx_val_in_range(arr, eps)
+        self.assertEqual(2, res)
+
+        arr = np.array([0.1, 0.2, 0.5, 0.7, 1.0])
+        eps = 0.3
+        res = self.hmm._sel_idx_val_in_range(arr, eps)
+        self.assertEqual(2, res)
+
+        arr = np.array([0.1, 0.2, 0.5, 0.7, 1.0])
+        eps = 0.3
+        res = self.hmm._sel_idx_val_in_range(arr, eps)
+        self.assertEqual(2, res)
+
+        arr = np.array([0.1, 0.2, 0.5, 0.7, 1.0])
+        eps = 0.05
+        res = self.hmm._sel_idx_val_in_range(arr, eps)
+        self.assertEqual(0, res)
+
+        arr = np.array([0.1, 0.2, 0.5, 0.7, 1.0])
+        eps = 0.8
+        res = self.hmm._sel_idx_val_in_range(arr, eps)
+        self.assertEqual(4, res)
+
+        # special cases
+        arr = np.array([0.1, 0.2, 0.5, 0.7, 1.0])
+        eps = 1.0
+        res = self.hmm._sel_idx_val_in_range(arr, eps)
+        self.assertEqual(4, res)
+
+        arr = np.array([0.1, 0.2, 0.5, 0.7, 1.0])
+        eps = 0.0
+        res = self.hmm._sel_idx_val_in_range(arr, eps)
+        self.assertEqual(0, res)
+
+        arr = np.array([0.1, 0.2, 0.5, 0.7, 1.0])
+        eps = 0.7
+        res = self.hmm._sel_idx_val_in_range(arr, eps)
+        self.assertEqual(3, res)
+
+    def test_sampling_initial(self):
+        res = self.hmm.sample_observations([], 2)
+        print(res)
+
+    def test_sampling(self):
+        obs_seq = self.obs_seq
+        print(obs_seq)
+        res = self.hmm.sample_observations(obs_seq, 5)
+        print('#'*100)
+        print(res)
 
 
     def test_training_step(self):

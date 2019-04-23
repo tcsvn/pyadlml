@@ -29,6 +29,11 @@ class Controller():
         md_conf_dict = self.load_md_conf()
         self._md_folder = md_conf_dict['folder']
 
+    def set_custom_state_list(self, state_list):
+        self._dataset.set_state_list(state_list)
+
+    def set_custom_obs_list(self, obs_list):
+        self._dataset.set_obs_list(obs_list)
 
     def load_md_conf(self):
         with open(self._path_to_config) as f:
@@ -49,7 +54,7 @@ class Controller():
             data = yaml.safe_load(f)
             return data['datasets'][dataset.value]
 
-    def load_dataset(self, data_name):
+    def set_dataset(self, data_name):
         """
         loads the dataset into ram
         :param data_name:
@@ -74,14 +79,15 @@ class Controller():
             self._dataset = DatasetHomeassistant()
             self._dataset.set_file_paths(self.load_paths(Dataset.HASS))
 
-        self._dataset.load_data()
-
         #elif data_name == Dataset.MAVPAD2005:
         #    return
         #elif data_name == Dataset.ARAS:
         #    return
         #elif data_name == Dataset.CASAS_ARUBA:
         #    return
+
+    def load_dataset(self):
+        self._dataset.load_data()
 
     def register_model(self, model):
         self._model = model

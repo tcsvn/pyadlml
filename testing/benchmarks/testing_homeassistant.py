@@ -54,13 +54,32 @@ class TestHomeassistantModel(unittest.TestCase):
     def setUp(self):
         # set of observations
         self.ctrl = Controller()
-        self.ctrl.load_dataset(Dataset.HASS)
+        self.ctrl.set_dataset(Dataset.HASS)
         self.hass_obj = self.ctrl._dataset #type: DatasetHomeassistant
 
     def tearDown(self):
         pass
 
+    def test_load_custom_lists_modelHMM(self):
+        custom_state_list = ['sleeping', 'cooking']
+        custom_obs_list = [
+            'binary_sensor.motion_bed',
+            'binary_sensor.motion_mirror',
+            'binary_sensor.motion_pc'
+        ]
+        self.ctrl.set_custom_state_list(custom_state_list)
+        self.ctrl.set_custom_obs_list(custom_obs_list)
+
+        self.ctrl.load_dataset()
+        hmm_model = ModelHMM(self.ctrl)
+        self.ctrl.register_model(hmm_model)
+        self.ctrl.init_model_on_dataset()
+        hmm_model._hmm.set_format_full(True)
+        print(self.ctrl._model)
+
+
     def test_load_modelHMM(self):
+        self.ctrl.load_dataset()
         hmm_model = ModelHMM(self.ctrl)
         self.ctrl.register_model(hmm_model)
         self.ctrl.init_model_on_dataset()
@@ -69,6 +88,7 @@ class TestHomeassistantModel(unittest.TestCase):
 
 
     def test_train_modelHMM(self):
+        self.ctrl.load_dataset()
         hmm_model = ModelHMM(self.ctrl)
         self.ctrl.register_model(hmm_model)
         self.ctrl.init_model_on_dataset()
@@ -80,6 +100,7 @@ class TestHomeassistantModel(unittest.TestCase):
 
 
     def test_bench_modelHMM(self):
+        self.ctrl.load_dataset()
         hmm_model = ModelHMM(self.ctrl)
         self.ctrl.register_model(hmm_model)
         self.ctrl.init_model_on_dataset()
@@ -98,8 +119,38 @@ class TestHomeassistantModel(unittest.TestCase):
         )
         print(report)
 
+    def test_classify(self):
+        self.ctrl.load_dataset()
+        hmm_model = ModelHMM(self.ctrl)
+        self.ctrl.register_model(hmm_model)
+        self.ctrl.init_model_on_dataset()
+        self.ctrl.train_model()
+        hmm_model._hmm.set_format_full(True)
+        print(hmm_model)
+        print('-'*10)
+        obs_seq = [('binary_sensor.motion_bed', 0), ('binary_sensor.motion_mirror', 1), ('binary_sensor.motion_bed', 0)]
+        pred_state = hmm_model.classify(obs_seq)
+        print('#'*100)
+        print(pred_state)
+
+    def test_pred_next_obs(self):
+        self.ctrl.load_dataset()
+        hmm_model = ModelHMM(self.ctrl)
+        self.ctrl.register_model(hmm_model)
+        self.ctrl.init_model_on_dataset()
+        self.ctrl.train_model()
+        hmm_model._hmm.set_format_full(True)
+        #print(hmm_model)
+        print('#'*100)
+        obs_seq = [('binary_sensor.motion_bed', 0), ('binary_sensor.motion_mirror', 1), ('binary_sensor.motion_bed', 0)]
+        pred_obs = hmm_model.predict_next_obs(obs_seq)
+        print('#'*100)
+        print(pred_obs)
+
+
 
     def test_bench_modelLogScaledHMM(self):
+        self.ctrl.load_dataset()
         hmm_model = ModelHMM_log_scaled(self.ctrl)
         self.ctrl.register_model(hmm_model)
         self.ctrl.init_model_on_dataset()

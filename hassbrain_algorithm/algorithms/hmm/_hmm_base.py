@@ -1169,6 +1169,148 @@ class HiddenMarkovModel():
         return max
 
 
+    def sample_observations(self, obs_seq, n):
+        """
+        for a given observation sequence generate n new observations
+        :param obs_seq:
+        :return:
+        """
+        N = len(obs_seq)
+        obs_list = []
+        state_seq = []
+        if obs_seq != []:
+            vit_seq = self.viterbi(obs_seq)
+            state_seq.append(vit_seq[len(vit_seq)-1])
+
+        for i in range(n):
+            state_seq, obs_seq = self.ancestral_sampling(state_seq, obs_seq)
+            #print('*'*10)
+            #print(obs_seq)
+            #print(state_seq)
+            #print(N)
+            obs_list.append(obs_seq[N+i])
+            #print(obs_list)
+            #print('*'*10)
+        return obs_list
+
+    def _rand_prob(self):
+        """
+        generates a random probability between 0 and 1
+        :return:
+        """
+        import random
+        return self.single_prob(random.randint(0,100)/100)
+
+    def _sel_idx_val_in_range(self, arr, eps):
+        """
+        selects a value from array
+        :param arr:
+        :param eps:
+        :return:
+        """
+        for i in range(0, len(arr)):
+            if arr[i] >= eps:
+                return i
+
+    def ancestral_sampling(self, state_seq, obs_seq):
+        """
+            two step forward sample process
+        :param obs_seq:
+            the list of generated samples or given observations so far
+        :return:
+            state_seq
+            obs_seq
+        """
+        K = len(self._z)
+        D = len(self._o)
+
+        # I.) sample z_1 from p(z_1)
+        # draw sample from intervall [0,1]
+
+        #print('--'*100)
+        #print('step I')
+
+
+        z1 = None
+        if obs_seq == [] and state_seq == []:
+            """
+                initial condition where everything is generated from nothing 
+            """
+            epsilon_z1 = self._rand_prob()
+            cum_pi = self.np_zeros((len(self._pi)))
+            for i, pi_i in enumerate(self._pi):
+               cum_pi[i] = pi_i
+            cum_pi = cum_pi.cumsum() # type:np.array
+            #print(epsilon)
+            #print(cum_pi)
+            idx = self._sel_idx_val_in_range(cum_pi, epsilon_z1)
+            z1 = self._z[idx]
+
+        elif obs_seq != []:
+            """
+                this is the case if a sample is given
+            """
+            epsilon_z1 = self._rand_prob()
+            z0 = state_seq[len(state_seq)-1]
+            cum_z1_given_z0 = self.np_zeros((K))
+            for i in range(K):
+                zi = self._z[i]
+                cum_z1_given_z0[i] = self.prob_za_given_zb(zi, z0)
+            cum_z1_given_z0 = cum_z1_given_z0.cumsum()
+
+            # select the sampeled next state z2
+            idx = self._sel_idx_val_in_range(cum_z1_given_z0, epsilon_z1)
+            z1 = self._z[idx]
+
+        #print('z1: ', z1)
+        #print('--'*100)
+        #print('step II')
+
+        if z1 is None:
+            raise ValueError
+
+        # II.) sample x_1 from p(x_1| z1=i)
+        x1 = None
+        epsilon_x = self._rand_prob()
+        cum_x_given_z = self.np_zeros((len(self._o)))
+        for d, x1 in enumerate(self._o):
+            cum_x_given_z[d] = self.prob_x_given_z(x1, z1)
+        cum_x_given_z = cum_x_given_z.cumsum()
+
+        # select next sampeled observation
+        idx = self._sel_idx_val_in_range(cum_x_given_z, epsilon_x)
+        x1 = self._o[idx]
+
+        if x1 is None:
+            raise ValueError
+
+
+        #print('x1: ', x1)
+        #print('--'*100)
+        #print('step III')
+
+        ## III.) sample the next state z2 from the prob distribution
+        #z2 = None
+        #epsilon_z2 = self._rand_prob()
+        #cum_z2_given_z1 = self.np_zeros((K))
+        #for i in range(K):
+        #    zi = self._z[i]
+        #    cum_z2_given_z1[i] = self.prob_za_given_zb(zi, z1)
+        #cum_z2_given_z1 = cum_z2_given_z1.cumsum()
+
+        ## select the sampeled next state z2
+        #idx = self._sel_idx_val_in_range(cum_z2_given_z1, epsilon_z2)
+        #z2 = self._z[idx]
+
+        #if z2 is None:
+        #    raise ValueError
+
+        obs_seq.append(x1)
+        state_seq.append(z1)
+        #state_seq.append(z2)
+        return state_seq, obs_seq
+
+
 # ------------ multiple sequences
 
     def new_A_numer_denom(self, obs_seq, xi):

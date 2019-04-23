@@ -44,6 +44,16 @@ class DatasetHomeassistant(DataInterfaceHMM):
         # Homeassistant specific stuff
         self._df = None
 
+
+    """
+    is used by web interface to set the activity and devices before stuff is done  
+    """
+    def set_state_list(self, act_list):
+        self._act_list = act_list
+
+    def set_obs_list(self, dev_list):
+        self._dev_list = dev_list
+
     def get_state_lbl_hashmap(self):
         return self._activity_label_hashmap
 
@@ -162,6 +172,16 @@ class DatasetHomeassistant(DataInterfaceHMM):
 
     def load_data(self):
         self._create_label_hashmaps()
+        print('*I'*100)
+        print(self._activity_label_hashmap)
+        print('--')
+        print(self._activity_label_reverse_hashmap)
+        print('--')
+        print(self._sensor_label_hashmap)
+        print('--')
+        print(self._sensor_label_reverse_hashmap)
+        print('*I'*100)
+
         self._create_sequences()
 
     def _create_label_hashmaps(self):
@@ -173,11 +193,10 @@ class DatasetHomeassistant(DataInterfaceHMM):
         if self._labels_path is not None:
             with open(self._labels_path, 'r') as stream:
                 data_loaded = yaml.load(stream)
-                self._act_list = data_loaded['activitys']
-                self._dev_list = data_loaded['devices']
-
-        elif self._act_list is None or self._dev_list is None:
-            raise ValueError
+                if self._act_list is None:
+                    self._act_list = data_loaded['activitys']
+                if self._dev_list is None:
+                    self._dev_list = data_loaded['devices']
 
         # encode strings with numbers
         for i, activity in enumerate(self._act_list):
@@ -227,6 +246,9 @@ class DatasetHomeassistant(DataInterfaceHMM):
         #print(df_act.head(10))
         df_act[TIME] = pd.to_datetime(df_act[TIME])
 
+        # remove activities that are not set in the state list
+        df_act = df_act[df_act[ID].isin(self._act_list)]
+
         return df_act
 
 
@@ -272,11 +294,10 @@ class DatasetHomeassistant(DataInterfaceHMM):
 
         # the days where nothing was logged
         train_df = sensors_binary_df[~days_where_sth_was_logged]
+        train_df = self._exclude_not_listed_sensors(train_df)
         self._create_train_sequence(train_df)
 
     def _create_test_sequences(self, test_df, act_df):
-       # todo split a day in multiple sequences for logs enabled
-        # todo and codes
         #print(test_df)
         #print(len(test_df))
         #print('--'*10)
@@ -326,6 +347,7 @@ class DatasetHomeassistant(DataInterfaceHMM):
         for each logging session get subset of the data
         and save it in a list
         """
+        test_df = self._exclude_not_listed_sensors(test_df)
         #print('#'*20)
         #print(act_df)
         #print('--'*100)
@@ -376,6 +398,11 @@ class DatasetHomeassistant(DataInterfaceHMM):
                 #print('\tact_name: ', act_name)
                 #print('*'*10)
                 #if act_slice
+                """
+                filter the act_slice to only include binary sensor that are
+                specified by either the config file or the web application
+                """
+
                 if int(len(act_slice)) != 0:
                     for i, row in enumerate(act_slice.iterrows()):
                         #print('\t' + '+'*10 + ': ' + str(i))
@@ -406,6 +433,19 @@ class DatasetHomeassistant(DataInterfaceHMM):
                 label_name,
                 state
             ))
+
+
+    def _exclude_not_listed_sensors(self, df):
+        # exclude binary sensors not listed in sensor list
+        #print('*'*100)
+        #print(self._dev_list)
+        #print(df)
+        df = df[self._dev_list]
+        # drop the rows that are all NaN
+        df = df.dropna(how='all')
+        #print(df)
+        #print('*'*100)
+        return df
 
 
     def _row2labelnstate(self, row):

@@ -80,7 +80,7 @@ class Benchmark():
             s += "Metrics test dataset:" + "\n"
             if self._conf_matrix is not None:
                 s += "Confusion matrix\n"
-                s += str(self._model.get_label_list()) + "\n"
+                s += str(self._model.get_state_label_list()) + "\n"
                 s += str(self._conf_matrix) + "\n"
                 s += ""
                 s += "-"*20
