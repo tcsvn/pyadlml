@@ -1,10 +1,9 @@
 import unittest
 import numpy as np
-from hassbrain_algorithm.algorithms.hmm._hmm_base import HiddenMarkovModel
-from hassbrain_algorithm.algorithms.hmm import Probs
-from hassbrain_algorithm.algorithms.hmm import HMM_log as HMM_log
-from hassbrain_algorithm.algorithms.hmm import ProbabilityMassFunction
-from testing.testing import DiscreteHMM
+from hbhmm.hmm._hmm_base import HiddenMarkovModel
+from hbhmm.hmm.Probs import Probs
+from hbhmm.hmm._hmm_log import HMM_log
+from hbhmm.hmm.distributions import ProbabilityMassFunction
 
 LA = 'Los Angeles'
 NY = 'New York'
@@ -42,12 +41,16 @@ class TestMIT16_410F10(unittest.TestCase):
         self.hmm3.set_transition_matrix(trans_matrix)
         self.hmm3.set_emission_matrix(em_matrix)
 
-        self.obs_seq2 = [2,0,0,2,1,2,1,1,1,2,1,1,1,1,1,2,2,0,0,1]
-        self.hmm2 = DiscreteHMM(2, 3, trans_matrix, em_matrix, init_dist2, init_type='user')
-        self.hmm2.mapB(self.obs_seq2)
+        #self.obs_seq2 = [2,0,0,2,1,2,1,1,1,2,1,1,1,1,1,2,2,0,0,1]
+        #self.hmm2 = DiscreteHMM(2, 3, trans_matrix, em_matrix, init_dist2, init_type='user')
+        #self.hmm2.mapB(self.obs_seq2)
 
     def tearDown(self):
         pass
+
+
+
+
 
 
     def test_verify_A(self):

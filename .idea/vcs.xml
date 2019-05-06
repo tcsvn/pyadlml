@@ -9,6 +9,7 @@
     <mapping directory="$PROJECT_DIR$/algorithms/testing/hmm2" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/datasets/pendigits/HMM-Pendigits" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/hassbrain_algorithm/algorithms/hmm/testing/hmm2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/hbhmm/testing/hmm2" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/hmm/testing/hmm2" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/testing/hmm/hmm2" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/testing/hmm/hmm2/HMM" vcs="Git" />

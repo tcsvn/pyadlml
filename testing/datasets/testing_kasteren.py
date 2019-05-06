@@ -2,7 +2,7 @@ import unittest
 
 from hassbrain_algorithm.controller import Controller
 from hassbrain_algorithm.controller import Dataset
-from hassbrain_algorithm.algorithms.hmm._hmm_base import HiddenMarkovModel
+from hbhmm.hmm._hmm_base import HiddenMarkovModel
 #from hassbrain_algorithm.algorithms.hmm import ProbabilityMassFunction
 #from testing.testing import DiscreteHMM
 

@@ -1,9 +1,8 @@
 import unittest
 import numpy as np
-#from algorithms.hmm._hmm_base import HiddenMarkovModel
-from hassbrain_algorithm.algorithms.hmm import Probs
-from hassbrain_algorithm.algorithms.hmm import HMM_log as HiddenMarkovModel
-from hassbrain_algorithm.algorithms.hmm import ProbabilityMassFunction
+from math import exp
+from hbhmm.hmm._hmm_base import HiddenMarkovModel
+from hbhmm.hmm import ProbabilityMassFunction
 from testing.testing import DiscreteHMM
 
 S0 = 'S0'
@@ -47,7 +46,6 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         beta = self.hmm.backward(obs_seq)
         prob_X = self.hmm._prob_X(alpha, beta)
         xi = self.hmm.xi(obs_seq, alpha, beta, prob_X)
-        xi = Probs.np_prob_arr2R(xi)
 
         self.hmm2.mapB(obs_seq2)
         hmm2_alpha = self.hmm2.calcalpha(obs_seq2)
@@ -65,14 +63,13 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         alpha = self.hmm.forward(obs_seq)
         beta = self.hmm.backward(obs_seq)
         gamma = self.hmm.gamma(alpha, beta)
-        gamma = Probs.np_prob_arr2R(gamma)
 
         hmm2_alpha = self.hmm2.calcalpha(obs_seq)
         hmm2_beta = self.hmm2.calcbeta(obs_seq)
         hmm2_xi = self.hmm2.calcxi(obs_seq, hmm2_alpha, hmm2_beta)
         hmm2_gamma = self.hmm2.calcgamma(hmm2_xi, len(obs_seq))
 
-        #self.assertTrue(np.allclose(hmm2_gamma[:2], gamma[:2]))
+        self.assertTrue(np.allclose(hmm2_gamma[:2], gamma[:2]))
 
 
     def test_prob_X(self):
@@ -84,9 +81,9 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         obs_seq2 = self.obs_seq2
         alpha = self.hmm.forward(obs_seq)
         beta = self.hmm.backward(obs_seq)
-        prob_X = float(self.hmm._prob_X(alpha, beta))
-        hmm2_prob_X = self.hmm2.forwardbackward(obs_seq2)
-        #self.assertEqual(round(exp(prob_X),2), 0.16)
+        prob_X = self.hmm._prob_X(alpha, beta)
+        hmm2_prob_X = exp(self.hmm2.forwardbackward(obs_seq2))
+        #self.assertEqual(round(prob_X,2), 0.16)
         self.assertEqual(hmm2_prob_X, prob_X)
 
     def test_backward(self):
@@ -99,13 +96,12 @@ class TestHmmExampleL08HMM(unittest.TestCase):
                            [ 0.21, 0.7, 1.0]]).T
 
         beta = self.hmm.backward(obs_seq)
-        beta = Probs.np_prob_arr2R(beta)
 
         hmm2_beta = self.hmm2.calcbeta(self.obs_seq2)
 
 
-        #self.assertTrue(np.allclose(hmm2_beta,beta))
-        #self.assertTrue(np.allclose(result,beta))
+        self.assertTrue(np.allclose(hmm2_beta,beta))
+        self.assertTrue(np.allclose(result,beta))
 
 
     def test_forward(self):
@@ -114,9 +110,12 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         :return:
         """
         obs_seq = [A,A,B]
+        #result = np.array([[0.48, 0.2304, 0.027648],
+        #                   [0.12, 0.0936, 0.130032]]).T
+
         alpha = self.hmm.forward(obs_seq)
         hmm2_alpha = self.hmm2.calcalpha(self.obs_seq2)
-        alpha = Probs.np_prob_arr2R(alpha)
+
         #self.assertTrue(np.allclose(result, alpha))
         self.assertTrue(np.allclose(hmm2_alpha, alpha))
 
@@ -129,16 +128,16 @@ class TestHmmExampleL08HMM(unittest.TestCase):
 
 
     def test_getter_emission(self):
-        self.assertEqual(Probs(0.8), self.hmm.prob_x_given_z(A, S0))
-        self.assertEqual(Probs(0.2), self.hmm.prob_x_given_z(B, S0))
-        self.assertEqual(Probs(0.3), self.hmm.prob_x_given_z(A, S1))
-        self.assertEqual(Probs(0.7), self.hmm.prob_x_given_z(B, S1))
+        self.assertEqual(0.8, self.hmm.prob_x_given_z(A, S0))
+        self.assertEqual(0.2, self.hmm.prob_x_given_z(B, S0))
+        self.assertEqual(0.3, self.hmm.prob_x_given_z(A, S1))
+        self.assertEqual(0.7, self.hmm.prob_x_given_z(B, S1))
 
     def test_getter_transition(self):
-        self.assertEqual(Probs(0.6), self.hmm.prob_za_given_zb(S0, S0))
-        self.assertEqual(Probs(0.0), self.hmm.prob_za_given_zb(S0, S1))
-        self.assertEqual(Probs(0.4), self.hmm.prob_za_given_zb(S1, S0))
-        self.assertEqual(Probs(1.0), self.hmm.prob_za_given_zb(S1, S1))
+        self.assertEqual(0.6, self.hmm.prob_za_given_zb(S0, S0))
+        self.assertEqual(0.0, self.hmm.prob_za_given_zb(S0, S1))
+        self.assertEqual(0.4, self.hmm.prob_za_given_zb(S1, S0))
+        self.assertEqual(1.0, self.hmm.prob_za_given_zb(S1, S1))
 
     def test_viterbi(self):
         obs_seq = [A,A,B]

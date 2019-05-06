@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from hassbrain_algorithm.algorithms.hmm import ProbabilityMassFunction
+from hbhmm.hmm import ProbabilityMassFunction
 
 HP = 'Happy'
 GR = 'Grumpy'

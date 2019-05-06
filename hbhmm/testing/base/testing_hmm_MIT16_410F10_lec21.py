@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
-from hassbrain_algorithm.algorithms.hmm._hmm_base import HiddenMarkovModel
-from hassbrain_algorithm.algorithms.hmm.distributions import ProbabilityMassFunction
+from hbhmm.hmm._hmm_base import HiddenMarkovModel
+from hbhmm.hmm.distributions import ProbabilityMassFunction
 #from testing.hmm.hmm2 import DiscreteHMM
 
 LA = 'Los Angeles'

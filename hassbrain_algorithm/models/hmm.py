@@ -1,13 +1,12 @@
 from sklearn.externals import joblib
-from hassbrain_algorithm.algorithms.hmm._hmm_base import HiddenMarkovModel
-from hassbrain_algorithm.algorithms.hmm._hmm_log import HMM_log, HMM_log_scaled
-from hassbrain_algorithm.algorithms.hmm.distributions import ProbabilityMassFunction
-from hassbrain_algorithm.algorithms.hmm.hmm_scaled import HMM_Scaled
+from hbhmm.hmm._hmm_base import HiddenMarkovModel
+from hbhmm.hmm._hmm_log import HMM_log, HMM_log_scaled
+from hbhmm.hmm.distributions import ProbabilityMassFunction
+from hbhmm.hmm.hmm_scaled import HMM_Scaled
 from hassbrain_algorithm.datasets.pendigits import DatasetPendigits
 from hassbrain_algorithm.models.model import Model
 from hassbrain_algorithm.datasets.kasteren import DatasetKasteren
 import numpy as np
-
 
 
 class ModelHMM(Model):

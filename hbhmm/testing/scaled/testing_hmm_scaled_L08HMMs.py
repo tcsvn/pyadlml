@@ -1,9 +1,9 @@
 import unittest
 import numpy as np
 from math import exp
-from hassbrain_algorithm.algorithms.hmm._hmm_base import HiddenMarkovModel as norm_HMM
-from hassbrain_algorithm.algorithms.hmm import HMM_Scaled as sc_HMM
-from hassbrain_algorithm.algorithms.hmm import ProbabilityMassFunction
+from hbhmm.hmm._hmm_base import HiddenMarkovModel as norm_HMM
+from hbhmm.hmm import HMM_Scaled as sc_HMM
+from hbhmm.hmm import ProbabilityMassFunction
 from testing.testing import DiscreteHMM
 
 S0 = 'S0'

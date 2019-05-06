@@ -1,6 +1,7 @@
 import unittest
 import numpy as np
-from hassbrain_algorithm.algorithms.hmm import Probs
+from hbhmm.hmm import Probs
+
 
 class TestPMF(unittest.TestCase):
     def setUp(self):

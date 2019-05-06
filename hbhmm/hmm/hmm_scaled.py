@@ -1,5 +1,5 @@
 import numpy as np
-from hassbrain_algorithm.algorithms.hmm._hmm_base import HiddenMarkovModel
+from hbhmm.hmm._hmm_base import HiddenMarkovModel
 
 
 class HMM_Scaled(HiddenMarkovModel):

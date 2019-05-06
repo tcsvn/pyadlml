@@ -1,10 +1,8 @@
-from hassbrain_algorithm.algorithms.hmm._hmm_base import HiddenMarkovModel
-from hassbrain_algorithm.algorithms.hmm.Probs import Probs
-from typing import Dict, Any
+from hbhmm.hmm._hmm_base import HiddenMarkovModel
+from hbhmm.hmm.Probs import Probs
 
 import numpy as np
-import pandas as pd
-import math
+
 
 class HMM_log(HiddenMarkovModel):
     """
@@ -336,7 +334,7 @@ class HMM_log(HiddenMarkovModel):
                 max = val
         return max
 
-from hassbrain_algorithm.algorithms.hmm.hmm_scaled import HMM_Scaled
+from hbhmm.hmm.hmm_scaled import HMM_Scaled
 
 class HMM_log_scaled(HMM_Scaled):
     """
