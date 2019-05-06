@@ -16,6 +16,7 @@ from hassbrain_algorithm.benchmarks.datasets.kasteren import DatasetKasteren
 from hassbrain_algorithm.benchmarks.datasets.pendigits import DatasetPendigits
 import math
 import joblib
+import copy
 
 MD_FILE_NAME = "model_%s.joblib"
 
@@ -157,12 +158,34 @@ class Model(object):
         """
         pass
 
-    def classify(self, obs_seq):
+
+    def classify_multi(self, obs_seq):
         """
         gets an observation sequence (at most times this is a window) and returns
         the most likely states
         :param obs_seq:
         :return: np array with the most likely state
+        """
+        # encode obs_seq
+        obs_seq = self.obs_lbl_seq2enc_obs_seq(obs_seq)
+        # array full of tuples with state_label and corresp. score
+        pred_state_arr = self._classify_multi(obs_seq)
+
+        # decode state seq
+        print('~'*10)
+        act_score_dict = {}
+        for i in range(0,len(pred_state_arr)):
+            label = pred_state_arr[i][0]
+            score = pred_state_arr[i][1]
+            act_score_dict[self._state_lbl_rev_hashmap[label]] = score
+        return act_score_dict
+
+    def classify(self, obs_seq):
+        """
+        gets an observation sequence (at most times this is a window) and returns
+        the most likely states
+        :param obs_seq:
+        :return: single state with most likely state
         """
         # encode obs_seq
         obs_seq = self.obs_lbl_seq2enc_obs_seq(obs_seq)
@@ -174,8 +197,10 @@ class Model(object):
 
     def predict_next_obs(self, obs_seq):
         """
+
         :param args:
         :return:
+            the next observation
         """
         obs_seq = self.obs_lbl_seq2enc_obs_seq(obs_seq)
         pred_obs = self._predict_next_obs(obs_seq)
@@ -186,10 +211,46 @@ class Model(object):
         else:
             return (label, 1)
 
+    def predict_prob_xnp1(self, obs_seq):
+        """
+        computes the probabilities of all observations to be the next
+        :param obs_seq:
+        :return:
+            dictionary like: "{ 'sensor_name' : { 0 : 0.123, 1: 0.789 } , ... }"
+        """
+        obs_seq = self.obs_lbl_seq2enc_obs_seq(obs_seq)
+        arr = self._predict_prob_xnp1(obs_seq)
+        res_dict = copy.deepcopy(self._obs_lbl_hashmap)
+        #print('*'*10)
+        #print(arr)
+        #print(res_dict.__eq__(self._obs_lbl_hashmap))
+        #print(self._obs_lbl_rev_hashmap)
+        #print('*'*10)
+        for i, prob in enumerate(arr):
+            label = self._obs_lbl_rev_hashmap[i]
+            # if the index is even, than the observation is 'turn on'
+            if i % 2 == 0:
+                res_dict[label][0] = prob
+            else:
+                res_dict[label][1] = prob
+        return res_dict
+
     def _classify(self, obs_seq):
         pass
 
+    def _classify_multi(self, obs_seq):
+        pass
+
     def _predict_next_obs(self, obs_seq):
+        """
+        has to return an array containing all the probabilities of the observations
+        to be next
+        :param obs_seq:
+        :return:
+        """
+        pass
+
+    def _predict_prob_xnp1(self, obs_seq):
         pass
 
 
@@ -293,9 +354,37 @@ class ModelHMM(Model):
         pred_state = state_seq[len(state_seq)-1]
         return pred_state
 
+    def _classify_multi(self, obs_seq):
+        """
+        computes the last omega slice of viterbi which is
+        equivalent to
+        :param obs_seq:
+        :return:
+        """
+        omega = self._hmm.viterbi_mat(obs_seq)
+        N = len(obs_seq) - 1
+        K = len(self._hmm._z)
+        last_omega_slice = omega[N]
+        # todo remove line below due to corrections
+        last_omega_slice = np.exp(last_omega_slice)
+        res = np.zeros((K), dtype=object)
+        for i in range(K):
+            res[i] = (self._hmm._z[i], last_omega_slice[i])
+        return res
+
+
     def _predict_next_obs(self, obs_seq):
-        next_obs = self._hmm.sample_observations(obs_seq, 1)[0]
+        next_obs = self._hmm.sample_observations(obs_seq, 1)
+        #print('*'*100)
+        #print('pre_next_obs', next_obs)
+        next_obs = next_obs[0]
+        #print('next_obs', next_obs)
+        #print('*'*100)
+        #next_obs = self._hmm.sample_observations(obs_seq, 1)[0]
         return next_obs
+
+    def _predict_prob_xnp1(self, obs_seq):
+        return self._hmm.predict_probs_xnp(obs_seq)
 
 
 class ModelHMM_log(ModelHMM):

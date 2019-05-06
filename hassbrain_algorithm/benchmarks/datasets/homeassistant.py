@@ -172,15 +172,15 @@ class DatasetHomeassistant(DataInterfaceHMM):
 
     def load_data(self):
         self._create_label_hashmaps()
-        print('*I'*100)
-        print(self._activity_label_hashmap)
-        print('--')
-        print(self._activity_label_reverse_hashmap)
-        print('--')
-        print(self._sensor_label_hashmap)
-        print('--')
-        print(self._sensor_label_reverse_hashmap)
-        print('*I'*100)
+        #print('*I'*100)
+        #print(self._activity_label_hashmap)
+        #print('--')
+        #print(self._activity_label_reverse_hashmap)
+        #print('--')
+        #print(self._sensor_label_hashmap)
+        #print('--')
+        #print(self._sensor_label_reverse_hashmap)
+        #print('*I'*100)
 
         self._create_sequences()
 
@@ -272,10 +272,15 @@ class DatasetHomeassistant(DataInterfaceHMM):
         db.fetch_all_data()
 
         self._df = db.master_df
-        from detective.core import BinarySensors
+        from detective.core import HassbrainCompatibleDevices
 
         # query
-        sensors_binary_df = BinarySensors(db.master_df).data
+        # todo don't load only binary sensors
+        sensors_binary_df = HassbrainCompatibleDevices(db.master_df).data
+        #self._print_full(sensors_binary_df.head(20))
+        #print('~'*10)
+        #self._print_full(self._df.head(20))
+        #exit(-1)
 
         # split df into test sequence and train sequence
         # test sequence is only annotated data
@@ -290,7 +295,7 @@ class DatasetHomeassistant(DataInterfaceHMM):
         #print(days_to_omit)
         # split into test and train dataset
         test_df = sensors_binary_df[days_where_sth_was_logged]
-        self._create_test_sequences(test_df, act_df)
+        #self._create_test_sequences(test_df, act_df)
 
         # the days where nothing was logged
         train_df = sensors_binary_df[~days_where_sth_was_logged]
@@ -476,3 +481,17 @@ class DatasetHomeassistant(DataInterfaceHMM):
         #response = db.perform_query(query)
         #df = pd.DataFrame(response.fetchall())
         #print(df.head(10))
+
+
+    def _print_full(self, x):
+        pd.set_option('display.max_rows', len(x))
+        pd.set_option('display.max_columns', None)
+        pd.set_option('display.width', 2000)
+        pd.set_option('display.float_format', '{:20,.10f}'.format)
+        pd.set_option('display.max_colwidth', -1)
+        print(x)
+        pd.reset_option('display.max_rows')
+        pd.reset_option('display.max_columns')
+        pd.reset_option('display.width')
+        pd.reset_option('display.float_format')
+        pd.reset_option('display.max_colwidth')
