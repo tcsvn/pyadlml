@@ -1,0 +1,22 @@
+models:
+  #folder: '/home/chris/code2/hassbrain_algorithm/hb_models'
+  folder: '/home/cmeier/code/hassbrain_algorithm/hb_models'
+
+datasets:
+  kasteren:
+    #sens_file_path: '/home/chris/code2/hassbrain_algorithm/datasets/kasteren/kasterenSenseData.txt'
+    #act_file_path: '/home/chris/code2/hassbrain_algorithm/datasets/kasteren/kasterenActData.txt'
+    sens_file_path: '/home/cmeier/code/hassbrain_algorithm/datasets/kasteren/kasterenSenseData.txt'
+    act_file_path: '/home/cmeier/code/hassbrain_algorithm/datasets/kasteren/kasterenActData.txt'
+
+  pendigits:
+    #test_file_path: '/home/chris/code2/hassbrain_algorithm/datasets/pendigits/pendigits-orig.tes'
+    #train_file_path: '/home/chris/code2/hassbrain_algorithm/datasets/pendigits/pendigits-orig.tra'
+    test_file_path: '/home/cmeier/code/hassbrain_algorithm/datasets/pendigits/pendigits-orig.tes'
+    train_file_path: '/home/cmeier/code/hassbrain_algorithm/datasets/pendigits/pendigits-orig.tra'
+  homeassistant:
+    database_path: '/home/cmeier/code/hassbrain_algorithm/datasets/homeassistant/home-assistant_v2.db'
+    #database_path: '/home/cmeier/code/hassbrain_algorithm/datasets/homeassistant/simon_hass_v2.db'
+    #database_path: '/home/cmeier/code/hassbrain_algorithm/datasets/homeassistant/github_ha_v2.db'
+    act_file_path: '/home/cmeier/code/hassbrain_algorithm/datasets/homeassistant/activities.csv'
+    labels_path: '/home/cmeier/code/hassbrain_algorithm/datasets/homeassistant/labels.yaml'
