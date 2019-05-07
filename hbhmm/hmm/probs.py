@@ -19,8 +19,11 @@ class Probs(object):
             prob = float(prob)
         except:
             raise ValueError
-        if prob > 1.0:
-            raise ValueError
+        # todo
+        # this is suspended because of summing probabilities
+        # greater than one and then dividing
+        #if prob > 1.0:
+        #    raise ValueError
         else:
             self.prob = self.eln(prob)
 
@@ -235,7 +238,6 @@ class Probs(object):
             #raise ValueError
         else:
             if type(other) in [float, int]:
-                # todo do ln
                 res.prob = self.prob + self.eln(other)
             else:
                 res.prob = self.prob + other.prob

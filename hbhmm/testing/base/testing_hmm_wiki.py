@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
-from hassbrain_algorithm.algorithms.hmm import HiddenMarkovModel
-from hassbrain_algorithm.algorithms.hmm import ProbabilityMassFunction
+from hbhmm.hmm._hmm_base import HMM
+from hbhmm.hmm.distributions import ProbabilityMassFunction
 
 S1 = 'State 1'
 S2 = 'State 2'
@@ -23,7 +23,7 @@ class TestHmmWiki(unittest.TestCase):
         init_dist = [0.2, 0.8]
 
         # init markov model
-        self.hmm = HiddenMarkovModel(states, observation_alphabet, ProbabilityMassFunction, init_dist)
+        self.hmm = HMM(states, observation_alphabet, ProbabilityMassFunction, init_dist)
         self.hmm.set_transition_matrix(np.array([[0.5,0.5],
                                                  [0.3,0.7]]))
         self.hmm.set_emission_matrix(np.array([[0.3,0.7],[0.8,0.2]]))

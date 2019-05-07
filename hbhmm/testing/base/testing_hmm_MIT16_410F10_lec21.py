@@ -1,8 +1,8 @@
 import unittest
 import numpy as np
-from hbhmm.hmm._hmm_base import HiddenMarkovModel
+from hbhmm.hmm._hmm_base import HMM
 from hbhmm.hmm.distributions import ProbabilityMassFunction
-#from testing.hmm.hmm2 import DiscreteHMM
+from hbhmm.testing.hmm2.discrete.DiscreteHMM import DiscreteHMM
 
 LA = 'Los Angeles'
 NY = 'New York'
@@ -30,14 +30,14 @@ class TestMIT16_410F10(unittest.TestCase):
                 NY, NY, NY, NY, NY, NULL, NULL, LA, LA, NY]
 
         # init markov model
-        self.hmm = HiddenMarkovModel(states, observation_alphabet, ProbabilityMassFunction, init_dist)
+        self.hmm = HMM(states, observation_alphabet, ProbabilityMassFunction, init_dist)
         self.hmm.set_transition_matrix(trans_matrix)
         self.hmm.set_emission_matrix(em_matrix)
 
 
-        #self.obs_seq2 = [2,0,0,2,1,2,1,1,1,2,1,1,1,1,1,2,2,0,0,1]
-        #self.hmm2 = DiscreteHMM(2, 3, trans_matrix, em_matrix, init_dist2, init_type='user')
-        #self.hmm2.mapB(self.obs_seq2)
+        self.obs_seq2 = [2,0,0,2,1,2,1,1,1,2,1,1,1,1,1,2,2,0,0,1]
+        self.hmm2 = DiscreteHMM(2, 3, trans_matrix, em_matrix, init_dist2, init_type='user')
+        self.hmm2._mapB(self.obs_seq2)
 
     def tearDown(self):
         pass
@@ -83,10 +83,10 @@ class TestMIT16_410F10(unittest.TestCase):
         hmm_new_pi = self.hmm.new_pi(gamma)
 
 
-        hmm2_gamma = self.hmm2.calcgamma(self.hmm2.calcxi(
+        hmm2_gamma = self.hmm2._calcgamma(self.hmm2._calcxi(
             self.obs_seq2,
-            self.hmm2.calcalpha(self.obs_seq2),
-            self.hmm2.calcbeta(self.obs_seq2)),
+            self.hmm2._calcalpha(self.obs_seq2),
+            self.hmm2._calcbeta(self.obs_seq2)),
             len(self.obs_seq2))
         # from code line 307
         hmm2_new_pi = hmm2_gamma[0]
@@ -104,12 +104,12 @@ class TestMIT16_410F10(unittest.TestCase):
         hmm_new_A = self.hmm.new_A(obs_seq, xi)
 
 
-        hmm2_xi = self.hmm2.calcxi(
+        hmm2_xi = self.hmm2._calcxi(
             self.obs_seq2,
-            self.hmm2.calcalpha(self.obs_seq2),
-            self.hmm2.calcbeta(self.obs_seq2))
-        hmm2_gamma = self.hmm2.calcgamma(hmm2_xi, len(self.obs_seq2))
-        hmm2_new_A = self.hmm2.reestimateA(self.obs_seq2, hmm2_xi, hmm2_gamma)
+            self.hmm2._calcalpha(self.obs_seq2),
+            self.hmm2._calcbeta(self.obs_seq2))
+        hmm2_gamma = self.hmm2._calcgamma(hmm2_xi, len(self.obs_seq2))
+        hmm2_new_A = self.hmm2._reestimateA(self.obs_seq2, hmm2_xi, hmm2_gamma)
 
 
         for znm1 in range(0,len(self.hmm._z)):
@@ -142,11 +142,11 @@ class TestMIT16_410F10(unittest.TestCase):
         hmm_new_em = self.hmm.new_emissions(gamma, obs_seq)
 
         obs_seq2 = self.obs_seq2
-        hmm2_xi = self.hmm2.calcxi(
+        hmm2_xi = self.hmm2._calcxi(
             obs_seq2,
-            self.hmm2.calcalpha(obs_seq2),
-            self.hmm2.calcbeta(obs_seq2))
-        hmm2_gamma = self.hmm2.calcgamma(hmm2_xi, len(obs_seq2))
+            self.hmm2._calcalpha(obs_seq2),
+            self.hmm2._calcbeta(obs_seq2))
+        hmm2_gamma = self.hmm2._calcgamma(hmm2_xi, len(obs_seq2))
         hmm2_new_ems = self.hmm2._reestimateB(obs_seq2, hmm2_gamma)
 
         print()
@@ -264,7 +264,7 @@ class TestMIT16_410F10(unittest.TestCase):
         #print('-'*2)
         #print(res_E)
         self.hmm.draw()
-        vg.render('test.gv', view=True)
+        #vg.render('test.gv', view=True)
 
         # assert pi
         for zn in range(0, len(res_pi)):
@@ -402,10 +402,10 @@ class TestMIT16_410F10(unittest.TestCase):
         prob_X = self.hmm._prob_X(alpha, beta)
         xi = self.hmm.xi(obs_seq, alpha, beta, prob_X)
 
-        hmm2_xi = self.hmm2.calcxi(
+        hmm2_xi = self.hmm2._calcxi(
             obs_seq2,
-            self.hmm2.calcalpha(obs_seq2),
-            self.hmm2.calcbeta(obs_seq2))
+            self.hmm2._calcalpha(obs_seq2),
+            self.hmm2._calcbeta(obs_seq2))
 
         K = len(self.hmm._z)
         N = len(obs_seq)
@@ -430,10 +430,10 @@ class TestMIT16_410F10(unittest.TestCase):
         beta = self.hmm.backward(obs_seq)
         gamma = self.hmm.gamma(alpha, beta)
 
-        hmm2_gamma = self.hmm2.calcgamma(self.hmm2.calcxi(
+        hmm2_gamma = self.hmm2._calcgamma(self.hmm2._calcxi(
                 self.obs_seq2,
-                self.hmm2.calcalpha(self.obs_seq2),
-                self.hmm2.calcbeta(self.obs_seq2)
+                self.hmm2._calcalpha(self.obs_seq2),
+                self.hmm2._calcbeta(self.obs_seq2)
             ),
             len(self.obs_seq2)
         )
@@ -464,7 +464,7 @@ class TestMIT16_410F10(unittest.TestCase):
 
         alpha = self.hmm.forward(obs_seq)
 
-        hmm2_alpha = self.hmm2.calcalpha(obs_seq2)
+        hmm2_alpha = self.hmm2._calcalpha(obs_seq2)
 
         N = len(obs_seq)
         K = len(self.hmm._z)
@@ -478,7 +478,7 @@ class TestMIT16_410F10(unittest.TestCase):
         obs_seq = self.obs_seq
         obs_seq2 = self.obs_seq2
         beta = self.hmm.backward(obs_seq)
-        hmm2_beta = self.hmm2.calcbeta(obs_seq2)
+        hmm2_beta = self.hmm2._calcbeta(obs_seq2)
 
         for n in range(0, len(obs_seq)):
             for k in range(0,len(self.hmm._z)):

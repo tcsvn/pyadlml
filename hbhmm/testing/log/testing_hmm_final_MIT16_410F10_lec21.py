@@ -1,9 +1,10 @@
 import unittest
 import numpy as np
-from hbhmm.hmm._hmm_base import HiddenMarkovModel
-from hbhmm.hmm.Probs import Probs
-from hbhmm.hmm._hmm_log import HMM_log
+from hbhmm.hmm._hmm_base import HMM
+from hbhmm.hmm.probs import Probs
+from hbhmm.hmm.hmm_log import HMM_log
 from hbhmm.hmm.distributions import ProbabilityMassFunction
+from hbhmm.testing.hmm2.discrete.DiscreteHMM import DiscreteHMM
 
 LA = 'Los Angeles'
 NY = 'New York'
@@ -33,17 +34,17 @@ class TestMIT16_410F10(unittest.TestCase):
         self.hmm_log.set_transition_matrix(trans_matrix)
         self.hmm_log.set_emission_matrix(em_matrix)
 
-        self.hmm = HiddenMarkovModel(states, observation_alphabet, ProbabilityMassFunction, init_dist)
+        self.hmm = HMM(states, observation_alphabet, ProbabilityMassFunction, init_dist)
         self.hmm.set_transition_matrix(trans_matrix)
         self.hmm.set_emission_matrix(em_matrix)
 
-        self.hmm3 = HiddenMarkovModel(states, observation_alphabet, ProbabilityMassFunction, init_dist)
+        self.hmm3 = HMM(states, observation_alphabet, ProbabilityMassFunction, init_dist)
         self.hmm3.set_transition_matrix(trans_matrix)
         self.hmm3.set_emission_matrix(em_matrix)
 
-        #self.obs_seq2 = [2,0,0,2,1,2,1,1,1,2,1,1,1,1,1,2,2,0,0,1]
-        #self.hmm2 = DiscreteHMM(2, 3, trans_matrix, em_matrix, init_dist2, init_type='user')
-        #self.hmm2.mapB(self.obs_seq2)
+        self.obs_seq2 = [2,0,0,2,1,2,1,1,1,2,1,1,1,1,1,2,2,0,0,1]
+        self.hmm2 = DiscreteHMM(2, 3, trans_matrix, em_matrix, init_dist2, init_type='user')
+        self.hmm2._mapB(self.obs_seq2)
 
     def tearDown(self):
         pass
@@ -86,20 +87,20 @@ class TestMIT16_410F10(unittest.TestCase):
             bol_verify = self.hmm_log.verify_emission_matrix()
             self.assertTrue(bol_verify)
 
-    def test_gamma_xi_relation(self):
-        # todo make use to speed up calculation
-        obs_seq = self.obs_seq
-        alpha = self.hmm_log.forward(obs_seq)
-        beta = self.hmm_log.backward(obs_seq)
-        xi = self.hmm_log.xi(obs_seq, alpha, beta)
-        gamma = self.hmm_log.gamma(alpha, beta)
+    #def test_gamma_xi_relation(self):
+    #    # todo make use to speed up calculation
+    #    obs_seq = self.obs_seq
+    #    alpha = self.hmm_log.forward(obs_seq)
+    #    beta = self.hmm_log.backward(obs_seq)
+    #    xi = self.hmm_log.xi(obs_seq, alpha, beta)
+    #    gamma = self.hmm_log.gamma(alpha, beta)
 
-        K = len(self.hmm_log._z)
-        N = len(obs_seq)
-        for n in range(N-1):
-            for i in range(K):
-                sum_xi = xi[n][i].sum()
-                self.assertAlmostEqual(gamma[n][i], sum_xi)
+    #    K = len(self.hmm_log._z)
+    #    N = len(obs_seq)
+    #    for n in range(N-1):
+    #        for i in range(K):
+    #            sum_xi = xi[n][i].sum()
+    #            self.assertAlmostEqual(gamma[n][i], sum_xi)
 
     def test_new_pi(self):
         alpha = self.hmm_log.forward(self.obs_seq)
@@ -109,10 +110,10 @@ class TestMIT16_410F10(unittest.TestCase):
         hmm_new_pi = Probs.np_prob_arr2R(hmm_new_pi)
 
 
-        hmm2_gamma = self.hmm2.calcgamma(self.hmm2.calcxi(
+        hmm2_gamma = self.hmm2._calcgamma(self.hmm2._calcxi(
             self.obs_seq2,
-            self.hmm2.calcalpha(self.obs_seq2),
-            self.hmm2.calcbeta(self.obs_seq2)),
+            self.hmm2._calcalpha(self.obs_seq2),
+            self.hmm2._calcbeta(self.obs_seq2)),
             len(self.obs_seq2))
         # from code line 307
         hmm2_new_pi = hmm2_gamma[0]
@@ -131,12 +132,12 @@ class TestMIT16_410F10(unittest.TestCase):
         hmm_new_A = Probs.np_prob_arr2R(hmm_new_A)
 
 
-        hmm2_xi = self.hmm2.calcxi(
+        hmm2_xi = self.hmm2._calcxi(
             self.obs_seq2,
-            self.hmm2.calcalpha(self.obs_seq2),
-            self.hmm2.calcbeta(self.obs_seq2))
-        hmm2_gamma = self.hmm2.calcgamma(hmm2_xi, len(self.obs_seq2))
-        hmm2_new_A = self.hmm2.reestimateA(self.obs_seq2, hmm2_xi, hmm2_gamma)
+            self.hmm2._calcalpha(self.obs_seq2),
+            self.hmm2._calcbeta(self.obs_seq2))
+        hmm2_gamma = self.hmm2._calcgamma(hmm2_xi, len(self.obs_seq2))
+        hmm2_new_A = self.hmm2._reestimateA(self.obs_seq2, hmm2_xi, hmm2_gamma)
 
 
         for znm1 in range(0, len(self.hmm_log._z)):
@@ -159,11 +160,11 @@ class TestMIT16_410F10(unittest.TestCase):
         hmm_new_em = self.hmm.new_emissions(hmm_gamma, obs_seq)
 
         obs_seq2 = self.obs_seq2
-        hmm2_xi = self.hmm2.calcxi(
+        hmm2_xi = self.hmm2._calcxi(
             obs_seq2,
-            self.hmm2.calcalpha(obs_seq2),
-            self.hmm2.calcbeta(obs_seq2))
-        hmm2_gamma = self.hmm2.calcgamma(hmm2_xi, len(obs_seq2))
+            self.hmm2._calcalpha(obs_seq2),
+            self.hmm2._calcbeta(obs_seq2))
+        hmm2_gamma = self.hmm2._calcgamma(hmm2_xi, len(obs_seq2))
         hmm2_new_ems = self.hmm2._reestimateB(obs_seq2, hmm2_gamma)
 
         print()
@@ -393,10 +394,10 @@ class TestMIT16_410F10(unittest.TestCase):
         xi = self.hmm_log.xi(obs_seq, alpha, beta, prob_X)
         xi = Probs.np_prob_arr2R(xi)
 
-        hmm2_xi = self.hmm2.calcxi(
+        hmm2_xi = self.hmm2._calcxi(
             obs_seq2,
-            self.hmm2.calcalpha(obs_seq2),
-            self.hmm2.calcbeta(obs_seq2))
+            self.hmm2._calcalpha(obs_seq2),
+            self.hmm2._calcbeta(obs_seq2))
 
         K = len(self.hmm_log._z)
         N = len(obs_seq)
@@ -422,10 +423,10 @@ class TestMIT16_410F10(unittest.TestCase):
         gamma = self.hmm_log.gamma(alpha, beta)
         gamma = Probs.np_prob_arr2R(gamma)
 
-        hmm2_gamma = self.hmm2.calcgamma(self.hmm2.calcxi(
+        hmm2_gamma = self.hmm2._calcgamma(self.hmm2._calcxi(
                 self.obs_seq2,
-                self.hmm2.calcalpha(self.obs_seq2),
-                self.hmm2.calcbeta(self.obs_seq2)
+                self.hmm2._calcalpha(self.obs_seq2),
+                self.hmm2._calcbeta(self.obs_seq2)
             ),
             len(self.obs_seq2)
         )
@@ -457,7 +458,7 @@ class TestMIT16_410F10(unittest.TestCase):
         alpha = self.hmm_log.forward(obs_seq)
         alpha = Probs.np_prob_arr2R(alpha)
 
-        hmm2_alpha = self.hmm2.calcalpha(obs_seq2)
+        hmm2_alpha = self.hmm2._calcalpha(obs_seq2)
 
         N = len(obs_seq)
         K = len(self.hmm_log._z)
@@ -472,7 +473,7 @@ class TestMIT16_410F10(unittest.TestCase):
         obs_seq2 = self.obs_seq2
         beta = self.hmm_log.backward(obs_seq)
         beta = Probs.np_prob_arr2R(beta)
-        hmm2_beta = self.hmm2.calcbeta(obs_seq2)
+        hmm2_beta = self.hmm2._calcbeta(obs_seq2)
 
         for n in range(0, len(obs_seq)):
             for k in range(0, len(self.hmm_log._z)):

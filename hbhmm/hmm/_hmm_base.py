@@ -34,7 +34,7 @@ class State():
         pass
 
 
-class HiddenMarkovModel():
+class HMM():
     """
     set of latent variables
     set of observations
@@ -534,7 +534,7 @@ class HiddenMarkovModel():
         :param norm_fact:
         :return:
         """
-        return new_pi_arr.sum(axis=0)*(1./len_seqs)
+        return new_pi_arr.sum(axis=0)/self.single_prob(len_seqs)
 
 
     def train_seqs(self, set, epsilon = None, steps=None):
@@ -1032,11 +1032,18 @@ class HiddenMarkovModel():
         :return: array for each xnp1 with the probability values of xn
         """
         obs_probs = self.predict_probs_xnp(seq)
+
         #print(np.exp(obs_probs))
         #print(obs_probs)
         max_index = obs_probs.argmax()
         #print(max_index)
         return self._o[max_index]
+
+    def _calc_alpha_beta_probx(self, obs_seq):
+        alpha = self.forward(obs_seq)
+        beta = self.backward(obs_seq)
+        prob_x = self._prob_X(alpha, beta)
+        return alpha, beta, prob_x
 
     def predict_probs_xnp(self, seq):
         """
@@ -1045,9 +1052,9 @@ class HiddenMarkovModel():
         :param seq:
         :return:  1D Matrix of probabilitys for each observation
         """
-        alpha = self.forward(seq)
-        beta = self.backward(seq)
-        normalizing_constant = self.single_prob(1.)/(self._prob_X(alpha, beta))
+        alpha, beta, prob_X = self._calc_alpha_beta_probx(seq)
+
+        normalizing_constant = self.single_prob(1.)/(prob_X)
         alpha_zn = alpha[len(seq) - 1]
 
         result = self.np_zeros(len(self._o))
@@ -1185,19 +1192,28 @@ class HiddenMarkovModel():
         N = len(obs_seq)
         obs_list = []
         state_seq = []
-        if obs_seq != []:
-            vit_seq = self.viterbi(obs_seq)
-            state_seq.append(vit_seq[len(vit_seq)-1])
-
-        for i in range(n):
-            state_seq, obs_seq = self.ancestral_sampling(state_seq, obs_seq)
+        #if obs_seq != []:
+        #    vit_seq = self.viterbi(obs_seq)
+        #    state_seq.append(vit_seq[len(vit_seq)-1])
+        if obs_seq == []:
+            for i in range(n):
+                state_seq, obs_seq = self.ancestral_sampling(state_seq, obs_seq)
             #print('*'*10)
             #print(obs_seq)
             #print(state_seq)
             #print(N)
-            obs_list.append(obs_seq[N+i])
+                obs_list.append(obs_seq[N+i])
             #print(obs_list)
             #print('*'*10)
+        else:
+            for i in range(n):
+                xnp_slice = self.predict_probs_xnp(obs_seq)
+                # sample
+                xnp_cum = xnp_slice.cumsum()
+                epsilon = self._rand_prob()
+                idx = self._sel_idx_val_in_range(xnp_cum, epsilon)
+                xnp = self._o[idx]
+                obs_list.append(xnp_slice)
         return obs_list
 
     def _rand_prob(self):

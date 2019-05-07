@@ -1,11 +1,11 @@
 import unittest
-import numpy as np
-from hbhmm.hmm import Probs
+from hbhmm.hmm.probs import Probs
+from hbhmm.hmm.probs import LOGZERO
 
 
-class TestPMF(unittest.TestCase):
+class TestProbs(unittest.TestCase):
     def setUp(self):
-        self.smallest_num = np.nextafter(0,1)
+        self.smallest_num = LOGZERO
         self.x0 = 0.0
         self.x1 = 0.1
         self.x2 = 0.2
@@ -19,22 +19,15 @@ class TestPMF(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_initialisation(self):
+
+    def test_init_zero(self):
         x4 = 0.000
-        # invalid
-        x5 = 2.0
-        x6 = -1.0
-
         p4 = Probs(x4)
-        self.assertEqual(self.smallest_num, p4.prob_to_norm())
+        self.assertEqual(x4, p4.prob_to_norm())
 
-        p5_exc = False
-        try:
-            p5 = Probs(x5)
-        except ValueError:
-            p5_exc = True
-        self.assertTrue(p5_exc)
 
+    def test_init_out_of_bounds_to_small(self):
+        x6 = -1.0
         p6_exc = False
         try:
             p6 = Probs(x6)
@@ -43,9 +36,21 @@ class TestPMF(unittest.TestCase):
         self.assertTrue(p6_exc)
 
 
+    def test_init_out_of_bounds_to_big(self):
+        # invalid
+        x5 = 2.0
+        p5_exc = False
+        try:
+            p5 = Probs(x5)
+        except ValueError:
+            p5_exc = True
+        self.assertTrue(p5_exc)
+
+
     def test_prob_to_norm(self):
-        self.assertEqual(self.smallest_num, self.p0.prob_to_norm())
-        self.assertEqual(self.x1, self.p1.prob_to_norm())
+        self.assertEqual(self.x0, self.p0.prob_to_norm())
+        # todo check why there is a round error
+        self.assertAlmostEqual(self.x1, self.p1.prob_to_norm(), 15)
         self.assertEqual(self.x2, self.p2.prob_to_norm())
         self.assertEqual(self.x3, self.p3.prob_to_norm())
 

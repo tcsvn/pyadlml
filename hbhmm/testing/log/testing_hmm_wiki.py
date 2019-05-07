@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 from hbhmm.hmm import HiddenMarkovModel
-from hbhmm.hmm import ProbabilityMassFunction
+from hbhmm.hmm.distributions import ProbabilityMassFunction
 
 S1 = 'State 1'
 S2 = 'State 2'

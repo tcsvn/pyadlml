@@ -1,9 +1,9 @@
 import unittest
 import numpy as np
-from hbhmm.hmm import HMM_Scaled as ScaledHMM
-from hbhmm.hmm._hmm_base import HiddenMarkovModel as hMM
-from hbhmm.hmm import ProbabilityMassFunction
-from testing.testing import DiscreteHMM
+from hbhmm.hmm.hmm_scaled import HMM_Scaled as ScaledHMM
+from hbhmm.hmm._hmm_base import HMM as HMM_base
+from hbhmm.hmm.distributions import ProbabilityMassFunction
+from hbhmm.testing.hmm2.discrete.DiscreteHMM import DiscreteHMM
 
 LA = 'Los Angeles'
 NY = 'New York'
@@ -33,14 +33,14 @@ class TestMIT16_410F10_scaled(unittest.TestCase):
                                                         [0.5,0.5]]))
         self.hmm_scaled.set_emission_matrix(np.array([[0.4, 0.1, 0.5], [0.1, 0.5, 0.4]]))
 
-        self.hmm = hMM(states, observation_alphabet, ProbabilityMassFunction, init_dist)
+        self.hmm = HMM_base(states, observation_alphabet, ProbabilityMassFunction, init_dist)
         self.hmm.set_transition_matrix(np.array([[0.5, 0.5],
                                                  [0.5,0.5]]))
         self.hmm.set_emission_matrix(np.array([[0.4, 0.1, 0.5], [0.1, 0.5, 0.4]]))
 
         self.obs_seq2 = [2,0,0,2,1,2,1,1,1,2,1,1,1,1,1,2,2,0,0,1]
         self.hmm2 = DiscreteHMM(2, 3, trans_matrix, em_matrix, init_dist2, init_type='user')
-        self.hmm2.mapB(self.obs_seq2)
+        self.hmm2._mapB(self.obs_seq2)
 
 
     def tearDown(self):
@@ -60,10 +60,10 @@ class TestMIT16_410F10_scaled(unittest.TestCase):
         prob_X = self.hmm._prob_X(alpha, beta)
         xi = self.hmm.xi(obs_seq, alpha, beta, prob_X)
 
-        hmm2_xi = self.hmm2.calcxi(
+        hmm2_xi = self.hmm2._calcxi(
             obs_seq2,
-            self.hmm2.calcalpha(obs_seq2),
-            self.hmm2.calcbeta(obs_seq2))
+            self.hmm2._calcalpha(obs_seq2),
+            self.hmm2._calcbeta(obs_seq2))
 
         K = len(self.hmm._z)
         N = len(obs_seq)
@@ -96,10 +96,10 @@ class TestMIT16_410F10_scaled(unittest.TestCase):
         self.assertEqual(round(gamma_20[1],4),0.8333)
 
 
-        hmm2_gamma = self.hmm2.calcgamma(self.hmm2.calcxi(
+        hmm2_gamma = self.hmm2._calcgamma(self.hmm2._calcxi(
             self.obs_seq2,
-            self.hmm2.calcalpha(self.obs_seq2),
-            self.hmm2.calcbeta(self.obs_seq2)
+            self.hmm2._calcalpha(self.obs_seq2),
+            self.hmm2._calcbeta(self.obs_seq2)
         ),
             len(self.obs_seq2)
         )
@@ -128,7 +128,7 @@ class TestMIT16_410F10_scaled(unittest.TestCase):
         re_alpha = self.hmm_scaled.nalpha_to_alpha(n_alpha, cn)
 
 
-        hmm2_alpha = self.hmm2.calcalpha(obs_seq2)
+        hmm2_alpha = self.hmm2._calcalpha(obs_seq2)
 
         for n in range(0, len(obs_seq)):
             for zn in range(0, len(self.hmm._z)):
@@ -145,7 +145,7 @@ class TestMIT16_410F10_scaled(unittest.TestCase):
         n_beta = self.hmm_scaled.backward(obs_seq, cn)
         re_beta = self.hmm_scaled.nbeta_to_beta(n_beta, cn)
 
-        hmm2_beta = self.hmm2.calcbeta(obs_seq2)
+        hmm2_beta = self.hmm2._calcbeta(obs_seq2)
         for n in range(0, len(obs_seq)):
             for k in range(0,len(self.hmm._z)):
                 self.assertAlmostEqual(re_beta[n][k], beta[n][k])

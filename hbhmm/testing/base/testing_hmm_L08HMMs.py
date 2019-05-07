@@ -1,9 +1,9 @@
 import unittest
 import numpy as np
 from math import exp
-from hbhmm.hmm._hmm_base import HiddenMarkovModel
-from hbhmm.hmm import ProbabilityMassFunction
-from testing.testing import DiscreteHMM
+from hbhmm.hmm._hmm_base import HMM
+from hbhmm.hmm.distributions import ProbabilityMassFunction
+from hbhmm.testing.hmm2.discrete.DiscreteHMM import DiscreteHMM
 
 S0 = 'S0'
 S1 = 'S1'
@@ -23,7 +23,7 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         em_mat = np.array([[0.8,0.2],[0.3,0.7]])
 
         # init markov model
-        self.hmm = HiddenMarkovModel(states, observation_alphabet, ProbabilityMassFunction, init_dist)
+        self.hmm = HMM(states, observation_alphabet, ProbabilityMassFunction, init_dist)
         self.hmm.set_transition_matrix(trans_mat)
         self.hmm.set_emission_matrix(em_mat)
 
@@ -31,7 +31,7 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         self.hmm2 = DiscreteHMM(2, 3, trans_mat, em_mat, init_dist2, init_type='user')
         self.obs_seq = [A,A,B]
         self.obs_seq2 = [0,0,1]
-        self.hmm2.mapB(self.obs_seq2)
+        self.hmm2._mapB(self.obs_seq2)
 
 
     def tearDown(self):
@@ -47,10 +47,10 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         prob_X = self.hmm._prob_X(alpha, beta)
         xi = self.hmm.xi(obs_seq, alpha, beta, prob_X)
 
-        self.hmm2.mapB(obs_seq2)
-        hmm2_alpha = self.hmm2.calcalpha(obs_seq2)
-        hmm2_beta = self.hmm2.calcbeta(obs_seq2)
-        hmm2_xi = self.hmm2.calcxi(obs_seq2, hmm2_alpha, hmm2_beta)
+        self.hmm2._mapB(obs_seq2)
+        hmm2_alpha = self.hmm2._calcalpha(obs_seq2)
+        hmm2_beta = self.hmm2._calcbeta(obs_seq2)
+        hmm2_xi = self.hmm2._calcxi(obs_seq2, hmm2_alpha, hmm2_beta)
 
         for i in range(0, len(self.hmm._z)):
             for j in range(0, len(self.hmm._z)):
@@ -64,10 +64,10 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         beta = self.hmm.backward(obs_seq)
         gamma = self.hmm.gamma(alpha, beta)
 
-        hmm2_alpha = self.hmm2.calcalpha(obs_seq)
-        hmm2_beta = self.hmm2.calcbeta(obs_seq)
-        hmm2_xi = self.hmm2.calcxi(obs_seq, hmm2_alpha, hmm2_beta)
-        hmm2_gamma = self.hmm2.calcgamma(hmm2_xi, len(obs_seq))
+        hmm2_alpha = self.hmm2._calcalpha(obs_seq)
+        hmm2_beta = self.hmm2._calcbeta(obs_seq)
+        hmm2_xi = self.hmm2._calcxi(obs_seq, hmm2_alpha, hmm2_beta)
+        hmm2_gamma = self.hmm2._calcgamma(hmm2_xi, len(obs_seq))
 
         self.assertTrue(np.allclose(hmm2_gamma[:2], gamma[:2]))
 
@@ -97,7 +97,7 @@ class TestHmmExampleL08HMM(unittest.TestCase):
 
         beta = self.hmm.backward(obs_seq)
 
-        hmm2_beta = self.hmm2.calcbeta(self.obs_seq2)
+        hmm2_beta = self.hmm2._calcbeta(self.obs_seq2)
 
 
         self.assertTrue(np.allclose(hmm2_beta,beta))
@@ -114,7 +114,7 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         #                   [0.12, 0.0936, 0.130032]]).T
 
         alpha = self.hmm.forward(obs_seq)
-        hmm2_alpha = self.hmm2.calcalpha(self.obs_seq2)
+        hmm2_alpha = self.hmm2._calcalpha(self.obs_seq2)
 
         #self.assertTrue(np.allclose(result, alpha))
         self.assertTrue(np.allclose(hmm2_alpha, alpha))

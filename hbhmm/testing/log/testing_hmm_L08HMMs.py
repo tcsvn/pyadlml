@@ -1,10 +1,10 @@
 import unittest
 import numpy as np
 #from algorithms.hmm._hmm_base import HiddenMarkovModel
-from hbhmm.hmm.Probs import Probs
-from hbhmm.hmm._hmm_log import HMM_log as HiddenMarkovModel
+from hbhmm.hmm.probs import Probs
+from hbhmm.hmm.hmm_log import HMM_log
 from hbhmm.hmm.distributions import ProbabilityMassFunction
-from hbhmm.testing.hmm2.discrete import DiscreteHMM
+from hbhmm.testing.hmm2.discrete.DiscreteHMM import DiscreteHMM
 
 S0 = 'S0'
 S1 = 'S1'
@@ -24,7 +24,7 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         em_mat = np.array([[0.8,0.2],[0.3,0.7]])
 
         # init markov model
-        self.hmm = HiddenMarkovModel(states, observation_alphabet, ProbabilityMassFunction, init_dist)
+        self.hmm = HMM_log(states, observation_alphabet, ProbabilityMassFunction, init_dist)
         self.hmm.set_transition_matrix(trans_mat)
         self.hmm.set_emission_matrix(em_mat)
 

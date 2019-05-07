@@ -2,7 +2,7 @@ import unittest
 
 from hassbrain_algorithm.controller import Controller
 from hassbrain_algorithm.controller import Dataset
-from hbhmm.hmm._hmm_base import HiddenMarkovModel
+from hbhmm.hmm._hmm_base import HMM
 #from hassbrain_algorithm.algorithms.hmm import ProbabilityMassFunction
 #from testing.testing import DiscreteHMM
 
@@ -36,9 +36,9 @@ class TestKasteren(unittest.TestCase):
         state_count = 7
         obs_count = 28
         training_steps = 200
-        trans_matrix = HiddenMarkovModel.gen_rand_transitions(state_count)
-        em_matrix = HiddenMarkovModel.gen_rand_emissions(state_count, obs_count)
-        init_pi = HiddenMarkovModel.gen_rand_pi(state_count)
+        trans_matrix = HMM.gen_rand_transitions(state_count)
+        em_matrix = HMM.gen_rand_emissions(state_count, obs_count)
+        init_pi = HMM.gen_rand_pi(state_count)
 
         observation_alphabet = self._kast_obj.get_sensor_list()
         states = self._kast_obj.get_state_list()
@@ -46,10 +46,10 @@ class TestKasteren(unittest.TestCase):
         print(states)
         print(observation_alphabet)
         # init markov model
-        hmm = HiddenMarkovModel(states,
-                                observation_alphabet,
-                                ProbabilityMassFunction,
-                                init_pi)
+        hmm = HMM(states,
+                  observation_alphabet,
+                  ProbabilityMassFunction,
+                  init_pi)
         hmm.set_emission_matrix(em_matrix)
         hmm.set_transition_matrix(trans_matrix)
 

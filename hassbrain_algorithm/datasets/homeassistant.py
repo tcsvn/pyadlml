@@ -85,7 +85,6 @@ class DatasetHomeassistant(DataInterfaceHMM):
             s = seq.T
             obs_seqs.append(s[0])
             lbl_seqs.append(s[1])
-
         return lbl_seqs, obs_seqs
 
     def is_multi_seq_train(self):
@@ -294,7 +293,7 @@ class DatasetHomeassistant(DataInterfaceHMM):
         #print(days_to_omit)
         # split into test and train dataset
         test_df = sensors_binary_df[days_where_sth_was_logged]
-        #self._create_test_sequences(test_df, act_df)
+        self._create_test_sequences(test_df, act_df)
 
         # the days where nothing was logged
         train_df = sensors_binary_df[~days_where_sth_was_logged]

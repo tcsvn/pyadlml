@@ -1,10 +1,10 @@
 import numpy as np
-from hbhmm.hmm._hmm_base import HiddenMarkovModel
+from hbhmm.hmm._hmm_base import HMM
 
 
-class HMM_Scaled(HiddenMarkovModel):
+class HMM_Scaled(HMM):
     def __init__(self, latent_variables, observations, em_dist, initial_dist=None):
-        HiddenMarkovModel.__init__(
+        HMM.__init__(
             self,
             latent_variables,
             observations,
@@ -103,16 +103,16 @@ class HMM_Scaled(HiddenMarkovModel):
             cn[n] = self.calc_cn(alpha[n-1], cn[:n], xn)
             #print(cn)
             #if cn[n] == 0.0:
-            if 0.0 == cn[n]:
-                print('-0'*100)
-                print(cn)
-                s = ""
-                for i, item in enumerate(cn):
-                    s += str(item) + " , "
-                    if i % 3  == 0: s += "\n"
-                print(s)
-                print('-0'*100)
-                raise ValueError
+            #if 0.0 == cn[n]:
+            #    print('-0'*100)
+            #    print(cn)
+            #    s = ""
+            #    for i, item in enumerate(cn):
+            #        s += str(item) + " , "
+            #        if i % 3  == 0: s += "\n"
+            #    print(s)
+            #    print('-0'*100)
+            #    raise ValueError
             #print('--')
             for idx, zn in enumerate(self._z):
                 sum = self.single_prob(0.)
@@ -205,7 +205,7 @@ class HMM_Scaled(HiddenMarkovModel):
     def gamma(self, n_alpha, n_beta):
         return n_alpha*n_beta
 
-
+    # todo change order of parameters, that obs_seq is first
     def xi(self, alpha, beta, cn, obs_seq):
         """
         xi[n][k1][k2] = probability of being
