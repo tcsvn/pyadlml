@@ -50,17 +50,99 @@ class TestMIT16_410F10(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_sampling(self):
+    def test_predict_probs_xnp(self):
+        steps = 100
+        # get arbitra subset of trained sequence
+        obs_seq = self.obs_seq
+        self.hmm.train(obs_seq, steps=steps)
+        self.hmm_log.train(obs_seq, steps=steps)
+        self.hmm_log_scaled.train(obs_seq, steps=steps)
+
+        obs_seq = self.obs_seq[3:7]
+        print(obs_seq)
+
+
+    def test_predict_next_obs(self):
+        """
+        tests the function that creates a labeled sequence given a few observations
+        :return:
+        """
+        steps = 100
+        # get arbitra subset of trained sequence
+        obs_seq = self.obs_seq
+        self.hmm.train(obs_seq, steps=steps)
+        self.hmm_log.train(obs_seq, steps=steps)
+        self.hmm_log_scaled.train(obs_seq, steps=steps)
+
+        obs_seq = self.obs_seq[3:7]
+        print(obs_seq)
+
+        next_obs_hmm = self.hmm.sample_observations(obs_seq, 4)
+        next_obs_hmm_log = self.hmm_log.sample_observations(obs_seq, 4)
+        next_obs_hmm_log_scaled = self.hmm_log_scaled.sample_observations(obs_seq, 1)
+
+
+        self.hmm_log.set_str_exp(True)
+        self.hmm_log_scaled.set_str_exp(True)
+        print('#'*100)
+        #print(next_obs_hmm)
+        #print(next_obs_hmm_log)
+        print(next_obs_hmm_log_scaled)
+        print('~'*100)
+        print('~'*100)
+        #print('~'*100)
+        #print(self.hmm)
+        #print(next_obs_hmm)
+        #print('*'*100)
+        #print(self.hmm_log)
+        #print(next_obs_hmm_log)
+        print('*'*100)
+        print(self.hmm_log_scaled)
+        print(next_obs_hmm_log_scaled)
+        print('*'*100)
+        print()
+
+
+    def test_predict_probs_xnp1(self):
+        """
+        tests the function that creates a lattice of probs for the next observation
+        :return:
+        """
         steps = 100
         obs_seq = self.obs_seq
 
-        self.hmm.train(obs_seq, steps=steps, q_fct=True)
-        self.hmm_log.train(obs_seq, steps=steps, q_fct=True)
-        self.hmm_log_scaled.train(obs_seq, steps=steps, q_fct=True)
-        self.hmm2.train(self.obs_seq2, iterations=steps)
+        self.hmm.train(obs_seq, steps=steps)
+        self.hmm_log.train(obs_seq, steps=steps)
+        self.hmm_log_scaled.train(obs_seq, steps=steps)
+
+        obs_seq = self.obs_seq[3:7]
+        next_obs_lattice_hmm = self.hmm.predict_probs_xnp(obs_seq)
+        next_obs_lattice_hmm_log = self.hmm_log.predict_probs_xnp(obs_seq)
+        next_obs_lattice_hmm_log_scaled = self.hmm_log_scaled.predict_probs_xnp(obs_seq)
+        print(next_obs_lattice_hmm)
+        s = "["
+        for item in next_obs_lattice_hmm_log:
+            s += str(Probs.prob_to_norm(item)) + ", "
+        print(s + "]")
+        s = "["
+        for item in next_obs_lattice_hmm_log_scaled:
+            s += str(Probs.prob_to_norm(item)) + ", "
+        print(s + "]")
+
+        # test sum to 1
+        prob_sum_hmm = next_obs_lattice_hmm.sum()
+        prob_sum_hmm_log = Probs.prob_to_norm(next_obs_lattice_hmm_log.sum())
+        prob_sum_hmm_log_sc = Probs.prob_to_norm(next_obs_lattice_hmm_log_scaled.sum())
+        self.assertAlmostEqual(1, prob_sum_hmm)
+        self.assertAlmostEqual(1, prob_sum_hmm_log)
+        self.assertAlmostEqual(1, prob_sum_hmm_log_sc)
 
 
     def test_viterbi_latt(self):
+        """
+        equivalent to test classify multi in model if last slice is used
+        :return:
+        """
         steps = 100
         obs_seq = self.obs_seq
 

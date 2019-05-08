@@ -6,6 +6,8 @@ from graphviz import Digraph
 import pandas as pd
 import math
 
+from hbhmm.hmm.probs import Probs
+
 CNT = 1
 
 class State():
@@ -1029,14 +1031,11 @@ class HMM():
         Seite 642 eq: (13.44)
         observed sequence predict the next observation x_(n+1)
         :param seq: sequence of observations
-        :return: array for each xnp1 with the probability values of xn
+        :return: observation label
         """
         obs_probs = self.predict_probs_xnp(seq)
 
-        #print(np.exp(obs_probs))
-        #print(obs_probs)
         max_index = obs_probs.argmax()
-        #print(max_index)
         return self._o[max_index]
 
     def _calc_alpha_beta_probx(self, obs_seq):
@@ -1107,7 +1106,7 @@ class HMM():
     def min_num(self):
         """
         is used to model negative infinity especially when to
-        calculate ln(0.0)
+        calculate ln(0.0) as used in viterbi
         :return:
             the smallest number known to python
         """
@@ -1193,7 +1192,6 @@ class HMM():
         """
         N = len(obs_seq)
         obs_list = []
-        state_seq = []
         #if obs_seq != []:
         #    vit_seq = self.viterbi(obs_seq)
         #    state_seq.append(vit_seq[len(vit_seq)-1])
@@ -1209,14 +1207,45 @@ class HMM():
             #print('*'*10)
         else:
             for i in range(n):
-                xnp_slice = self.predict_probs_xnp(obs_seq)
-                # sample
-                xnp_cum = xnp_slice.cumsum()
-                epsilon = self._rand_prob()
-                idx = self._sel_idx_val_in_range(xnp_cum, epsilon)
-                xnp = self._o[idx]
-                obs_list.append(xnp_slice)
+                print('-'*100)
+                print('obs_seq:\t',obs_seq)
+                xnp = self.sample_next_obs(obs_seq)
+                obs_list.append(xnp)
+                obs_seq.append(xnp)
         return obs_list
+
+    def sample_next_obs(self, obs_seq):
+        """
+        computes the probabilities of the next observations given
+        a sequence and draws a random sample observation from the
+        distribution
+        :param obs_seq:
+        :return: observation label
+        """
+        xnp_slice = self.predict_probs_xnp(obs_seq)
+        #print('xnp_slice: \n', xnp_slice)
+        #print('xnp_slice: \n', Probs.print_np_arr(xnp_slice))
+        print('xnp_slice: \n')
+        s = "["
+        for val in  xnp_slice:
+            s += str(np.exp(val)) + ", "
+        print(s + "]")
+        # sample
+        xnp_cum = xnp_slice.cumsum()
+        #print('xnp_cum: \n', Probs.print_np_arr(xnp_cum))
+        print('xnp_cum: \n') #Probs.print_np_arr(xnp_cum))
+        s = "["
+        for val in xnp_cum:
+            s += str(np.exp(val)) + ", "
+        print(s + "]")
+        epsilon = self._rand_prob()
+        #print('epsilon:', epsilon)
+        print('epsilon:', np.exp(epsilon))
+        idx = self._sel_idx_val_in_range(xnp_cum, epsilon)
+        print('idx:\t', idx)
+        xnp = self._o[idx]
+        print(xnp)
+        return xnp
 
     def _rand_prob(self):
         """
@@ -1228,7 +1257,8 @@ class HMM():
 
     def _sel_idx_val_in_range(self, arr, eps):
         """
-        selects a value from array
+        calculates the index of the intervalls the value epsilon
+        falls into
         :param arr:
         :param eps:
         :return:

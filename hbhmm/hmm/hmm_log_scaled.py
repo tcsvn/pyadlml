@@ -281,11 +281,6 @@ class HMM_log_scaled(HMM_Scaled):
         return first_term + second_term + third_term
 
 
-    def _calc_alpha_beta_probx(self, obs_seq):
-        alpha, cn = self.forward(obs_seq)
-        beta = self.backward(obs_seq, cn)
-        prob_x = self._prob_X(cn)
-        return alpha, beta, prob_x
 
     def viterbi_latt(self, seq):
         """
