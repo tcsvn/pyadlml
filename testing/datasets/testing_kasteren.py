@@ -3,8 +3,8 @@ import unittest
 from hassbrain_algorithm.controller import Controller
 from hassbrain_algorithm.controller import Dataset
 from hbhmm.hmm._hmm_base import HMM
-#from hassbrain_algorithm.algorithms.hmm import ProbabilityMassFunction
-#from testing.testing import DiscreteHMM
+from hbhmm.hmm.distributions import ProbabilityMassFunction
+from hbhmm.testing.hmm2.discrete.DiscreteHMM import DiscreteHMM
 
 import pandas as pd
 
@@ -63,7 +63,7 @@ class TestKasteren(unittest.TestCase):
         #obs_seq = self._kast_obj.get_train_seq()[:19]  # [:250]#[:19]
         obs_seq = self._kast_obj.get_train_seq()[:250]  # [:250]#[:19]
         print(math.exp(hmm2.forwardbackward(obs_seq)))
-        hmm2.mapB(obs_seq)
+        hmm2._mapB(obs_seq)
         hmm2.train(obs_seq, training_steps)
         print(hmm2.pi)
         print(hmm2.A)

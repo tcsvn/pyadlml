@@ -60,27 +60,47 @@ class TestMIT16_410F10(unittest.TestCase):
         self.hmm2.train(self.obs_seq2, iterations=steps)
 
 
-    def test_viterbi_mat(self):
+    def test_viterbi_latt(self):
         steps = 100
         obs_seq = self.obs_seq
-        obs_seq = [NULL, LA, NY]
 
         self.hmm.train(obs_seq, steps=steps, q_fct=True)
         self.hmm_log.train(obs_seq, steps=steps, q_fct=True)
         self.hmm_log_scaled.train(obs_seq, steps=steps, q_fct=True)
         self.hmm2.train(self.obs_seq2, iterations=steps)
 
-        hmm_vit_state = self.hmm.viterbi_mat(obs_seq)
-        #hmm_log_vit_state = self.hmm_log.viterbi_mat(obs_seq)
-        hmm_loc_scaled_vit_state = self.hmm_log_scaled.viterbi_mat(obs_seq)
 
-        print(hmm_vit_state)
+        obs_seq = [NULL, LA, NY]
+        hmm_vit_latt = self.hmm.viterbi_latt(obs_seq)
+        hmm_log_vit_latt = self.hmm_log.viterbi_latt(obs_seq)
+        hmm_log_scaled_vit_latt = self.hmm_log_scaled.viterbi_latt(obs_seq)
+        print('#'*100)
+        print('hmm_vit_latt: \n', hmm_vit_latt)
         print('~'*10)
-        print(hmm_loc_scaled_vit_state)
+        print('hmm_lg_sc_latt: \n', hmm_log_scaled_vit_latt)
+        Probs.print_np_arr(hmm_log_scaled_vit_latt)
+        Probs.print_np_arr(np.array([1]))
+        #print('hmm_lg_sc_latt: \n', Probs.np_prob_arr2exp(hmm_loc_scaled_vit_latt))
+        #print(hmm_loc_scaled_vit_state)
         print('*'*10)
-        self.print_arr_exp(hmm_vit_state)
+        self.print_arr_exp(hmm_vit_latt)
         print('~'*10)
-        self.print_arr_exp(hmm_loc_scaled_vit_state)
+        self.print_arr_exp(hmm_log_vit_latt)
+        print('~'*10)
+        self.print_arr_exp(hmm_log_scaled_vit_latt)
+        print('*'*10)
+        for i in range(len(hmm_vit_latt)):
+            for j in range(len(hmm_vit_latt[0])):
+                rnd = 7
+                print('-')
+                #print(hmm_vit_latt[i][j], hmm_log_scaled_vit_latt[i][j])
+                #print(round(hmm_vit_latt[i][j], rnd), round(hmm_log_vit_latt[i][j], rnd))
+                #print('-')
+                print(hmm_log_vit_latt[i][j], hmm_log_scaled_vit_latt[i][j])
+                print(round(hmm_log_vit_latt[i][j], rnd), round(hmm_log_scaled_vit_latt[i][j], rnd))
+                print('-')
+                #self.assertAlmostEqual(hmm_vit_latt[i][j], float(hmm_log_vit_latt[i][j]))
+                self.assertAlmostEqual(hmm_log_vit_latt[i][j], hmm_log_scaled_vit_latt[i][j], 2)
 
     def print_arr_exp(self, arr):
         for item in arr:
@@ -97,11 +117,13 @@ class TestMIT16_410F10(unittest.TestCase):
 
         hmm_vit_state = self.hmm.viterbi(obs_seq)
         hmm_log_vit_state = self.hmm_log.viterbi(obs_seq)
-        hmm_loc_scaled_vit_state = self.hmm_log_scaled.viterbi(obs_seq)
+        hmm_log_scaled_vit_state = self.hmm_log_scaled.viterbi(obs_seq)
 
-        print(hmm_vit_state)
-        print(hmm_log_vit_state)
-        print(hmm_loc_scaled_vit_state)
+        #print(hmm_vit_state)
+        #print(hmm_log_vit_state)
+        #print(hmm_log_scaled_vit_state)
+        self.assertTrue(np.array_equal(hmm_vit_state, hmm_log_vit_state))
+        self.assertTrue(np.array_equal(hmm_vit_state, hmm_log_scaled_vit_state))
 
 
     def test_verify_A(self):
@@ -163,13 +185,13 @@ class TestMIT16_410F10(unittest.TestCase):
         hmm_log_beta = self.hmm_log.backward(obs_seq)
         hmm_log_gamma = self.hmm_log.gamma(hmm_log_alpha, hmm_log_beta)
         hmm_log_pi = self.hmm_log.new_pi(hmm_log_gamma)
-        hmm_log_pi = Probs.np_prob_arr2R(hmm_log_pi)
+        hmm_log_pi = Probs.np_prob_arr2exp(hmm_log_pi)
 
         hmm_sc_alpha, cn = self.hmm_log_scaled.forward(obs_seq)
         hmm_sc_beta = self.hmm_log_scaled.backward(obs_seq, cn)
         hmm_sc_gamma = self.hmm_log_scaled.gamma(hmm_sc_alpha, hmm_sc_beta)
         hmm_sc_pi = self.hmm_log_scaled.new_pi(hmm_sc_gamma)
-        hmm_sc_pi = Probs.np_prob_arr2R(hmm_sc_pi)
+        hmm_sc_pi = Probs.np_prob_arr2exp(hmm_sc_pi)
 
         hmm2_gamma = self.hmm2._calcgamma(self.hmm2._calcxi(
             self.obs_seq2,
@@ -207,14 +229,14 @@ class TestMIT16_410F10(unittest.TestCase):
         hmm_log_beta = self.hmm_log.backward(obs_seq)
         hmm_log_xi = self.hmm_log.xi(obs_seq, hmm_log_alpha, hmm_log_beta)
         hmm_log_new_A = self.hmm_log.new_A(obs_seq, hmm_log_xi)
-        hmm_log_new_A = Probs.np_prob_arr2R(hmm_log_new_A)
+        hmm_log_new_A = Probs.np_prob_arr2exp(hmm_log_new_A)
 
 
         hmm_sc_alpha, cn = self.hmm_log_scaled.forward(obs_seq)
         hmm_sc_beta = self.hmm_log_scaled.backward(obs_seq, cn)
         hmm_sc_xi = self.hmm_log_scaled.xi(hmm_sc_alpha, hmm_sc_beta, cn, obs_seq)
         hmm_sc_new_A = self.hmm_log_scaled.new_A(obs_seq, hmm_sc_xi)
-        hmm_sc_new_A = Probs.np_prob_arr2R(hmm_sc_new_A)
+        hmm_sc_new_A = Probs.np_prob_arr2exp(hmm_sc_new_A)
 
 
         hmm2_xi = self.hmm2._calcxi(
@@ -249,13 +271,13 @@ class TestMIT16_410F10(unittest.TestCase):
         beta = self.hmm_log.backward(self.obs_seq)
         gamma = self.hmm_log.gamma(alpha, beta)
         new_em = self.hmm_log.new_emissions(gamma, obs_seq)
-        new_em = Probs.np_prob_arr2R(new_em)
+        new_em = Probs.np_prob_arr2exp(new_em)
 
         hmm_sc_alpha, cn = self.hmm_log_scaled.forward(obs_seq)
         hmm_sc_beta = self.hmm_log_scaled.backward(obs_seq, cn)
         hmm_sc_gamma = self.hmm_log_scaled.gamma(hmm_sc_alpha, hmm_sc_beta)
         hmm_sc_new_em = self.hmm_log_scaled.new_emissions(hmm_sc_gamma, obs_seq)
-        hmm_sc_new_em = Probs.np_prob_arr2R(hmm_sc_new_em)
+        hmm_sc_new_em = Probs.np_prob_arr2exp(hmm_sc_new_em)
 
 
         hmm_alpha = self.hmm.forward(obs_seq)
@@ -481,7 +503,7 @@ class TestMIT16_410F10(unittest.TestCase):
         beta = self.hmm_log_scaled.backward(obs_seq, cn)
         prob_X = self.hmm_log_scaled._prob_X(cn)
         xi = self.hmm_log_scaled.xi(alpha, beta, cn, obs_seq)
-        xi = Probs.np_prob_arr2R(xi)
+        xi = Probs.np_prob_arr2exp(xi)
 
         hmm2_xi = self.hmm2._calcxi(
             obs_seq2,
@@ -510,7 +532,7 @@ class TestMIT16_410F10(unittest.TestCase):
         alpha, cn = self.hmm_log_scaled.forward(obs_seq)
         beta = self.hmm_log_scaled.backward(obs_seq, cn)
         gamma = self.hmm_log_scaled.gamma(alpha, beta)
-        gamma = Probs.np_prob_arr2R(gamma)
+        gamma = Probs.np_prob_arr2exp(gamma)
 
         hmm2_gamma = self.hmm2._calcgamma(self.hmm2._calcxi(
                 self.obs_seq2,
@@ -539,7 +561,7 @@ class TestMIT16_410F10(unittest.TestCase):
 
         alpha, cn = self.hmm_log_scaled.forward(obs_seq)
         alpha = self.hmm_log_scaled.nalpha_to_alpha(alpha, cn)
-        alpha = Probs.np_prob_arr2R(alpha)
+        alpha = Probs.np_prob_arr2exp(alpha)
 
         hmm2_alpha = self.hmm2._calcalpha(obs_seq2)
 
@@ -557,7 +579,7 @@ class TestMIT16_410F10(unittest.TestCase):
         alpha, cn = self.hmm_log_scaled.forward(obs_seq)
         beta = self.hmm_log_scaled.backward(obs_seq, cn)
         beta = self.hmm_log_scaled.nbeta_to_beta(beta, cn)
-        beta = Probs.np_prob_arr2R(beta)
+        beta = Probs.np_prob_arr2exp(beta)
         hmm2_beta = self.hmm2._calcbeta(obs_seq2)
 
         for n in range(0, len(obs_seq)):

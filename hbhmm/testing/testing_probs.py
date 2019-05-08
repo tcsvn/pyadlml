@@ -1,6 +1,7 @@
 import unittest
 from hbhmm.hmm.probs import Probs
 from hbhmm.hmm.probs import LOGZERO
+import numpy as np
 
 
 class TestProbs(unittest.TestCase):
@@ -19,6 +20,22 @@ class TestProbs(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_arr2norm(self):
+        test_prop_arr_1d_0 = np.array([self.p0, self.p1, self.p2, self.p3], dtype=object)
+        true_norm_arr_1d_0 = np.array([self.x0, self.x1, self.x2, self.x3])
+        test_norm_arr_1d_0 = Probs.np_prob_arr2exp(test_prop_arr_1d_0)
+        for true_item, test_item  in zip(true_norm_arr_1d_0, test_norm_arr_1d_0):
+            self.assertAlmostEqual(true_item, test_item, 15)
+
+        test_prop_arr_2d_0 = np.array([[self.p0, self.p1],
+                                      [self.p2, self.p3]], dtype=object)
+        true_norm_arr_2d_0 = np.array([[self.x0, self.x1],
+                                      [self.x2, self.x3]])
+        test_norm_arr_2d_0 = Probs.np_prob_arr2exp(test_prop_arr_2d_0)
+
+        for true_row, test_row  in zip(true_norm_arr_2d_0, test_norm_arr_2d_0):
+            for true_item, test_item in zip(true_row, test_row):
+                self.assertAlmostEqual(true_item, test_item, 15)
 
     def test_init_zero(self):
         x4 = 0.000

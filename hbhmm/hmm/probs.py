@@ -28,7 +28,12 @@ class Probs(object):
             self.prob = self.eln(prob)
 
     @classmethod
-    def np_prob_arr2R(cls, np_arr):
+    def np_prob_arr2exp(cls, np_arr):
+        """
+        converts an array full of probs into
+        :param np_arr:
+        :return:
+        """
         return np.exp(np_arr).astype(np.float, copy=False)
 
 
@@ -224,7 +229,18 @@ class Probs(object):
     #    X = np.array(X)
     #    c = max(X)
     #    return np.log(np.sum(np.exp(X-c))) + c
-
+    @classmethod
+    def print_np_arr(cls, arr : np.ndarray):
+        shape = arr.shape
+        if len(shape) == 1:
+            print(arr)
+        if len(shape) == 2:
+            for row in arr:
+                s = "[ "
+                for item in row:
+                    s += str(item) + " "
+                s += "] "
+                print(s)
 
     def __mul__(self, other):
         """

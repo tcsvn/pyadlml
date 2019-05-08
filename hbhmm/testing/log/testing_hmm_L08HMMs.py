@@ -47,7 +47,7 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         beta = self.hmm.backward(obs_seq)
         prob_X = self.hmm._prob_X(alpha, beta)
         xi = self.hmm.xi(obs_seq, alpha, beta, prob_X)
-        xi = Probs.np_prob_arr2R(xi)
+        xi = Probs.np_prob_arr2exp(xi)
 
         self.hmm2._mapB(obs_seq2)
         hmm2_alpha = self.hmm2._calcalpha(obs_seq2)
@@ -65,7 +65,7 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         alpha = self.hmm.forward(obs_seq)
         beta = self.hmm.backward(obs_seq)
         gamma = self.hmm.gamma(alpha, beta)
-        gamma = Probs.np_prob_arr2R(gamma)
+        gamma = Probs.np_prob_arr2exp(gamma)
 
         hmm2_alpha = self.hmm2._calcalpha(obs_seq)
         hmm2_beta = self.hmm2._calcbeta(obs_seq)
@@ -99,7 +99,7 @@ class TestHmmExampleL08HMM(unittest.TestCase):
                            [ 0.21, 0.7, 1.0]]).T
 
         beta = self.hmm.backward(obs_seq)
-        beta = Probs.np_prob_arr2R(beta)
+        beta = Probs.np_prob_arr2exp(beta)
 
         hmm2_beta = self.hmm2._calcbeta(self.obs_seq2)
 
@@ -116,7 +116,7 @@ class TestHmmExampleL08HMM(unittest.TestCase):
         obs_seq = [A,A,B]
         alpha = self.hmm.forward(obs_seq)
         hmm2_alpha = self.hmm2._calcalpha(self.obs_seq2)
-        alpha = Probs.np_prob_arr2R(alpha)
+        alpha = Probs.np_prob_arr2exp(alpha)
         #self.assertTrue(np.allclose(result, alpha))
         self.assertTrue(np.allclose(hmm2_alpha, alpha))
 

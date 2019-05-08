@@ -276,7 +276,14 @@ class HMM_log(HMM):
 
         return first_term + second_term + third_term
 
-    def viterbi(self, seq):
+    def min_num(self):
+        """
+        smallest value that a probability can have
+        :return:
+        """
+        return Probs(0.0)
+
+    def viterbi_latt(self, seq):
         """
         computes the most likely path of states that generated the given sequence
         :param seq: list or np.array of symbols
@@ -286,29 +293,25 @@ class HMM_log(HMM):
         K = len(self._z)
         # matrix contains the log lattice probs for each step
         omega = self.np_zeros((N, K))
-         # init
+        # init
         for k, z1 in enumerate(self._z):
             prob_x_given_z = self.prob_x_given_z(seq[0], z1)
             prob_z1 = self.prob_z1(z1)
 
-            omega[0][k] = prob_z1 + prob_x_given_z
+            omega[0][k] = prob_z1 * prob_x_given_z
 
         # recursion
         for n in range(1, N):
             xnp1 = seq[n]
             for k, zn in enumerate(self._z):
+                prob_x_given_z = self.prob_x_given_z(xnp1, zn)
                 # find max
                 max_future_prob = self.viterbi_max(omega[n-1], xnp1)
-                prob_x_given_z = self.prob_x_given_z(xnp1, zn)
 
-                omega[n][k] = prob_x_given_z  \
-                                + max_future_prob
+                omega[n][k] = prob_x_given_z \
+                              * max_future_prob
+        return omega
 
-        # backtrack the most probable states and generate a list
-        res = []
-        for n in omega:
-            res.append(self._z[n.argmax()])
-        return res
 
     def viterbi_max(self, omega_slice, xnp1):
         """
@@ -321,7 +324,7 @@ class HMM_log(HMM):
         max = self.min_num()
         for k, zn in enumerate(self._z):
             prob_x_given_z = self.prob_x_given_z(xnp1, zn)
-            val = prob_x_given_z + omega_slice[k]
+            val = prob_x_given_z * omega_slice[k]
 
             if val > max:
                 max = val

@@ -96,7 +96,7 @@ class Controller():
         self._model.model_init(self._dataset)
 
     def register_benchmark(self):
-        from hassbrain_algorithm.benchmarks.benchmark import Benchmark
+        from hassbrain_algorithm.benchmark import Benchmark
         self._bench = Benchmark(self._model)
         self._model.register_benchmark(self._bench)
 

@@ -1115,36 +1115,38 @@ class HMM():
         return -sys.maxsize
 
     def viterbi(self, seq):
-        omega = self.viterbi_mat(seq)
-        print('~'*100)
-        print(omega)
-        print('~'*100)
+        """
+        computes the most likely path of states that generated the given sequence
+        :param seq: list or np.array of symbols
+        :return: list of states
+        """
+        omega = self.viterbi_latt(seq)
         # backtrack the most probable states and generate a list
         res = []
         for n in omega:
             res.append(self._z[n.argmax()])
         return res
 
-    def viterbi_mat(self, seq):
+    def viterbi_latt(self, obs_seq):
         """
-        computes the most likely path of states that generated the given sequence
-        :param seq: list or np.array of symbols
-        :return: list of states
+        computes the lattice of  
+        :param obs_seq: 
+        :return: 
         """
-        N = len(seq)
+        N = len(obs_seq)
         K = len(self._z)
         # matrix contains the log lattice probs for each step
         omega = self.np_zeros((N, K))
         # init
         for k, z1 in enumerate(self._z):
-            prob_x_given_z = self.prob_x_given_z(seq[0], z1)
+            prob_x_given_z = self.prob_x_given_z(obs_seq[0], z1)
             prob_z1 = self.prob_z1(z1)
 
             omega[0][k] = self._ln_ext(prob_z1) + self._ln_ext(prob_x_given_z)
 
         # recursion
         for n in range(1, N):
-            xnp1 = seq[n]
+            xnp1 = obs_seq[n]
             for k, zn in enumerate(self._z):
                 # find max
                 max_future_prob = self.viterbi_max(omega[n-1], xnp1)

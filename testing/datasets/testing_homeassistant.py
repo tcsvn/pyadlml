@@ -49,9 +49,9 @@ class TestHomeassistant(unittest.TestCase):
 
     def test_print_hass_df(self):
         df = self.hass_obj._df
-        print(df)
+        print(DatasetHomeassistant.format_mat_full(df))
 
-    def test_hasmaps(self):
+    def test_hashmaps(self):
         print(self.hass_obj.get_state_lbl_hashmap())
         print(self.hass_obj.get_obs_lbl_hashmap())
 

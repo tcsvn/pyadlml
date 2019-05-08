@@ -107,7 +107,7 @@ class TestMIT16_410F10(unittest.TestCase):
         beta = self.hmm_log.backward(self.obs_seq)
         gamma = self.hmm_log.gamma(alpha, beta)
         hmm_new_pi = self.hmm_log.new_pi(gamma)
-        hmm_new_pi = Probs.np_prob_arr2R(hmm_new_pi)
+        hmm_new_pi = Probs.np_prob_arr2exp(hmm_new_pi)
 
 
         hmm2_gamma = self.hmm2._calcgamma(self.hmm2._calcxi(
@@ -129,7 +129,7 @@ class TestMIT16_410F10(unittest.TestCase):
         beta = self.hmm_log.backward(obs_seq)
         xi = self.hmm_log.xi(obs_seq, alpha, beta)
         hmm_new_A = self.hmm_log.new_A(obs_seq, xi)
-        hmm_new_A = Probs.np_prob_arr2R(hmm_new_A)
+        hmm_new_A = Probs.np_prob_arr2exp(hmm_new_A)
 
 
         hmm2_xi = self.hmm2._calcxi(
@@ -152,7 +152,7 @@ class TestMIT16_410F10(unittest.TestCase):
         beta = self.hmm_log.backward(self.obs_seq)
         gamma = self.hmm_log.gamma(alpha, beta)
         new_em = self.hmm_log.new_emissions(gamma, obs_seq)
-        new_em = Probs.np_prob_arr2R(new_em)
+        new_em = Probs.np_prob_arr2exp(new_em)
 
         hmm_alpha = self.hmm.forward(obs_seq)
         hmm_beta = self.hmm.backward(obs_seq)
@@ -392,7 +392,7 @@ class TestMIT16_410F10(unittest.TestCase):
         beta = self.hmm_log.backward(obs_seq)
         prob_X = self.hmm_log._prob_X(alpha, beta)
         xi = self.hmm_log.xi(obs_seq, alpha, beta, prob_X)
-        xi = Probs.np_prob_arr2R(xi)
+        xi = Probs.np_prob_arr2exp(xi)
 
         hmm2_xi = self.hmm2._calcxi(
             obs_seq2,
@@ -421,7 +421,7 @@ class TestMIT16_410F10(unittest.TestCase):
         alpha = self.hmm_log.forward(obs_seq)
         beta = self.hmm_log.backward(obs_seq)
         gamma = self.hmm_log.gamma(alpha, beta)
-        gamma = Probs.np_prob_arr2R(gamma)
+        gamma = Probs.np_prob_arr2exp(gamma)
 
         hmm2_gamma = self.hmm2._calcgamma(self.hmm2._calcxi(
                 self.obs_seq2,
@@ -456,7 +456,7 @@ class TestMIT16_410F10(unittest.TestCase):
         obs_seq2 = self.obs_seq2
 
         alpha = self.hmm_log.forward(obs_seq)
-        alpha = Probs.np_prob_arr2R(alpha)
+        alpha = Probs.np_prob_arr2exp(alpha)
 
         hmm2_alpha = self.hmm2._calcalpha(obs_seq2)
 
@@ -472,7 +472,7 @@ class TestMIT16_410F10(unittest.TestCase):
         obs_seq = self.obs_seq
         obs_seq2 = self.obs_seq2
         beta = self.hmm_log.backward(obs_seq)
-        beta = Probs.np_prob_arr2R(beta)
+        beta = Probs.np_prob_arr2exp(beta)
         hmm2_beta = self.hmm2._calcbeta(obs_seq2)
 
         for n in range(0, len(obs_seq)):

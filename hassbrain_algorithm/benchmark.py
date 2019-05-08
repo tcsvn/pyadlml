@@ -88,7 +88,7 @@ class Benchmark():
             if self._accuracy is not None:
                 s += "\tAccuracy: \t" + str(self.get_accuracy()) + "\n"
             if self._precision is not None:
-                s += "\tPrecision: \t" + str(self.get_accuracy()) + "\n"
+                s += "\tPrecision: \t" + str(self.get_precision()) + "\n"
             if self._recall is not None:
                 s += "\tRecall: \t" + str(self.get_recall()) + "\n"
             if self._f1_score is not None:

@@ -110,7 +110,7 @@ class ModelHMM(Model):
         :param obs_seq:
         :return:
         """
-        omega = self._hmm.viterbi_mat(obs_seq)
+        omega = self._hmm.viterbi_latt(obs_seq)
         N = len(obs_seq) - 1
         K = len(self._hmm._z)
         #print('*'*10)
@@ -195,7 +195,7 @@ class ModelHMM_log(ModelHMM):
         :param obs_seq:
         :return:
         """
-        omega = self._hmm.viterbi_mat(obs_seq)
+        omega = self._hmm.viterbi_latt(obs_seq)
         N = len(obs_seq) - 1
         K = len(self._hmm._z)
         #print('*'*10)

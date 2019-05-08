@@ -287,7 +287,7 @@ class HMM_log_scaled(HMM_Scaled):
         prob_x = self._prob_X(cn)
         return alpha, beta, prob_x
 
-    def viterbi_mat(self, seq):
+    def viterbi_latt(self, seq):
         """
         computes the most likely path of states that generated the given sequence
         :param seq: list or np.array of symbols
@@ -302,7 +302,7 @@ class HMM_log_scaled(HMM_Scaled):
             prob_x_given_z = self.prob_x_given_z(seq[0], z1)
             prob_z1 = self.prob_z1(z1)
 
-            omega[0][k] = prob_z1 + prob_x_given_z
+            omega[0][k] = prob_z1 * prob_x_given_z
 
         # recursion
         for n in range(1, N):
@@ -311,11 +311,15 @@ class HMM_log_scaled(HMM_Scaled):
                 prob_x_given_z = self.prob_x_given_z(xnp1, zn)
                 # find max
                 max_future_prob = self.viterbi_max(omega[n-1], xnp1)
-
-                omega[n][k] = prob_x_given_z \
-                              + max_future_prob
+                omega[n][k] = prob_x_given_z * max_future_prob
         return omega
 
+    def min_num(self):
+        """
+        smallest value that a probability can have
+        :return:
+        """
+        return Probs(0.0)
 
     def viterbi_max(self, omega_slice, xnp1):
         """
@@ -328,8 +332,7 @@ class HMM_log_scaled(HMM_Scaled):
         max = self.min_num()
         for k, zn in enumerate(self._z):
             prob_x_given_z = self.prob_x_given_z(xnp1, zn)
-            val = prob_x_given_z + omega_slice[k]
-
+            val = prob_x_given_z * omega_slice[k]
             if val > max:
                 max = val
         return max

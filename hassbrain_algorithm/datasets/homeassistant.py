@@ -218,8 +218,8 @@ class DatasetHomeassistant(DataInterfaceHMM):
         #print('dev_lbl_hm: ', self._sensor_label_hashmap)
         #print('dev_lbl_rev_hm: ', self._sensor_label_reverse_hashmap)
 
-
-    def _format_mat_full(self, x):
+    @classmethod
+    def format_mat_full(cls, x):
         pd.set_option('display.max_rows', len(x))
         pd.set_option('display.max_columns', None)
         pd.set_option('display.width', 2000)
@@ -272,9 +272,9 @@ class DatasetHomeassistant(DataInterfaceHMM):
         self._df = db.master_df
         from detective.core import HassbrainCompatibleDevices
 
-        # query
-        # todo don't load only binary sensors
+        # load multiple sensors, (lights, switches and binary_sensors as things with on of value)
         sensors_binary_df = HassbrainCompatibleDevices(db.master_df).data
+        self._df = sensors_binary_df
         #self._print_full(sensors_binary_df.head(20))
         #print('~'*10)
         #self._print_full(self._df.head(20))
