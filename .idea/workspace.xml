@@ -2,33 +2,106 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5b1d4ea4-e931-4d76-bc0c-90991e2dc3e4" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hassbrain_algorithm/models/pendigits.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbhmm/hmm/hmm_log_scaled.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbhmm/testing/log_scaled/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbhmm/testing/log_scaled/testing_hmm_final_MIT16_410F10_lec21.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hassbrain_algorithm/datasets/homeassistant.py" beforeDir="false" afterPath="$PROJECT_DIR$/hassbrain_algorithm/datasets/homeassistant.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hassbrain_algorithm/models/hmm.py" beforeDir="false" afterPath="$PROJECT_DIR$/hassbrain_algorithm/models/hmm.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hassbrain_algorithm/models/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/hassbrain_algorithm/models/_model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbhmm/hmm/Probs.py" beforeDir="false" afterPath="$PROJECT_DIR$/hbhmm/hmm/probs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbhmm/hmm/_hmm_base.py" beforeDir="false" afterPath="$PROJECT_DIR$/hbhmm/hmm/_hmm_base.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbhmm/hmm/_hmm_log.py" beforeDir="false" afterPath="$PROJECT_DIR$/hbhmm/hmm/hmm_log.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbhmm/hmm/hmm_scaled.py" beforeDir="false" afterPath="$PROJECT_DIR$/hbhmm/hmm/hmm_scaled.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbhmm/testing/base/testing_hmm_L08HMMs.py" beforeDir="false" afterPath="$PROJECT_DIR$/hbhmm/testing/base/testing_hmm_L08HMMs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbhmm/testing/base/testing_hmm_MIT16_410F10_lec21.py" beforeDir="false" afterPath="$PROJECT_DIR$/hbhmm/testing/base/testing_hmm_MIT16_410F10_lec21.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbhmm/testing/base/testing_hmm_wiki.py" beforeDir="false" afterPath="$PROJECT_DIR$/hbhmm/testing/base/testing_hmm_wiki.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbhmm/testing/log/testing_hmm_L08HMMs.py" beforeDir="false" afterPath="$PROJECT_DIR$/hbhmm/testing/log/testing_hmm_L08HMMs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbhmm/testing/log/testing_hmm_MIT16_410F10_lec21.py" beforeDir="false" afterPath="$PROJECT_DIR$/hbhmm/testing/log/testing_hmm_MIT16_410F10_lec21.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbhmm/testing/log/testing_hmm_wiki.py" beforeDir="false" afterPath="$PROJECT_DIR$/hbhmm/testing/log/testing_hmm_wiki.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbhmm/testing/scaled/testing_hmm_scaled_L08HMMs.py" beforeDir="false" afterPath="$PROJECT_DIR$/hbhmm/testing/scaled/testing_hmm_scaled_L08HMMs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbhmm/testing/scaled/testing_hmm_scaled_MIT16_410F10_lec21.py" beforeDir="false" afterPath="$PROJECT_DIR$/hbhmm/testing/scaled/testing_hmm_scaled_MIT16_410F10_lec21.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbhmm/testing/testing_hmm_final_MIT16_410F10_lec21.py" beforeDir="false" afterPath="$PROJECT_DIR$/hbhmm/testing/log/testing_hmm_final_MIT16_410F10_lec21.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbhmm/testing/testing_probs.py" beforeDir="false" afterPath="$PROJECT_DIR$/hbhmm/testing/testing_probs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/datasets/testing_kasteren.py" beforeDir="false" afterPath="$PROJECT_DIR$/testing/datasets/testing_kasteren.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/models/testing_homeassistant.py" beforeDir="false" afterPath="$PROJECT_DIR$/testing/models/testing_homeassistant.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/models/testing_kasteren.py" beforeDir="false" afterPath="$PROJECT_DIR$/testing/models/testing_kasteren.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/models/testing_pendigits.py" beforeDir="false" afterPath="$PROJECT_DIR$/testing/models/testing_pendigits.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/casas_aruba/README" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/casas_aruba/aruba.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/casas_aruba/aruba.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/casas_aruba/data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/homeassistant/activities.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/homeassistant/github_ha_v2.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/homeassistant/home-assistant_v2.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/homeassistant/home-assistant_v2.db.old" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/homeassistant/labels.yaml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/@actstruct/actstruct.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/@actstruct/display.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/@actstruct/horzcat.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/@actstruct/subsasgn.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/@actstruct/subsref.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/@actstruct/vertcat.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/@sensorstruct/display.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/@sensorstruct/horzcat.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/@sensorstruct/sensorstruct.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/@sensorstruct/subsasgn.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/@sensorstruct/subsref.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/@sensorstruct/vertcat.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/README.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/convert2ChangeFeatMat.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/convert2LastFiredFeatMat.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/convert2RawFeatMat.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/kasterenActData.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/kasterenDataset.mat" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/kasterenSenseData.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/runScript.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/sensorGUI/getLabel.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/sensorGUI/initplot.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/sensorGUI/lineClickCallback.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/sensorGUI/plotas.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/sensorGUI/plotss.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/sensorGUI/sec2Time.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/sensorGUI/sensorGUI.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/sensorGUI/sensorGUIHandler.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/kasteren/sensorGUI/timeTicks.m" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-10-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-11-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-12-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-13-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-14-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-15-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-16-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-17-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-18-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-19-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-20-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-21-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-22-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-23-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-24-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-25-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-26-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-27-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-28-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-29-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-3-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-30-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-31-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-4-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-5-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-6-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-7-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-8-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/1-9-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/2-1-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/2-10-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/2-11-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/2-12-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/2-13-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/2-14-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/2-15-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/2-16-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/2-17-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/2-18-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/2-19-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/2-2-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/2-20-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/2-3-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/2-4-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/2-5-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/2-6-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/2-7-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/2-8-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/2-9-2005-RAW.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/MavPad-Mapping.pdf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mavpad2005/README" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mitlab/readme.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mitlab/subject1/Activities.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mitlab/subject1/activities_data.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mitlab/subject1/sensors.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mitlab/subject2/Activities.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mitlab/subject2/activities_data.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/mitlab/subject2/sensors.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/pendigits/pendigits-orig.tes" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/pendigits/pendigits-orig.tra" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/hassbrain_algorithm/benchmarks/__init__.py" beforeDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -212,17 +285,26 @@
     <select />
   </component>
   <component name="FileEditorManager">
-    <splitter split-orientation="horizontal" split-proportion="0.5322812">
+    <splitter split-orientation="horizontal" split-proportion="0.41588446">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/hbhmm/hmm/_hmm_base.py">
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/hassbrain_algorithm/datasets/homeassistant.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="680">
-                  <caret line="1162" column="32" selection-start-line="1162" selection-start-column="32" selection-end-line="1162" selection-end-column="32" />
+                <state relative-caret-position="2074">
+                  <caret line="206" selection-start-line="206" selection-end-line="206" />
                   <folding>
-                    <element signature="e#0#14#0" expanded="true" />
+                    <element signature="e#0#30#0" expanded="true" />
                   </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/hassbrain_algorithm/models/hmm.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="381">
+                  <caret line="209" column="16" selection-start-line="209" selection-start-column="16" selection-end-line="209" selection-end-column="16" />
                 </state>
               </provider>
             </entry>
@@ -231,23 +313,11 @@
       </split-first>
       <split-second>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/hbhmm/hmm/hmm_log_scaled.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="303">
-                  <caret line="305" selection-start-line="305" selection-end-line="305" />
-                  <folding>
-                    <element signature="e#0#33#0" expanded="true" />
-                  </folding>
-                </state>
-              </provider>
-            </entry>
-          </file>
           <file pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/hbhmm/testing/log_scaled/testing_hmm_final_MIT16_410F10_lec21.py">
+            <entry file="file://$PROJECT_DIR$/testing/models/testing_homeassistant.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="653">
-                  <caret line="76" column="8" selection-start-line="76" selection-start-column="8" selection-end-line="76" selection-end-column="8" />
+                <state relative-caret-position="291">
+                  <caret line="274" column="31" selection-start-line="274" selection-start-column="31" selection-end-line="274" selection-end-column="31" />
                   <folding>
                     <element signature="e#0#15#0" expanded="true" />
                   </folding>
@@ -283,16 +353,11 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/algorithms/hmm/testing/log/testing_hmm_MIT16_410F10_lec21.py" />
-        <option value="$PROJECT_DIR$/algorithms/hmm/_hmm_base.py" />
-        <option value="$PROJECT_DIR$/algorithms/hmm/_hmm_log.py" />
-        <option value="$PROJECT_DIR$/setup.py" />
         <option value="$PROJECT_DIR$/testing/benchmarks/testing_bench.py" />
         <option value="$PROJECT_DIR$/hassbrain_algorithm/algorithms/hmm/Probs.py" />
         <option value="$PROJECT_DIR$/testing/hmm/testing_hmm_final_MIT16_410F10_lec21.py" />
         <option value="$PROJECT_DIR$/testing/benchmarks/testing_kasteren.py" />
         <option value="$PROJECT_DIR$/hassbrain_algorithm/benchmarks/config.yaml" />
-        <option value="$PROJECT_DIR$/datasets/homeassistant/activities.csv" />
         <option value="$PROJECT_DIR$/hassbrain_algorithm/benchmarks/benchmark.py" />
         <option value="$PROJECT_DIR$/hassbrain_algorithm/algorithms/hmm/_hmm_log.py" />
         <option value="$PROJECT_DIR$/hassbrain_algorithm/benchmarks/datasets/kasteren.py" />
@@ -320,27 +385,32 @@
         <option value="$PROJECT_DIR$/hbhmm/testing/base/testing_hmm_wiki.py" />
         <option value="$PROJECT_DIR$/hbhmm/testing/base/testing_hmm_L08HMMs.py" />
         <option value="$PROJECT_DIR$/hbhmm/testing/base/testing_hmm_MIT16_410F10_lec21.py" />
-        <option value="$PROJECT_DIR$/hbhmm/testing/testing_probs.py" />
         <option value="$PROJECT_DIR$/hbhmm/hmm/_hmm_log.py" />
         <option value="$PROJECT_DIR$/hbhmm/testing/hmm2/_BaseHMM.py" />
-        <option value="$PROJECT_DIR$/hbhmm/hmm/probs.py" />
         <option value="$PROJECT_DIR$/hassbrain_algorithm/models/pendigits.py" />
         <option value="$PROJECT_DIR$/hbhmm/hmm/hmm_scaled.py" />
         <option value="$PROJECT_DIR$/testing/models/testing_kasteren.py" />
-        <option value="$PROJECT_DIR$/hbhmm/hmm/hmm_log.py" />
         <option value="$PROJECT_DIR$/testing/models/testing_homeassistant.py" />
-        <option value="$PROJECT_DIR$/hassbrain_algorithm/models/hmm.py" />
-        <option value="$PROJECT_DIR$/hassbrain_algorithm/datasets/homeassistant.py" />
+        <option value="$PROJECT_DIR$/hbhmm/testing/log/testing_hmm_final_MIT16_410F10_lec21.py" />
+        <option value="$PROJECT_DIR$/hbhmm/testing/testing_probs.py" />
+        <option value="$PROJECT_DIR$/hbhmm/hmm/probs.py" />
         <option value="$PROJECT_DIR$/hbhmm/hmm/_hmm_base.py" />
-        <option value="$PROJECT_DIR$/hbhmm/hmm/hmm_log_scaled.py" />
         <option value="$PROJECT_DIR$/hbhmm/testing/log_scaled/testing_hmm_final_MIT16_410F10_lec21.py" />
+        <option value="$PROJECT_DIR$/testing/datasets/testing_kasteren.py" />
+        <option value="$PROJECT_DIR$/hassbrain_algorithm/datasets/homeassistant.py" />
+        <option value="$PROJECT_DIR$/datasets/homeassistant/activities.csv" />
+        <option value="$PROJECT_DIR$/testing/datasets/testing_homeassistant.py" />
+        <option value="$PROJECT_DIR$/hbhmm/hmm/hmm_log_scaled.py" />
+        <option value="$PROJECT_DIR$/hbhmm/hmm/hmm_log.py" />
+        <option value="$PROJECT_DIR$/hassbrain_algorithm/benchmark.py" />
+        <option value="$PROJECT_DIR$/hassbrain_algorithm/models/hmm.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="10" />
     <option name="y" value="15" />
-    <option name="width" value="1899" />
+    <option name="width" value="467" />
     <option name="height" value="1054" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
@@ -351,7 +421,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -359,62 +428,11 @@
               <item name="hassbrain_algorithm" type="b2602c69:ProjectViewProjectNode" />
               <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
             </path>
-            <path>
-              <item name="hassbrain_algorithm" type="b2602c69:ProjectViewProjectNode" />
-              <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
-              <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="hassbrain_algorithm" type="b2602c69:ProjectViewProjectNode" />
-              <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
-              <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
-              <item name="datasets" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="hassbrain_algorithm" type="b2602c69:ProjectViewProjectNode" />
-              <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
-              <item name="hbhmm" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="hassbrain_algorithm" type="b2602c69:ProjectViewProjectNode" />
-              <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
-              <item name="hbhmm" type="462c0819:PsiDirectoryNode" />
-              <item name="hmm" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="hassbrain_algorithm" type="b2602c69:ProjectViewProjectNode" />
-              <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
-              <item name="hbhmm" type="462c0819:PsiDirectoryNode" />
-              <item name="testing" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="hassbrain_algorithm" type="b2602c69:ProjectViewProjectNode" />
-              <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
-              <item name="hbhmm" type="462c0819:PsiDirectoryNode" />
-              <item name="testing" type="462c0819:PsiDirectoryNode" />
-              <item name="log_scaled" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="hassbrain_algorithm" type="b2602c69:ProjectViewProjectNode" />
-              <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
-              <item name="testing" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="hassbrain_algorithm" type="b2602c69:ProjectViewProjectNode" />
-              <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
-              <item name="testing" type="462c0819:PsiDirectoryNode" />
-              <item name="datasets" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="hassbrain_algorithm" type="b2602c69:ProjectViewProjectNode" />
-              <item name="hassbrain_algorithm" type="462c0819:PsiDirectoryNode" />
-              <item name="testing" type="462c0819:PsiDirectoryNode" />
-              <item name="models" type="462c0819:PsiDirectoryNode" />
-            </path>
           </expand>
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -425,23 +443,23 @@
     <property name="WebServerToolWindowPanel.toolwindow.show.date" value="false" />
     <property name="WebServerToolWindowPanel.toolwindow.show.permissions" value="false" />
     <property name="WebServerToolWindowPanel.toolwindow.show.size" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/hbhmm/testing/log" />
-      <recent name="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
-      <recent name="$PROJECT_DIR$/hbhmm" />
-      <recent name="$PROJECT_DIR$/hbhmm/testing" />
-      <recent name="$PROJECT_DIR$/testing" />
-    </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
       <recent name="$PROJECT_DIR$/hbhmm" />
       <recent name="$PROJECT_DIR$/testing/benchmarks/datasets" />
       <recent name="$PROJECT_DIR$/datasets/homeassistant" />
       <recent name="$PROJECT_DIR$/testing/benchmarks" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/hassbrain_algorithm" />
+      <recent name="$PROJECT_DIR$/hbhmm/testing/log" />
+      <recent name="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
+      <recent name="$PROJECT_DIR$/hbhmm" />
+      <recent name="$PROJECT_DIR$/hbhmm/testing" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -456,7 +474,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python tests.Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi_mat">
+  <component name="RunManager" selected="Python tests.Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_classify_multi">
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <module name="hassbrain_algorithm" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -479,95 +497,95 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_sampling" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+    <configuration name="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_bench_modelHMM" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
       <module name="hassbrain_algorithm" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/testing/models" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_sampling&quot;" />
+      <option name="_new_target" value="&quot;testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_bench_modelHMM&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+    <configuration name="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_classify" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
       <module name="hassbrain_algorithm" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/testing/models" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi&quot;" />
+      <option name="_new_target" value="&quot;testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_classify&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi2" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+    <configuration name="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_classify_multi" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
       <module name="hassbrain_algorithm" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/testing/models" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi2&quot;" />
+      <option name="_new_target" value="&quot;testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_classify_multi&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi_mat" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+    <configuration name="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_load_modelHMM" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
       <module name="hassbrain_algorithm" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/testing/models" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi_mat&quot;" />
+      <option name="_new_target" value="&quot;testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_load_modelHMM&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Unittests for testing_homeassistant.TestHomeassistant.test_get_test_seq" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+    <configuration name="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_train_modelHMM" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
       <module name="hassbrain_algorithm" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/testing/datasets" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/testing/models" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;testing_homeassistant.TestHomeassistant.test_get_test_seq&quot;" />
+      <option name="_new_target" value="&quot;testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_train_modelHMM&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python tests.Unittests for testing_homeassistant.TestHomeassistant.test_get_test_seq" />
-      <item itemvalue="Python tests.Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi" />
-      <item itemvalue="Python tests.Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_sampling" />
-      <item itemvalue="Python tests.Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi2" />
-      <item itemvalue="Python tests.Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi_mat" />
+      <item itemvalue="Python tests.Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_bench_modelHMM" />
+      <item itemvalue="Python tests.Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_load_modelHMM" />
+      <item itemvalue="Python tests.Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_train_modelHMM" />
+      <item itemvalue="Python tests.Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_classify" />
+      <item itemvalue="Python tests.Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_classify_multi" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python tests.Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi_mat" />
-        <item itemvalue="Python tests.Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi2" />
-        <item itemvalue="Python tests.Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi" />
-        <item itemvalue="Python tests.Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_sampling" />
-        <item itemvalue="Python tests.Unittests for testing_homeassistant.TestHomeassistant.test_get_test_seq" />
+        <item itemvalue="Python tests.Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_classify_multi" />
+        <item itemvalue="Python tests.Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_classify" />
+        <item itemvalue="Python tests.Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_bench_modelHMM" />
+        <item itemvalue="Python tests.Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_train_modelHMM" />
+        <item itemvalue="Python tests.Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_load_modelHMM" />
       </list>
     </recent_temporary>
   </component>
@@ -651,43 +669,45 @@
       <workItem from="1557149629639" duration="301000" />
       <workItem from="1557150076922" duration="11226000" />
       <workItem from="1557223801180" duration="15923000" />
+      <workItem from="1557320570300" duration="1968000" />
+      <workItem from="1557322631307" duration="6060000" />
     </task>
     <servers />
   </component>
   <component name="TestHistory">
-    <history-entry file="Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_viterbi2 - 2019.05.07 at 16h 41m 21s.xml">
-      <configuration name="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi2" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_homeassistant_TestHomeassistantModelHMMLogScaled_test_bench_modelHMM - 2019.05.08 at 16h 58m 43s.xml">
+      <configuration name="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_bench_modelHMM" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_viterbi_mat - 2019.05.07 at 16h 41m 35s.xml">
-      <configuration name="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi_mat" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_homeassistant_TestHomeassistantModelHMMLogScaled_test_bench_modelHMM - 2019.05.08 at 16h 59m 00s.xml">
+      <configuration name="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_bench_modelHMM" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_viterbi_mat - 2019.05.07 at 16h 41m 55s.xml">
-      <configuration name="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi_mat" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_homeassistant_TestHomeassistantModelHMMLogScaled_test_bench_modelHMM - 2019.05.08 at 16h 59m 39s.xml">
+      <configuration name="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_bench_modelHMM" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_viterbi_mat - 2019.05.07 at 16h 43m 43s.xml">
-      <configuration name="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi_mat" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_homeassistant_TestHomeassistantModelHMMLogScaled_test_bench_modelHMM - 2019.05.08 at 17h 00m 08s.xml">
+      <configuration name="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_bench_modelHMM" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_viterbi_mat - 2019.05.07 at 16h 45m 20s.xml">
-      <configuration name="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi_mat" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_homeassistant_TestHomeassistantModelHMMLogScaled_test_bench_modelHMM - 2019.05.08 at 17h 01m 59s.xml">
+      <configuration name="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_bench_modelHMM" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_viterbi_mat - 2019.05.07 at 16h 46m 56s.xml">
-      <configuration name="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi_mat" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_homeassistant_TestHomeassistantModelHMMLogScaled_test_bench_modelHMM - 2019.05.08 at 17h 02m 26s.xml">
+      <configuration name="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_bench_modelHMM" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_viterbi_mat - 2019.05.07 at 16h 49m 43s.xml">
-      <configuration name="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi_mat" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_homeassistant_TestHomeassistantModelHMMLogScaled_test_bench_modelHMM - 2019.05.08 at 17h 03m 05s.xml">
+      <configuration name="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_bench_modelHMM" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_viterbi_mat - 2019.05.07 at 16h 50m 15s.xml">
-      <configuration name="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi_mat" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_homeassistant_TestHomeassistantModelHMMLogScaled_test_bench_modelHMM - 2019.05.08 at 17h 05m 08s.xml">
+      <configuration name="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_bench_modelHMM" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_viterbi_mat - 2019.05.07 at 16h 50m 50s.xml">
-      <configuration name="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi_mat" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_homeassistant_TestHomeassistantModelHMMLogScaled_test_classify - 2019.05.08 at 17h 06m 07s.xml">
+      <configuration name="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_classify" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_viterbi_mat - 2019.05.07 at 16h 51m 06s.xml">
-      <configuration name="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi_mat" configurationId="tests" />
+    <history-entry file="Unittests_for_testing_homeassistant_TestHomeassistantModelHMMLogScaled_test_classify_multi - 2019.05.08 at 17h 07m 02s.xml">
+      <configuration name="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_classify_multi" configurationId="tests" />
     </history-entry>
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="579066000" />
+    <option name="totallyTimeSpent" value="587094000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -699,10 +719,35 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="10" y="33" width="1899" height="1036" extended-state="6" />
-    <editor active="true" />
+    <frame x="10" y="15" width="947" height="1054" extended-state="6" />
     <layout>
-      <window_info content_ui="combo" x="1875" y="519" width="326" height="917" id="Project" order="0" sideWeight="0.49945474" weight="0.16729628" />
+      <window_info active="true" content_ui="combo" x="1875" y="519" width="326" height="917" id="Project" order="0" sideWeight="0.49945474" visible="true" weight="0.2863485" />
+      <window_info id="Structure" order="1" sideWeight="0.50054526" side_tool="true" weight="0.22470076" />
+      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info x="1095" y="524" width="1890" height="1001" id="Run" order="3" sideWeight="0.49945474" weight="0.3151646" />
+      <window_info x="964" y="33" width="943" height="1034" id="Debug" order="4" type="WINDOWED" weight="0.34113166" />
+      <window_info id="Python Console" order="5" weight="0.30383164" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Cvs" order="1" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="2" weight="0.4" />
+      <window_info anchor="bottom" id="Docker" order="3" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Event Log" order="4" sideWeight="0.5003381" side_tool="true" weight="0.3594625" />
+      <window_info anchor="bottom" id="Database Changes" order="5" weight="0.32978722" />
+      <window_info anchor="bottom" id="TODO" order="6" weight="0.3287234" />
+      <window_info anchor="bottom" id="Find" order="7" weight="0.3212766" />
+      <window_info anchor="bottom" id="File Transfer" order="8" sideWeight="0.49966192" weight="0.20084865" />
+      <window_info anchor="bottom" id="Terminal" order="9" weight="0.123644255" />
+      <window_info anchor="bottom" id="Version Control" order="10" weight="0.32765958" />
+      <window_info anchor="right" id="Commander" order="0" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" x="965" y="40" width="470" height="1025" id="Remote Host" order="3" type="WINDOWED" weight="0.3297062" />
+      <window_info anchor="right" x="1932" y="33" width="623" height="1034" id="SciView" order="4" type="WINDOWED" weight="0.32154515" />
+      <window_info anchor="right" id="Database" order="5" weight="0.3291959" />
+      <window_info anchor="right" x="0" y="0" width="337" height="637" id="Documentation" order="6" side_tool="true" weight="0.19315895" />
+    </layout>
+    <layout-to-restore>
+      <window_info content_ui="combo" x="1875" y="519" width="326" height="917" id="Project" order="0" sideWeight="0.49945474" weight="0.13923368" />
       <window_info id="Structure" order="1" sideWeight="0.50054526" side_tool="true" weight="0.22470076" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info active="true" x="1095" y="524" width="1890" height="1001" id="Run" order="3" sideWeight="0.49945474" visible="true" weight="0.24770643" />
@@ -725,32 +770,6 @@
       <window_info anchor="right" x="965" y="40" width="470" height="1025" id="Remote Host" order="3" type="WINDOWED" weight="0.3297062" />
       <window_info anchor="right" x="1932" y="33" width="623" height="1034" id="SciView" order="4" type="WINDOWED" weight="0.32154515" />
       <window_info anchor="right" id="Database" order="5" weight="0.3291959" />
-      <window_info anchor="right" x="0" y="0" width="337" height="637" id="Documentation" order="6" side_tool="true" weight="0.19315895" />
-    </layout>
-    <layout-to-restore>
-      <window_info content_ui="combo" x="1875" y="519" width="326" height="917" id="Project" order="0" sideWeight="0.49945474" weight="0.140313" />
-      <window_info id="Structure" order="1" sideWeight="0.50054526" side_tool="true" weight="0.22470076" />
-      <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info active="true" x="1095" y="524" width="1890" height="1001" id="Run" order="3" sideWeight="0.49945474" visible="true" weight="0.3685915" />
-      <window_info x="15" y="362" width="1050" height="442" id="Debug" order="4" type="WINDOWED" weight="0.34113166" />
-      <window_info id="Python Console" order="5" weight="0.30405405" />
-      <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="Cvs" order="1" weight="0.25" />
-      <window_info anchor="bottom" id="Inspection" order="2" weight="0.4" />
-      <window_info anchor="bottom" id="Docker" order="3" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Database Changes" order="4" />
-      <window_info anchor="bottom" id="Event Log" order="5" sideWeight="0.5003381" side_tool="true" weight="0.3594625" />
-      <window_info anchor="bottom" id="Find" order="6" weight="0.324295" />
-      <window_info anchor="bottom" id="TODO" order="7" weight="0.3293348" />
-      <window_info anchor="bottom" id="Version Control" order="8" weight="0.3281075" />
-      <window_info anchor="bottom" id="Terminal" order="9" weight="0.32715377" />
-      <window_info anchor="bottom" id="File Transfer" order="10" sideWeight="0.49966192" weight="0.20084865" />
-      <window_info anchor="right" id="Commander" order="0" weight="0.4" />
-      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
-      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
-      <window_info anchor="right" x="965" y="40" width="470" height="1025" id="Remote Host" order="3" type="WINDOWED" weight="0.3297062" />
-      <window_info anchor="right" x="15" y="814" width="1050" height="464" id="SciView" order="4" type="WINDOWED" weight="0.32154515" />
-      <window_info anchor="right" id="Database" order="5" weight="0.3297062" />
       <window_info anchor="right" x="0" y="0" width="337" height="637" id="Documentation" order="6" side_tool="true" weight="0.19315895" />
     </layout-to-restore>
   </component>
@@ -828,7 +847,7 @@
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_getter_emission.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_getter_emission Coverage Results" MODIFIED="1557161407419" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/hmm/log" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_gamma_xi_relation.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_gamma_xi_relation Coverage Results" MODIFIED="1557162482812" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing/log" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_gamma.coverage" NAME="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_gamma Coverage Results" MODIFIED="1557166073195" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistant_test_get_test_seq.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistant.test_get_test_seq Coverage Results" MODIFIED="1557235587364" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/datasets" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistant_test_get_test_seq.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistant.test_get_test_seq Coverage Results" MODIFIED="1557326681807" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/datasets" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10.coverage" NAME="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10 Coverage Results" MODIFIED="1557228603051" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10__1_.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10 (1) Coverage Results" MODIFIED="1557162960695" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing/base" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistant_test_load_modelHMM.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistant.test_load_modelHMM Coverage Results" MODIFIED="1555578855786" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
@@ -855,9 +874,10 @@
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_abs_TestController_test_train_model.coverage" NAME="Unittests for testing_kasteren_abs.TestController.test_train_model Coverage Results" MODIFIED="1557159658960" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_probs_TestPMF_test_neq.coverage" NAME="Unittests for testing_probs.TestPMF.test_neq Coverage Results" MODIFIED="1557163133142" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_probs_TestPMF_test_lt.coverage" NAME="Unittests for testing_probs.TestPMF.test_lt Coverage Results" MODIFIED="1557163128944" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistantModelHMMLogScaled_test_train_modelHMM.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_train_modelHMM Coverage Results" MODIFIED="1557327067392" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/models" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_probs_TestPMF_test_isub.coverage" NAME="Unittests for testing_probs.TestPMF.test_isub Coverage Results" MODIFIED="1557163139687" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_training.coverage" NAME="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_training Coverage Results" MODIFIED="1557166965521" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_viterbi_mat.coverage" NAME="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi_mat Coverage Results" MODIFIED="1557240665767" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_viterbi_mat.coverage" NAME="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi_mat Coverage Results" MODIFIED="1557320993003" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_backward.coverage" NAME="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_backward Coverage Results" MODIFIED="1557165941381" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_probs_TestPMF_test_pow.coverage" NAME="Unittests for testing_probs.TestPMF.test_pow Coverage Results" MODIFIED="1557163144119" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_abs_TestController_test_init_model.coverage" NAME="Unittests for testing_kasteren_abs.TestController.test_init_model Coverage Results" MODIFIED="1555588653415" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
@@ -869,12 +889,13 @@
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_pendigits_TestPendigitsModel_test_generate_obs_n_plot.coverage" NAME="Unittests for testing_pendigits.TestPendigitsModel.test_generate_obs_n_plot Coverage Results" MODIFIED="1554888849652" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_probs_TestPMF_test_eq.coverage" NAME="Unittests for testing_probs.TestPMF.test_eq Coverage Results" MODIFIED="1557163126487" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestController_test_load_model.coverage" NAME="Unittests for testing_kasteren.TestController.test_load_model Coverage Results" MODIFIED="1557229171775" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/models" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistantModelHMMLogScaled_test_classify_multi.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_classify_multi Coverage Results" MODIFIED="1557233639568" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/models" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistantModelHMMLogScaled_test_classify_multi.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_classify_multi Coverage Results" MODIFIED="1557328008132" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/models" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_probs_TestPMF_test_mul.coverage" NAME="Unittests for testing_probs.TestPMF.test_mul Coverage Results" MODIFIED="1557163146128" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_bench_TestController_test_ctrl_train_seqs.coverage" NAME="Unittests for testing_bench.TestController.test_ctrl_train_seqs Coverage Results" MODIFIED="1554879208276" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_getter_emission.coverage" NAME="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_getter_emission Coverage Results" MODIFIED="1557165645130" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_probs_TestPMF_test_ne.coverage" NAME="Unittests for testing_probs.TestPMF.test_ne Coverage Results" MODIFIED="1557163125243" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_viterbi2.coverage" NAME="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi2 Coverage Results" MODIFIED="1557240071807" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistantModelHMMLogScaled_test_bench_modelHMM.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_bench_modelHMM Coverage Results" MODIFIED="1557327893054" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/models" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_viterbi2.coverage" NAME="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi2 Coverage Results" MODIFIED="1557325701938" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_sampling_initial.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_sampling_initial Coverage Results" MODIFIED="1556028193684" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/hmm/base" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_training_q.coverage" NAME="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_training_q Coverage Results" MODIFIED="1557227968540" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestController_test_ctrl_train_seqs.coverage" NAME="Unittests for testing_kasteren.TestController.test_ctrl_train_seqs Coverage Results" MODIFIED="1557230135377" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/models" />
@@ -885,6 +906,7 @@
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistantModel_test_train_modelHMM.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistantModel.test_train_modelHMM Coverage Results" MODIFIED="1557153232919" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_L08HMMs_TestHmmExampleL08HMM_test_prob_X.coverage" NAME="Unittests for testing_hmm_L08HMMs.TestHmmExampleL08HMM.test_prob_X Coverage Results" MODIFIED="1557161427180" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/hmm/log" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_bench_TestController_test_train_model_kasteren.coverage" NAME="Unittests for testing_bench.TestController.test_train_model_kasteren Coverage Results" MODIFIED="1554878021812" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistantModelHMMLogScaled_test_classify.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_classify Coverage Results" MODIFIED="1557327952481" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/models" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestKasteren_test_hashmaps.coverage" NAME="Unittests for testing_kasteren.TestKasteren.test_hashmaps Coverage Results" MODIFIED="1555334295770" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestKasteren_test_bench_modelHMM.coverage" NAME="Unittests for testing_homeassistant.TestKasteren.test_bench_modelHMM Coverage Results" MODIFIED="1555528312512" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistant_test_train_modelHMM.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistant.test_train_modelHMM Coverage Results" MODIFIED="1555578884062" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
@@ -892,8 +914,10 @@
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestKasteren_test_load_modelHMM.coverage" NAME="Unittests for testing_homeassistant.TestKasteren.test_load_modelHMM Coverage Results" MODIFIED="1555524540527" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistantModel_test_pred_next_obs_multi.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistantModel.test_pred_next_obs_multi Coverage Results" MODIFIED="1556805963365" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_getter_transition.coverage" NAME="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_getter_transition Coverage Results" MODIFIED="1557165642448" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_probs_TestProbs_test_arr2norm.coverage" NAME="Unittests for testing_probs.TestProbs.test_arr2norm Coverage Results" MODIFIED="1557323352749" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_probs_TestPMF_test_iadd.coverage" NAME="Unittests for testing_probs.TestPMF.test_iadd Coverage Results" MODIFIED="1557163142036" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistant_test_loaded_seq.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistant.test_loaded_seq Coverage Results" MODIFIED="1555579186361" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_viterbi_latt.coverage" NAME="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_viterbi_latt Coverage Results" MODIFIED="1557325514827" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistantModelHMMLogScaled.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled Coverage Results" MODIFIED="1557233201293" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/models" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_training_with_qfct.coverage" NAME="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_training_with_qfct Coverage Results" MODIFIED="1557228126406" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_MIT16_410F10_lec21_TestMIT16_410F10_test_sample.coverage" NAME="Unittests for testing_hmm_MIT16_410F10_lec21.TestMIT16_410F10.test_sample Coverage Results" MODIFIED="1556022049920" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/hmm/base" />
@@ -905,18 +929,18 @@
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistantModel_test_classify_multi.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistantModel.test_classify_multi Coverage Results" MODIFIED="1556901184243" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistantModel_test_pred_next_obs.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistantModel.test_pred_next_obs Coverage Results" MODIFIED="1556034303137" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistant_test_hasmaps.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistant.test_hasmaps Coverage Results" MODIFIED="1557152943883" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistantModelHMMLogScaled_test_load_modelHMM.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_load_modelHMM Coverage Results" MODIFIED="1557230408674" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/models" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistantModelHMMLogScaled_test_load_modelHMM.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_load_modelHMM Coverage Results" MODIFIED="1557327043128" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/models" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_probs_TestPMF_test_ge.coverage" NAME="Unittests for testing_probs.TestPMF.test_ge Coverage Results" MODIFIED="1557163122553" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_probs_TestPMF_test_gt.coverage" NAME="Unittests for testing_probs.TestPMF.test_gt Coverage Results" MODIFIED="1557163124004" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_training_seqs.coverage" NAME="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_training_seqs Coverage Results" MODIFIED="1557227084904" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistantModelHMMLogScaled_test_load_custom_lists_modelHMM.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_load_custom_lists_modelHMM Coverage Results" MODIFIED="1557230810908" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/models" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistantModelHMMLogScaled_test_load_custom_lists_modelHMM.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistantModelHMMLogScaled.test_load_custom_lists_modelHMM Coverage Results" MODIFIED="1557326968358" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/models" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_kasteren_TestController_test_train_model.coverage" NAME="Unittests for testing_kasteren.TestController.test_train_model Coverage Results" MODIFIED="1557230035194" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/models" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_bench_TestController_test_ctrl_presentation.coverage" NAME="Unittests for testing_bench.TestController.test_ctrl_presentation Coverage Results" MODIFIED="1554878081515" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_forward.coverage" NAME="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_forward Coverage Results" MODIFIED="1557166026990" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing/log_scaled" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_hmm_final_MIT16_410F10_lec21_TestMIT16_410F10_test_forward.coverage" NAME="Unittests for testing_hmm_final_MIT16_410F10_lec21.TestMIT16_410F10.test_forward Coverage Results" MODIFIED="1557322413552" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing/log" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestKasteren.coverage" NAME="Unittests for testing_homeassistant.TestKasteren Coverage Results" MODIFIED="1555346039135" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_probs_TestPMF_test_ipow.coverage" NAME="Unittests for testing_probs.TestPMF.test_ipow Coverage Results" MODIFIED="1557163135360" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistant_test_get_train_seqs.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistant.test_get_train_seqs Coverage Results" MODIFIED="1557152998118" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
-    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistant_test_print_hass_df.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistant.test_print_hass_df Coverage Results" MODIFIED="1557152906427" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistant_test_get_train_seqs.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistant.test_get_train_seqs Coverage Results" MODIFIED="1557326664210" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/datasets" />
+    <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistant_test_print_hass_df.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistant.test_print_hass_df Coverage Results" MODIFIED="1557326655376" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/datasets" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistantModel_test_classify.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistantModel.test_classify Coverage Results" MODIFIED="1556031110338" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_homeassistant_TestHomeassistantModel_test_bench_modelHMM.coverage" NAME="Unittests for testing_homeassistant.TestHomeassistantModel.test_bench_modelHMM Coverage Results" MODIFIED="1557153245501" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/testing/benchmarks" />
     <SUITE FILE_PATH="coverage/hassbrain_algorithm$Unittests_for_testing_probs_TestPMF_test_idiv.coverage" NAME="Unittests for testing_probs.TestPMF.test_idiv Coverage Results" MODIFIED="1557163136675" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/hbhmm/testing" />
@@ -993,30 +1017,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/testing/datasets/testing_kasteren.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-208">
-          <caret line="173" selection-start-line="173" selection-end-line="173" />
-          <folding>
-            <element signature="e#0#15#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/hassbrain_algorithm/config.yaml">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="240">
           <caret line="16" selection-start-line="16" selection-end-line="16" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/hassbrain_algorithm/benchmarks/benchmark.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-30">
-          <caret line="55" selection-start-line="55" selection-end-line="55" />
-          <folding>
-            <element signature="e#0#14#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1105,30 +1109,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/hbhmm/testing/testing_probs.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="495">
-          <caret line="39" column="16" selection-start-line="39" selection-start-column="16" selection-end-line="39" selection-end-column="16" />
-          <folding>
-            <element signature="e#0#15#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/hbhmm/testing/base/testing_hmm_MIT16_410F10_lec21.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="635">
           <caret line="149" column="17" lean-forward="true" selection-start-line="149" selection-start-column="17" selection-end-line="149" selection-end-column="17" />
-          <folding>
-            <element signature="e#0#15#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/hbhmm/testing/log/testing_hmm_final_MIT16_410F10_lec21.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="5670">
-          <caret line="378" column="8" selection-start-line="378" selection-start-column="8" selection-end-line="378" selection-end-column="8" />
           <folding>
             <element signature="e#0#15#0" expanded="true" />
           </folding>
@@ -1184,16 +1168,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/testing/models/testing_kasteren.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="690">
-          <caret line="46" column="30" selection-start-line="46" selection-start-column="30" selection-end-line="46" selection-end-column="30" />
-          <folding>
-            <element signature="e#0#15#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/hassbrain_algorithm/datasets/kasteren.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="780">
@@ -1214,43 +1188,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/hbhmm/hmm/hmm_log.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-3100">
-          <caret line="68" selection-start-line="68" selection-end-line="68" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/datasets/homeassistant/activities.csv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
-          <caret line="10" column="36" selection-start-line="10" selection-start-column="36" selection-end-line="10" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/testing/datasets/testing_homeassistant.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="92">
-          <caret line="25" column="28" selection-start-line="25" selection-start-column="28" selection-end-line="25" selection-end-column="28" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/hassbrain_algorithm/models/_model.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="484">
           <caret line="158" selection-start-line="158" selection-end-line="158" />
           <folding>
             <element signature="e#149#202#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/testing/models/testing_homeassistant.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-540">
-          <caret line="111" column="25" selection-start-line="111" selection-start-column="25" selection-end-line="111" selection-end-column="25" />
-          <folding>
-            <element signature="e#0#15#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -1265,37 +1208,77 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/hassbrain_algorithm/datasets/homeassistant.py">
+    <entry file="file://$PROJECT_DIR$/hbhmm/testing/log/testing_hmm_final_MIT16_410F10_lec21.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4536">
-          <caret line="444" column="17" selection-start-line="444" selection-start-column="17" selection-end-line="444" selection-end-column="17" />
+        <state relative-caret-position="219">
+          <caret line="459" selection-start-line="459" selection-end-line="459" />
           <folding>
-            <element signature="e#0#30#0" expanded="true" />
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/testing/datasets/testing_kasteren.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="870">
+          <caret line="58" lean-forward="true" selection-start-line="58" selection-end-line="58" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/testing/models/testing_kasteren.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="690">
+          <caret line="46" column="30" selection-start-line="46" selection-start-column="30" selection-end-line="46" selection-end-column="30" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/hbhmm/testing/testing_probs.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="480">
+          <caret line="33" selection-start-line="33" selection-end-line="33" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/hbhmm/hmm/probs.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="473">
-          <caret line="379" column="17" selection-start-line="379" selection-start-column="17" selection-end-line="379" selection-end-column="17" />
+        <state relative-caret-position="611">
+          <caret line="256" selection-start-line="256" selection-end-line="256" />
           <folding>
             <element signature="e#97#118#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/hassbrain_algorithm/models/hmm.py">
+    <entry file="file://$PROJECT_DIR$/hbhmm/hmm/hmm_log.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="407">
-          <caret line="211" column="41" selection-start-line="211" selection-start-column="41" selection-end-line="211" selection-end-column="41" />
+        <state relative-caret-position="410">
+          <caret line="278" column="4" selection-start-line="278" selection-start-column="4" selection-end-line="278" selection-end-column="4" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/hbhmm/hmm/_hmm_base.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="680">
-          <caret line="1162" column="32" selection-start-line="1162" selection-start-column="32" selection-end-line="1162" selection-end-column="32" />
+        <state relative-caret-position="-420">
+          <caret line="1114" column="8" selection-start-line="1114" selection-start-column="8" selection-end-line="1114" selection-end-column="8" />
+          <folding>
+            <element signature="e#0#14#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/hassbrain_algorithm/benchmark.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="495">
+          <caret line="90" column="53" selection-start-line="90" selection-start-column="53" selection-end-line="90" selection-end-column="53" />
           <folding>
             <element signature="e#0#14#0" expanded="true" />
           </folding>
@@ -1304,21 +1287,65 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/hbhmm/hmm/hmm_log_scaled.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="303">
-          <caret line="305" selection-start-line="305" selection-end-line="305" />
+        <state relative-caret-position="455">
+          <caret line="316" selection-start-line="316" selection-end-line="316" />
           <folding>
             <element signature="e#0#33#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/hbhmm/testing/log_scaled/testing_hmm_final_MIT16_410F10_lec21.py">
+    <entry file="file://$PROJECT_DIR$/datasets/homeassistant/activities.csv">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="653">
-          <caret line="76" column="8" selection-start-line="76" selection-start-column="8" selection-end-line="76" selection-end-column="8" />
+        <state relative-caret-position="465">
+          <caret line="31" column="36" selection-start-line="31" selection-start-column="36" selection-end-line="31" selection-end-column="36" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/testing/datasets/testing_homeassistant.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="530">
+          <caret line="53" column="16" selection-start-line="53" selection-start-column="16" selection-end-line="53" selection-end-column="16" />
           <folding>
             <element signature="e#0#15#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/hbhmm/testing/log_scaled/testing_hmm_final_MIT16_410F10_lec21.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="617">
+          <caret line="108" column="20" selection-start-line="108" selection-start-column="20" selection-end-line="108" selection-end-column="20" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/hassbrain_algorithm/datasets/homeassistant.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2074">
+          <caret line="206" selection-start-line="206" selection-end-line="206" />
+          <folding>
+            <element signature="e#0#30#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/testing/models/testing_homeassistant.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="291">
+          <caret line="274" column="31" selection-start-line="274" selection-start-column="31" selection-end-line="274" selection-end-column="31" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/hassbrain_algorithm/models/hmm.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="381">
+          <caret line="209" column="16" selection-start-line="209" selection-start-column="16" selection-end-line="209" selection-end-column="16" />
         </state>
       </provider>
     </entry>
