@@ -57,7 +57,8 @@ class DatasetKasteren(DataInterfaceHMM):
 
     def get_train_seq(self):
         #todo make train seq longer
-        return self._train_seq[:30]
+        #return self._train_seq[:30]
+        return self._train_seq
 
     def get_obs_list(self):
         """

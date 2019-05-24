@@ -15,7 +15,7 @@ class Dataset(Enum):
 class Controller():
     def __init__(self,path_to_config=None):
         self.logger = logging.getLogger(__name__)
-        self._model = None
+        self._model = None # type: Model
         self._bench = None
         self._dataset = None
         self._dataset_enm = None
@@ -99,6 +99,17 @@ class Controller():
         from hassbrain_algorithm.benchmark import Benchmark
         self._bench = Benchmark(self._model)
         self._model.register_benchmark(self._bench)
+
+
+    def register_location_info(self, loc_data):
+        if not self._model.are_hashmaps_created():
+            self._model.gen_hashmaps(self._dataset)
+        self._model.register_loc_info(loc_data)
+
+    def register_activity_info(self, act_data):
+        if not self._model.are_hashmaps_created():
+            self._model.gen_hashmaps(self._dataset)
+        self._model.register_act_info(act_data)
 
     def disable_benchmark(self):
         self._bench = None

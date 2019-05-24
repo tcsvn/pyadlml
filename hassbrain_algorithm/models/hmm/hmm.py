@@ -7,7 +7,7 @@ from hassbrain_algorithm.models._model import Model
 from hassbrain_algorithm.datasets.kasteren import DatasetKasteren
 import numpy as np
 
-class ModelHMM(Model):
+class _ModelHMM(Model):
 
     def __init__(self, controller):
         #self._cm = controller # type: Controller
@@ -138,9 +138,9 @@ class ModelHMM(Model):
     def _predict_prob_xnp1(self, obs_seq):
         return self._hmm.predict_probs_xnp(obs_seq)
 
-class ModelHMM_scaled(ModelHMM):
+class _ModelHMM_scaled(_ModelHMM):
     def __init__(self, controller):
-        ModelHMM.__init__(self, controller)
+        _ModelHMM.__init__(self, controller)
 
     def _model_init(self, dataset):
         state_list = dataset.get_state_list()
@@ -163,9 +163,9 @@ class ModelHMM_scaled(ModelHMM):
         self._hmm.set_transition_matrix(trans_mat)
 
 
-class ModelHMM_log(ModelHMM):
+class ModelHMM_log(_ModelHMM):
     def __init__(self, controller):
-        ModelHMM.__init__(self, controller)
+        _ModelHMM.__init__(self, controller)
 
     def _model_init(self, dataset):
         state_list = dataset.get_state_list()
@@ -215,7 +215,7 @@ class ModelHMM_log(ModelHMM):
 
 class ModelHMM_log_scaled(ModelHMM_log):
     def __init__(self, controller):
-        ModelHMM.__init__(self, controller)
+        _ModelHMM.__init__(self, controller)
 
     def _model_init(self, dataset):
         state_list = dataset.get_state_list()

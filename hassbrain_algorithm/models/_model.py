@@ -3,6 +3,8 @@
     model is used for benchmarks
     model is also called from hmm events
 """
+import datetime
+
 from hassbrain_algorithm.controller import Controller
 import joblib
 import copy
@@ -62,6 +64,7 @@ class Model(object):
 
 
 
+
     def obs_lbl_seq2enc_obs_seq(self, obs_seq):
         """
         generates from labels and observations
@@ -97,23 +100,138 @@ class Model(object):
         """
         initialize model on dataset
         :param dataset:
+        :param state_list:
+        :param location_data:
+            a list conatining information how the smart home is set up
+            loc_data = [ { "name" : "loc1", "activities" : ['cooking'],
+            "devices" : ['binary_sensor.motion_floor', 'binary_sensor.motion_mirror'],
+            }, ... }
         :return:
         """
 
-        self._obs_lbl_hashmap = dataset.get_obs_lbl_hashmap()
-        self._obs_lbl_rev_hashmap = dataset.get_obs_lbl_reverse_hashmap()
-        self._state_lbl_hashmap = dataset.get_state_lbl_hashmap()
-        self._state_lbl_rev_hashmap = dataset.get_state_lbl_reverse_hashmap()
+        self.gen_hashmaps(dataset)
 
         if state_list is not None:
             self._state_list = dataset.encode
         else:
             self._state_list = dataset.get_state_list()
+
+
+
         self._observation_list = dataset.get_obs_list()
 
         self._model_init(dataset)
 
-    def _model_init(self, dataset):
+    def gen_hashmaps(self, dataset):
+        self._obs_lbl_hashmap = dataset.get_obs_lbl_hashmap()
+        self._obs_lbl_rev_hashmap = dataset.get_obs_lbl_reverse_hashmap()
+        self._state_lbl_hashmap = dataset.get_state_lbl_hashmap()
+        self._state_lbl_rev_hashmap = dataset.get_state_lbl_reverse_hashmap()
+
+    def are_hashmaps_created(self):
+        return self._obs_lbl_hashmap is None \
+               or self._obs_lbl_rev_hashmap is None \
+               or self._state_lbl_hashmap is None \
+               or self._state_lbl_rev_hashmap is None
+
+
+    def register_act_info(self, act_data):
+        self._act_data = self._encode_act_data(act_data)
+
+    def register_loc_info(self, loc_data):
+       self._loc_data = self._encode_location_data(loc_data)
+
+    def _encode_act_data(self, act_data):
+        """
+        encodes the device names and activity names into numbers that the models
+        can understand
+        :param loc_data:
+            is a list of loc data
+            example:
+            [ { "name" : "loc1", "activities" : ['cooking'],
+            "devices" : ['binary_sensor.motion_floor', 'binary_sensor.motion_mirror'],
+            },  ... ]
+        :return:
+            a list of location data, with the same structure correct encoded labels
+             [ { "name" : "loc1",
+                "activities" : [ 1 ],
+                "devices" : [3, 7],
+            },  ... ]
+        """
+        for activity in act_data:
+            activity["name"] = self.encode_state_lbl(activity["name"])
+        return act_data
+
+    def sort_act_data(self):
+        """
+        sorts the synthetic generated activity data and returns a sorted list
+        :return:
+        """
+        # list of lists, with each sublist representing a day
+        # daybins[0] contains all activities for sunday, ...
+        day_bins = [[],[],[],[],[],[],[]]
+        for syn_act in self._act_data:
+            day_bins[syn_act["day_of_week"]].append(syn_act)
+        res_list = []
+        for day in day_bins:
+            for i in range(len(day)):
+                min_idx = self._sort_get_min_idx(day)
+                res_list.append(day[i])
+        return res_list
+
+    def _sort_get_min_idx(self, lst):
+        """
+        returns the index of the smallest element
+        :param lst:
+        :return:
+        """
+        min_idx = 0
+        for i in range(1, len(lst)):
+            if lst[i]['start'] < lst[min_idx]['start']:
+                min_idx = i
+        return min_idx
+
+
+
+
+
+
+    def _encode_location_data(self, loc_data):
+        """
+        encodes the device names and activity names into numbers that the models
+        can understand
+        :param loc_data:
+            is a list of loc data
+            example:
+            [ { "name" : "loc1", "activities" : ['cooking'],
+            "devices" : ['binary_sensor.motion_floor', 'binary_sensor.motion_mirror'],
+            },  ... ]
+        :return:
+            a list of location data, with the same structure correct encoded labels
+             [ { "name" : "loc1",
+                "activities" : [ 1 ],
+                "devices" : [3, 7],
+            },  ... ]
+        """
+        for location in loc_data:
+            new_act_list = []
+            for activity in location['activities']:
+                # todo the use of str vs. int is a hint that there is an
+                # inconsistent use in the encoding and decoding in state labels
+                new_act_list.append(str(self.encode_state_lbl(activity)))
+            location['activities'] = new_act_list
+
+            new_dev_list = []
+            for device in location['devices']:
+                new_dev_list.append(self.encode_obs_lbl(device, 0))
+                new_dev_list.append(self.encode_obs_lbl(device, 1))
+            location['devices'] = new_dev_list
+        return loc_data
+
+
+
+
+    def _model_init(self, dataset, location_data):
         """
         this method has to be overriden by child classes
         :return:
@@ -159,7 +277,7 @@ class Model(object):
         pred_state_arr = self._classify_multi(obs_seq)
 
         # decode state seq
-        print('~'*10)
+       # print('~'*10)
         act_score_dict = {}
         for i in range(0,len(pred_state_arr)):
             label = pred_state_arr[i][0]

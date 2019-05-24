@@ -289,6 +289,7 @@ class TestHomeassistantModelHMMLogScaled(unittest.TestCase):
         print('#'*100)
         obs_seq = [('binary_sensor.motion_bed', 0), ('binary_sensor.motion_mirror', 1), ('binary_sensor.motion_bed', 0)]
         tupel = hmm_model.predict_next_obs(obs_seq)
+        print(tupel)
 
     def test_pred_next_obs_multi(self):
         hmm_model = self.hmm_model
@@ -297,7 +298,7 @@ class TestHomeassistantModelHMMLogScaled(unittest.TestCase):
         self.ctrl.init_model_on_dataset()
         self.ctrl.train_model()
         hmm_model._hmm.set_format_full(True)
-        #print(hmm_model)
+        print(hmm_model)
         print('#'*100)
         obs_seq = [('binary_sensor.motion_bed', 0), ('binary_sensor.motion_mirror', 1), ('binary_sensor.motion_bed', 0)]
         #arr = hmm_model.predict_next_obs_arr(obs_seq)
