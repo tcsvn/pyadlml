@@ -63,7 +63,21 @@ class PreConfHMM(ModelHMM_log_scaled):
             time_deltas[tidx] += td
             total_hours += td
 
-        return time_deltas/total_hours
+        new_pi = time_deltas/total_hours # type: np.ndarray
+        """
+        assign a constant where the probability is 0.0 and correct the other
+        probabilities for it
+        """
+        cnt_non_zero = np.count_nonzero(new_pi)
+        cnt_zero = K - cnt_non_zero
+        if cnt_zero > 0:
+            non_zero_correction = cnt_zero*self._pi_constant/cnt_non_zero
+            for i in range(K):
+                if new_pi[i] == 0.0:
+                    new_pi[i] = self._pi_constant
+                else:
+                    new_pi[i] -= non_zero_correction
+        return new_pi
 
     def _time_diff(self, a, b):
         """
