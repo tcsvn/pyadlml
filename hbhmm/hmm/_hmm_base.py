@@ -265,13 +265,19 @@ class HMM():
     def plot(self):
         self.render_console()
 
-    def generate_visualization_2(self, act_retrieval_meth):
-        """ Returns a graphviz object representing the network"""
+    def generate_graphviz_dot_ext_lbl(self, act_retrieval_meth):
+        """
+        :param act_retrieval_meth:
+            is a method that returns an external label given
+            given the internal label form self._z
+        :return:
+            graphviz dot representation of the graph
+        """
         dot = Digraph()
         for z in self._z:
             label = act_retrieval_meth(z)
             dot.node(str(z), label)
-        it = np.nditer(self._A, flags=['multi_index'])
+        it = np.nditer(self._A, flags=['multi_index', 'refs_ok'])
         while not it.finished:
             tail_name = str(self._z[it.multi_index[0]])
             head_name = str(self._z[it.multi_index[1]])
@@ -287,7 +293,7 @@ class HMM():
             it.iternext()
         return dot
 
-    def generate_visualization(self):
+    def _generate_graphviz_dot(self):
         """ Returns a graphviz object representing the network"""
         dot = Digraph()
         for z in self._z:
@@ -306,7 +312,7 @@ class HMM():
         return dot
 
     def render_console(self):
-        vis = self.generate_visualization()
+        vis = self._generate_graphviz_dot()
         print(vis)
 
     def render_graph(self):
@@ -314,7 +320,7 @@ class HMM():
          and print the image with the standard viewer program
          installed on the machine
         """
-        visualization = self.generate_visualization()
+        visualization = self._generate_graphviz_dot()
         visualization.render('test.gv', view=True)
 
     def _idx_state(self, state_label):
@@ -539,7 +545,7 @@ class HMM():
         return new_pi_arr.sum(axis=0)/self.single_prob(len_seqs)
 
 
-    def train_seqs(self, set, epsilon = None, steps=None):
+    def train_seqs(self, set, epsilon = None, steps=None, callbacks=[]):
         """
         this follows the original rabiner script equation 109/ 110
         :param set:
@@ -665,7 +671,7 @@ class HMM():
 
             diff = new_prob_Ok - old_prob_Ok
             old_prob_Ok = new_prob_Ok
-            self.logger.debug(new_prob_Ok)
+            self.train_notify_callbacks(callbacks, new_prob_Ok, q_fct=False)
             #if diff < 0:
             #    # todo VERY IMPORTANT!!!
             #    # this condition can't be happening because in EM
@@ -682,8 +688,15 @@ class HMM():
             #cnt +=1
 
 
+    def train_notify_callbacks(self, callbacks, loss, q_fct):
+            if callbacks:
+                for callback in callbacks:
+                    # todo hack with asdf because of parameter check how to do
+                    # otherwise
+                    callback(self, loss)
 
-    def train(self, seq, epsilon=None, steps=None, q_fct=False):
+
+    def train(self, seq, epsilon=None, steps=None, q_fct=False, callbacks=[]):
         """
         :param seq:
         :param epsilon:
@@ -694,6 +707,7 @@ class HMM():
         :param steps:
             if parameter is given this is the maximal amount of steps
             the training should take
+        :param callbacks:
         :return: None
         """
         if steps is None:
@@ -707,28 +721,46 @@ class HMM():
 
         diffcounter = 0
         len_diff_arr = 100
-        diff_arr = np.full((len_diff_arr), float(len_diff_arr))
+        #diff_arr = np.full((len_diff_arr), float(len_diff_arr))
+        diff_arr = self.np_full((len_diff_arr), float(len_diff_arr))
+        #print(diff_arr)
+        #print(diff_arr.mean())
 
         if q_fct:
             old_q = self.min_num()
         else:
             old_prob_X = self.single_prob(0.0)
-        cnt = 0
-        while (diff_arr.mean() > epsilon and steps > 0):
+
+        #while (diff_arr.mean() > epsilon and steps > 0):
+        # todo create better convergent thing that
+        # works for log and for normal domain !!!!
+        while (steps > 0):
             alpha, beta, gamma, prob_X, xi = self._e_step(seq)
+            #print('prob_X after e-step: ', prob_X)
             self._m_step(seq, gamma, xi)
-            # todo debuge remove flag
 
             if q_fct:
                 new_q = self.q_energy_function(seq, gamma, xi)
                 diff = new_q - old_q
                 old_q = new_q
-                self.logger.debug(new_q)
+                self.train_notify_callbacks(callbacks, old_q, q_fct=True)
             else:
                 new_prob_X = prob_X
                 diff = new_prob_X - old_prob_X
+
+                diff_arr[diffcounter % len_diff_arr] = diff
+                diffcounter += 1
+                steps -= 1
+                #print('*'*100)
+                #print('steps: ', str(steps))
+                #print('old_prob: ', str(old_prob_X))
+                #print('new_prob: ', str(new_prob_X))
+                #print('diff: ', str(diff))
+                #print('diff_arr: ', str(Probs.np_prob_arr2exp(diff_arr)))
+                #print('--')
+                #print('diff_arr_mean: ', str(diff_arr.mean()))
                 old_prob_X = new_prob_X
-                self.logger.debug(new_prob_X)
+                self.train_notify_callbacks(callbacks, old_prob_X, q_fct=False)
 
             #if diff < 0:
             #    # todo VERY IMPORTANT!!!
@@ -738,9 +770,6 @@ class HMM():
             #    # print('fuck')
             #    # temporal "solution"
             #    diff = abs(diff)
-            diff_arr[diffcounter % len_diff_arr] = diff
-            diffcounter += 1
-            steps -= 1
 
             #if cnt == CNT:
             #    print('~%s'%(cnt)*50)
@@ -1044,6 +1073,14 @@ class HMM():
         prob_x = self._prob_X(alpha, beta)
         return alpha, beta, prob_x
 
+    #def predict_norm_probs_xnp(self, seq):
+    #    lattice = self.predict_probs_xnp(seq)
+    #    #print('lattice: ', Probs.np_prob_arr2exp(lattice))
+    #    #print('latticesum: ', Probs.np_prob_arr2exp(lattice).sum())
+    #    alpha, beta, prob_X = self._calc_alpha_beta_probx(seq)
+    #    #print('P(X): ', Probs.prob_to_norm(prob_X))
+    #    return lattice
+
     def predict_probs_xnp(self, seq):
         """
         computes the probability for each observation to be the next symbol
@@ -1207,8 +1244,8 @@ class HMM():
             #print('*'*10)
         else:
             for i in range(n):
-                print('-'*100)
-                print('obs_seq:\t',obs_seq)
+                #print('-'*100)
+                #print('obs_seq:\t',obs_seq)
                 xnp = self.sample_next_obs(obs_seq)
                 obs_list.append(xnp)
                 obs_seq.append(xnp)
@@ -1225,26 +1262,26 @@ class HMM():
         xnp_slice = self.predict_probs_xnp(obs_seq)
         #print('xnp_slice: \n', xnp_slice)
         #print('xnp_slice: \n', Probs.print_np_arr(xnp_slice))
-        print('xnp_slice: \n')
+        #print('xnp_slice: \n')
         s = "["
         for val in  xnp_slice:
             s += str(np.exp(val)) + ", "
-        print(s + "]")
+       # print(s + "]")
         # sample
         xnp_cum = xnp_slice.cumsum()
         #print('xnp_cum: \n', Probs.print_np_arr(xnp_cum))
-        print('xnp_cum: \n') #Probs.print_np_arr(xnp_cum))
+       # print('xnp_cum: \n') #Probs.print_np_arr(xnp_cum))
         s = "["
         for val in xnp_cum:
             s += str(np.exp(val)) + ", "
-        print(s + "]")
+       # print(s + "]")
         epsilon = self._rand_prob()
         #print('epsilon:', epsilon)
-        print('epsilon:', np.exp(epsilon))
+       # print('epsilon:', np.exp(epsilon))
         idx = self._sel_idx_val_in_range(xnp_cum, epsilon)
-        print('idx:\t', idx)
+       # print('idx:\t', idx)
         xnp = self._o[idx]
-        print(xnp)
+       # print(xnp)
         return xnp
 
     def _rand_prob(self):
@@ -1481,10 +1518,10 @@ class HMM():
         # get length of all symbols / sequences added
         N = len(state_list)
         #for
-        print('-'*100)
-        print(state_list)
-        print(obs_list)
-        print('-'*100)
+       # print('-'*100)
+       # print(state_list)
+       # print(obs_list)
+       # print('-'*100)
         obs_seq = []
         y_pred = np.zeros((N))
         y_true = np.zeros((N))

@@ -1,54 +1,123 @@
 import logging
 import matplotlib.pyplot as plt
-from numpy import genfromtxt
+import numpy as np
+#from hassbrain_algorithm.models._model import Model
 
-LOGGING_FILENAME='train_model.log'
+TRAIN_LOSS_PLOT_X_LABEL = 'training_steps'
+TRAIN_ACC_PLOT_X_LABEL = 'training_steps'
 
 class Benchmark():
     def __init__(self, model):
-        self._model = model
+        self._model = model # type: Model
         self._model_was_trained = False
-        self._conv_plot = None
-        self._conv_data = None
+
+        self._train_loss_plot = None
+        self._train_loss_data = None
+        self._train_loss_file_path = None
+
+        self._train_acc_plot = None
+        self._train_acc_data = None
+        self._train_acc_file_path = None
+
         self._model_metrics = False
         self._conf_matrix = None
+
         self._accuracy = None
         self._recall = None
         self._precision = None
         self._f1_score = None
+
         self._decimals = 4
 
     def notify_model_was_trained(self):
         self._model_was_trained = True
 
-    def enable_logging(self):
-        logging.basicConfig(
-            level=logging.DEBUG,
-            filename=LOGGING_FILENAME,
-            filemode='w',
-            format='%(message)s'
-        )
-        logger = logging.getLogger()
-        logger.disabled = False
+    def register_train_acc_file_path(self, file_path):
+        """
+        sets the file path to a certain location where the acc loss should be
+        logged to
+        :return:
+        """
+        self._train_acc_file_path = file_path
+        self._model.append_method_to_callbacks(self.train_acc_callback)
 
-    def disable_logging(self):
-        logger = logging.getLogger()
-        logger.disabled = True
+    def train_acc_callback(self, hmm, acc, args):
+        # todo calculate the accuracy and then log the value to file
+        raise NotImplementedError
 
-    def read_in_conv_plot(self):
+    def read_train_acc_file(self):
         # read logged file and read in data for plotting
-        data = genfromtxt(LOGGING_FILENAME, delimiter='\n')
-        self._conv_data = data
-        self.generate_conv_plot(data)
+        #data = np.genfromtxt(LOGGING_FILENAME, delimiter='\n')
+        #self._train_acc_data = data
+        #self.gen_train_acc_plot(data)
+        pass
 
-    def generate_conv_plot(self, data):
+    def gen_train_acc_plot(self, data):
         #matplotlib.rcParams['text.usetex'] = True
         plt.plot(data)
         #plt.ylabel('$P(X|\Theta)$')
-        ylabel = self._model.get_conv_plot_y_label()
-        xlabel = self._model.get_conv_plot_x_label()
+        ylabel = self._model.get_train_loss_plot_y_label()
+        xlabel = self._model.get_train_loss_plot_x_label()
         plt.ylabel(ylabel)
         plt.xlabel(xlabel)
+        return plt
+
+    def register_train_loss_file_path(self, file_path):
+        """
+        sets the file path to a certain location where the train loss should be
+        logged to
+        :return:
+        """
+        self._model.set_train_loss_callback()
+        self._train_loss_file_path = file_path
+
+        # delete file if exits
+        self._file_remove_if_exists(file_path)
+
+    def train_loss_callback(self, hmm, loss, *args):
+        """
+        this method is called during the training of a model (fe. hmm)
+
+        :param hmm:
+        :param loss:
+        :param args:
+        :return:
+        """
+        # todo log the loss to the specified file
+        #print('~'*100)
+        #print('hmm: ', hmm)
+        print('loss: ', loss)
+        self._file_write_line(self._train_loss_file_path, loss)
+
+    def _file_write_line(self, file_path, value):
+        with open(file_path, "a") as log:
+            log.write(str(value) + "\n")
+            log.close()
+
+    def _file_remove_if_exists(self, file_path):
+        import os
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+
+    def _read_train_loss_file(self):
+        # read logged file and read in data for plotting
+        data = np.genfromtxt(self._train_loss_file_path, delimiter='\n')
+        self._train_loss_data = data
+        return data
+
+    def save_train_loss_plot(self, img_file_path):
+        data = self._read_train_loss_file()
+        #matplotlib.rcParams['text.usetex'] = True
+        plt.plot(data)
+        #plt.ylabel('$P(X|\Theta)$')
+        ylabel = self._model.get_train_loss_plot_y_label()
+        xlabel = TRAIN_LOSS_PLOT_X_LABEL
+        plt.ylabel(ylabel)
+        plt.xlabel(xlabel)
+        #plt.show()
+        plt.savefig(img_file_path)
+        plt.clf()
 
     def show_plot(self):
         plt.show()
@@ -67,9 +136,9 @@ class Benchmark():
         if self._model_was_trained:
             s += "_"*100
             s += "\n"
-            start_Y = self._conv_data[0]
-            end_Y = self._conv_data[len(self._conv_data)-1]
-            str_Y = self._model.get_conv_plot_y_label()
+            start_Y = self._train_loss_data[0]
+            end_Y = self._train_loss_data[len(self._train_loss_data) - 1]
+            str_Y = self._model.get_train_loss_plot_y_label()
             s += "Start\t" + str_Y + " = " + str(start_Y) + "\n"
             s += "Trained\t" + str_Y + " = " + str(end_Y) + "\n"
 

@@ -19,6 +19,12 @@ class Model(object):
         self._cm = controller # type: Controller
         self._model_name = MD_FILE_NAME
 
+        """
+        these are callbacks that are can be accessed from third party classes
+        for example the Benchmark to execute sth. during each training step.
+        The model such as a hmm should call these methods after each step
+        """
+        self._callbacks = []
 
         """
         these hashmaps are used to decode and encode in O(1) the numeric based
@@ -62,9 +68,6 @@ class Model(object):
         #for item in self.o:
         #    lst.append(self.de[])
 
-
-
-
     def obs_lbl_seq2enc_obs_seq(self, obs_seq):
         """
         generates from labels and observations
@@ -79,13 +82,27 @@ class Model(object):
             enc_obs_seq.append(self._obs_lbl_hashmap[tupel[0]][tupel[1]])
         return enc_obs_seq
 
+    def append_method_to_callbacks(self, callback_method):
+        self._callbacks.append(callback_method)
+
+    def set_train_loss_callback(self):
+        self._callbacks.append(self._train_loss_callback)
+
+    def _train_loss_callback(self, *args):
+        """
+        hass to format the callback from the real model into an appropriate output for
+        the benchmark method bench.train_loss_callback()
+        :return:
+        """
+        raise NotImplementedError
 
     def register_benchmark(self, bench):
         self._bench = bench
 
     def generate_file_path(self, path_to_folder, filename):
         key = 1
-        name = path_to_folder + "/" +  filename + "_%s.joblib"%(key)
+        #name = path_to_folder + "/" + filename + "_%s.joblib"%(key)
+        name = path_to_folder + "/" + filename
         return name
 
     def save_model(self, path_to_folder, filename):
@@ -252,6 +269,14 @@ class Model(object):
     def get_state(self, seq):
         """
         returns the state the model is in given an observation sequence
+        :return:
+        """
+        pass
+
+    def save_visualization(self, path_to_file):
+        """
+        save a visualization of the model to the given filepath
+        :param path_to_file:
         :return:
         """
         pass

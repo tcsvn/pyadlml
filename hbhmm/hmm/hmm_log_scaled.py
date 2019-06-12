@@ -186,9 +186,9 @@ class HMM_log_scaled(HMM_Scaled):
         if em_mat is None:
             for idx, label in enumerate(self._z):
                 em_arr = self.states[label].get_probs()
-                print(em_arr)
+                #print(em_arr)
                 sum = abs(np.sum(em_arr))
-                print(sum)
+                #print(sum)
                 if sum > self._emission_tolerance:
                     return False
             return True

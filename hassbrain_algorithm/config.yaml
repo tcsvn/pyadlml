@@ -1,22 +1,39 @@
 models:
-  #folder: '/home/chris/code2/hb_models'
   folder: '/home/cmeier/code/data/hb_models'
 
 datasets:
   kasteren:
-    #sens_file_path: '/home/chris/code2/datasets/kasteren/kasterenSenseData.txt'
-    #act_file_path: '/home/chris/code2/datasets/kasteren/kasterenActData.txt'
-    sens_file_path: '/home/cmeier/code/data/datasets/kasteren/kasterenSenseData.txt'
-    act_file_path: '/home/cmeier/code/data/datasets/kasteren/kasterenActData.txt'
+    sens_file_path: '/home/cmeier/code/data/hassbrain/datasets/kasteren/kasterenSenseData.txt'
+    act_file_path: '/home/cmeier/code/data/hassbrain/datasets/kasteren/kasterenActData.txt'
 
   pendigits:
-    #test_file_path: '/home/chris/code2/datasets/pendigits/pendigits-orig.tes'
-    #train_file_path: '/home/chris/code2/datasets/pendigits/pendigits-orig.tra'
-    test_file_path: '/home/cmeier/code/data/datasets/pendigits/pendigits-orig.tes'
-    train_file_path: '/home/cmeier/code/data/datasets/pendigits/pendigits-orig.tra'
-  homeassistant:
-    database_path: '/home/cmeier/code/data/datasets/homeassistant/home-assistant_v2.db'
-    #database_path: '/home/cmeier/code/datasets/homeassistant/simon_hass_v2.db'
-    #database_path: '/home/cmeier/code/datasets/homeassistant/github_ha_v2.db'
-    act_file_path: '/home/cmeier/code/data/datasets/homeassistant/activities.csv'
-    labels_path: '/home/cmeier/code/data/datasets/homeassistant/labels.yaml'
+    test_file_path: '/home/cmeier/code/data/hassbrain/datasets/pendigits/pendigits-orig.tes'
+    train_file_path: '/home/cmeier/code/data/hassbrain/datasets/pendigits/pendigits-orig.tra'
+  hass_testing:
+    database_path: '/home/cmeier/code/data/hassbrain/datasets/hass_testing/home-assistant_v2.db'
+    act_file_path: '/home/cmeier/code/data/hassbrain/datasets/hass_testing/activities.csv'
+    labels_path: '/home/cmeier/code/data/hassbrain/datasets/hass_testing/labels.yaml'
+
+
+#models:
+#  #folder: '/home/chris/code2/hb_models'
+#  folder: '/home/cmeier/code/data/hb_models'
+#
+#datasets:
+#  kasteren:
+#    #sens_file_path: '/home/chris/code2/datasets/kasteren/kasterenSenseData.txt'
+#    #act_file_path: '/home/chris/code2/datasets/kasteren/kasterenActData.txt'
+#    sens_file_path: '/home/cmeier/code/data/datasets/kasteren/kasterenSenseData.txt'
+#    act_file_path: '/home/cmeier/code/data/datasets/kasteren/kasterenActData.txt'
+#
+#  pendigits:
+#    #test_file_path: '/home/chris/code2/datasets/pendigits/pendigits-orig.tes'
+#    #train_file_path: '/home/chris/code2/datasets/pendigits/pendigits-orig.tra'
+#    test_file_path: '/home/cmeier/code/data/datasets/pendigits/pendigits-orig.tes'
+#    train_file_path: '/home/cmeier/code/data/datasets/pendigits/pendigits-orig.tra'
+#  homeassistant:
+#    database_path: '/home/cmeier/code/data/datasets/homeassistant/home-assistant_v2.db'
+#    #database_path: '/home/cmeier/code/datasets/homeassistant/simon_hass_v2.db'
+#    #database_path: '/home/cmeier/code/datasets/homeassistant/github_ha_v2.db'
+#    act_file_path: '/home/cmeier/code/data/datasets/homeassistant/activities.csv'
+#    labels_path: '/home/cmeier/code/data/datasets/homeassistant/labels.yaml'

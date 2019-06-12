@@ -29,7 +29,6 @@ class PreConfHMM(ModelHMM_log_scaled):
                             ProbabilityMassFunction,
                             initial_dist=None)
 
-
         # note:
         # the log classes govern their own data type
         # therefore set_pi for example transforms matrix to Prob domain itsself
@@ -53,6 +52,9 @@ class PreConfHMM(ModelHMM_log_scaled):
             the amount of states :return:
             1D K long numpy array
         """
+        if self._act_data == []:
+            return HMM_log_scaled.gen_rand_pi(K)
+
         # total amount of hours spent in this activity
         time_deltas = np.zeros((K), dtype='f')
         total_hours = 0.0
@@ -60,6 +62,11 @@ class PreConfHMM(ModelHMM_log_scaled):
             # todo inconsistent use of typecast
             tidx = self._hmm._idx_state(str(act_data_point['name']))
             td = self._time_diff(act_data_point['end'], act_data_point['start'])
+            if act_data_point['end'] == datetime.time.fromisoformat("00:00:00"):
+                # if the endtime is 0 o clock the timedifferenz is negativ
+                # and has to be corrected
+                # example 19:00:00 to 00:00:00 yields -19.0 and corrected is 5.0
+                td = td + 24.0
             time_deltas[tidx] += td
             total_hours += td
 
@@ -110,7 +117,6 @@ class PreConfHMM(ModelHMM_log_scaled):
         sorted_acts = []
         for act in sorted_act_data:
             sorted_acts.append(act['name'])
-
         tm = np.zeros((K,K))
 
         # the total transitions from state i into other states
@@ -137,14 +143,19 @@ class PreConfHMM(ModelHMM_log_scaled):
 
         for i in range(0, K):
             row_zeros_count = K - np.count_nonzero(tm[i])
-            row_correction =  row_zeros_count*self._transition_constant/ (K-row_zeros_count)
-            for j in range(0, K):
-                if tm[i][j] == 0:
-                    # set to nonzero constant
-                    tm[i][j] = self._transition_constant
-                else:
-                    # normalize with amount of outgoing transitions
-                    tm[i][j] = (tm[i][j]/norm_trans[i]) - row_correction
+            if K == row_zeros_count:
+                # if the complete has no activity set it to standard
+                tm[i] = np.random.random_sample(K)
+                tm[i] = tm[i] / sum(tm[i])
+            else:
+                row_correction =  row_zeros_count*self._transition_constant/ (K-row_zeros_count)
+                for j in range(0, K):
+                    if tm[i][j] == 0:
+                        # set to nonzero constant
+                        tm[i][j] = self._transition_constant
+                    else:
+                        # normalize with amount of outgoing transitions
+                        tm[i][j] = (tm[i][j]/norm_trans[i]) - row_correction
         return tm
 
 

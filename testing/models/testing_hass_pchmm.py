@@ -2,7 +2,7 @@ import datetime
 import unittest
 
 from hassbrain_algorithm.models.hmm.hmm import ModelHMM_log_scaled
-from hassbrain_algorithm.models.hmm.hmmpc import PreConfHMM
+from hassbrain_algorithm.models.hmm.pchmm import PreConfHMM
 from hassbrain_algorithm.controller import Controller
 from hassbrain_algorithm.controller import Dataset
 from hassbrain_algorithm.datasets.homeassistant import DatasetHomeassistant
@@ -15,7 +15,7 @@ class TestHomeassistantModelHMMLogScaled(unittest.TestCase):
     def setUp(self):
         # set of observations
         self.ctrl = Controller()
-        self.ctrl.set_dataset(Dataset.HASS)
+        self.ctrl.set_dataset(Dataset.HASS_TESTING)
         self.hass_obj = self.ctrl._dataset #type: DatasetHomeassistant
         self.hmm_model = PreConfHMM(self.ctrl)
 
@@ -258,6 +258,21 @@ class TestHomeassistantModelHMMLogScaled(unittest.TestCase):
             "day_of_week" : 1,
             "start" : datetime.time.fromisoformat("12:00:00"),
             "end" : datetime.time.fromisoformat("13:00:00")
+            },
+            {"name" : "cooking",
+            "day_of_week" : 2,
+            "start" : datetime.time.fromisoformat("19:00:00"),
+            "end" : datetime.time.fromisoformat("00:00:00")
+            },
+            {"name" : "cooking",
+            "day_of_week" : 2,
+            "start" : datetime.time.fromisoformat("23:00:00"),
+            "end" : datetime.time.fromisoformat("00:00:00")
+            },
+            {"name" : "sleeping",
+            "day_of_week" : 2,
+            "start" : datetime.time.fromisoformat("00:00:00"),
+            "end" : datetime.time.fromisoformat("03:00:00")
             },
         ]
 

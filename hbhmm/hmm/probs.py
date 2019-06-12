@@ -266,7 +266,10 @@ class Probs(object):
         :return:
         """
         res = Probs(1.0)
-        res.prob = self.prob - other.prob
+        if type(other) in [float, int]:
+            res.prob = self.prob + self.eln(other)
+        else:
+            res.prob = self.prob - other.prob
         return res
 
     def __pow__(self, power, modulo=None):

@@ -1,6 +1,6 @@
 import unittest
 
-from hassbrain_algorithm.models.hmm import *
+from hassbrain_algorithm.models.hmm.hmm import *
 from hassbrain_algorithm.controller import Controller
 from hassbrain_algorithm.controller import Dataset
 
@@ -25,6 +25,7 @@ class TestController(unittest.TestCase):
         self.ctrl.register_model(hmm_model)
         self.ctrl.init_model_on_dataset()
         self.ctrl.register_benchmark()
+        self.ctrl.register
         # render
         #dot = self.ctrl.render_model()
         #dot.render('test.gv', view=True)
@@ -83,6 +84,32 @@ class TestController(unittest.TestCase):
         # render
         #dot = self.ctrl.render_model()
         #dot.render('test.gv', view=True)
+
+    def test_generate_visualization(self):
+        hmm_model = self.hmm_model
+        dk = Dataset.KASTEREN
+        self.ctrl.set_dataset(dk)
+        self.ctrl.load_dataset()
+        self.ctrl.register_model(hmm_model)
+        self.ctrl.init_model_on_dataset()
+        hmm_model._hmm.set_format_full(True)
+        print('state_label_hm: ', hmm_model._state_lbl_hashmap)
+        print('state_label_rev_hm: ', hmm_model._state_lbl_rev_hashmap)
+        self.ctrl.save_visualization_to_file('/home/cmeier/code/tmp/visualization.png')
+
+
+    def test_bench_train_loss(self):
+        hmm_model = self.hmm_model
+        dk = Dataset.KASTEREN
+        self.ctrl.set_dataset(dk)
+        self.ctrl.load_dataset()
+        self.ctrl.register_model(hmm_model)
+        self.ctrl.init_model_on_dataset()
+        self.ctrl.register_benchmark()
+        self.ctrl.register_loss_file_path('/home/cmeier/code/tmp/kasteren/train_loss.log')
+        self.ctrl.train_model()
+        self.ctrl.save_model('/home/cmeier/code/tmp/kasteren/kasteren_model.joblib')
+
 
     def test_bench_reports_conf_matrix(self):
         hmm_model = self.hmm_model

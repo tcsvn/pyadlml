@@ -89,7 +89,7 @@ class ModelPendigits(Model):
     def draw(self, act_retrieval_meth):
         lst = []
         for key, item in self._model_dict.items():
-            lst.append(item.generate_visualization_2(act_retrieval_meth))
+            lst.append(item.generate_graphviz_dot_ext_lbl(act_retrieval_meth))
         return lst
         # vg.render('test.gv', view=True)
 

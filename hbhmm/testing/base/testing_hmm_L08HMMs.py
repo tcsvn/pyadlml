@@ -37,6 +37,11 @@ class TestHmmExampleL08HMM(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_visualize(self):
+        #self.hmm.draw()
+        self.hmm.plot()
+        dot = self.hmm._generate_graphviz_dot()
+
 
     def test_xi(self):
         obs_seq = [A,A,B,A]

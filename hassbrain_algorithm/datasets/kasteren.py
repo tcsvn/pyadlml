@@ -34,7 +34,7 @@ class DatasetKasteren(DataInterfaceHMM):
         return self._activity_label_hashmap
 
     def get_state_lbl_reverse_hashmap(self):
-        return self._activity_label_hashmap
+        return self._activity_label_reverse_hashmap
 
     def get_obs_lbl_hashmap(self):
         return self._sensor_label_reverse_hashmap
@@ -56,8 +56,6 @@ class DatasetKasteren(DataInterfaceHMM):
         return [tmp[0]], [tmp[1]]
 
     def get_train_seq(self):
-        #todo make train seq longer
-        #return self._train_seq[:30]
         return self._train_seq
 
     def get_obs_list(self):

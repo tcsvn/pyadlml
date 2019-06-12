@@ -1,5 +1,5 @@
 import unittest
-from hassbrain_algorithm.models.hmm import ModelHMM, ModelHMM_log_scaled
+from hassbrain_algorithm.models.hmm.hmm import ModelHMM_log_scaled
 from hassbrain_algorithm.controller import Controller
 from hassbrain_algorithm.controller import Dataset
 from hassbrain_algorithm.datasets.homeassistant import DatasetHomeassistant
@@ -12,7 +12,7 @@ class TestHomeassistantModelHMM(unittest.TestCase):
     def setUp(self):
         # set of observations
         self.ctrl = Controller()
-        self.ctrl.set_dataset(Dataset.HASS)
+        self.ctrl.set_dataset(Dataset.HASS_TESTING)
         self.hass_obj = self.ctrl._dataset #type: DatasetHomeassistant
 
     def tearDown(self):
@@ -31,7 +31,7 @@ class TestHomeassistantModelHMM(unittest.TestCase):
         self.ctrl.set_custom_obs_list(custom_obs_list)
 
         self.ctrl.load_dataset()
-        hmm_model = ModelHMM(self.ctrl)
+        hmm_model = ModelHMM_log_scaled(self.ctrl)
         self.ctrl.register_model(hmm_model)
         self.ctrl.init_model_on_dataset()
         hmm_model._hmm.set_format_full(True)
@@ -40,7 +40,7 @@ class TestHomeassistantModelHMM(unittest.TestCase):
 
     def test_load_modelHMM(self):
         self.ctrl.load_dataset()
-        hmm_model = ModelHMM(self.ctrl)
+        hmm_model = ModelHMM_log_scaled(self.ctrl)
         self.ctrl.register_model(hmm_model)
         self.ctrl.init_model_on_dataset()
         hmm_model._hmm.set_format_full(True)
@@ -51,7 +51,7 @@ class TestHomeassistantModelHMM(unittest.TestCase):
 
     def test_train_modelHMM(self):
         self.ctrl.load_dataset()
-        hmm_model = ModelHMM(self.ctrl)
+        hmm_model = ModelHMM_log_scaled(self.ctrl)
         self.ctrl.register_model(hmm_model)
         self.ctrl.init_model_on_dataset()
         hmm_model._hmm.set_format_full(True)
@@ -63,7 +63,7 @@ class TestHomeassistantModelHMM(unittest.TestCase):
 
     def test_bench_modelHMM(self):
         self.ctrl.load_dataset()
-        hmm_model = ModelHMM(self.ctrl)
+        hmm_model = ModelHMM_log_scaled(self.ctrl)
         self.ctrl.register_model(hmm_model)
         self.ctrl.init_model_on_dataset()
         hmm_model._hmm.set_format_full(True)
@@ -83,7 +83,7 @@ class TestHomeassistantModelHMM(unittest.TestCase):
 
     def test_classify(self):
         self.ctrl.load_dataset()
-        hmm_model = ModelHMM(self.ctrl)
+        hmm_model = ModelHMM_log_scaled(self.ctrl)
         self.ctrl.register_model(hmm_model)
         self.ctrl.init_model_on_dataset()
         self.ctrl.train_model()
@@ -101,7 +101,7 @@ class TestHomeassistantModelHMM(unittest.TestCase):
         used to test for classification of multiple labels
         """
         self.ctrl.load_dataset()
-        hmm_model = ModelHMM(self.ctrl)
+        hmm_model = ModelHMM_log_scaled(self.ctrl)
         self.ctrl.register_model(hmm_model)
         self.ctrl.init_model_on_dataset()
         self.ctrl.train_model()
@@ -118,7 +118,7 @@ class TestHomeassistantModelHMM(unittest.TestCase):
 
     def test_pred_next_obs_single(self):
         self.ctrl.load_dataset()
-        hmm_model = ModelHMM(self.ctrl)
+        hmm_model = ModelHMM_log_scaled(self.ctrl)
         self.ctrl.register_model(hmm_model)
         self.ctrl.init_model_on_dataset()
         self.ctrl.train_model()
@@ -130,7 +130,7 @@ class TestHomeassistantModelHMM(unittest.TestCase):
 
     def test_pred_next_obs_multi(self):
         self.ctrl.load_dataset()
-        hmm_model = ModelHMM(self.ctrl)
+        hmm_model = ModelHMM_log_scaled(self.ctrl)
         self.ctrl.register_model(hmm_model)
         self.ctrl.init_model_on_dataset()
         self.ctrl.train_model()
@@ -178,7 +178,7 @@ class TestHomeassistantModelHMMLogScaled(unittest.TestCase):
     def setUp(self):
         # set of observations
         self.ctrl = Controller()
-        self.ctrl.set_dataset(Dataset.HASS)
+        self.ctrl.set_dataset(Dataset.HASS_TESTING)
         self.hass_obj = self.ctrl._dataset #type: DatasetHomeassistant
         self.hmm_model = ModelHMM_log_scaled(self.ctrl)
 
@@ -244,6 +244,52 @@ class TestHomeassistantModelHMMLogScaled(unittest.TestCase):
             f1=True
         )
         print(report)
+
+    def test_bench_train_loss(self):
+        self.ctrl.load_dataset()
+        hmm_model = self.hmm_model
+        self.ctrl.register_model(hmm_model)
+        self.ctrl.init_model_on_dataset()
+        hmm_model._hmm.set_format_full(True)
+        self.ctrl.register_benchmark()
+        #self.ctrl.register_loss_file_path('/home/cmeier/code/tmp/train_loss.log')
+        self.ctrl.register_loss_file_path('/home/cmeier/code/data/hassbrain/media/tmp/trainloss.csv')
+        self.ctrl.train_model()
+        self.ctrl.show_plot()
+
+    def test_bench_train_loss_and_graph(self):
+        self.ctrl.load_dataset()
+        hmm_model = self.hmm_model
+        self.ctrl.register_model(hmm_model)
+        self.ctrl.init_model_on_dataset()
+        hmm_model._hmm.set_format_full(True)
+        self.ctrl.register_benchmark()
+        self.ctrl.register_loss_file_path('/home/cmeier/code/tmp/train_loss.csv')
+        self.ctrl.train_model()
+
+        self.ctrl.save_loss_plot_to_file('/home/cmeier/code/tmp/train_loss_graph.png')
+        #self.ctrl.save_visualization_to_file('/home/cmeier/code/data/tmp/train_loss_graph.img')
+
+    def test_generate_visualization(self):
+        self.ctrl.load_dataset()
+        hmm_model = self.hmm_model
+        self.ctrl.register_model(hmm_model)
+        self.ctrl.init_model_on_dataset()
+        hmm_model._hmm.set_format_full(True)
+        self.ctrl.save_visualization_to_file('/home/cmeier/code/tmp/visualization.png')
+
+
+    def test_bench_train_loss_and_graph(self):
+        self.ctrl.load_dataset()
+        hmm_model = self.hmm_model
+        self.ctrl.register_model(hmm_model)
+        self.ctrl.init_model_on_dataset()
+        hmm_model._hmm.set_format_full(True)
+        self.ctrl.register_benchmark()
+        self.ctrl.register_loss_file_path('/home/cmeier/code/tmp/train_loss.csv')
+        self.ctrl.train_model()
+        self.ctrl.save_loss_plot_to_file('/home/cmeier/code/tmp/train_loss_graph.png')
+        self.ctrl.save_visualization_to_file('/home/cmeier/code/tmp/visualization.png')
 
     def test_classify(self):
         self.ctrl.load_dataset()
