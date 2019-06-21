@@ -1,8 +1,6 @@
-from hbhmm.hmm._hmm_base import HMM
-from hbhmm.hmm.distributions import ProbabilityMassFunction
 from hassbrain_algorithm.models._model import Model
 import numpy as np
-from hbhmm.hmm.probs import Probs
+from pomegranate import *
 """
 implementation of a normal Hidden Markov Model with pomegranate
 
@@ -19,7 +17,7 @@ class PomHMM(Model):
         self._epsilon = None
         self._use_q_fct = False
 
-        Model.__init__(self, "test", controller)
+        Model.__init__(self)
 
     def __str__(self):
         if self._hmm is None:
@@ -37,25 +35,21 @@ class PomHMM(Model):
         K = len(self._state_list)
         D = len(self._observation_list)
         # init markov model in normal way
-        self._hmm = HMM(self._state_list,
-                        self._observation_list,
-                        ProbabilityMassFunction,
-                        initial_dist=None)
-        init_pi = HMM.gen_rand_pi(K)
-        self._hmm.set_pi(init_pi)
+        state_list = []
+        for state in self._state_list:
+            hyperparam = {}
+            #for d in self._observation_list:
+            #    hyperparam[d] =
+            state_list.append(State(DiscreteDistribution(hyperparam)))
 
-        em_matrix = HMM.gen_rand_emissions(K, D)
-        self._hmm.set_emission_matrix(em_matrix)
 
-        trans_mat = HMM.gen_rand_transitions(K)
-        self._hmm.set_transition_matrix(trans_mat)
+
 
     def get_train_loss_plot_y_label(self):
         if self._use_q_fct:
             return 'Q(Theta, Theta_old)'
         else:
             return 'P(X|Theta)'
-
 
     def create_pred_act_seqs(self, dataset):
         state_lists, obs_lists = dataset.get_test_labels_and_seq()

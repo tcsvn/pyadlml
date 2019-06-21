@@ -313,7 +313,7 @@ class TestHomeassistantModelHMMLogScaled(unittest.TestCase):
         hmm_model = self.hmm_model
         self.ctrl.register_model(hmm_model)
         self.ctrl.init_model_on_dataset()
-        self.ctrl.train_model()
+        #self.ctrl.train_model()
         hmm_model._hmm.set_format_full(True)
         print(hmm_model)
         print('-'*10)

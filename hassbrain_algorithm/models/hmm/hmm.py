@@ -166,7 +166,9 @@ class _ModelHMM(Model):
         #print('*'*10)
         last_omega_slice = omega[N]
         # todo remove line below due to corrections
-        last_omega_slice = np.exp(last_omega_slice)
+        norm = last_omega_slice.sum()
+        last_omega_slice = last_omega_slice/norm
+        last_omega_slice = Probs.np_prob_arr2exp(last_omega_slice)
         res = np.zeros((K), dtype=object)
         for i in range(K):
             res[i] = (self._hmm._z[i], last_omega_slice[i])
@@ -272,8 +274,8 @@ class ModelHMM_log(_ModelHMM):
         N = len(obs_seq) - 1
         K = len(self._hmm._z)
         last_omega_slice = omega[N]
-        # todo remove line below due to corrections
-        last_omega_slice = np.exp(last_omega_slice)
+        last_omega_slice = last_omega_slice/last_omega_slice.sum()
+        last_omega_slice = Probs.np_prob_arr2exp(last_omega_slice)
         res = np.zeros((K), dtype=object)
         for i in range(K):
             res[i] = (self._hmm._z[i], last_omega_slice[i])
