@@ -1,5 +1,4 @@
 import unittest
-
 from hassbrain_algorithm.models.hmm.hsmm import *
 from hassbrain_algorithm.controller import Controller
 from hassbrain_algorithm.controller import Dataset
@@ -172,18 +171,19 @@ class TestController(unittest.TestCase):
         self.ctrl.set_dataset(dk)
         self.ctrl.load_dataset()
         self.ctrl.register_model(hmm_model)
-
         self.ctrl.init_model_on_dataset()
 
 
 
+        hmm_model = self.ctrl._model._hsmm #type: ssm.HSMM
+        z, y = hmm_model.sample(1000)
+
+        print(z)
         #print(hmm_model._hmm)
-        self.ctrl.train_model()
-        print('#'*200)
-        print(hmm_model)
-        hmm_model._hmm.set_str_exp(True)
-        hmm_model._hmm.set_format_full(True)
-        print(hmm_model)
+        #self.ctrl.train_model()
+        #print('#'*200)
+        #print(hmm_model)
+        #print(hmm_model)
         #print(hmm_model._hmm.verify_transition_matrix())
         #print(hmm_model._hmm.verify_emission_matrix())
 
@@ -210,12 +210,12 @@ class TestController(unittest.TestCase):
     def test_init_model(self):
         hmm_model = self.hmm_model
         dk = Dataset.KASTEREN
-        self.ctrl.set_dataset(dk)
+        params = {'repr': 'raw'}
+        self.ctrl.set_dataset(dk, params)
         self.ctrl.load_dataset()
         self.ctrl.register_model(hmm_model)
 
         self.ctrl.init_model_on_dataset()
-        hmm_model._hmm.set_format_full(True)
         print(self.ctrl._model)
 
 

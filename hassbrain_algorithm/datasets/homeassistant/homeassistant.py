@@ -187,7 +187,7 @@ class DatasetHomeassistant(DataInterfaceHMM):
         this method presupposes that either a path is set
         :return:
         """
-        # either load by file or this was set previously by controller
+        # either load_basic by file or this was set previously by controller
         if self._labels_path is not None:
             with open(self._labels_path, 'r') as stream:
                 data_loaded = yaml.load(stream)
@@ -256,10 +256,10 @@ class DatasetHomeassistant(DataInterfaceHMM):
         :return:
         """
 
-        # load activity csv to df
+        # load_basic activity csv to df
         act_df = self._act_file_to_df()
 
-        # load database
+        # load_basic database
         from detective.core import HassDatabase
         if self._database_path is None:
             raise ValueError
@@ -272,7 +272,7 @@ class DatasetHomeassistant(DataInterfaceHMM):
         self._df = db.master_df
         from detective.core import HassbrainCompatibleDevices
 
-        # load multiple sensors, (lights, switches and binary_sensors as things with on of value)
+        # load_basic multiple sensors, (lights, switches and binary_sensors as things with on of value)
         sensors_binary_df = HassbrainCompatibleDevices(db.master_df).data
         self._df = sensors_binary_df
         #self._print_full(sensors_binary_df.head(20))

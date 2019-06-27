@@ -70,47 +70,48 @@ class Controller():
             # for example from homeassistant web for the own database
             return self._config['datasets'][dataset.value]
 
-    def set_dataset(self, data_name):
+    def set_dataset(self, data_name, params={}):
         """
         loads the dataset into ram
         :param data_name:
+                params:
         :return:
         """
-        self.logger.info("load dataset...")
+        self.logger.info("load_basic dataset...")
         if data_name == Dataset.KASTEREN:
-            from hassbrain_algorithm.datasets.kasteren import DatasetKasteren
+            from hassbrain_algorithm.datasets.kasteren.kasteren import DatasetKasteren
             self._dataset_enm = Dataset.KASTEREN
-            self._dataset = DatasetKasteren()
+            self._dataset = DatasetKasteren(**params)
             self._dataset.set_file_paths(self.load_paths(Dataset.KASTEREN))
 
         elif data_name == Dataset.PENDIGITS:
-            from hassbrain_algorithm.datasets.pendigits import DatasetPendigits
+            from hassbrain_algorithm.datasets.pendigit.pendigits import DatasetPendigits
             self._dataset_enm = Dataset.PENDIGITS
-            self._dataset = DatasetPendigits()
+            self._dataset = DatasetPendigits(**params)
             self._dataset.set_file_paths(self.load_paths(Dataset.PENDIGITS))
 
         elif data_name == Dataset.HASS_TESTING:
             from hassbrain_algorithm.datasets.homeassistant import DatasetHomeassistant
             self._dataset_enm = Dataset.HASS_TESTING
-            self._dataset = DatasetHomeassistant()
+            self._dataset = DatasetHomeassistant(**params)
             self._dataset.set_file_paths(self.load_paths(Dataset.HASS_TESTING))
 
         elif data_name == Dataset.HASS_CHRIS:
             from hassbrain_algorithm.datasets.homeassistant import DatasetHomeassistant
             self._dataset_enm = Dataset.HASS_CHRIS
-            self._dataset = DatasetHomeassistant()
+            self._dataset = DatasetHomeassistant(**params)
             self._dataset.set_file_paths(self.load_paths(Dataset.HASS_CHRIS))
 
         elif data_name == Dataset.HASS_SIMON:
             from hassbrain_algorithm.datasets.homeassistant import DatasetHomeassistant
             self._dataset_enm = Dataset.HASS_SIMON
-            self._dataset = DatasetHomeassistant()
+            self._dataset = DatasetHomeassistant(**params)
             self._dataset.set_file_paths(self.load_paths(Dataset.HASS_SIMON))
 
         elif data_name == Dataset.HASS:
             from hassbrain_algorithm.datasets.homeassistant import DatasetHomeassistant
             self._dataset_enm = Dataset.HASS
-            self._dataset = DatasetHomeassistant()
+            self._dataset = DatasetHomeassistant(**params)
         #elif data_name == Dataset.MAVPAD2005:
         #    return
         #elif data_name == Dataset.ARAS:

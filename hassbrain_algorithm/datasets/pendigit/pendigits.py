@@ -34,7 +34,7 @@ class DatasetPendigits(DataInterfaceHMM):
         train_data, tdata = normalize_example(train_data)
         self._train_data = train_data
 
-        # load testdata
+        # load_basic testdata
         test_data, test_labels = self._loadUnipenData(self._test_label_path)
         self._test_labels = test_labels
 

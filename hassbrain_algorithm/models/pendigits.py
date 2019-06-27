@@ -1,6 +1,6 @@
 from hassbrain_algorithm.algorithms.hmm.distributions import ProbabilityMassFunction
 from sklearn.externals import joblib
-from hassbrain_algorithm.datasets.pendigits import DatasetPendigits
+from hassbrain_algorithm.datasets.pendigit.pendigits import DatasetPendigits
 from hassbrain_algorithm.models._model import Model
 from hbhmm.hmm.hmm_log import HMM_log
 import numpy as np

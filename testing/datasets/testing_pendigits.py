@@ -1,6 +1,6 @@
 import unittest
 from hassbrain_algorithm.controller import Controller, Dataset
-from hassbrain_algorithm.datasets.pendigits import DatasetPendigits
+from hassbrain_algorithm.datasets.pendigit.pendigits import DatasetPendigits
 
 
 class TestDatasetPendigits(unittest.TestCase):

@@ -75,7 +75,7 @@ class DataInterfaceHMM():
     def get_train_seq(self):
         """
         :return:
-            a list of symbols representing the observations
+            a 1D numpy array
         """
         raise NotImplementedError
 
@@ -95,9 +95,12 @@ class DataInterfaceHMM():
     @abstractmethod
     def get_test_labels_and_seq(self):
         """
+        each index of y_labels corresponds to the element of at index i in x
         :return:
             y_labels
-            y_observations
+                a 1D numpy with labels
+            x
+                a 1D numpy array with observations
         """
         raise NotImplementedError
 

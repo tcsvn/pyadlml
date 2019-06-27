@@ -4,7 +4,7 @@ from hbhmm.hmm.hmm_log_scaled import HMM_log_scaled
 from hbhmm.hmm.hmm_scaled import HMM_Scaled
 from hbhmm.hmm.distributions import ProbabilityMassFunction
 from hassbrain_algorithm.models._model import Model
-from hassbrain_algorithm.datasets.kasteren import DatasetKasteren
+from hassbrain_algorithm.datasets.kasteren.kasteren import DatasetKasteren
 import numpy as np
 
 from hbhmm.hmm.probs import Probs
@@ -273,9 +273,16 @@ class ModelHMM_log(_ModelHMM):
         omega = self._hmm.viterbi_latt(obs_seq)
         N = len(obs_seq) - 1
         K = len(self._hmm._z)
+        print('lulululu'*50)
+        print('omega: ', omega)
         last_omega_slice = omega[N]
+        print('prob(x): ', last_omega_slice.sum())
         last_omega_slice = last_omega_slice/last_omega_slice.sum()
+        print('omega_after: ', last_omega_slice)
+        print('sum to 0: ', last_omega_slice.sum())
         last_omega_slice = Probs.np_prob_arr2exp(last_omega_slice)
+        print('exp(omega_after: ', last_omega_slice)
+        print('exp(sum to 1: ', last_omega_slice.sum())
         res = np.zeros((K), dtype=object)
         for i in range(K):
             res[i] = (self._hmm._z[i], last_omega_slice[i])
@@ -343,14 +350,12 @@ class HMMForward(ModelHMM_log_scaled):
         #print('went here1')
         #print('normalized_alpha: ', norm_alpha)
         alpha = self._hmm.nalpha_to_alpha(norm_alpha, cn)
-        #print('went here2')
-        #print('alpha: ', alpha)
-        #print('alpha: ', Probs.np_prob_arr2exp(alpha))
-        #print('last_alpha: ', Probs.np_prob_arr2exp(alpha[-1:]))
-        last_alpha_vals = Probs.np_prob_arr2exp(alpha[-1:][0])
-
+        last_omega_slice = Probs.np_prob_arr2exp(alpha[-1:][0])
+        last_omega_slice = last_omega_slice/last_omega_slice.sum()
+        last_omega_slice = Probs.np_prob_arr2exp(last_omega_slice)
+        print('lululu'*100)
         K = len(self._hmm._z)
         res = np.zeros((K), dtype=object)
         for i in range(K):
-            res[i] = (self._hmm._z[i], last_alpha_vals[i])
+            res[i] = (self._hmm._z[i], last_omega_slice[i])
         return res

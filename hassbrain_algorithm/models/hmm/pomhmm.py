@@ -1,3 +1,4 @@
+from pomegranate.distributions.NormalDistribution import NormalDistribution
 from hassbrain_algorithm.models._model import Model
 import numpy as np
 from pomegranate import *
@@ -36,12 +37,11 @@ class PomHMM(Model):
         D = len(self._observation_list)
         # init markov model in normal way
         state_list = []
-        for state in self._state_list:
-            hyperparam = {}
-            #for d in self._observation_list:
-            #    hyperparam[d] =
-            state_list.append(State(DiscreteDistribution(hyperparam)))
-
+        from pomegranate import *
+        dists = [NormalDistribution(5, 1), NormalDistribution(1, 7), NormalDistribution(8,2)]
+        trans_mat = np.zeros((K, K))
+        self._hmm = HiddenMarkovModel.from_matrix(trans_mat, dists, starts, ends)
+        self._hmm.jk
 
 
 
