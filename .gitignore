@@ -22,4 +22,4 @@ coverage.xml
 profile_default/
 ipython_config.py
 
-venv/*
+venv_pyadml/*
