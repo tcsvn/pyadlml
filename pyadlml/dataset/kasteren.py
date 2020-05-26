@@ -2,34 +2,9 @@ import pandas as pd
 import numpy as np
 from pandas import DataFrame
 from pandas._libs.index import timedelta
-
-
-START_TIME = 'start_time'
-END_TIME = 'end_time'
-VAL = 'val'
-NAME = 'name'
-DEVICE = 'device'
-"""
-    df_activities:
-        start_time | end_time   | activity
-        ---------------------------------
-        timestamp   | timestamp | act_name
-
-    df_devices:
-        toggle_time | device_1 | ...| device_n
-        ----------------------------------------
-        timestamp   | state_0  | ...| state_n
-"""
-class Data():
-    def __init__(self, activities, devices):
-        self.df_activities = activities
-        self.df_devices = devices
-
-    def create(self, data_dep='iid'):
-        if data_dep == 'iid':
-            pass
-        elif data_dep == 'sequential':
-            pass
+from pyadlml.dataset.util import fill_nans_ny_inverting_first_occurence
+from pyadlml.dataset._dataset import Data
+from pyadlml.dataset._dataset import ACTIVITY, VAL, START_TIME, END_TIME, TIME, NAME, DEVICE
 
 def _load_activities(activity_fp):
     act_map = {
@@ -51,7 +26,7 @@ def _load_activities(activity_fp):
                      engine='python') 
     df[START_TIME] = pd.to_datetime(df[START_TIME])
     df[END_TIME] = pd.to_datetime(df[END_TIME])
-    df['activities'] = df[ide].map(act_map)
+    df[ACTIVITY] = df[ide].map(act_map)
     df = df.drop(ide, axis=1)
     return df
 
@@ -88,6 +63,7 @@ def _load_devices(device_fp):
     #k todo declare at initialization of dataframe
     sens_data[START_TIME] = pd.to_datetime(sens_data[START_TIME])
     sens_data[END_TIME] = pd.to_datetime(sens_data[END_TIME])
+    sens_data[VAL] = sens_data[VAL].astype('bool')
 
     # replace numbers with the labels
     sens_data[DEVICE] = sens_data[ide].map(sens_labels)
@@ -95,14 +71,51 @@ def _load_devices(device_fp):
     sens_data = sens_data.sort_values(START_TIME)
     return sens_data
 
-
 def load(device_fp, activity_fp):
+    df_activities, df_devices = _load(device_fp, activity_fp)
+    return Data(df_activities, df_devices)
+
+
+
+def _load(device_fp, activity_fp):
+    from pyadlml.dataset._dataset import correct_activity_overlap, \
+        correct_device_ts_duplicates, _is_activity_overlapping
+    from pyadlml.dataset.util import print_df
     df_activities = _load_activities(activity_fp)
+
+    # correct overlapping activities as going to toilet is done in parallel
+    # for this dataset >:/
+    while _is_activity_overlapping(df_activities):
+        df_activities = correct_activity_overlap(df_activities)
+
     df_devices = _load_devices(device_fp)
 
-    # transform into proper shape
-    print(df_devices.index)
-    for i in range(0,len(df_devices)):
-        pass
+    # copy devices to new dfs 
+    #   one with all values but start time and other way around
+    df_start = df_devices.copy().loc[:, df_devices.columns != END_TIME]
+    df_end = df_devices.copy().loc[:, df_devices.columns != START_TIME]
 
-    return Data(df_activities, df_devices)
+    # set values at the end time to zero because this is the time a device turns off
+    df_start[VAL] = True
+    df_end[VAL] = False
+
+    # rename column 'End Time' and 'Start Time' to 'Time'
+    df_start.rename(columns={START_TIME: TIME}, inplace=True)
+    df_end.rename(columns={END_TIME: TIME}, inplace=True)
+
+    df_devices = pd.concat([df_end, df_start]).sort_values(TIME)
+    df_devices = df_devices.reset_index(drop=True)
+
+    # check if all timestamps have no duplicate
+    df_devices = correct_device_ts_duplicates(df_devices)
+    assert df_devices[TIME].is_unique
+
+    # transpose the dataframe
+    df_devices = df_devices.pivot(index=TIME, columns=DEVICE, values=VAL)
+
+    lower = 50
+    #print_df(df_devices.iloc[ 0:lower, 0:2])
+    df_devices = fill_nans_ny_inverting_first_occurence(df_devices)
+    df_devices = df_devices.fillna(method='ffill')
+
+    return df_activities, df_devices

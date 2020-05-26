@@ -9,7 +9,7 @@ import pyadlml.dataset.kasteren as kasteren
 
 class TestKasteren(unittest.TestCase):
     def setUp(self):
-        pass
+        self.data = kasteren.load(deviceData, activityData)
 
-    def test_load(self):
-        data = kasteren.load(deviceData, activityData)
+    def test_create_raw(self):
+        tmp = self.data.create_raw()
