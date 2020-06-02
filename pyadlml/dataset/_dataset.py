@@ -6,18 +6,18 @@ import pandas as pd
 import swifter
 import numpy as np
 from enum import Enum
-from pyadlml.dataset.util import print_df
+from pyadlml.dataset.util import print_df, resample_data
 
 START_TIME = 'start_time'
 END_TIME = 'end_time'
 TIME  = 'time'
-VAL = 'val'
 NAME = 'name'
 ACTIVITY = 'activity'
+VAL = 'val'
 
 DEVICE = 'device'
 RAW = 'raw'
-CHANGEPOINT ='changed'
+CHANGEPOINT ='changepoint'
 LAST_FIRED = 'last_fired'
 
 """
@@ -29,99 +29,90 @@ LAST_FIRED = 'last_fired'
         timestamp   | timestamp | act_name
 
 
-    df_devices:
+    df_devices_rep_1:
         toggle_time | device_1 | ...| device_n
         ----------------------------------------
         timestamp   | state_0  | ...| state_n
+
+    df_devices_rep_2:
+        is used to calculate statistics for devices more easily
+        and has lower footprint in storage
+        Exc: 
+        start_time | end_time   | device    | state
+        -------------------------------------------
+        timestamp   | timestamp | dev_name  |   1
+
 """
 class Data():
     def __init__(self, activities, devices):
 
-        assert self.check_activities(activities) 
-        assert self.check_devices(devices)
+        assert check_activities(activities) 
+        assert check_devices(devices)
 
         self.df_activities = activities
         self.df_devices = devices
 
+        # list of activities and devices
+        self.activities = activities.columns
+        self.devices = devices.columns
+
+        # second representation
+        self.df_dev_rep2 = None
+
         self.df_raw = None
+        self.df_cp = None
+        self.df_lf = None
 
-    def check_activities(self, df):
+
+    def create_raw(self, t_res=None):
+        self.df_raw = create_raw(self.df_devices, self.df_activities, t_res)
+
+    def statreport_devices(self):
         """
-        check if the activitiy dataframe is valid by checking if
-            - the dataframe has the correct dimensions and labels
-            - activities are non overlapping
+        gather some stats about the devices used in the dataset
+        Returns
+        -------
+        res dict
         """
-        if not START_TIME in df.columns or not END_TIME in df.columns \
-        or not ACTIVITY in df.columns or len(df.columns) != 3:
-            raise ValueError
+        res = {}
 
-        if _is_activity_overlapping(df):
-            print('there should be none activity overlapping')
-            raise ValueError
-        return True
+        # a list of all activites used in dataset
+        res['device_list'] = self.devices
 
-    def check_devices(self, df_devices):
-        # todo 
-        return True
+        # the number of times a device changed state
+        dfc = get_devices_count()
+        res['device_counts']  = first_row_df2dict(dfc)
 
-    def create_raw(self):
-        dev = self.df_devices.copy() 
-        act = self.df_activities.copy() 
-        self.df_raw = label_data(dev, act)
+        return res
 
-#    def statreport_devices(self):
-#        """
-#        gather some stats about the devices used in the dataset
-#        Returns
-#        -------
-#        res dict
-#        """
-#        from pyadlml.datasets.util import first_row_df2dict
-#        from pyadlml.datasets.stat import get_devices_count
-#
-#        res = {}
-#
-#        # a list of all activites used in dataset
-#        res['device_list'] = self.df_devices.columns
-#
-#        # the number of times a device changed state
-#        dfc = get_devices_count()
-#        res['device_counts']  = first_row_df2dict(dfc)
-#
-#        return res
-#
-#    def statreport_activities(self):
-#        """
-#        gather some stats about the activities, that labeled the dataset
-#        in form of dictionarys
-#        Returns
-#        -------
-#        res dict
-#
-#        """
-#        from pyadlml.datasets.util import first_row_df2dict
-#
-#        res = {}
-#        # a list of all activites used in dataset
-#        res['act_list'] = self.df_activities.columns
-#
-#        # the number of how often the each activity occured in the dataset
-#        dfc = self.df_activities.get_activities_count()
-#        res['act_count'] = first_row_df2dict(dfc)
-#
-#        # percentage of activity duration over all activities
-#        dfpc = _acts.get_rel_act_duration()
-#        res['act_rel_duration'] = first_row_df2dict(dfpc)
-#
-#        # total length of activities in minutes
-#        dfal = _acts.get_total_act_duration()
-#        res['act_tot_duration'] = first_row_df2dict(dfal)
-#
-#        # percentage of labeled data vs unlabeled data
-#        # todo implement
-#
-#        return res
-#
+    def statreport_activities(self):
+        """
+        gather some stats about the activities, that labeled the dataset
+        in form of dictionarys
+        Returns
+        -------
+        res dict
+
+        """
+        res['activity_list'] = self.activities
+        #res['act_count'] = pyadlml.dataset.stat.
+        dfpc = _acts.get_rel_act_duration()
+        res['act_rel_duration'] = first_row_df2dict(dfpc)
+        dfal = _acts.get_total_act_duration()
+        res['act_tot_duration'] = first_row_df2dict(dfal)
+        return res
+
+
+def create_raw(df_devices, df_activities, t_res=None):
+    dev = df_devices.copy()
+    act = df_activities.copy() 
+    if t_res is not None:
+        # TODO upscale the data to a certain time resolution
+        raise NotImplementedError
+
+    df_raw = label_data(dev, act)
+    return df_raw
+
 
 def label_data(df_devices: pd.DataFrame, df_activities: pd.DataFrame):
     """
@@ -139,17 +130,17 @@ def label_data(df_devices: pd.DataFrame, df_activities: pd.DataFrame):
     :return:
         numpy ndarray 1D
     """
-    df_raw = df_devices.copy()
-    df_raw[ACTIVITY] = df_raw.index
-    df_raw[ACTIVITY] = df_raw[ACTIVITY].apply(
+    df = df_devices.copy()
+    df[ACTIVITY] = df.index
+    df[ACTIVITY] = df[ACTIVITY].apply(
                     _map_timestamp2activity,
                     df_act=df_activities)
 
 # todo check how to vectorize with swifter for speedup
-#    df_raw[ACTIVITY] = df_raw[ACTIVITY].swifter.apply(
+#    df[ACTIVITY] = df[ACTIVITY].swifter.apply(
 #                    _map_timestamp2activity,
 #                    df_act=df_activities)
-    return df_raw
+    return df
 
 def _map_timestamp2activity(timestamp, df_act):
     """ given a timestamp map the timestamp to an activity in df_act
@@ -186,12 +177,7 @@ def _map_timestamp2activity(timestamp, df_act):
         print('*'*70)
         raise ValueError
 
-def is_proper_activity_df(df):
-    """
-    checks if the given dataframe conforms to the definition of an activity dataframe
-    """
-    return 
-def gen_random_day(df):
+def random_day(df):
     """
     :param: df 
         start_time | end_time   | activity
@@ -203,7 +189,7 @@ def gen_random_day(df):
         datetime object
     """
     import numpy as np
-    assert is_proper_activity(df)
+    assert check_activities(df)
 
     rnd_idx = np.random.random_integers(0, len(df.index))
     rnd_start_time = df.iloc[rnd_idx][START_TIME] # type: pd.Timestamp
@@ -211,11 +197,45 @@ def gen_random_day(df):
     return rnd_start_time.date()
 
 
+def check_activities(df):
+    """
+    check if the activitiy dataframe is valid by checking if
+        - the dataframe has the correct dimensions and labels
+        - activities are non overlapping
+    """
+    if not START_TIME in df.columns or not END_TIME in df.columns \
+    or not ACTIVITY in df.columns or len(df.columns) != 3:
+        print('the lables and dimensions of activites does not fit')
+        raise ValueError
+
+    if _is_activity_overlapping(df):
+        print('there should be none activity overlapping')
+        raise ValueError
+    return True
+
+def check_devices(df_devices):
+    return _is_dev_repr1 or _is_dev_repr2
+
+def _is_dev_repr1(df):
+    return True
+
+def _is_dev_repr2(df):
+    if not START_TIME in df.columns or not END_TIME in df.columns \
+    or not DEVICE in df.columns or len(df.columns) != 3:
+        return False
+    # TODO check for uniqueness in timestamps
+    return True
+
+
+
 def correct_device_ts_duplicates(df):
     """
     if there are duplicate timestamps which are used for indexing 
     make them unique again by adding a millisecond to the second pair
     """
+    # if time is the index, than it has to be reseted to a column
+    df = df.reset_index()
+
     # split duplicates and uniques  
     dup_mask = df.duplicated(subset=[TIME], keep=False)
     duplicates = df[dup_mask]
@@ -232,11 +252,17 @@ def correct_device_ts_duplicates(df):
         new_time = df.loc[index,TIME] + pd.Timedelta(milliseconds=1)
         duplicates.iloc[i - 1, df.columns.get_loc(TIME)] = new_time
 
+
     assert duplicates[TIME].is_unique
 
     # concatenate and sort the dataframe 
     df = pd.concat([duplicates, uniques], sort=True)
-    return df.sort_values(TIME)
+
+    # set the time as index again
+    df = df.sort_values(TIME)
+    df = df.set_index(TIME)
+
+    return df
 
 def _is_activity_overlapping(df):
     import datetime
@@ -246,6 +272,9 @@ def _is_activity_overlapping(df):
     return not overlapping.empty
 
 def _create_activity_df():
+    """
+    returns: empty pd Dataframe 
+    """
     df = pd.DataFrame(columns=[START_TIME, END_TIME, ACTIVITY])
     df[START_TIME] = pd.to_datetime(df[START_TIME])
     df[END_TIME] = pd.to_datetime(df[END_TIME])
@@ -348,3 +377,142 @@ def correct_activity_overlap(df):
     df_activities = df_activities.reset_index(drop=True)
 
     return df_activities
+
+
+
+	
+def split_train_test_dat(df, test_day):
+    """
+    is called after a random test_day is selected
+    :param test_day:
+    :return:
+    """
+    assert True
+
+    mask_st_days = (df[START_TIME].dt.day == test_day.day)
+    mask_st_months = (df[START_TIME].dt.month == test_day.month)
+    mask_st_year = (df[START_TIME].dt.year == test_day.year)
+    mask_et_days = (df[END_TIME].dt.day == test_day.day)
+    mask_et_months = (df[END_TIME].dt.month == test_day.month)
+    mask_et_year = (df[END_TIME].dt.year == test_day.year)
+    mask1 = mask_st_days & mask_st_months & mask_st_year
+    mask2 = mask_et_days & mask_et_months & mask_et_year
+    mask = mask1 | mask2
+
+    test_df = df[mask]
+    train_df = df[~mask]
+    return test_df, train_df
+
+def _dev_rep2_to_rep1(df):
+
+    pass
+
+def _create_devices(dev_list, index=None):
+    """
+    creates an empty device dataframe
+    """
+    if index is not None:
+        return pd.DataFrame(columns=dev_list, index=index)
+    else:
+        return pd.DataFrame(columns=dev_list)
+
+def _dev_rep1_to_rep2(df):
+    """
+        df: 
+        | Start time    | End time  | device_name | value
+        --------------------------------------------------
+        | ts1           | ts2       | name1       | 1
+
+        return df:
+        | time  | dev_1 | ....  | dev_n |
+        --------------------------------
+        | ts1   |   1   | ....  |  0    |
+    """
+    # copy devices to new dfs 
+    # one with all values but start time and other way around
+    df_start = df.copy().loc[:, df.columns != END_TIME]
+    df_end = df.copy().loc[:, df.columns != START_TIME]
+
+    # set values at the end time to zero because this is the time a device turns off
+    df_start[VAL] = True
+    df_end[VAL] = False
+
+    # rename column 'End Time' and 'Start Time' to 'Time'
+    df_start.rename(columns={START_TIME: TIME}, inplace=True)
+    df_end.rename(columns={END_TIME: TIME}, inplace=True)
+
+    df = pd.concat([df_end, df_start]).sort_values(TIME)
+    df = df.reset_index(drop=True)
+
+    # create raw dataframe
+    df_dev = _create_devices(df[DEVICE].unique(), index=df[TIME])
+
+    # create first row in dataframe 
+    df_dev.iloc[0] = np.zeros(len(df_dev.columns))
+    col_idx = df_dev.columns.get_loc(df.iloc[0].device)
+    df_dev.iloc[0,col_idx] = 1
+
+    # update all rows of the dataframe
+    for i, row in enumerate(df.iterrows()):
+        if i == 0:
+            continue
+        #copy previous row into current and update current value
+        df_dev.iloc[i] = df_dev.iloc[i-1].values
+        col_idx = df_dev.columns.get_loc(df.iloc[i].device)
+        df_dev.iloc[i] = int(df.iloc[i].val)
+
+    return df_dev
+
+
+def create_changepoint(df, freq=(30, 's')):
+    # resample the data given frequencies
+    df = resample_data(df, freq)
+    df = _apply_change_point(df.copy())
+    return df
+
+def _apply_change_point(df):
+    """
+    Parameters
+    ----------
+    df
+    
+    Returns
+    -------
+    
+    """
+    i = 0
+    insert_stack = []
+    pushed_prev_it_on_stack = False
+    len_of_row = len(df.iloc[0])
+    series_all_false = self._gen_row_false_idx_true(len_of_row, [])
+    for j in range(1, len(df.index)+2):
+        if (len(insert_stack) == 2 or (len(insert_stack) == 1 and not pushed_prev_it_on_stack)) \
+                and (i-1 >= 0):
+            """
+            the case when either the stack is maxed out ( == 2) or a row from before
+            2 iterations is to be written to the dataframe and it is not the first two rows
+            """
+            item = insert_stack[0]
+            df.iloc[i-1] = item
+            insert_stack.remove(item)
+        else:
+            df.iloc[i-1] = series_all_false
+        if pushed_prev_it_on_stack:
+            pushed_prev_it_on_stack = False
+    
+        if j >= len(df.index):
+            # this is to process the last two lines also as elements are appended
+            # 2 rows in behind
+            i += 1
+            continue
+
+        rowt = df.iloc[i]   # type: pd.Series
+        rowtp1 = df.iloc[j] # type: pd.Series
+    
+        if not rowt.equals(rowtp1):
+            idxs = self._get_cols_that_changed(rowt, rowtp1) # type: list
+            row2insert = self._gen_row_false_idx_true(len(rowt), idxs)
+            insert_stack.append(row2insert)
+            pushed_prev_it_on_stack = True
+        i += 1
+    return df

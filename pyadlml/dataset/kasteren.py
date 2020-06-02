@@ -1,10 +1,14 @@
-import pandas as pd
 import numpy as np
 from pandas import DataFrame
 from pandas._libs.index import timedelta
+import pandas as pd
+
 from pyadlml.dataset.util import fill_nans_ny_inverting_first_occurence
-from pyadlml.dataset._dataset import Data
-from pyadlml.dataset._dataset import ACTIVITY, VAL, START_TIME, END_TIME, TIME, NAME, DEVICE
+from pyadlml.dataset._dataset import Data, correct_activity_overlap, \
+    _dev_rep1_to_rep2, correct_device_ts_duplicates, \
+    _is_activity_overlapping, \
+    ACTIVITY, VAL, START_TIME, END_TIME, TIME, NAME, DEVICE
+
 
 def _load_activities(activity_fp):
     act_map = {
@@ -72,15 +76,6 @@ def _load_devices(device_fp):
     return sens_data
 
 def load(device_fp, activity_fp):
-    df_activities, df_devices = _load(device_fp, activity_fp)
-    return Data(df_activities, df_devices)
-
-
-
-def _load(device_fp, activity_fp):
-    from pyadlml.dataset._dataset import correct_activity_overlap, \
-        correct_device_ts_duplicates, _is_activity_overlapping
-    from pyadlml.dataset.util import print_df
     df_activities = _load_activities(activity_fp)
 
     # correct overlapping activities as going to toilet is done in parallel
@@ -88,34 +83,17 @@ def _load(device_fp, activity_fp):
     while _is_activity_overlapping(df_activities):
         df_activities = correct_activity_overlap(df_activities)
 
-    df_devices = _load_devices(device_fp)
+    df_dev = _load_devices(device_fp)
+    df_dev_rep1 = _dev_rep1_to_rep2(df_dev)
+    df_dev_rep2 = df_dev.copy()
+    
+    # correct possible duplicates for the devices
+    df_dev_rep1 = correct_device_ts_duplicates(df_dev_rep1)
 
-    # copy devices to new dfs 
-    #   one with all values but start time and other way around
-    df_start = df_devices.copy().loc[:, df_devices.columns != END_TIME]
-    df_end = df_devices.copy().loc[:, df_devices.columns != START_TIME]
+    data = Data(df_activities, df_dev_rep1)
+    data.df_dev_rep2 = df_dev_rep2
+    return data
 
-    # set values at the end time to zero because this is the time a device turns off
-    df_start[VAL] = True
-    df_end[VAL] = False
 
-    # rename column 'End Time' and 'Start Time' to 'Time'
-    df_start.rename(columns={START_TIME: TIME}, inplace=True)
-    df_end.rename(columns={END_TIME: TIME}, inplace=True)
 
-    df_devices = pd.concat([df_end, df_start]).sort_values(TIME)
-    df_devices = df_devices.reset_index(drop=True)
 
-    # check if all timestamps have no duplicate
-    df_devices = correct_device_ts_duplicates(df_devices)
-    assert df_devices[TIME].is_unique
-
-    # transpose the dataframe
-    df_devices = df_devices.pivot(index=TIME, columns=DEVICE, values=VAL)
-
-    lower = 50
-    #print_df(df_devices.iloc[ 0:lower, 0:2])
-    df_devices = fill_nans_ny_inverting_first_occurence(df_devices)
-    df_devices = df_devices.fillna(method='ffill')
-
-    return df_activities, df_devices

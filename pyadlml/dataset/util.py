@@ -38,28 +38,6 @@ def _label_df_cols(df, hm):
         df.rename(columns={col:lbl}, inplace=True)
     return df
 
-def first_row_df2dict(df):
-    """
-    creates a dictionary by taking the column names as keys and as the
-    values the first items of the first row
-    Parameters
-    ----------
-    df  pd.DataFrame
-        with only one row
-        e.g
-              leave house  use toilet  ...  prepare Dinner  get drink
-        perc     0.650096    0.005725  ...        0.010038    0.00049
-
-    Returns
-    -------
-    res dict
-    """
-    res = {}
-    for i, col_name in enumerate(df.columns):
-        res[col_name] = df.iloc[0][col_name]
-    return res
-
-
 def fill_nans_ny_inverting_first_occurence(df):
     """
     fills up true or false values
@@ -88,4 +66,80 @@ def fill_nans_ny_inverting_first_occurence(df):
         col.iloc[0:idx] = not col[ts]
     return df
 
+
+def resample_data(df, freq):
+    """ splits data into time bins and a new frequency of
+     occurences either upsample or downsample data
+
+    Parameters
+    ----------
+    df
+    freq (string)
+        the frequency or the timeslice delta
+        e.g
+            '0.5min'
+            '30min'
+
+    Returns
+    -------
+
+    """
+    assert isinstance(freq[0],int) and freq[0] > 0
+    assert freq[0] in ['ms', 's', 'm']
+
+    resampler = df.resample(freq)
+    rs_df = resampler.apply(self._aggr)
+    rs_df = self._ffill_bfill_inv_first_dev(rs_df)
+    return rs_df
+
+
+
+def _aggr(series: pd.Series) -> pd.Series:
+    """ for every value in a the dataframe to be resampled decide which
+    value stands in the new field of the resampled dataframe. If a new
+    value would be generated write np.nan into it. If the value matches the time
+    bin write the value into it. If there is a multitude of device changes falling
+    into one time bin take the last one to represent the time bin.
+    Parameters
+    ----------
+    series
+        a number of elements that have to be set into one time bin
+    Returns
+    -------
+
+    """
+    if series.empty:
+        return np.nan
+    elif series.size == 1:
+        return series
+    else:
+        #return self._aggr_multi_items_last(series)
+        return self._aggr_multi_items_sample(series)
+
+def _aggr_multi_items_sample(series: pd.Series):
+    """
+    as take last has been shown to not yield good performance sample one
+    entry of the series and return its value instead
+    Returns
+    -------
+        True or False
+    """
+    rand_idx = np.random.randint(0, series.size)
+    val = series.values[rand_idx]
+    return val
+
+def _aggr_multi_items_last(series: pd.Series):
+    """
+
+    Parameters
+    ----------
+    series
+
+    Returns
+    -------
+        True or False
+
+    """
+    tmp = series.values[-1:][0]
+    return tmp
 
