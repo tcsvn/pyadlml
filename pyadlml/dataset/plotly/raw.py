@@ -1,5 +1,19 @@
+import plotly.figure_factory as ff
+import plotly.express as px
+import numpy as np
+from pyadlml.dataset.stat import devices_count
+"""
+#1.  categorical dot plot for device activations over time
+        - color of dot could be the activity
+        - next to activity bar plot
 
-def gantt_activities_and_devices(df):
+2. dot plot activities vs labeled 
+
+3. confusion matrix as heatmap
+"""
+
+
+def gantt_activities_vs_devices(df):
     """
     """
     df_plt = df.copy()

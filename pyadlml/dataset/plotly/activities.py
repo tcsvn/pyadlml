@@ -2,20 +2,14 @@ import plotly.figure_factory as ff
 import plotly.express as px
 import numpy as np
 import plotly.express as px
-from pyadlml.dataset.stat import activities_count, activities_durations, activities_dist
 from pyadlml.dataset._dataset import START_TIME
-from pyadlml.dataset.stat import activities_duration_dist
+from pyadlml.dataset.stat import activities_duration_dist, \
+    activities_count, activities_durations, activities_dist
 
 """
-#1.  categorical dot plot for device activations over time
-        - color of dot could be the activity
-https://plotly.com/python/dot-plots/
-
-#2. one example week histogramm of activitys
-
-
-
- 
+TODO
+    Activity x activity transition matrix 
+        with the weight matrix of a fitted markov model
 """
 
 def ridge_line(df_act, t_range='day', n=1000):
@@ -75,9 +69,10 @@ def hist_duration(df_act, y_scale='norm'):
     """
     assert y_scale in ['norm', 'log']
 
-    act_dur = activities_durations(df_act.copy())
-    #print(act_dur.head(n=15))
+    title = 'activity duration'
 
+
+    act_dur = activities_durations(df_act.copy())
     df = act_dur[['minutes']]
     df.reset_index(level=0, inplace=True)
     
@@ -87,7 +82,9 @@ def hist_duration(df_act, y_scale='norm'):
     else:
         labels={'minutes': 'minutes'}    
         
-    fig = px.bar(df, x='activity', y='minutes', 
+    df = df.sort_values(by=['minutes'], axis=0)
+    fig = px.bar(df, y='activity', x='minutes', 
+                title=title,
                 labels=labels, 
                 height=400,
                 #hover_data=['fraction'] TODO add the fraction by hovering
@@ -100,19 +97,21 @@ def hist_counts(df_act, y_scale='norm'):
     """
     assert y_scale in ['norm', 'log']
 
+    col_label = 'occurence'
+    title ='activity occurrences'
+
     df = activities_count(df_act.copy())
     df.reset_index(level=0, inplace=True)
-    df
-    col_label = 'occurence'
+    
     if y_scale == 'log':
         df[col_label] = np.log(df[col_label])
         labels={col_label: 'log count'}
     else:
         labels={col_label: 'count'}    
 
-    fig = px.bar(df, x='activity', y=col_label, labels=labels, height=400)
+    df = df.sort_values(by=['occurence'], axis=0)
+    fig = px.bar(df, title=title, y='activity', x=col_label, orientation='h', labels=labels, height=400)
     return fig
-
 
 def gantt(df):
     """
@@ -130,36 +129,15 @@ def gantt(df):
         showgrid_x=True, showgrid_y=False)
 
     # Add range slider
+    btn_12h = dict(count=12, label="12h", step="hour", stepmode="backward")
+    btn_1d = dict(count=1, label="1d", step="day", stepmode="backward")
+    btn_1w = dict(count=7, label="1w", step="day", stepmode="backward")
+    btn_1m = dict(count=1, label="1m", step="month", stepmode="backward")
+    #btn_all =
     fig.update_layout(
         xaxis=dict(
             rangeselector=dict(
-                buttons=list([
-                    #dict(count=1,
-                    #     label="1h",
-                    #     step="hour",
-                    #     stepmode="backward"),                                   
-                    #dict(count=6,
-                    #     label="6h",
-                    #     step="hour",
-                    #     stepmode="backward"),                   
-                    dict(count=12,
-                         label="12h",
-                         step="hour",
-                         stepmode="backward"),                
-                    dict(count=1,
-                         label="1d",
-                         step="day",
-                         stepmode="backward"),
-                    dict(count=7,
-                         label="1w",
-                         step="day",
-                         stepmode="backward"),                     
-                    dict(count=1,
-                         label="1m",
-                         step="month",
-                         stepmode="backward"),
-                    dict(step="all")
-                ])
+                buttons=list([btn_12h, btn_1d, btn_1w, btn_1m])#, dict(step="all")
             ),
             rangeslider=dict(
                 visible=True
