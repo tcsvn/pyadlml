@@ -31,6 +31,66 @@ def concatenate(df1, df2, df1_rev_hm, df2_rev_hm, df1_hm):
     df_resunlbld = _label_df_cols(df_res, df1_hm)
     return df_res
 
+def timestrs_2_timedeltas(t_strs):
+    """
+        gets either a string or a list of strings to convert to a list of 
+        timedeltas
+    """
+    if isinstance(t_strs, list):
+        return [timestr_2_timedelta(t_str) for t_str in t_strs]
+    else:
+        return [timestr_2_timedelta(t_strs)]
+
+
+def timestr_2_timedelta(t_str):
+    """
+        t_str (string)
+        of form 30s, 30m
+    """
+    ttype = t_str[-1:]
+    val = int(t_str[:-1])
+
+    assert ttype in ['h','m','s']
+    assert (val > 0 and val <=12 and ttype == 'h')\
+        or (val > 0 and val <= 60 and ttype == 'm')\
+        or (val > 0 and val <= 60 and ttype == 's')
+    import datetime as dt
+    if ttype == 's':
+        return pd.Timedelta(seconds=val)
+    if ttype == 'm':
+        return pd.Timedelta(seconds=val*60)
+    if ttype == 'h':
+        return pd.Timedelta(seconds=val*3600)
+
+
+
+def time2int(ts, t_res='30m'):
+    """
+    rounds to the next lower min bin or hour bin
+    """
+    assert t_res[-1:] in ['h','m']
+    val = int(t_res[:-1])
+
+    assert (val > 0 and val <=12 and t_res[-1:] == 'h')\
+        or (val > 0 and val <= 60 and t_res[-1:] == 'm')
+
+    import datetime as dt
+    zero = dt.time()
+
+    if t_res[-1:] == 'h':
+        hs = val
+        h_bin = int(ts.hour/hs)*hs
+        return dt.time(hour=h_bin)
+
+    elif t_res[-1:] == 'm':
+        ms = val
+        m_bin = int(ts.minute/ms)*ms
+        return dt.time(hour=ts.hour, minute=m_bin)
+    else:
+        raise ValueError
+
+
+
 def _label_df_cols(df, hm):
     cols = df.columns.values
     for col in cols:

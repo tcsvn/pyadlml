@@ -6,7 +6,8 @@ import pandas as pd
 from pyadlml.dataset.util import fill_nans_ny_inverting_first_occurence
 from pyadlml.dataset._dataset import Data, correct_activity_overlap, \
     _dev_rep1_to_rep2, correct_device_ts_duplicates, \
-    _is_activity_overlapping, \
+    _is_activity_overlapping, correct_device_rep3_ts_duplicates, \
+    device_rep2_2_rep3, device_rep3_2_rep2, \
     ACTIVITY, VAL, START_TIME, END_TIME, TIME, NAME, DEVICE
 
 
@@ -90,8 +91,14 @@ def load(device_fp, activity_fp):
     # correct possible duplicates for the devices
     df_dev_rep1 = correct_device_ts_duplicates(df_dev_rep1)
 
+    # correct possible duplicates for representation 2
+    rep3 = device_rep2_2_rep3(df_dev_rep2)
+    cor_rep3 = correct_device_rep3_ts_duplicates(rep3)
+    df_dev_rep2 = device_rep3_2_rep2(cor_rep3)
+
     data = Data(df_activities, df_dev_rep1)
     data.df_dev_rep2 = df_dev_rep2
+    data.df_dev_rep3 = cor_rep3
     return data
 
 

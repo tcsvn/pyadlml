@@ -28,8 +28,7 @@ LAST_FIRED = 'last_fired'
         ---------------------------------
         timestamp   | timestamp | act_name
 
-
-    df_devices_rep_1:
+    df_devices:
         toggle_time | device_1 | ...| device_n
         ----------------------------------------
         timestamp   | state_0  | ...| state_n
@@ -227,6 +226,88 @@ def _is_dev_repr2(df):
     return True
 
 
+def device_rep3_2_rep2(df_rep3):
+    """
+    transforms a device representation 3 into 2
+    params: df: pd.DataFrame
+                rep3: col (time, device, val)
+                example row: [2008-02-25 00:20:14, Freezer, False]
+    returns: df: (pd.DataFrame)
+                rep2: columns are (start time, end_time, device)
+                example row: [2008-02-25 00:20:14, 2008-02-25 00:22:14, Freezer]         
+    """
+    df = df_rep3.copy().reset_index()
+    df = df.sort_values('time')
+    df['ones'] = 1
+
+    df_start = df[df['val']]
+    df_end = df[~df['val']]
+
+    df_end.rename(columns={'time': 'end_time'}, inplace=True)
+    df_start.rename(columns={'time': 'start_time'}, inplace=True)
+   
+    df_end['pairs'] = df_end.groupby(['device'])['ones'].apply(lambda x: x.cumsum())
+    df_start['pairs'] = df_start.groupby(['device'])['ones'].apply(lambda x: x.cumsum())        
+    
+    
+    df = pd.merge(df_start, df_end, on=['pairs', 'device'])
+    df['val'] = True
+    df = df.sort_values('start_time')
+    
+    assert int(len(df_rep3)/2) == len(df), 'Somewhere two following events of the \
+    #        same device had the same starting point and end point. Make timepoints   '
+    return df[['start_time', 'end_time', 'val', 'device']]
+
+def device_rep2_2_rep3(df_rep2):
+    """
+    params: df: pd.DataFrame
+                rep2: col (start time, end_time, device)
+    returns: df: (pd.DataFrame)
+                rep3: columns are (time, value, device)
+                example row: [2008-02-25 00:20:14, Freezer, False]
+    """
+    # copy devices to new dfs 
+    # one with all values but start time and other way around
+    df_start = df_rep2.copy().loc[:, df_rep2.columns != END_TIME]
+    df_end = df_rep2.copy().loc[:, df_rep2.columns != START_TIME]
+
+    # set values at the end time to zero because this is the time a device turns off
+    df_start[VAL] = True
+    df_end[VAL] = False
+
+    # rename column 'End Time' and 'Start Time' to 'Time'
+    df_start.rename(columns={START_TIME: TIME}, inplace=True)
+    df_end.rename(columns={END_TIME: TIME}, inplace=True)
+
+    df = pd.concat([df_end, df_start]).sort_values(TIME)
+    #df = df.reset_index(drop=True)
+    return df
+
+
+def correct_device_rep3_ts_duplicates(df):
+    """
+    """
+    
+    dup_mask = df.duplicated(subset=[TIME], keep=False)
+    duplicates = df[dup_mask]
+    uniques = df[~dup_mask]
+
+    # for every pair of duplicates add a millisecond on the second one
+    duplicates = duplicates.reset_index(drop=False)
+    s = duplicates['time'] + pd.Timedelta(milliseconds=1)
+    mask = (duplicates.index % 2 == 0) # every second index
+    duplicates['time'] = duplicates['time'].where(mask, s)
+    duplicates = duplicates.set_index('index')
+
+    # concatenate and sort the dataframe 
+    df = pd.concat([duplicates, uniques], sort=True)
+    
+    # set the time as index again
+    df = df.sort_values(TIME)
+    assert df[TIME].is_unique, 'Time is not unique'
+
+    df = df.set_index(TIME)
+    return df
 
 def correct_device_ts_duplicates(df):
     """
@@ -305,9 +386,9 @@ def correct_activity_overlap(df):
         ov_st = row[1].start_time
         ov_et = row[1].end_time
         """
-        1. case      2. case     3.case       4.case
-        ov |----|       |----|      |----|    |----|
-        df   |----|      |-|      |---|      |-------| 
+        1. case      2. case     3.case       4.case    5. case
+        ov |----|       |----|      |----|    |----|    |---|
+        df   |----|      |-|      |---|      |-------|  |---|
         1. case
             start falls into interval
         2. case
@@ -451,7 +532,6 @@ def _dev_rep1_to_rep2(df):
     df_dev.iloc[0] = np.zeros(len(df_dev.columns))
     col_idx = df_dev.columns.get_loc(df.iloc[0].device)
     df_dev.iloc[0,col_idx] = 1
-
     # update all rows of the dataframe
     for i, row in enumerate(df.iterrows()):
         if i == 0:
@@ -459,60 +539,57 @@ def _dev_rep1_to_rep2(df):
         #copy previous row into current and update current value
         df_dev.iloc[i] = df_dev.iloc[i-1].values
         col_idx = df_dev.columns.get_loc(df.iloc[i].device)
-        df_dev.iloc[i] = int(df.iloc[i].val)
+        df_dev.iloc[i, col_idx] = int(df.iloc[i].val)
 
     return df_dev
 
 
-def create_changepoint(df, freq=(30, 's')):
+def create_changepoint(df, freq=(None,None)):#, freq=(30, 's')):
     # resample the data given frequencies
-    df = resample_data(df, freq)
+    #df = resample_data(df, freq)
+    try:
+        check_devices(df)
+    except:
+        check_devices2(df)
+        df = _dev_rep2_to_rep1(df)
+
+    if freq[0] is None and freq[1] is None:
+        # TODO resample data with  frequencey
+        pass
     df = _apply_change_point(df.copy())
     return df
 
 def _apply_change_point(df):
     """
-    Parameters
-    ----------
-    df
-    
-    Returns
-    -------
-    
+        df: 
+            | Start time    | End time  | device_name | value
+            --------------------------------------------------
+            | ts1           | ts2       | name1       | 1
+        return df:
+            | Start time    | End time  | device_name | value
+            --------------------------------------------------
+            | ts1           | ts2       | name1       | 1
     """
-    i = 0
-    insert_stack = []
-    pushed_prev_it_on_stack = False
-    len_of_row = len(df.iloc[0])
-    series_all_false = self._gen_row_false_idx_true(len_of_row, [])
-    for j in range(1, len(df.index)+2):
-        if (len(insert_stack) == 2 or (len(insert_stack) == 1 and not pushed_prev_it_on_stack)) \
-                and (i-1 >= 0):
-            """
-            the case when either the stack is maxed out ( == 2) or a row from before
-            2 iterations is to be written to the dataframe and it is not the first two rows
-            """
-            item = insert_stack[0]
-            df.iloc[i-1] = item
-            insert_stack.remove(item)
-        else:
-            df.iloc[i-1] = series_all_false
-        if pushed_prev_it_on_stack:
-            pushed_prev_it_on_stack = False
+    VAL = 'val'
+    TIME = 'time'
+    DEVICE = 'device'
     
-        if j >= len(df.index):
-            # this is to process the last two lines also as elements are appended
-            # 2 rows in behind
-            i += 1
-            continue
+    # one with all values but start time and other way around
+    df_start = df.copy().loc[:, df.columns != END_TIME]
+    df_end = df.copy().loc[:, df.columns != START_TIME]
 
-        rowt = df.iloc[i]   # type: pd.Series
-        rowtp1 = df.iloc[j] # type: pd.Series
-    
-        if not rowt.equals(rowtp1):
-            idxs = self._get_cols_that_changed(rowt, rowtp1) # type: list
-            row2insert = self._gen_row_false_idx_true(len(rowt), idxs)
-            insert_stack.append(row2insert)
-            pushed_prev_it_on_stack = True
-        i += 1
+    # rename column 'End Time' and 'Start Time' to 'Time'
+    df_start.rename(columns={START_TIME: TIME}, inplace=True)
+    df_end.rename(columns={END_TIME: TIME}, inplace=True)
+
+    df = pd.concat([df_end, df_start]).sort_values(TIME)
+    from pyadlml.dataset._dataset import correct_device_ts_duplicates
+
+    if not df[TIME].is_unique:
+        df = df.set_index(TIME)
+        df = correct_device_ts_duplicates(df)
+        df = df.reset_index()
+
+    df = df.pivot(index=TIME, columns=DEVICE, values=VAL)
+    df = df.fillna(False)
     return df
