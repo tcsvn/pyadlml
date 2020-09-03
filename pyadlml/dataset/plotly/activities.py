@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 from plotly.colors import n_colors
 
 from pyadlml.dataset._dataset import START_TIME
-from pyadlml.dataset.stat import activities_duration_dist, \
+from pyadlml.dataset.stats.activities import activities_duration_dist, \
     activities_count, activities_durations, activities_dist, \
     activities_transitions
 

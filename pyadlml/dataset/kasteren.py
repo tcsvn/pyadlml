@@ -4,11 +4,16 @@ from pandas._libs.index import timedelta
 import pandas as pd
 
 from pyadlml.dataset.util import fill_nans_ny_inverting_first_occurence
-from pyadlml.dataset._dataset import Data, correct_activity_overlap, \
-    _dev_rep1_to_rep2, correct_device_ts_duplicates, \
-    _is_activity_overlapping, correct_device_rep3_ts_duplicates, \
-    device_rep2_2_rep3, device_rep3_2_rep2, \
-    ACTIVITY, VAL, START_TIME, END_TIME, TIME, NAME, DEVICE
+from pyadlml.dataset.obj import Data
+
+from pyadlml.dataset.devices import correct_device_rep3_ts_duplicates, \
+    device_rep1_2_rep3, device_rep3_2_rep1, check_devices 
+
+from pyadlml.dataset.activities import correct_activity_overlap,\
+    _is_activity_overlapping
+
+from pyadlml.dataset._dataset import  ACTIVITY, VAL, \
+    START_TIME, END_TIME, TIME, NAME, DEVICE
 
 
 def _load_activities(activity_fp):
@@ -76,6 +81,7 @@ def _load_devices(device_fp):
     sens_data = sens_data.sort_values(START_TIME)
     return sens_data
 
+
 def load(device_fp, activity_fp):
     df_activities = _load_activities(activity_fp)
 
@@ -85,19 +91,13 @@ def load(device_fp, activity_fp):
         df_activities = correct_activity_overlap(df_activities)
 
     df_dev = _load_devices(device_fp)
-    df_dev_rep1 = _dev_rep1_to_rep2(df_dev)
-    df_dev_rep2 = df_dev.copy()
     
-    # correct possible duplicates for the devices
-    df_dev_rep1 = correct_device_ts_duplicates(df_dev_rep1)
-
     # correct possible duplicates for representation 2
-    rep3 = device_rep2_2_rep3(df_dev_rep2)
+    rep3 = device_rep1_2_rep3(df_dev)
     cor_rep3 = correct_device_rep3_ts_duplicates(rep3)
-    df_dev_rep2 = device_rep3_2_rep2(cor_rep3)
+    df_dev = device_rep3_2_rep1(cor_rep3)
 
-    data = Data(df_activities, df_dev_rep1)
-    data.df_dev_rep2 = df_dev_rep2
+    data = Data(df_activities, df_dev)
     data.df_dev_rep3 = cor_rep3
     return data
 

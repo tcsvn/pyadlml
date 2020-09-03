@@ -1,0 +1,38 @@
+from pyadlml.dataset.stat import devices_trigger_time_diff
+import plotly.graph_objects as go
+import numpy as np
+from datetime import timedelta
+# TODO plot a line for percentage 
+def hist_trigger_time_diff(df_dev):
+    """
+        plots
+    """
+    n_bins = 100
+    title='Time difference between device triggers'
+    log_sec_col = 'total_log_secs'
+    sec_col = 'total_secs'
+    df = devices_trigger_time_diff(df_dev.copy())
+    
+    # convert timedelta to total minutes
+    #df[sec_col] = (df['row_duration']/timedelta(microseconds=1))/60000000
+    df[sec_col] = (df['row_duration']/timedelta(microseconds=1))
+
+    df[log_sec_col] = np.log(df[sec_col])
+    #return df
+    fig = go.Figure()
+    #hover_data = {'sec: ', np.random.random(len(df))}
+    hover_template = "count: %{y:}<br>bin: %{x:} </br><extra></extra>"
+    fig.add_trace(go.Histogram(x=df[log_sec_col],
+                        nbinsx=n_bins,
+                        hovertemplate=hover_template,
+                      ))
+    fig.update_layout(
+            title=title,
+            xaxis_title="log min",
+            bargap=0.1,
+        )                      
+    return fig
+
+df = hist_trigger_time_diff(data.df_dev_rep2)
+#df['bins'] = pd.cut(df['total_secs'], bins=100)
+hist_trigger_time_diff(data.df_dev_rep2).show()

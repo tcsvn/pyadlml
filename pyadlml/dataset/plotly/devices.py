@@ -6,7 +6,7 @@ from plotly.colors import n_colors
 from datetime import timedelta
 
 import numpy as np
-from pyadlml.dataset.stat import devices_on_off_stats, \
+from pyadlml.dataset.stats.devices import devices_on_off_stats, \
     devices_trigger_count, devices_dist, devices_trigger_time_diff, \
     device_tcorr, device_triggers_one_day
 

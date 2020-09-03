@@ -1,19 +1,16 @@
 import math
-
 from hassbrain_algorithm.models._model import Model
 import autograd.numpy as np
-import autograd.numpy.random as npr
-from scipy.stats import nbinom
-import matplotlib.pyplot as plt
 import ssm
 from ssm.util import rle, find_permutation
+from hassbrain_algorithm.models.util import create_xset_onebitflip
 
-class HMM(Model):
+class BernoulliHMM(Model):
 
     def __init__(self, controller):
         #self._cm = controller # type: Controller
         # training parameters
-        self._training_steps = 500
+        self._training_steps = 50
         self._epsilon = None
         self._use_q_fct = False
 
@@ -31,11 +28,14 @@ class HMM(Model):
             s += "M:\t " + str(self._hmm.M) + "\n"
             return s
 
+    def set_training_steps(self, val):
+        assert val > 0 and val < 1000 and isinstance(val, int)
+        self._training_steps = val
+
     def _model_init(self, dataset):
         K = len(self._state_list)       # number of discrete states
         D = len(self._observation_list) # dimension of the observation
         self._hmm = ssm.HMM(K, D, observations='bernoulli')
-
 
     def save_visualization(self, path_to_file):
         """
@@ -43,46 +43,32 @@ class HMM(Model):
         :param path_to_file:
         :return:
         """
-        pass
-
-    def save_visualization_helper_decode_labels(self, label):
-        """
-        :return:
-        """
-        return self.decode_state_lbl(label)
-
-
-    def get_train_loss_plot_y_label(self):
-        if self._use_q_fct:
-            return 'Q(Theta, Theta_old)'
-        else:
-            return 'P(X|Theta)'
-
+        raise NotImplementedError
 
     def predict_state_sequence(self, test_y):
-        """
-
-        :param test_y:
-        :return:
-        """
         pred_x = self._hmm.most_likely_states(test_y)
         return pred_x
 
     def predict_obs_sequence(self, test_y):
-        """
-
-        :param test_y:
-        :return:
-        """
-        pred_y = self._hmm.sample(test_y)
+        D, _ = test_y.shape
+        pred_y = np.zeros((D), dtype=np.int64)
+        #for i in range(D):
+        #    self.
+        #    self._hmm.predict_xnp1()
+        #    tmp =''
+        #    res_y[i] = tmp
+        _, pred_y = self._hmm.sample(test_y)
         return pred_y
 
-
     def can_predict_next_obs(self):
-        return False
+        return True
+
+    def _sample(self, n, obs_seq=None):
+        tmp1, tmp2 = self._hmm.sample(T=n)
+        return tmp1, tmp2
 
     def can_predict_prob_devices(self):
-        return False
+        return True
 
     def draw(self, act_retrieval_meth):
         self._hmm.plot()
@@ -102,20 +88,18 @@ class HMM(Model):
         loss = 1-loss
         self._bench.train_loss_callback(hmm, loss)
 
-
-    def train(self, dataset, args):
+    def _train(self, dataset):
         y_train = dataset.get_train_data()
-        hsmm_em_lls = self._hmm.fit(
+        hmm_em_lls = self._hmm.fit(
             y_train,
             method="em",
             num_em_iters=self._training_steps)
 
         test_x, test_y = dataset.get_all_labeled_data()
-        # todo uncomment line below, very important !!!!!!!!
-        self.assign_states(test_x, test_y)
-        return hsmm_em_lls
+        self._assign_states(test_x, test_y)
+        return hmm_em_lls
 
-    def assign_states(self, true_z, true_y):
+    def _assign_states(self, true_z, true_y):
         """
         assigns the unordered hidden states of the trained model (on true_y)
         to the most probable state labels in alignment of true_z
@@ -145,10 +129,6 @@ class HMM(Model):
         tmp2 = find_permutation(true_z, tmp1)
         self._hmm.permute(tmp2)
 
-
-
-
-
 #-------------------------------------------------------------------
     # RT Node stuff
 
@@ -169,6 +149,7 @@ class HMM(Model):
         equivalent to
         :param obs_seq:
         :return:
+            numpy array with each index being the id for the label
         """
         tmp = self._hmm.filter(obs_seq)
         last_alpha = tmp[-1:][0]
@@ -177,34 +158,26 @@ class HMM(Model):
         assert math.isclose(last_alpha.sum(), 1.)
 
         K = self._hmm.K
-
-        score_dict = {}
-        for i in range(K):
-            label = i
-            score = last_alpha[i]
-            score_dict[label] = score
-        return score_dict
-
-
+        return last_alpha
 
     def _predict_next_obs(self, obs_seq):
-        pre_states = self._hmm.most_likely_states(obs_seq)
-        next_obs = self._hmm.sample(1, prefix=pre_states)
-        next_obs = next_obs[0]
-        return next_obs
+        """
+        the index of the most probable next observation
+        """
+        samples = create_xset_onebitflip(obs_seq[-1:][0])
+        log_prob_states = self._hmm.predict_xnp1(data=obs_seq,x=samples)
+        # get max of pre_states
+        max_idx = np.argmax(log_prob_states)
+        if max_idx == len(log_prob_states) -1:
+            return np.argmax(log_prob_states[:len(log_prob_states)-1])
+        else:
+            return max_idx
 
     def _predict_prob_xnp1(self, obs_seq):
-        # todo here hsmm has to be modified, tap in the process and
-        # return the probabilities
-        res = self._hmm.sample(obs_seq)
-        return res
-
-#class BernoulliHMM_Cat(BernoulliHMM):
-#    def __init__(self, controller):
-#       BernoulliHMM.__init__(self, controller)
-#
-#    def _model_init(self, dataset):
-#        K = len(self._state_list)       # number of discrete states
-#        D = len(self._observation_list) # dimension of the observation
-#        self._hmm = ssm.HMM(K, D, observations='categorical')
-
+        samples = create_xset_onebitflip(obs_seq[-1:][0])
+        log_prob_states = self._hmm.predict_xnp1(data=obs_seq,x=samples)
+        normalizer = ssm.util.logsumexp(log_prob_states)
+        norm_log_prob = log_prob_states - normalizer
+        norm_log_prob = norm_log_prob[:len(norm_log_prob)-1]
+        norm_log_prob = np.exp(norm_log_prob)
+        return norm_log_prob

@@ -8,3 +8,14 @@ of daily living. It supports a lot of datasets
 
 
 # algorithms
+
+
+
+# Paper to reproduce
+
+- LSTMS
+
+- HMMs
+ 
+
+- 
