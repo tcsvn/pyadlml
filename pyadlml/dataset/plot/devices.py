@@ -8,8 +8,6 @@ from pyadlml.dataset.stats.devices import duration_correlation, \
     devices_trigger_time_diff, device_tcorr, device_triggers_one_day
 
 from pyadlml.dataset.stats.devices import devices_on_off_stats
-# TODO move to plot.util
-from pyadlml.dataset.plot import _heatmap, _annotate_heatmap
 from pyadlml.dataset.plot.util import heatmap, annotate_heatmap
 from pyadlml.dataset.stats.devices import devices_trigger_time_diff
 from pyadlml.dataset.plot.util import func_formatter_sec
@@ -181,17 +179,27 @@ def heatmap_trigger_time(df_dev, t_window = '5s', figsize=(8,8), z_scale=None):
     plt.show()
 
 def heatmap_cross_correlation(df_dev, figsize=(10,8)):
+    """ plots the cross correlation between the device signals
+    Parameters
+    ----------
+    df_dev: pd.DataFrame 
+        devices in representation 3 
+    """
+    cmap = 'BrBG'
+    cbarlabel = 'counts'
+    title = 'Cross-correlation of signals'
+    
     ct = duration_correlation(df_dev)
     vals = ct.values.T
     devs = list(ct.index)
-
     fig, ax = plt.subplots(figsize=figsize)
-    im, cbar = _heatmap(vals, devs, devs, ax=ax, cmap='PuOr', cbarlabel='counts',
+    im, cbar = heatmap_square(vals, devs, devs, ax=ax, cmap=cmap, cbarlabel=cbarlabel,
                        vmin=-1, vmax=1)
 
-    texts = _annotate_heatmap(im, textcolors=("black", "white"), valfmt="{x:.2f}")
+    texts = annotate_heatmap(im, textcolors=("black", "white"), 
+                             threshold=0.5, valfmt="{x:.2f}")
 
-    ax.set_title("Cross-correlation of signals")
+    ax.set_title(title)
     fig.tight_layout()
     plt.show()
 

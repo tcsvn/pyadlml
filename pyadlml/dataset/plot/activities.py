@@ -6,9 +6,9 @@ from pyadlml.dataset.plot.util import func_formatter_log, func_formatter_min
 from pyadlml.dataset.stats.activities import activities_durations
 from pyadlml.dataset.plot.util import func_formatter_sec, ridgeline
 from pyadlml.dataset.stats.activities import activities_transitions
-from pyadlml.dataset.plot import _heatmap, _annotate_heatmap
 from pyadlml.dataset.stats.activities import activities_dist
 from pyadlml.dataset.activities import add_idle 
+from pyadlml.dataset.plot.util import heatmap, annotate_heatmap, heatmap_square
 import numpy as np
 
 
@@ -118,8 +118,10 @@ def heatmap_transitions(df_act, z_scale=None, figsize=(8,6), idle=False):
     assert z_scale in [None, 'log'], 'z-scale has to be either of type None or log'
 
     title = 'Activity transitions'
-    if idle:
-        df_act = add_idle(df_act)
+    z_label = 'count'
+
+
+    df_act = add_idle(df_act) if idle else df_act
    
     # get the list of cross tabulations per t_window
     df = activities_transitions(df_act)
@@ -129,18 +131,13 @@ def heatmap_transitions(df_act, z_scale=None, figsize=(8,6), idle=False):
     values = df.values
     
 
-    if z_scale == 'log':
-        zlabel = 'log count'
-        values = np.log(values)
-        valfmt = '{x:.2f}'
-    else:
-        zlabel = 'count'
-        valfmt = '{x}'
+    log = True if z_scale == 'log' else False
+    valfmt = '{x:.0f}'
         
      # begin plotting
     fig, ax = plt.subplots(figsize=figsize)
-    im, cbar = _heatmap(values, y_labels, x_labels, ax=ax, cmap='viridis', cbarlabel=zlabel)
-    texts = _annotate_heatmap(im, textcolors=("white", "black"), valfmt=valfmt)
+    im, cbar = heatmap_square(values, y_labels, x_labels, log=log, ax=ax, cbarlabel=z_label)
+    texts = annotate_heatmap(im, textcolors=("white", "black"),log=log, valfmt=valfmt)
     ax.set_title(title)
 
     

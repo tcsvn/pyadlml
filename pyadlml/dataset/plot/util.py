@@ -38,7 +38,7 @@ def func_formatter_min(x, pos):
     else:
         return "{:.0f}t".format(x/3600)
 
-def heatmap_contingency(vals, acts, devs, cbarlabel, title, valfmt, figsize):
+def heatmap_contingency(vals, acts, devs, cbarlabel, title, valfmt, figsize, z_scale=None):
     # cut off the name of the device for every second label to make it more readable
     for i in range(0,len(devs)):
         if i % 2 == 0:
@@ -46,11 +46,16 @@ def heatmap_contingency(vals, acts, devs, cbarlabel, title, valfmt, figsize):
             devs[i] = tmp + 'Off'
         else:
             devs[i] = 'On'
-    
+
+    if z_scale == 'log':
+        log = True
+    else:
+        log = False
+
     fig, ax = plt.subplots(figsize=figsize)
-    im, cbar = heatmap(vals, acts, devs, ax=ax, cmap='viridis', cbarlabel=cbarlabel)
+    im, cbar = heatmap(vals, acts, devs, ax=ax, log=log, cbarlabel=cbarlabel)
       
-    texts = annotate_heatmap(im, textcolors=("white", "black"), valfmt=valfmt)        
+    texts = annotate_heatmap(im, textcolors=("white", "black"), log=log, valfmt=valfmt)        
 
     # create grid for heatmap into every pair
     tcks = np.arange((vals.shape[1])/2)*2 + 1.5
@@ -62,7 +67,7 @@ def heatmap_contingency(vals, acts, devs, cbarlabel, title, valfmt, figsize):
     fig.tight_layout()
     plt.show()
 
-def heatmap(data, row_labels, col_labels, ax=None,
+def heatmap(data, row_labels, col_labels, log=False, ax=None,
             cbar_kw={}, cbarlabel="", **kwargs):
     """
     Create a heatmap from a numpy array and two lists of labels.
@@ -90,7 +95,20 @@ def heatmap(data, row_labels, col_labels, ax=None,
         ax = plt.gca()
 
     # Plot the heatmap
-    im = ax.imshow(data, **kwargs)
+    if log:
+        cbarlabel = "log " + cbarlabel
+        
+        #set colorlabel for bad colors
+        cmap = copy.copy(matplotlib.cm.get_cmap("viridis"))
+        cmap.set_bad(color = 'lightgrey', alpha = .8)
+        
+        # round to the next highest digit for display purposes
+        vmax = 10**int(np.ceil(np.log10(data.max())))
+        vmin = 1
+        
+        im = ax.imshow(data, cmap=cmap, norm=LogNorm(vmin=vmin, vmax=vmax),**kwargs)
+    else:
+        im = ax.imshow(data, **kwargs)
 
     # Create colorbar
     divider = make_axes_locatable(ax)
@@ -164,7 +182,6 @@ def heatmap_square(data, row_labels, col_labels, log=False, ax=None,
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size='5%', pad=0.05)
     cbar = cax.figure.colorbar(im, cax, **cbar_kw) # debug
-    #cbar = cax.figure.colorbar(pcm, cax, **cbar_kw) 
     cbar.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom")
 
     # We want to show all ticks...
@@ -185,8 +202,6 @@ def heatmap_square(data, row_labels, col_labels, log=False, ax=None,
     ax.tick_params(which="minor", bottom=False, left=False)
 
     return im, cbar
-
-
 
 
 def annotate_heatmap(im, data=None, valfmt="{}",
@@ -232,7 +247,7 @@ def annotate_heatmap(im, data=None, valfmt="{}",
     kw.update(textkw)
 
     # Get the formatter in case a string is supplied
-    if log:
+    if log and not isinstance(valfmt, matplotlib.ticker.FuncFormatter):
         def func_formatter_tmp(x,p):
             with np.errstate(divide='ignore'):
                 x = np.log10(x)
@@ -244,10 +259,12 @@ def annotate_heatmap(im, data=None, valfmt="{}",
         
         format_func = lambda x, p: func_formatter_tmp(x, p)
         valfmt = matplotlib.ticker.FuncFormatter(format_func)
-        
     elif isinstance(valfmt, str):
         valfmt = matplotlib.ticker.StrMethodFormatter(valfmt)
         
+    diverging_lst = [ 'PiYG', 'PRGn', 'BrBG', 'PuOr', 'RdGy', 'RdBu',
+            'RdYlBu', 'RdYlGn', 'Spectral', 'coolwarm', 'bwr', 'seismic']
+    
     # Loop over the data and create a `Text` for each "pixel".
     # Change the text's color depending on the data.
     texts = []
@@ -256,13 +273,21 @@ def annotate_heatmap(im, data=None, valfmt="{}",
             # if the content is masked for e.g log values set the color to black
             if isinstance(im.norm(data[i,j]), np.ma.core.MaskedConstant):
                 kw.update(color='black')
+                
+            # if list is diverging high values should have white and values
+            # near zero should have black values
+            elif im.cmap.name in diverging_lst:
+                if 1 - im.norm(data[i, j]) >= threshold or im.norm(data[i, j]) >= threshold:
+                    color = 'white'
+                else:
+                    color = 'black'
+                kw.update(color=color)
             else:
                 kw.update(color=textcolors[int(im.norm(data[i, j]) > threshold)])
             text = im.axes.text(j, i, valfmt(data[i, j], None), **kw)
             texts.append(text)
 
     return texts
-
 
 def ridgeline(data, overlap=0, fill=True, labels=None, n_points=150, dist_scale=0.05):
     """

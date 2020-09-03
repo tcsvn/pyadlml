@@ -1,30 +1,31 @@
 from pyadlml.dataset.stats.raw import contingency_table_01, cross_correlation
-from pyadlml.dataset.plot import _annotate_heatmap, _heatmap
-from pyadlml.dataset.plot.util import annotate_heatmap, heatmap
+from pyadlml.dataset.plot.util import annotate_heatmap, heatmap, heatmap_square
 
 import matplotlib.pyplot as plt 
 import matplotlib
 import pandas as pd 
 import numpy as np
 
-def heatmap_contingency_01(X, y, scale='log', figsize=(12,10)):
-    """
+def heatmap_contingency_01(X, y, rep='', z_scale=None, figsize=(16,12)):
+    """ plots the contingency between features and labels of data
+    Parameters
+    ----------
+    X: pd.DataFrame
+        one of the representation raw, lastfired, changepoint
+    y: pd.DataFrame
+        a series of labels
+    rep: string
+        the name of the representation to add to the title
     """
     
     cbarlabel = 'counts'
-    title = "On/Off contingency for representation"
+    title = "On/Off contingency for representation " + rep
 
     df_con = contingency_table_01(X, y)
     
     vals = df_con.values.T
     acts = df_con.columns
     devs = list(df_con.index)
-    
-    if scale == 'log':
-        with np.errstate(divide='ignore'):
-            vals = np.log(vals)
-            vals[vals == -np.inf] = -0.0001
-            cbarlabel = 'log counts'
     
     # format x labels
     for i in range(0,len(devs)):
@@ -34,10 +35,15 @@ def heatmap_contingency_01(X, y, scale='log', figsize=(12,10)):
         else:
             devs[i] = 'On'
 
+    if z_scale == 'log':
+        log = True
+    else:
+        log = False
+
     fig, ax = plt.subplots(figsize=figsize)
-    im, cbar = _heatmap(vals, acts, devs, ax=ax, cmap='viridis', cbarlabel=cbarlabel)
+    im, cbar = heatmap(vals, acts, devs, ax=ax, log=log, cbarlabel=cbarlabel)
     
-    texts = _annotate_heatmap(im, textcolors=("white", "black"), valfmt="{x:.1f}")
+    texts = annotate_heatmap(im, log=log, textcolors=("white", "black"), valfmt="{x:.0f}")
     
     # create grid for heatmap into every pair
     tcks = np.arange((vals.shape[1])/2)*2 + 1.5
@@ -133,10 +139,11 @@ def heatmap_cross_correlation(df_dev, figsize=(10,8)):
     devs = list(ct.index)
     
     fig, ax = plt.subplots(figsize=figsize)
-    im, cbar = heatmap(vals, devs, devs, ax=ax, cmap='PuOr', cbarlabel='counts',
+    im, cbar = heatmap_square(vals, devs, devs, ax=ax, cmap='BrBG', cbarlabel='counts',
                        vmin=-1, vmax=1)
 
-    texts = annotate_heatmap(im, textcolors=("black", "white"), valfmt="{x:.2f}")
+    texts = annotate_heatmap(im, textcolors=("black", "white"), valfmt="{x:.2f}",
+                            threshold=0.6)
 
     ax.set_title("Cross-correlation of signals")
     fig.tight_layout()
