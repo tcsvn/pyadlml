@@ -1,5 +1,6 @@
 from pyadlml.dataset._dataset import START_TIME, ACTIVITY, END_TIME
 import pandas as pd
+import numpy as np
 
 def check_activities(df):
     """
@@ -24,8 +25,14 @@ def check_activities(df):
     return True
 
 def _is_activity_overlapping(df):
-    import datetime
-    epsilon = datetime.timedelta(milliseconds=0)
+    """ checks if any activity is overlapping another
+    Parameters
+    ----------
+    df : pd.DataFrame
+    
+    """
+    assert df.shape[1] == 3
+    epsilon = pd.Timedelta('0ms')
     mask = (df[END_TIME].shift()-df[START_TIME]) > epsilon
     overlapping = df[mask]
     return not overlapping.empty
@@ -40,7 +47,7 @@ def _create_activity_df():
     return df 
 
 
-def correct_activity_overlap(df):
+def correct_activity_overlap_old(df):
     """
         the use of the toilet in this dataset is logged in parallel to the
         rest of the data. This violates the constraint that no activity can 
@@ -169,3 +176,287 @@ def add_idle(acts, min_diff=pd.Timedelta('5s')):
     tmp = tmp.apply(func, axis=1, df=acts)
     res = pd.concat([acts.iloc[:,:-1],tmp]).sort_values(by='start_time')
     return res.reset_index(drop=True)
+
+
+def _merge_int_inclusive(row, ov, strat='inplace'):
+    """
+    int |~~~~~~~~|
+    ov    |----|   => |~|----|~~|
+    
+    Parameters
+    ----------
+    ov: pd.DataFrame
+        single df with one row
+    row: pd.Series
+        one row 
+    """
+    assert strat in ['inplace']
+    # use epsilon to offset the interval boundaries a little bit
+    # to prevent later matching of multiple indices
+    eps = pd.Timedelta('1ms')
+    df = _create_activity_df()
+    
+    if strat == 'inplace':
+        df.loc[0] = [row.start_time, ov.start_time, row.activity]
+        df.loc[1] = [ov.start_time + eps, ov.end_time, ov.activity]
+        df.loc[2] = [ov.end_time + eps, row.end_time, row.activity]
+    else:
+        raise ValueError #Should never happen
+    return df
+
+def _merge_int_right_partial(row, ov, strat='clip_left'):
+    """ merges 
+        row int |~~~~|    => |~~~|---|    
+        ov ints   |----|  
+    """
+    df_res = _create_activity_df()
+    eps = pd.Timedelta('1ms')
+    
+    # get row stats
+    row_act = row[ACTIVITY]
+    row_st = row[START_TIME]
+    row_et = row[END_TIME]
+    
+    # get overlap stats
+    ov_st = ov.start_time
+    ov_et = ov.end_time
+    ov_act = ov.activity
+    
+    if strat == 'clip_left':
+        df_res.loc[0] = [row_st, ov_st, row_act]
+        df_res.loc[1] = [ov_st + eps, ov_et, ov_act]
+    return df_res
+    
+
+def _merge_ints(row, overlapping, strat='cut_at_lower'):
+    """ gets overlapping intervals and merges those intervals with a strategy
+    Parameters
+    ----------
+    row : pd.Series 
+    overlapping : pd.Series 
+    
+    Returns
+    -------
+    merged: pd.DataFrame
+    """
+    assert strat in ['cut_at_lower']
+    assert isinstance(overlapping, pd.Series)
+    assert isinstance(row, pd.Series)
+        
+    int1 = pd.Interval(row.start_time, row.end_time)
+    int2 = pd.Interval(overlapping.start_time, overlapping.end_time)
+    
+    if (int1.left < int2.left) & (int2.right < int1.right):
+        # int1  |~~~~~~|  
+        # int2   |----|  
+        df_res = _merge_int_inclusive(row, overlapping)
+        
+    elif (int1.left < int2.left) & (int1.right < int2.right):
+        # int1 |~~~~|   
+        # int2   |----|   
+        df_res = _merge_int_right_partial(row, overlapping)
+        
+    else:
+        raise ValueError # this should never happen
+    return df_res
+
+
+def _is_activity_et_after_st(df):
+    """ checks if the start_time is lesser than end_time for every activity
+    """
+    df = df.sort_values(by=START_TIME)
+    df = df.copy()
+    
+    df['diff'] = df['end_time'] - df['start_time']
+    mask = df['diff'] < pd.Timedelta('0ns')
+    return not mask.any()
+
+
+
+def correct_activity_overlap(df):
+    """ solve the merge overlapping interval problem
+        worst runtime is O(n^2)
+        average runtime is O()
+        
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Activity dataframe with the columns
+        
+    Returns
+    -------
+    df : pd.DataFrame 
+        corrected activity dataframe
+    corrections : list
+        a list of tuples with the areas that had to be corrected and the corrections
+    """
+    df = df.copy()
+    df = df.sort_values(START_TIME)
+    df = df.reset_index(drop=True)
+    
+    res = _create_activity_df()
+    corrections = [] 
+    
+    # get all activities that have in an overlap with a direct preceding interval
+    mask = (df[START_TIME].shift(-1) - df[END_TIME]) < pd.Timedelta('0ms')
+    idxs_succ_overlaps = np.array(list(df[mask].index))
+ 
+    i_l, i = 0, 0
+    while i < len(idxs_succ_overlaps):
+        i_h = idxs_succ_overlaps[i]
+        res = res.append(df.iloc[i_l:i_h,:]) # exclusive i_h e,g 0->2 is [0,1]
+        
+        # get index of first element that start_time is lesser than the end time
+        # this marks the point where we can copy again indices
+        i_l = i_h
+        i_h = _get_idx_start(df, i_h)
+        
+        # only for last iteration
+        if i == len(idxs_succ_overlaps)-1:
+            area_to_correct = df.iloc[i_l:i_h,:]
+            result = _correct_overlapping_activities(area_to_correct)                             
+            corrections.append((area_to_correct, result))
+            res = res.append(result)
+            break
+            
+        # if the index exceed the any pair of overlapping indicies, extent the range to
+        # include them
+        try:
+            idxs_succ_overlaps2 = idxs_succ_overlaps[i+1:].copy()
+        except:
+            raise ValueError
+            
+        if (i_h >= idxs_succ_overlaps2).any():       
+            """ 
+            for all succ ov indicies get the maximum of the extented range
+            e.g max-int = 4
+               1 |~~~~~~~~~~~~~~|
+               2          |--|
+               3              |~~~~| 
+               4                 |---|
+               5                       |---| <----- max-int = 5
+               6                            |~~~~|
+               7                              |-|
+            """
+            for idx in idxs_succ_overlaps2:     
+                # if the succ pair is in range of the overlap skip in next big iteration
+                if idx < i_h: 
+                    i += 1
+                else:
+                    break
+                # set the upper overlap limit to the maximum of the included rows
+                i_h = max(_get_idx_start(df, idx), i_h)
+        
+        area_to_correct = df.iloc[i_l:i_h,:]
+        result = _correct_overlapping_activities(area_to_correct)                       
+        corrections.append((area_to_correct, result))        
+        res = res.append(result)        
+        i += 1
+        i_l = i_h
+        
+        
+    res = res.append(df.iloc[i_h:,:])
+    
+    # sanity checks
+    assert len(res) >= len(df)
+    added_entrys = 0
+    for corr in corrections:
+        added_entrys += len(corr[1]) - len(corr[0])
+    assert len(res) - added_entrys == len(df)
+    
+    res = res.sort_values(by=START_TIME)
+    res = res.reset_index(drop=True)    
+    return res, corrections
+
+def _get_idx_start(df, idx):
+    """ returns the index of the first element in the dataframe where the 
+    start_time is greater than the end_time of the interval that overlaps 
+    the succeding one. Thus marking the overlapping areas that need correction.
+    Parameters
+    ----------
+    df : pd.DataFrame
+        activity dataframe
+    idx : int
+        index of the row where the interval overlaps the succeding row(s)
+    
+    Returns
+    -------
+    res : int
+        index of a row
+    """
+    et_of_violation = df.iloc[idx,:].end_time
+    tmp = df[df[START_TIME] > et_of_violation]
+    res = list(tmp.index)[0]
+    return res
+
+def _correct_overlapping_activities(area_to_correct):
+    """
+    
+    """
+    assert len(area_to_correct) >= 2
+    
+    result = _create_activity_df()
+    stack = area_to_correct.copy().reset_index(drop=True)
+    #print('area_to_correct: ', area_to_correct)
+    
+    while True:
+        # pop first and second item from stack if they overlap otherwise 
+        # append to result until two items overlap
+        while True:                
+            current_row = stack.iloc[0]
+            ov = stack.iloc[1]
+
+            # if they don't overlap push onto result otherwise proceed with merging 
+            # procedure
+            int1 = pd.Interval(current_row.start_time, current_row.end_time)
+            int2 = pd.Interval(ov.start_time, ov.end_time)
+            if int1.overlaps(int2):
+                stack = stack.iloc[2:]
+                break
+            # the case when the last two activities on stack don't overlap
+            elif stack.iloc[2:].empty:
+                result = result.append(stack)
+                return result
+            else:
+                result = result.append(current_row)
+                stack = stack.iloc[1:]
+
+ 
+        new_rows = _merge_ints(current_row, ov)
+
+        if stack.empty: 
+            result = result.append(new_rows)
+            return result
+        else:
+            result = result.append(new_rows.iloc[0,:])
+
+        new_rows = new_rows.iloc[1:]
+        stack = stack.append(new_rows)
+        stack = stack.sort_values(by='start_time')
+    return result
+
+def _get_overlapping_activities(df, shift=1):
+    """ gets all activities that have an overlap
+    """
+    assert shift >=1
+    
+    df = df.copy()
+    df = df.sort_values(by=START_TIME)
+    df = df.reset_index(drop=True)
+    
+    # get all activities that are have in an overlap
+    mask = (df[START_TIME].shift(-shift) - df[END_TIME]) < pd.Timedelta('0ms')
+    
+    # as start_time is shifted upwards to select the right corresp. overlap 
+    # shift the mask 'shift' steps downards  
+    mask = mask.shift(+shift) | mask
+    return df[mask] 
+
+def correct_activities(df):
+    """ gets df in form of activities and removes overlapping activities
+    """
+    df = df.copy()
+    if _is_activity_overlapping(df):
+        df, cor_lst = correct_activity_overlap(df)
+    assert not _is_activity_overlapping(df)
+    return df, cor_lst

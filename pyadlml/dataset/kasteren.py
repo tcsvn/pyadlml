@@ -6,14 +6,15 @@ import pandas as pd
 from pyadlml.dataset.util import fill_nans_ny_inverting_first_occurence
 from pyadlml.dataset.obj import Data
 
-from pyadlml.dataset.devices import correct_device_rep3_ts_duplicates, \
-    device_rep1_2_rep3, device_rep3_2_rep1, check_devices 
-
 from pyadlml.dataset.activities import correct_activity_overlap,\
     _is_activity_overlapping
 
 from pyadlml.dataset._dataset import  ACTIVITY, VAL, \
     START_TIME, END_TIME, TIME, NAME, DEVICE
+
+from pyadlml.dataset.activities import correct_activities
+from pyadlml.dataset.devices import correct_devices
+
 
 
 def _load_activities(activity_fp):
@@ -74,6 +75,7 @@ def _load_devices(device_fp):
     sens_data[START_TIME] = pd.to_datetime(sens_data[START_TIME])
     sens_data[END_TIME] = pd.to_datetime(sens_data[END_TIME])
     sens_data[VAL] = sens_data[VAL].astype('bool')
+    sens_data = sens_data.drop(VAL, axis=1)
 
     # replace numbers with the labels
     sens_data[DEVICE] = sens_data[ide].map(sens_labels)
@@ -83,24 +85,20 @@ def _load_devices(device_fp):
 
 
 def load(device_fp, activity_fp):
-    df_activities = _load_activities(activity_fp)
+    df_act = _load_activities(activity_fp)
+    df_dev = _load_devices(device_fp)
 
     # correct overlapping activities as going to toilet is done in parallel
-    # for this dataset >:/
-    while _is_activity_overlapping(df_activities):
-        df_activities = correct_activity_overlap(df_activities)
-
-    df_dev = _load_devices(device_fp)
+    # for this dataset >:/    
+    df_act, cor_lst = correct_activities(df_act)
     
-    # correct possible duplicates for representation 2
-    rep3 = device_rep1_2_rep3(df_dev)
-    cor_rep3 = correct_device_rep3_ts_duplicates(rep3)
-    df_dev = device_rep3_2_rep1(cor_rep3)
+    # correct possible duplicates for representation 2    
+    df_dev, df_dev_rep3 = correct_devices(df_dev)
 
-    data = Data(df_activities, df_dev)
-    data.df_dev_rep3 = cor_rep3
+    data = Data(df_act, df_dev)
+    
+    data.df_dev_rep3 = df_dev_rep3
+    data.correction_activities = cor_lst
+    
     return data
-
-
-
 

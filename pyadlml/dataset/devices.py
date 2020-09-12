@@ -17,7 +17,7 @@ def _create_devices(dev_list, index=None):
 def check_devices(df):
     """
     """
-    case1 = _is_dev_repr1(df) or _is_dev_repr2
+    case1 = _is_dev_rep1(df) or _is_dev_rep3(df)
     case2 = _check_devices_sequ_order(df)
     return case1 and case2 
 
@@ -27,8 +27,14 @@ def _check_devices_sequ_order(df):
     """
     iterate pairwise through each select device an check if the 
     sequential order in time is inconsistent
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        device representation 1  with columns [start_time, end_time, devices]
     """
     dev_list = df['device'].unique()
+    no_errors = True
     for dev in dev_list:
         df_d = df[df['device'] == dev]
         for i in range(1,len(df_d)):
@@ -37,23 +43,34 @@ def _check_devices_sequ_order(df):
             st_i = df_d.iloc[i].start_time
             et_i = df_d.iloc[i].end_time
             # if the sequential order is violated return false
-            if not (st_j < et_j) or not (et_j < st_i) or not (st_i < et_i):
-                raise ValueError('{} {} {}'.format(i, df_d.iloc[i-1], df_d.iloc[i]))
-                return False
-    return True
+            if not (st_j < et_j) or not (et_j < st_i):
+                print('~'*50)
+                if (st_j >= et_j):                    
+                    #raise ValueError('{}; st: {} >= et: {} |\n {} '.format(i-1, st_j, et_j, df_d.iloc[i-1]))
+                    print('{}; st: {} >= et: {} |\n {} '.format(i-1, st_j, et_j, df_d.iloc[i-1]))
+                if (et_j >= st_i):                    
+                    #raise ValueError('{},{}; et: {} >= st: {} |\n{}\n\n{}'.format(i-1,i, et_j, st_i, df_d.iloc[i-1], df_d.iloc[i]))
+                    print('{},{}; et: {} >= st: {} |\n{}\n\n{}'.format(i-1,i, et_j, st_i, df_d.iloc[i-1], df_d.iloc[i]))
+                no_errors = False
+    return no_errors
 
-def _is_dev_repr1(df):
+
+
+def _is_dev_rep1(df):
     """
     """
-    return True
-
-def _is_dev_repr2(df):
     if not START_TIME in df.columns or not END_TIME in df.columns \
     or not DEVICE in df.columns or len(df.columns) != 3:
         return False
-    # TODO check for uniqueness in timestamps
     return True
 
+def _is_dev_rep3(df):
+    """
+    """
+    if DEVICE in df.columns and VAL in df.columns \
+    and TIME in df.columns and len(df.columns) == 3:
+        return True
+    return False
 
 def device_rep3_2_rep1(df_rep3):
     """
@@ -80,12 +97,11 @@ def device_rep3_2_rep1(df_rep3):
     
     
     df = pd.merge(df_start, df_end, on=['pairs', 'device'])
-    df['val'] = True
     df = df.sort_values('start_time')
     
     assert int(len(df_rep3)/2) == len(df), 'Somewhere two following events of the \
     #        same device had the same starting point and end point. Make timepoints   '
-    return df[['start_time', 'end_time', 'val', 'device']]
+    return df[['start_time', 'end_time', 'device']]
 
 def device_rep1_2_rep3(df_rep):
     """
@@ -116,31 +132,36 @@ def correct_device_rep3_ts_duplicates(df):
     """
     remove devices that went on and off at the same time. And add a microsecond
     to devices that trigger on the same time
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Devices in representation 3; columns [time, device, value]
     """
-    # remove devices that went on and off at the same time
+    eps = pd.Timedelta('10ms')
+    
+    try:
+        df[TIME]
+    except KeyError:
+        df = df.reset_index()
+        
+    # remove device if it went on and off at the same time    
     dup_mask = df.duplicated(subset=[TIME, DEVICE], keep=False)    
     df = df[~dup_mask]
     
-    # check for consistency 
     df = df.reset_index(drop=True)
     
+    
     dup_mask = df.duplicated(subset=[TIME], keep=False)
-    duplicates = df[dup_mask]
+    duplicates = df[dup_mask]    
     uniques = df[~dup_mask]
-
+    
     # for every pair of duplicates add a millisecond on the second one
     duplicates = duplicates.reset_index(drop=True)
-    """
-        the duplicates come in pairs. Alter every second element to resolve duplicates. 
-        If the device turns on add a millisecond. If the device was turns off subtract
-        a millisecond
-    """
-    sp = duplicates['time'] + pd.Timedelta(milliseconds=10)
-    #sm = duplicates['time'] - pd.Timedelta(milliseconds=1)
-    mask_p = (duplicates.index % 2 == 0) #& (~duplicates.val)
-    #mask_m = (duplicates.index % 2 == 0) #& (duplicates.val)
+    sp = duplicates['time'] + eps   
+    mask_p = (duplicates.index % 2 == 0) 
+    
     duplicates['time'] = duplicates['time'].where(mask_p, sp)
-    #duplicates['time'] = duplicates['time'].where(mask_m, sm)
+    
     # concatenate and sort the dataframe 
     uniques = uniques.set_index(TIME)
     duplicates = duplicates.set_index(TIME)
@@ -150,42 +171,51 @@ def correct_device_rep3_ts_duplicates(df):
     df = df.sort_values(TIME)
     
     return df
-
-
-def correct_device_ts_duplicates(df):
+    
+def _has_timestamp_duplicates(df):
+    """ check whether there are duplicates in timestamp present
+    Parameters
+    ----------
+    df : pd.DataFrame
+        data frame representation 3
     """
-    TODO deprecation: remove this method if not needed
-    if there are duplicate timestamps which are used for indexing 
-    make them unique again by adding a millisecond to the second pair
+    df = df.copy()
+    try:
+        dup_mask = df.duplicated(subset=[TIME], keep=False)
+    except KeyError:
+        df = df.reset_index()
+        dup_mask = df.duplicated(subset=[TIME], keep=False)
+    return dup_mask.sum() > 0
+
+def correct_devices(df):
     """
-    # if time is the index, than it has to be reseted to a column
-    df = df.reset_index()
+    Parameters
+    ----------
+    df : pd.DataFrame
+        either in device representation 1 or 3
+    Returns
+    -------
+    cor_rep1 : pd.DataFrame
+    cor_rep3 : pd.DataFrame
+    """
+    df = df.copy()
+    df = df.drop_duplicates()        
+    
+    # bring in correct representation
+    if _is_dev_rep1(df):
+        cor_rep3 = device_rep1_2_rep3(df)        
+    elif _is_dev_rep3(df):
+        cor_rep3 = df
+    else:
+        raise ValueError
+    
+    # correct timestamp duplicates
+    while _has_timestamp_duplicates(cor_rep3):
+        cor_rep3 = correct_device_rep3_ts_duplicates(cor_rep3)
+    
+    cor_rep1 = device_rep3_2_rep1(cor_rep3)
 
-    # split duplicates and uniques  
-    dup_mask = df.duplicated(subset=[TIME], keep=False)
-    duplicates = df[dup_mask]
-    uniques = df[~dup_mask]
-
-    i = -1 
-    # for every pair of duplicates add a millisecond on the second one
-    for index, row in duplicates.iterrows():
-        i+=1
-        if i%2 == 0:
-            index_m1 = index
-            row_m1 = row
-            continue
-        new_time = df.loc[index,TIME] + pd.Timedelta(milliseconds=1)
-        duplicates.iloc[i - 1, df.columns.get_loc(TIME)] = new_time
-
-
-    assert duplicates[TIME].is_unique
-
-    # concatenate and sort the dataframe 
-    df = pd.concat([duplicates, uniques], sort=True)
-
-    # set the time as index again
-    df = df.sort_values(TIME)
-    df = df.set_index(TIME)
-
-    return df
-
+    assert not _has_timestamp_duplicates(cor_rep3)
+    assert _check_devices_sequ_order(cor_rep1)
+    
+    return cor_rep1, cor_rep3
