@@ -82,10 +82,12 @@ def device_rep3_2_rep1(df_rep3):
                 rep: columns are (start time, end_time, device)
                 example row: [2008-02-25 00:20:14, 2008-02-25 00:22:14, Freezer]         
     """
+    
     df = df_rep3.copy().reset_index()
     df = df.sort_values('time')
     df['ones'] = 1
-
+    df['val'] = df['val'].astype(bool)
+    
     df_start = df[df['val']]
     df_end = df[~df['val']]
 
@@ -99,8 +101,8 @@ def device_rep3_2_rep1(df_rep3):
     df = pd.merge(df_start, df_end, on=['pairs', 'device'])
     df = df.sort_values('start_time')
     
-    assert int(len(df_rep3)/2) == len(df), 'Somewhere two following events of the \
-    #        same device had the same starting point and end point. Make timepoints   '
+    assert int(len(df_rep3)/2) == len(df), 'input {} != {} result. Somewhere two following events of the \
+    #        same device had the same starting point and end point'.format(len(df_rep3), len(df))
     return df[['start_time', 'end_time', 'device']]
 
 def device_rep1_2_rep3(df_rep):
