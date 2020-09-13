@@ -454,9 +454,16 @@ def _get_overlapping_activities(df, shift=1):
 
 def correct_activities(df):
     """ gets df in form of activities and removes overlapping activities
+    Parameters
+    ----------
+    df : pd.DataFrame
     """
     df = df.copy()
+    df = df.drop_duplicates(ignore_index=True)
+    
     if _is_activity_overlapping(df):
         df, cor_lst = correct_activity_overlap(df)
+    else:
+        cor_lst = None
     assert not _is_activity_overlapping(df)
     return df, cor_lst

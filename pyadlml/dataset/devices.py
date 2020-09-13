@@ -83,27 +83,30 @@ def device_rep3_2_rep1(df_rep3):
                 example row: [2008-02-25 00:20:14, 2008-02-25 00:22:14, Freezer]         
     """
     
-    df = df_rep3.copy().reset_index()
-    df = df.sort_values('time')
-    df['ones'] = 1
-    df['val'] = df['val'].astype(bool)
+    df = df_rep3.copy().reset_index(drop=True)
+    df = df.sort_values(TIME)
+    df.loc[:,'ones'] = 1
     
-    df_start = df[df['val']]
-    df_end = df[~df['val']]
-
-    df_end.rename(columns={'time': 'end_time'}, inplace=True)
-    df_start.rename(columns={'time': 'start_time'}, inplace=True)
-   
-    df_end['pairs'] = df_end.groupby(['device'])['ones'].apply(lambda x: x.cumsum())
-    df_start['pairs'] = df_start.groupby(['device'])['ones'].apply(lambda x: x.cumsum())        
+    # seperate the 0to1 and 1to0 device changes
+    df.loc[:,VAL] = df[VAL].astype(bool)
+    df_start = df[df[VAL]]
+    df_end = df[~df[VAL]]    
+    df_end = df_end.rename(columns={TIME: END_TIME})
+    df_start = df_start.rename(columns={TIME: START_TIME})
     
+    # ordered in time to index them and make a correspondence
+    df_end.loc[:,'pairs'] = df_end.groupby([DEVICE])['ones'].apply(lambda x: x.cumsum())
+    df_start.loc[:,'pairs'] = df_start.groupby([DEVICE])['ones'].apply(lambda x: x.cumsum())        
+        
     
-    df = pd.merge(df_start, df_end, on=['pairs', 'device'])
-    df = df.sort_values('start_time')
+    df = pd.merge(df_start, df_end, on=['pairs', DEVICE])
+    df = df.sort_values(START_TIME)
     
-    assert int(len(df_rep3)/2) == len(df), 'input {} != {} result. Somewhere two following events of the \
-    #        same device had the same starting point and end point'.format(len(df_rep3), len(df))
-    return df[['start_time', 'end_time', 'device']]
+    # sanity checks
+    diff = int(len(df_rep3)/2) - len(df)
+    assert diff == 0, 'input {} - {} == {} result. Somewhere two following events of the \
+    #        same device had the same starting point and end point'.format(len(df_rep3)/2, len(df), diff)
+    return df[[START_TIME, END_TIME, DEVICE]]
 
 def device_rep1_2_rep3(df_rep):
     """
@@ -210,14 +213,80 @@ def correct_devices(df):
         cor_rep3 = df
     else:
         raise ValueError
-    
+    cor_rep3 = cor_rep3.sort_values(by='time')    
+
     # correct timestamp duplicates
     while _has_timestamp_duplicates(cor_rep3):
         cor_rep3 = correct_device_rep3_ts_duplicates(cor_rep3)
-    
-    cor_rep1 = device_rep3_2_rep1(cor_rep3)
+
+    # correct on off incosistency
+    if not is_on_off_consistent(cor_rep3):
+        cor_rep3 = correct_on_off_inconsistency(cor_rep3)
 
     assert not _has_timestamp_duplicates(cor_rep3)
+    assert is_on_off_consistent(cor_rep3)
+
+    cor_rep1 = device_rep3_2_rep1(cor_rep3)
     assert _check_devices_sequ_order(cor_rep1)
     
     return cor_rep1, cor_rep3
+
+def is_on_off_consistent(df):
+    """ devices can only go on after they are off and vice versa. check if this is true
+        for every column
+    """
+    # check if every device starts by turning on
+    for dev in df['device'].unique():
+        df_dev = df[df['device'] == dev]
+        assert df_dev.iloc[0].val
+        
+    # check if the alternating pattern of devices holds
+    for dev in df['device'].unique():
+        df_dev = df[df['device'] == dev].copy().sort_values(by='time').reset_index(drop=True)
+        # create alternating mask
+        mask = np.zeros((len(df_dev)), dtype=bool)
+        mask[::2] = True
+        df_dev['alternating'] = mask
+        df_dev['diff'] = df_dev['val'] ^ mask
+        if df_dev['diff'].sum() > 0:
+            return False
+    return True
+
+def correct_on_off_inconsistency(df):
+    """ 
+    has multiple strategies for solving the patterns:
+    e.g if the preceeding value is on and the same value is occuring now delete now
+    Parameters
+    ----------
+    df : pd.DataFrame
+        device representation 3
+        
+    Returns
+    -------
+    df : pd.DataFrame
+        device representation 3
+    """
+    
+    no_inconsistency = False # if one inconsistency is checked the loop is left
+    while not no_inconsistency:
+        no_inconsistency = True
+        for dev in df['device'].unique():            
+            df_dev = df[df['device'] == dev].copy().sort_values(by='time').reset_index()
+            
+            # create alternating mask
+            mask = np.zeros((len(df_dev)), dtype=bool)
+            mask[::2] = True
+            df_dev['alternating'] = mask
+            df_dev['diff'] = df_dev['val'] ^ mask
+            
+            if df_dev['diff'].sum() > 0:
+                no_inconsistency = False
+                
+                # get index of rows where the previous value was the same and delete row
+                df_dev['same_prec'] = ~(df_dev['val'].shift(1) ^ df_dev['val'])
+                df_dev.loc[0, 'same_prec'] = False # correct shift artefact
+                indices = list(df_dev[df_dev['same_prec']]['index'])
+                
+                df = df.drop(indices, axis=0)
+            
+    return df
