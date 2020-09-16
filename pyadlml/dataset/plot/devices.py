@@ -12,12 +12,11 @@ from pyadlml.dataset.plot.util import heatmap, annotate_heatmap
 from pyadlml.dataset.stats.devices import devices_trigger_time_diff
 from pyadlml.dataset.plot.util import func_formatter_sec
 from datetime import timedelta
-import matplotlib.ticker as ticker
 from pyadlml.dataset.stats.devices import devices_trigger_count
 from pyadlml.dataset.plot.util import heatmap_square
 
 
-def hist_trigger_time_diff(df_dev, n_bins=50):
+def hist_trigger_time_diff(df_dev, n_bins=50, figsize=(10,6)):
     """
         plots
     """
@@ -40,7 +39,7 @@ def hist_trigger_time_diff(df_dev, n_bins=50):
     cum_percentage = np.concatenate(([0], cum_percentage)) # let the array start with 0
 
     # plots
-    fig,ax = plt.subplots(figsize=(10,6))
+    fig,ax = plt.subplots(figsize=figsize)
     plt.xscale('log')
     #plt.yscale('log')
     
@@ -67,7 +66,8 @@ def hist_trigger_time_diff(df_dev, n_bins=50):
     
     return fig
 
-def boxsplot_on_duration(df_dev):
+from pyadlml.dataset.plot.util import func_formatter_sec
+def boxsplot_on_duration(df_dev, figsize=(10,8)):
     """
     draws a boxsplot of all devices
     Parameters
@@ -79,7 +79,6 @@ def boxsplot_on_duration(df_dev):
     df_dev = df_dev.copy()
     df_dev['td'] = df_dev['end_time'] - df_dev['start_time']
 
-    
     # select data for each device
     devices = df_dev['device'].unique()
     dat = []
@@ -88,11 +87,12 @@ def boxsplot_on_duration(df_dev):
         #tmp = np.log(df_device['td'].dt.total_seconds())
         tmp = df_device['td'].dt.total_seconds()
         dat.append(tmp)
-
+    
+    #return df_dev #DEBUG
     # plot boxsplot
-    fig, ax = plt.subplots(figsize=(10,8))
+    fig, ax = plt.subplots(figsize=figsize)
     ax.boxplot(dat, vert=False)
-    ax.set_title('Devices "ON"-Duration')
+    ax.set_title('Devices on-duration')
     ax.set_yticklabels(devices, ha='right')
     ax.set_xlabel('log seconds')
     ax.set_xscale('log')
@@ -103,19 +103,8 @@ def boxsplot_on_duration(df_dev):
     ax_top = ax.secondary_xaxis('top', functions=(lambda x: x, lambda x: x))
     ax_top.set_xlabel('time')
     ax_top.xaxis.set_major_formatter(
-        ticker.FuncFormatter(_func_formatter))
+        ticker.FuncFormatter(func_formatter_sec))
     return fig
-
-def _func_formatter(x, pos):
-    if x-60 < 0:
-        return "{:.0f}s".format(x)
-    elif x-3600 < 0:
-        return "{:.0f}m".format(x/60)
-    elif x-86400 < 0:
-        return "{:.0f}h".format(x/3600)
-    else:
-        return "{:.0f}t".format(x/86400)
-
 
 def heatmap_trigger_one_day(df_dev, t_res='1h', figsize=(10,6)):
     """
@@ -183,7 +172,7 @@ def heatmap_cross_correlation(df_dev, figsize=(10,8)):
     Parameters
     ----------
     df_dev: pd.DataFrame 
-        devices in representation 3 
+        devices in representation 1
     """
     cmap = 'BrBG'
     cbarlabel = 'counts'
@@ -204,7 +193,7 @@ def heatmap_cross_correlation(df_dev, figsize=(10,8)):
     plt.show()
 
 
-def hist_on_off(df_dev):
+def hist_on_off(df_dev, figsize=(13, 9)):
     """ plots the percentage a device is on against the percentage it is off
     Parameters
     ----------
@@ -217,7 +206,7 @@ def hist_on_off(df_dev):
     title = 'Devices fraction on/off'
 
     # Figure Size 
-    fig, ax = plt.subplots(figsize =(13, 9)) 
+    fig, ax = plt.subplots(figsize=figsize) 
     plt.barh(dev_lst, df['frac_off'].values, label='off')  
 
     # careful: notice "bottom" parameter became "left"

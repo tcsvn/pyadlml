@@ -5,7 +5,6 @@ this file is to bring datasets into specific representations
 import pandas as pd
 import swifter
 import numpy as np
-from enum import Enum
 from pyadlml.dataset.util import print_df
 
 
@@ -15,60 +14,45 @@ TIME  = 'time'
 NAME = 'name'
 ACTIVITY = 'activity'
 VAL = 'val'
-
 DEVICE = 'device'
 RAW = 'raw'
+
 CHANGEPOINT ='changepoint'
 LAST_FIRED = 'last_fired'
 
-"""
-    df_activities:
-        - per definition no activity can be performed in parallel
-
-        start_time | end_time   | activity
-        ---------------------------------
-        timestamp   | timestamp | act_name
-
-    df_devices:
-        also referred to as rep1
-        is used to calculate statistics for devices more easily
-        and has lowest footprint in storage. Most of the computation 
-        is done using this format
-        Exc: 
-        start_time | end_time   | device    
-        ----------------------------------
-        timestamp   | timestamp | dev_name  
-    
-    df_dev_rep3:
-        a lot of data is found in this format.
-        time        | device    | state
-        --------------------------------
-        timestamp   | dev_name  |   1
-"""
 
 def label_data(df_devices: pd.DataFrame, df_activities: pd.DataFrame, idle=False):
     """
     for each row in the dataframe select the corresponding activity from the
-    timestamp and create a np array with the activity labels
-    :param df_devices:
-        the only constraint is that the index have to be timestamps
+    timestamp append it as column to df_devices
+    Parameters
+    ----------
+    df_devices : pd.DataFrame
+        the only constraint is that the there is a column named time or the index named time
         an example can be raw format: 
-        Name                    0   ...      13
+                                0   ...      13
         Time                        ...
         2008-03-20 00:34:38  False  ...    True
         2008-03-20 00:34:39  False  ...   False
         ...
-    :param idle: boolean
+    idle : bool
         if true this leads to datapoints not falling into a logged activity to be
         labeled as idle
-    :return:
+
+    Returns
+    -------
+        dataframe df_devices with appended label column
         Name                    0   ...      13 activity
         Time                        ...         
         2008-03-20 00:34:38  False  ...    True idle
         2008-03-20 00:34:39  False  ...   False act1
     """
     df = df_devices.copy()
-    df[ACTIVITY] = df.index
+    if df.index.name == TIME:
+        df[ACTIVITY] = df.index
+    else:
+        df[ACTIVITY] = df[TIME]
+
     df[ACTIVITY] = df[ACTIVITY].apply(
                     _map_timestamp2activity,
                     df_act=df_activities,

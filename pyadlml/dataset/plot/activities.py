@@ -12,7 +12,7 @@ from pyadlml.dataset.plot.util import heatmap, annotate_heatmap, heatmap_square
 import numpy as np
 
 
-def hist_counts(df_act, y_scale=None, idle=False):
+def hist_counts(df_act, y_scale=None, idle=False, figsize=(9,3)):
     """ plots the activities durations against each other
     """
     assert y_scale in [None, 'log']
@@ -29,7 +29,7 @@ def hist_counts(df_act, y_scale=None, idle=False):
     df = df.sort_values(by=['occurence'], axis=0)
     
     # plot
-    fig, ax = plt.subplots(figsize=(9,3))
+    fig, ax = plt.subplots(figsize=figsize)
     plt.title(title)
     plt.xlabel(xlabel)
     ax.barh(df['activity'], df['occurence'])
@@ -38,7 +38,7 @@ def hist_counts(df_act, y_scale=None, idle=False):
     return fig
 
 
-def boxplot_duration(df_act, y_scale='norm', idle=False):
+def boxplot_duration(df_act, y_scale='norm', idle=False, figsize=(10,8)):
     """
         plot a boxplot of activity durations (mean) max min 
     """
@@ -59,7 +59,7 @@ def boxplot_duration(df_act, y_scale='norm', idle=False):
         dat.append(df_activity['seconds']) 
     
     # plot boxsplot
-    fig, ax = plt.subplots(figsize=(10,8))
+    fig, ax = plt.subplots(figsize=figsize)
     ax.boxplot(dat, vert=False)
     ax.set_title('Activity durations')
     ax.set_yticklabels(activities, ha='right')
@@ -76,7 +76,7 @@ def boxplot_duration(df_act, y_scale='norm', idle=False):
     return fig
 
 
-def hist_cum_duration(df_act, y_scale=None, idle=False):
+def hist_cum_duration(df_act, y_scale=None, idle=False, figsize=(9,3)):
     """ plots the cummulated activities durations in a histogram for each activity 
     """
     assert y_scale in [None, 'log']
@@ -97,7 +97,7 @@ def hist_cum_duration(df_act, y_scale=None, idle=False):
     df['seconds'] = df['minutes']*60 
     
     # plot
-    fig, ax = plt.subplots(figsize=(9,3))
+    fig, ax = plt.subplots(figsize=figsize)
     plt.title(title)
     plt.xlabel(xlabel)
     ax.barh(df['activity'], df['seconds'])
@@ -145,7 +145,7 @@ def heatmap_transitions(df_act, z_scale=None, figsize=(8,6), idle=False):
 
 
 
-def ridge_line(df_act, t_range='day', idle=False, n=1000, dist_scale=0.05, ylim_upper=1.1):
+def ridge_line(df_act, t_range='day', idle=False, n=1000, dist_scale=0.05, ylim_upper=1.1, figsize=(10, 8)):
     """
     Parameters
     ----------
@@ -184,7 +184,7 @@ def ridge_line(df_act, t_range='day', idle=False, n=1000, dist_scale=0.05, ylim_
 
     grouped = [(col, df[col].values) for col in df.columns]
 
-    fig, ax = plt.subplots(figsize=(10, 8))
+    fig, ax = plt.subplots(figsize=figsize)
     acts, data = zip(*grouped)
     ridgeline(data, labels=acts, overlap=.85, fill='tab:blue', n_points=1000, dist_scale=dist_scale)
     plt.title(title)

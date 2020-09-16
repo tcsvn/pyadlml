@@ -3,6 +3,24 @@ import pandas as pd
 from pyadlml.dataset._dataset import START_TIME, END_TIME, TIME, \
     TIME, NAME, VAL, DEVICE
 
+"""
+    df_devices:
+        also referred to as rep1
+        is used to calculate statistics for devices more easily
+        and has lowest footprint in storage. Most of the computation 
+        is done using this format
+        Exc: 
+           | start_time | end_time   | device    
+        ----------------------------------------
+         0 | timestamp   | timestamp | dev_name  
+    
+    df_dev_rep3:
+        a lot of data is found in this format.
+            | time      | device    | state
+        ------------------------------------
+         0  | timestamp | dev_name  |   1
+"""
+
 def _create_devices(dev_list, index=None):
     """
     creates an empty device dataframe
@@ -111,7 +129,7 @@ def device_rep3_2_rep1(df_rep3):
 def device_rep1_2_rep3(df_rep):
     """
     params: df: pd.DataFrame
-                rep1: col (start time, end_time, device)
+                rep1: columns (start time, end_time, device)
     returns: df: (pd.DataFrame)
                 rep3: columns are (time, value, device)
                 example row: [2008-02-25 00:20:14, Freezer, False]
@@ -173,7 +191,7 @@ def correct_device_rep3_ts_duplicates(df):
     df = pd.concat([duplicates, uniques], sort=True)
     
     # set the time as index again
-    df = df.sort_values(TIME)
+    df = df.sort_values(TIME).reset_index(drop=False)
     
     return df
     

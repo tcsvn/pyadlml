@@ -2,6 +2,17 @@ from pyadlml.dataset._dataset import START_TIME, ACTIVITY, END_TIME
 import pandas as pd
 import numpy as np
 
+"""
+    df_activities:
+        - per definition no activity can be performed in parallel
+
+        start_time | end_time   | activity
+        ---------------------------------
+        timestamp   | timestamp | act_name
+
+
+"""
+
 def check_activities(df):
     """
     check if the activitiy dataframe is valid by checking if
@@ -46,103 +57,6 @@ def _create_activity_df():
     df[END_TIME] = pd.to_datetime(df[END_TIME])
     return df 
 
-
-def correct_activity_overlap_old(df):
-    """
-        the use of the toilet in this dataset is logged in parallel to the
-        rest of the data. This violates the constraint that no activity can 
-        be performed in parallel
-    """
-    import datetime
-    from pyadlml.dataset.util import print_df
-
-    overlap = 'overlap'
-    epsilon = datetime.timedelta(milliseconds=0)
-
-    # label overlapping toilet activities
-    mask = (df[END_TIME].shift()-df[START_TIME]) > epsilon
-    overlapping = df[mask]
-    overlapping = overlapping.sort_values(START_TIME)
-
-    overlap_corresp = _create_activity_df()
-    corrected = _create_activity_df()
-
-    for row in overlapping.iterrows():
-        ov_st = row[1].start_time
-        ov_et = row[1].end_time
-        """
-        1. case      2. case     3.case       4.case    5. case
-        ov |----|       |----|      |----|    |----|    |---|
-        df   |----|      |-|      |---|      |-------|  |---|
-        1. case
-            start falls into interval
-        2. case
-            end falls into interval
-        3. case
-            start and end fall both into interval
-        4. case 
-            start is smaller than ov_start and end is greater than ov_end
-        5. case 
-            interval boundaries match
-        """
-        mask_5c = (df[START_TIME] == ov_st) & (df[END_TIME] == ov_et)
-        mask_1c = (df[START_TIME] >= ov_st) & (df[START_TIME] <= ov_et) \
-                    & ~mask_5c
-        mask_2c = (df[END_TIME] >= ov_st) & (df[END_TIME] <= ov_et) \
-                    & ~mask_5c
-        mask_3c = mask_1c & mask_2c & ~mask_5c
-        mask_4c = (df[START_TIME] <= ov_st) & (df[END_TIME] >= ov_et) \
-                    & ~mask_5c
-        mask = mask_1c | mask_2c | mask_3c | mask_4c
-
-        corresp_row = df[mask]
-
-        overlap_corresp = overlap_corresp.append(corresp_row, ignore_index=True)
-        # 1. case
-        if mask_1c.any():
-            raise NotImplementedError
-
-        # 2. case
-        if mask_2c.any():
-            raise NotImplementedError
-
-        # 3. case
-        if mask_3c.any():
-            raise NotImplementedError
-
-        # 4. case
-        if mask_4c.any():
-            """
-            ov    |----|   => |~|----|~~|
-            cr  |~~~~~~~~|
-            """
-            # use epsilon to offset the interval boundaries a little bit
-            # to prevent later matching of multiple indices
-            eps = pd.Timedelta(milliseconds=1)
-
-            # create temporary dataframe with values
-            df2 = _create_activity_df()
-            cr_st = corresp_row.start_time.iloc[0] 
-            cr_et = corresp_row.end_time.iloc[0]
-            ov_act = row[1][ACTIVITY]
-            cr_act = corresp_row[ACTIVITY].iloc[0]
-
-            df2.loc[0] = [cr_st, ov_st, cr_act]
-            df2.loc[1] = [ov_st + eps, ov_et, ov_act]
-            df2.loc[2] = [ov_et + eps, cr_et, cr_act]
-
-            # append dataframe 
-            corrected = corrected.append(df2, ignore_index=True)
-    
-
-    # create dataframe without the overlapping and their corresponding rows
-    # and append the corrected values
-    df_activities = pd.concat([df, overlapping, overlap_corresp]).drop_duplicates(keep=False)
-    df_activities = df_activities.append(corrected)
-    df_activities = df_activities.sort_values(START_TIME)
-    df_activities = df_activities.reset_index(drop=True)
-
-    return df_activities
 
 def add_idle(acts, min_diff=pd.Timedelta('5s')):
     """ adds a dummy Idle activity for gaps between activities greater than min_diff
@@ -226,32 +140,132 @@ def _merge_int_right_partial(row, ov, strat='clip_left'):
         df_res.loc[0] = [row_st, ov_st, row_act]
         df_res.loc[1] = [ov_st + eps, ov_et, ov_act]
     return df_res
-    
 
-def _merge_ints(row, overlapping, strat='cut_at_lower'):
+def _merge_int_first_persists(row1, row2):
+    """ replaces interval by taking the first as dominant interval which borders 
+        should be preserved:
+            1. case 
+                row1 int |~~~~|    => |~~~~|-|    
+                row2 int   |----|  
+            2. case
+                row1 int   |~~~~|  => |-|~~~~|    
+                row2 int |----|
+    Parameters
+    ----------
+    row1 : pd.Series
+        The dominant interval
+    row2 : pd.Series
+        the submissive interval
+    Returns
+    -------
+    df_res : pd.DataFrame
+        the corrected activities
+    """
+    df = _create_activity_df()
+    eps = pd.Timedelta('1ms')
+
+    int1 = pd.Interval(row1.start_time, row1.end_time)
+    int2 = pd.Interval(row2.start_time, row2.end_time)
+
+    if int1.left <= int2.left and int1.right < int2.right: # 1.case
+        df.loc[0] = [row1.start_time, row1.end_time, row1.activity]
+        df.loc[1] = [row1.end_time + eps, row2.end_time, row2.activity]
+
+    elif int2.left <= int1.left and int2.right < int1.right: # 2.case
+        df.loc[0] = [row2.start_time, row1.start_time, row2.activity]
+        df.loc[1] = [row1.start_time + eps, row1.end_time, row1.activity]
+    return df
+
+def _merge_int_same(row1, row2):
+    """ the intervals are the same  
+    Parameters
+    ----------
+    row1 : pd.Series
+    row2 : pd.Series
+    Returns
+    -------
+    df_res : pd.DataFrame
+        the corrected activities
+    """
+    assert row1.activity == row2.activity
+    
+    df = _create_activity_df()
+    df.loc[0] = [row1.start_time, row2.end_time, row1.activity]
+    return df
+
+
+
+def _merge_ints(row, overlapping, strats=['cut_at_lower'], excepts=[]):
     """ gets overlapping intervals and merges those intervals with a strategy
     Parameters
     ----------
     row : pd.Series 
+
     overlapping : pd.Series 
-    
+
+    strats : list
+        the strategies for merging intervals with priority in ascending order
+    excepts : list
+        the activities which should be preserved when merging
+ 
     Returns
     -------
     merged: pd.DataFrame
     """
-    assert strat in ['cut_at_lower']
+    # todo check if every strategy in the list is possible
     assert isinstance(overlapping, pd.Series)
     assert isinstance(row, pd.Series)
+
+    if row.activity == overlapping.activity:
+        return _merge_int_same(row, overlapping)
         
     int1 = pd.Interval(row.start_time, row.end_time)
     int2 = pd.Interval(overlapping.start_time, overlapping.end_time)
     
+    if excepts != []:
+        # find out which is the dominant and the less dominant interval
+        if row.activity in excepts and overlapping.activity in excepts:
+            # assign row and ov such as to replace the one with lower priority below
+            print('priority mismatch!'*20)
+            idx_row = excepts.index(row.activity)
+            idx_ov = excepts.index(overlapping.activity)
+            if idx_row < idx_ov:
+                dom = overlapping
+                less_dom = row
+
+        if row.activity in excepts:
+            dom = row
+            less_dom = overlapping
+        else:
+            dom = overlapping 
+            less_dom = row
+
+
+        # apply merging strategies
+        int_dom = pd.Interval(dom.start_time, dom.end_time)
+        int_ldom = pd.Interval(less_dom.start_time, less_dom.end_time)
+
+        # dominant interval encloses less dominant => keep dominant, drop less dominant
+        if (int_dom.left < int_ldom.left) & (int_ldom.right < int_dom.right):
+            df_res = _create_activity_df()
+            df_res.loc[0] = dom
+            return df_res
+
+        # less dominant interval encloses dominant => normal inclusive merge
+        elif (int_ldom.left < int_dom.left) & (int_dom.right < int_ldom.right):
+            return _merge_int_inclusive(less_dom, dom)
+
+        # intervals overlap => keep dominant
+        else:
+            return _merge_int_first_persists(dom, less_dom)
+            
+
     if (int1.left < int2.left) & (int2.right < int1.right):
         # int1  |~~~~~~|  
         # int2   |----|  
         df_res = _merge_int_inclusive(row, overlapping)
         
-    elif (int1.left < int2.left) & (int1.right < int2.right):
+    elif (int1.left <= int2.left) & (int1.right < int2.right):
         # int1 |~~~~|   
         # int2   |----|   
         df_res = _merge_int_right_partial(row, overlapping)
@@ -273,7 +287,7 @@ def _is_activity_et_after_st(df):
 
 
 
-def correct_activity_overlap(df):
+def correct_activity_overlap(df, strats=[], excepts=[]):
     """ solve the merge overlapping interval problem
         worst runtime is O(n^2)
         average runtime is O()
@@ -282,7 +296,11 @@ def correct_activity_overlap(df):
     ----------
     df : pd.DataFrame
         Activity dataframe with the columns
-        
+    strats : list
+        the strategies for merging intervals with priority in ascending order
+    excepts : list
+        the activities which should be preserved when merging
+ 
     Returns
     -------
     df : pd.DataFrame 
@@ -314,7 +332,7 @@ def correct_activity_overlap(df):
         # only for last iteration
         if i == len(idxs_succ_overlaps)-1:
             area_to_correct = df.iloc[i_l:i_h,:]
-            result = _correct_overlapping_activities(area_to_correct)                             
+            result = _correct_overlapping_activities(area_to_correct, strats, excepts)
             corrections.append((area_to_correct, result))
             res = res.append(result)
             break
@@ -348,7 +366,9 @@ def correct_activity_overlap(df):
                 i_h = max(_get_idx_start(df, idx), i_h)
         
         area_to_correct = df.iloc[i_l:i_h,:]
-        result = _correct_overlapping_activities(area_to_correct)                       
+        result = _correct_overlapping_activities(area_to_correct, strats, excepts)
+
+        assert not result.empty
         corrections.append((area_to_correct, result))        
         res = res.append(result)        
         i += 1
@@ -389,9 +409,17 @@ def _get_idx_start(df, idx):
     res = list(tmp.index)[0]
     return res
 
-def _correct_overlapping_activities(area_to_correct):
+def _correct_overlapping_activities(area_to_correct, strats, excepts=[]):
     """
-    
+    Parameters
+    ----------
+    area_to_correct : pd.DataFrame
+        Acitity dataframe
+    strats : list
+        the strategies for merging intervals with priority in ascending order
+    excepts : list
+        the activities which should be preserved when merging
+     
     """
     assert len(area_to_correct) >= 2
     
@@ -422,15 +450,16 @@ def _correct_overlapping_activities(area_to_correct):
                 stack = stack.iloc[1:]
 
  
-        new_rows = _merge_ints(current_row, ov)
+        new_rows = _merge_ints(current_row, ov, strats, excepts)
 
         if stack.empty: 
             result = result.append(new_rows)
             return result
-        else:
+        elif len(new_rows) >= 2:
             result = result.append(new_rows.iloc[0,:])
-
-        new_rows = new_rows.iloc[1:]
+            new_rows = new_rows.iloc[1:]
+        else: # the case if two intervals are merged that have the same name => it should get back on stack
+            new_rows = new_rows.iloc[0,:]
         stack = stack.append(new_rows)
         stack = stack.sort_values(by='start_time')
     return result
@@ -452,17 +481,21 @@ def _get_overlapping_activities(df, shift=1):
     mask = mask.shift(+shift) | mask
     return df[mask] 
 
-def correct_activities(df):
+def correct_activities(df, strats=[], excepts=[]):
     """ gets df in form of activities and removes overlapping activities
     Parameters
     ----------
     df : pd.DataFrame
+    strats : list
+        the strategies for merging intervals with priority in ascending order
+    excepts : list
+        the activities which should be preserved when merging
     """
     df = df.copy()
     df = df.drop_duplicates(ignore_index=True)
     
     if _is_activity_overlapping(df):
-        df, cor_lst = correct_activity_overlap(df)
+        df, cor_lst = correct_activity_overlap(df, strats, excepts)
     else:
         cor_lst = None
     assert not _is_activity_overlapping(df)

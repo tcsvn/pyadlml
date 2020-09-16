@@ -1,6 +1,4 @@
 import numpy as np
-from pandas import DataFrame
-from pandas._libs.index import timedelta
 import pandas as pd
 
 from pyadlml.dataset.util import fill_nans_ny_inverting_first_occurence

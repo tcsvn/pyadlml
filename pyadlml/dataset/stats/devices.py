@@ -4,9 +4,9 @@ from pyadlml.dataset._dataset import START_TIME, END_TIME, TIME, \
     TIME, NAME, VAL, DEVICE
 from pyadlml.dataset.util import time2int, timestr_2_timedeltas
 from pyadlml.dataset.devices import device_rep1_2_rep3, _create_devices
+from pyadlml.dataset.util import timestr_2_timedeltas
 
-
-def duration_correlation(df_dev):
+def duration_correlation(df):
     """ compute the crosscorelation by comparing for every interval the binary values
     between the devices
     
@@ -19,6 +19,8 @@ def duration_correlation(df_dev):
         pd.DataFrame (k x k)
         crosscorrelation between each device
     """
+    df_dev = device_rep1_2_rep3(df)
+
     dev_lst = df_dev['device'].unique()
     df_dev = df_dev.sort_values(by='time')
 
@@ -28,10 +30,11 @@ def duration_correlation(df_dev):
     # make off to -1 and on to 1 and then calculate cross correlation between signals
     
     states = np.full(K, -1)
-    prae_time = df_dev.iloc[0].name
+    prae_time = df_dev.iloc[0].time
     dev_idx = np.where(dev_lst == df_dev.iloc[0].device)[0][0]
     states[dev_idx] = 1
-
+    
+    
     # sweep through all 
     i=0
     for row in df_dev.iterrows():
@@ -40,7 +43,7 @@ def duration_correlation(df_dev):
         # for every device determine cross correlation by multiplying
         # the state of the device with the vector of states in order 
         # to know if to subtract or add the time in the previous interval
-        nt = row[0]
+        nt = row[1].time
         td = (nt - prae_time).to_timedelta64()   
         for j in range(K):
             dev_st = states[j]
@@ -59,6 +62,7 @@ def duration_correlation(df_dev):
     crosstab = crosstab/crosstab[0,0]
     ct = pd.DataFrame(data=crosstab, index=dev_lst, columns=dev_lst)
     return ct
+
 
 def devices_trigger_count(df):
     """
@@ -156,36 +160,25 @@ def devices_on_off_stats(df):
     return df
 
 def device_tcorr(df, t_windows=['20s']):
-    """
-    computes for every time window the prevalence of device triggers
-    for each device
-    params: df in repr2 
-            t_windows (list)
-                a list of windows
-            or a single window (string)
+    """ computes for every time window the prevalence of device triggers
+        for each device
 
-    returns: list of panda dataframes
+    Parameters
+    ----------
+    df : pd.DataFrame
+        device representation 1
+    t_windows : list
+        time frames or a single window (string)
+
+    Returns 
+    -------
+    lst : list of panda dataframes
     """
-    from pyadlml.dataset.util import timestr_2_timedeltas
 
     t_windows = timestr_2_timedeltas(t_windows)
-
-    # copy devices to new dfs 
-    # one with all values but start time and other way around
-    df_start = df.copy().loc[:, df.columns != END_TIME]
-    df_end = df.copy().loc[:, df.columns != START_TIME]
-
-    # set values at the end time to zero because this is the time a device turns off
-    df_start[VAL] = True
-    df_end[VAL] = False
-
-    # rename column 'End Time' and 'Start Time' to 'Time'
-    df_start.rename(columns={START_TIME: TIME}, inplace=True)
-    df_end.rename(columns={END_TIME: TIME}, inplace=True)
-
-    df = pd.concat([df_end, df_start]).sort_values(TIME)
-    df = df.reset_index(drop=True)
-
+    
+    df = device_rep1_2_rep3(df)
+    
     # create timediff to the previous trigger
     df['time_diff'] = df['time'].diff()
 
@@ -193,9 +186,10 @@ def device_tcorr(df, t_windows=['20s']):
     #    do cumsum for row_duration 
     #    for each row mask the rows that fall into the given area
     dev_list =  df.device.unique()
-
+    
     df.iloc[0,3] = pd.Timedelta(0, 's')
     df['cum_sum'] = df['time_diff'].cumsum()
+    
     lst = []
     for t_window in t_windows:
         # create cross table with zeros
