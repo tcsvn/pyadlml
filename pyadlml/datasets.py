@@ -198,8 +198,7 @@ def load_from_data_home(param_dict):
     y : pd.DataFrame
     """
     # create folder name
-    param_dict = sorted(param_dict.keys())
-    folder_name = hashlib.md5(str(param_dict))
+    folder_name = hashdict2str(param_dict)
     folder_path = os.environ[ENV_DATA_HOME] + '/' + folder_name + '/'
 
     if not os.path.exists(folder_path):
@@ -224,15 +223,35 @@ def dump_in_data_home(X, y, param_dict):
             {'dataset': kasteren, 'freq':'10s', 'repr': 'raw'}
     """
     # create string representation of dictionary
-    param_dict = sorted(param_dict.keys())
-    folder_name = hashlib.md5(str(param_dict))
+    folder_name = hashdict2str(param_dict)
     folder_path = os.environ[ENV_DATA_HOME] + '/' + folder_name + '/'
+    
+    # remove folder if it already exists
+    if os.path.exists(folder_path):        
+        shutil.rmtree(folder_path)
+        
     _create_folder(folder_path)
 
     # save all data
     joblib.dump(X, folder_path + 'X.joblib') 
-    joblib.dump(X, folder_path + 'y.joblib') 
-    joblib.dump(X, folder_path + 'param_dict.joblib') 
+    joblib.dump(y, folder_path + 'y.joblib') 
+    joblib.dump(param_dict, folder_path + 'param_dict.joblib') 
+
 
 def _create_folder(path_to_folder):
     Path(path_to_folder).mkdir(parents=True, exist_ok=True)
+
+def hashdict2str(param_dict):
+    """ creates a unique string for a dictionary 
+    Parameters
+    ----------
+    param_dict : dict
+        Contains the attributes of the encoder and the data representations
+    Returns
+    -------
+    folder_name : str
+    """
+    param_dict = sorted(param_dict.keys())
+    param_string = str(param_dict).encode('utf-8')
+    folder_name = hashlib.md5(param_string).hexdigest()
+    return str(folder_name)
