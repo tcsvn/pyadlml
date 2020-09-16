@@ -1,21 +1,25 @@
 ### Repo
 
-
-This Repo contains the means for developing machine learning algorithms for activites
-of daily living. It supports a lot of datasets 
-# Datasets
+Contains data processing methods for ADL datasets.
 
 
+### Motivation
 
-# algorithms
+### Supported Datasets
+  - Casas Aruba (2011)
+  - Casas Milan (2009)
+  - Aras
+  - Amsterdam 
+  - MitLab
+
+### Replication list
 
 
-
-# Paper to reproduce
+### Reading list
 
 - LSTMS
-
 - HMMs
  
 
-- 
+### TODO liste
+ - check out projects like skorch, paladium
