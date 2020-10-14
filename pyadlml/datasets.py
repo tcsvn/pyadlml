@@ -24,7 +24,6 @@ import pyadlml.dataset.casas_aruba as casas_aruba
 CASAS_ARUBA_URL = 'https://mega.nz/file/QA5hEToD#V0ypxFsxiwWgVV49OzhsX8RnMNTX8MYSUM2TLL1xX6w'
 CASAS_ARUBA_FILENAME = 'casas_aruba.zip'
 
-
 import pyadlml.dataset.mitlab as mitlab
 MITLAB_URL = 'https://mega.nz/file/MB4BFL6S#8MjAQoS-j0Lje1UFoWUMOCay2FcdpVfla6p9MTe4SQM'
 MITLAB_FILENAME = 'mitlab.zip'
@@ -34,131 +33,180 @@ from pyadlml.dataset.uci_adl_binary import fix_OrdonezB_ADLS
 UCI_ADL_BINARY_URL = 'https://mega.nz/file/AQIgDQJD#oximAQFjexTKwNP3WYzlPnOGew06YSQ2ef85vvWGN94'
 UCI_ADL_BINARY_FILENAME = 'uci_adl_binary.zip'
 
+import pyadlml.dataset.activity_assistant as act_assist
+TUE_2019_URL = 'https://mega.nz/file/sBoCXBrR#Z5paOUwjTo6GWVPxf39ACDs5faPaNbpHah51Q964PBI'
+TUE_2019_FILENAME = 'tuebingen_2019.zip'
 
-def fetch_uci_adl_binary(cache=True, subject='OrdonezA'):
+
+DATA_DUMP_NAME = 'data.joblib'
+ENV_DATA_HOME='PYADLML_DATA_HOME'
+
+def fetch_tuebingen_2019(keep_original=True, cache=True):
+    dataset_name = 'tuebingen_2019'
+
+    def load_tuebingen_2019(folder_path):
+        return act_assist.load(folder_path)
+
+    data = _fetch_handler(keep_original, cache, dataset_name, 
+                        TUE_2019_FILENAME, TUE_2019_URL, 
+                        load_tuebingen_2019)
+    return data
+
+def fetch_uci_adl_binary(keep_original=True, cache=True, subject='OrdonezA'):
     assert subject in ['OrdonezA', 'OrdonezB']
-    data_home = get_data_home()
-    data_home_uci = ''.join([data_home, '/uci_adl_binary'])
+    dataset_name = 'uci_adl_binary'
 
-    sub_act_file = data_home_uci + '/{}_ADLs.txt'.format(subject)
-    sub_dev_file = data_home_uci + '/{}_Sensors.txt'.format(subject)
+    def load_uci_adl_binary(folder_path):
+        sub_dev_file = folder_path + '/{}_Sensors.txt'.format(subject)
+        if subject == 'OrdonezB':
+            fix_OrdonezB_ADLS(folder_path + '/OrdonezB_ADLs.txt')
+            sub_act_file = folder_path + '/{}_ADLs_corr.txt'.format(subject)
+        else:
+            sub_act_file = folder_path + '/{}_ADLs.txt'.format(subject)
 
-    # if dataset does not exists download it
-    if not os.path.isdir(data_home_uci):
-        # download file from mega # TODO make official way available
-        _download_from_mega(data_home, UCI_ADL_BINARY_FILENAME, UCI_ADL_BINARY_URL)
-        fix_OrdonezB_ADLS(data_home_uci + '/OrdonezB_ADLs.txt')
+        return uci_adl_binary.load(sub_dev_file, sub_act_file, subject)
 
-    if subject == 'OrdonezB':
-        sub_act_file = data_home_uci + '/{}_ADLs_corr.txt'.format(subject)
-
-    data = uci_adl_binary.load(sub_dev_file, sub_act_file, subject)
-    if cache is False:        
-        # folder is cleaned
-        shutil.rmtree(data_home_uci)
-        
+    data = _fetch_handler(keep_original, cache, dataset_name, 
+                        UCI_ADL_BINARY_FILENAME, UCI_ADL_BINARY_URL, 
+                        load_uci_adl_binary, data_postfix=subject)
     return data
+    
 
-def fetch_mitlab(cache=True, subject='subject1'):
+def fetch_mitlab(keep_original=True, cache=True, subject='subject1'):
     assert subject in ['subject1', 'subject2']
-    data_home = get_data_home()
-    data_home_mitlab = ''.join([data_home, '/mitlab'])
-    
-    # if dataset does not exists download it
-    if not os.path.isdir(data_home_mitlab):
-        # download file from mega # TODO make official way available
-        _download_from_mega(data_home, MITLAB_FILENAME, MITLAB_URL)
+    dataset_name = 'mitlab'
 
-    sub_act = data_home_mitlab + '/' + subject + "/Activities.csv"
-    sub_dev = data_home_mitlab + '/' + subject + "/sensors.csv"
-    sub_data = data_home_mitlab + '/' + subject + "/activities_data.csv"
+    def load_mitlab(folder_path):
+        sub_act = folder_path + '/' + subject + "/Activities.csv"
+        sub_dev = folder_path + '/' + subject + "/sensors.csv"
+        sub_data = folder_path + '/' + subject + "/activities_data.csv"
+        return mitlab.load(sub_dev, sub_act, sub_data)
 
-    data = mitlab.load(sub_dev, sub_act, sub_data)
-    
-    if cache is False:        
-        # folder is cleaned
-        shutil.rmtree(data_home_mitlab)
-        
+    data = _fetch_handler(keep_original, cache, dataset_name, 
+                        MITLAB_FILENAME, MITLAB_URL, 
+                        load_mitlab, data_postfix=subject)
+    return data
+
+def fetch_amsterdam(keep_original=True, cache=True):
+    dataset_name = 'amsterdam'
+
+    def load_amsterdam(folder_path):
+        sensorData = folder_path + "/kasterenSenseData.txt"
+        activityData = folder_path + "/kasterenActData.txt"
+        return amsterdam.load(sensorData, activityData)
+
+    data = _fetch_handler(keep_original, cache, dataset_name, 
+                        AMSTERDAM_FILENAME, AMSTERDAM_URL, 
+                        load_amsterdam)
+    return data
+
+def fetch_casas_aruba(keep_original=True, cache=True):
+    """
+    """
+    dataset_name = 'casas_aruba'
+    def load_casas_aruba(folder_path):
+        from pyadlml.dataset.casas_aruba import _fix_data
+        _fix_data(folder_path + "/data")
+        return casas_aruba.load(folder_path + '/corrected_data.csv')
+
+    data = _fetch_handler(keep_original, cache, dataset_name, 
+                        CASAS_ARUBA_FILENAME, CASAS_ARUBA_URL, 
+                        load_casas_aruba)     
     return data
 
 
-
-def fetch_amsterdam(cache=True):
-    data_home = get_data_home()
-    data_home_amsterdam = ''.join([data_home, '/amsterdam'])
-    
-    # if dataset does not exists download it
-    if not os.path.isdir(data_home_amsterdam):
-        # download file from mega # TODO make official way available
-        _download_from_mega(data_home, AMSTERDAM_FILENAME, AMSTERDAM_URL)
-
-    sensorData = data_home_amsterdam + "/kasterenSenseData.txt"
-    activityData = data_home_amsterdam + "/kasterenActData.txt"
-    data = amsterdam.load(sensorData, activityData)
-    
-    if cache is False:        
-        # folder is cleaned
-        shutil.rmtree(data_home_amsterdam)
-        
-    return data
-
-
-def fetch_casas_aruba(cache=True):
-    data_home = get_data_home()
-    data_home_casas_aruba = ''.join([data_home, '/casas_aruba'])
-    
-    # if dataset does not exists download it
-    if not os.path.isdir(data_home_casas_aruba):
-        # download file from mega # TODO make official way available
-        _download_from_mega(data_home, CASAS_ARUBA_FILENAME, CASAS_ARUBA_URL)
-
-    from pyadlml.dataset.casas_aruba import _fix_data
-    data_path = data_home_casas_aruba + "/data"
-    _fix_data(data_path)
-    data = casas_aruba.load(data_home_casas_aruba + '/corrected_data.csv')
-    
-    if cache is False:        
-        # folder is cleaned
-        shutil.rmtree(data_home_casas_aruba)
-        
-    return data
-
-
-def fetch_aras(cache=True):
+def fetch_aras(keep_original=True, cache=True):
     """ downloads aras dataset into the datahome folder of pyadlml if 
         it wasn't already downloaded and returns data object
 
     Parameters
     ----------
+    keep_original : bool
+        Determines whether the original dataset is kept on drive or removed
     cache : bool
-        Determines whether the downloaded or existing data should be deleted from 
-        the data home after creating the data object
+        Determines whether the loaded data object is stored on disk or not   
+    
+    Returns
+    -------
+    data : Data.obj
     """
-    data_home = get_data_home()
-    data_home_aras = ''.join([data_home, '/aras'])
-    
-    # if dataset does not exists download it
-    if not os.path.isdir(data_home_aras):
-        # download file from mega # TODO make official way available
-        _download_from_mega(data_home, ARAS_FILENAME, ARAS_URL)
-        
-    data = aras.load(data_home_aras + '/')
-    
-    if cache is False:        
-        # folder is cleaned
-        shutil.rmtree(data_home_aras)
-        
+    dataset_name = 'aras'
+
+    def load_aras(folder_path):
+        return aras.load(folder_path)
+
+    data = _fetch_handler(keep_original, cache, dataset_name, 
+                        ARAS_FILENAME, ARAS_URL, load_aras)     
     return data
 
+
+
+def _fetch_handler(keep_original, cache, dataset_name, 
+        mega_filename, mega_url,
+        load_func, data_postfix=''):
+    """ handles the downloading, loading and caching of a dataset
+    Parameters
+    ----------
+    Returns
+    -------
+    data : object
+
+    """
+    data_home = get_data_home()
+    data_home_dataset = ''.join([data_home, '/', dataset_name])
+    cache_data_folder = _data_2_folder_name(data_home, dataset_name)
+
+    # download data    
+    if not os.path.isdir(data_home_dataset):
+        # download file from mega # TODO make official way available
+        _download_from_mega(get_data_home(), mega_filename, mega_url)
+
+    
+    # load data
+    if data_postfix != '':
+        data_name = cache_data_folder + '/' \
+            + DATA_DUMP_NAME[:-7] + '_' + data_postfix + '.joblib'
+    else:
+        data_name = cache_data_folder + '/' + DATA_DUMP_NAME
+
+    if Path(data_name).is_file(): 
+        data = joblib.load(data_name) 
+    else:
+        data = load_func(data_home_dataset + '/')
+        if cache:
+            _create_folder(cache_data_folder)
+            joblib.dump(data, data_name)
+            Path(cache_data_folder + '/' + dataset_name).touch()
+
+
+    # clean up data
+    # TODO note that the folder is deleted. For two different subjects
+    # caching one and deleting another leads to deletion of the first 
+    if not cache and os.path.exists(cache_data_folder):
+        _delete_data(cache_data_folder)
+    if not keep_original and os.path.exists(data_home_dataset):
+        _delete_data(data_home_dataset)
+
+    return data
+
+
+def _delete_data(path_to_folder):
+    # make shure only data in home directorys are deleted
+    assert '/home/' == path_to_folder[:6] 
+    shutil.rmtree(path_to_folder)
+
+def _data_2_folder_name(path_to_folder, data_name):
+    param_dict = {'dataset' : data_name}
+    folder_name = hashdict2str(param_dict)
+    folder_path = path_to_folder + '/' + folder_name
+    return folder_path
 
 
 def clear_data_home():
     """ Delete all the content of the data home cache.
     """
     data_home = get_data_home()
-    assert '/home/' == data_home[:6] # make shure only data in home directorys are deleted
-    
-    shutil.rmtree(data_home)
+    _delete_data(data_home) 
     Path.mkdir(data_home)
 
 def _download_from_mega(data_home, file_name, url):
@@ -176,9 +224,9 @@ def _download_from_mega(data_home, file_name, url):
 
     # remove zip file
     Path(file_dp).unlink()
-ENV_DATA_HOME='PYADLML_DATA_HOME'
 
 def set_data_home(path_to_folder):
+    # TODO restrict to home folder and full paths
     os.environ[ENV_DATA_HOME] = path_to_folder
 
 def get_data_home():
@@ -251,7 +299,10 @@ def hashdict2str(param_dict):
     -------
     folder_name : str
     """
-    param_dict = sorted(param_dict.keys())
+    # sort dictionary after keys for determinism
+    param_dict = {k: v for k, v in sorted(param_dict.items(), key=lambda item: item[1])}
+
+    # create string
     param_string = str(param_dict).encode('utf-8')
     folder_name = hashlib.md5(param_string).hexdigest()
     return str(folder_name)
