@@ -3,10 +3,12 @@ import pandas as pd
 from pyadlml.dataset._dataset import START_TIME, END_TIME, TIME, \
     TIME, NAME, VAL, DEVICE
 from pyadlml.dataset.util import time2int, timestr_2_timedeltas
-from pyadlml.dataset.devices import device_rep1_2_rep3, _create_devices
+from pyadlml.dataset.devices import device_rep1_2_rep2, _create_devices, \
+                                    _is_dev_rep1, _is_dev_rep2
+
 from pyadlml.dataset.util import timestr_2_timedeltas
 
-def duration_correlation(df):
+def duration_correlation(df_dev):
     """ compute the crosscorelation by comparing for every interval the binary values
     between the devices
     
@@ -14,13 +16,12 @@ def duration_correlation(df):
     ----------
         df_dev: pd.DataFrame
             device representation 1 
+            columns [time, device, val]
     returns
     -------
         pd.DataFrame (k x k)
         crosscorrelation between each device
     """
-    df_dev = device_rep1_2_rep3(df)
-
     dev_lst = df_dev['device'].unique()
     df_dev = df_dev.sort_values(by='time')
 
@@ -65,12 +66,18 @@ def duration_correlation(df):
 
 
 def devices_trigger_count(df):
+    """ counts the amount a device was triggered
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Contains representation 1 of the devices
+        column: [time, device, val]
+
+    Returns
+    ------
     """
-    counts the amount a device was triggered
-    params: df pd.DataFrame
-            a data frame in repr2 of the devices
-    """
-    # TODO check if the 
+    assert _is_dev_rep1(df)
+
     df = df.groupby('device')['device'].count()
     df = pd.DataFrame(df)
     df.columns = ['trigger count']
@@ -167,6 +174,8 @@ def device_tcorr(df, t_windows=['20s']):
     ----------
     df : pd.DataFrame
         device representation 1
+        columns: [time, device, val]
+
     t_windows : list
         time frames or a single window (string)
 
@@ -177,9 +186,8 @@ def device_tcorr(df, t_windows=['20s']):
 
     t_windows = timestr_2_timedeltas(t_windows)
     
-    df = device_rep1_2_rep3(df)
-    
     # create timediff to the previous trigger
+    df = df.copy() 
     df['time_diff'] = df['time'].diff()
 
     #knn
@@ -221,9 +229,6 @@ def device_triggers_one_day(df, t_res='1h'):
             columsn devices
             values: the amount a device changed states 
     """
-
-    df = device_rep1_2_rep3(df)
-
     # compute new table
     df['time'] = df['time'].apply(time2int, args=[t_res])
     df = df.groupby(['time', 'device']).sum().unstack()

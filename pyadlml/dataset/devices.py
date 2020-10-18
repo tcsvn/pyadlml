@@ -1,25 +1,27 @@
 import numpy as np
 import pandas as pd
-from pyadlml.dataset._dataset import START_TIME, END_TIME, TIME, \
+import dask
+from pyadlml.dataset import START_TIME, END_TIME, TIME, \
     TIME, NAME, VAL, DEVICE
 
 """
     df_devices:
         also referred to as rep1
+        a lot of data is found in this format.
+        Exc: 
+           | time      | device    | state
+        ------------------------------------
+         0  | timestamp | dev_name  |   1
+
+    rep2:
         is used to calculate statistics for devices more easily
         and has lowest footprint in storage. Most of the computation 
         is done using this format
-        Exc: 
            | start_time | end_time   | device    
         ----------------------------------------
          0 | timestamp   | timestamp | dev_name  
-    
-    df_dev_rep3:
-        a lot of data is found in this format.
-            | time      | device    | state
-        ------------------------------------
-         0  | timestamp | dev_name  |   1
-"""
+ 
+ """
 
 def _create_devices(dev_list, index=None):
     """
@@ -29,15 +31,6 @@ def _create_devices(dev_list, index=None):
         return pd.DataFrame(columns=dev_list, index=index)
     else:
         return pd.DataFrame(columns=dev_list)
-
-
-
-def check_devices(df):
-    """
-    """
-    case1 = _is_dev_rep1(df) or _is_dev_rep3(df)
-    case2 = _check_devices_sequ_order(df)
-    return case1 and case2 
 
 
 
@@ -51,6 +44,7 @@ def _check_devices_sequ_order(df):
     df : pd.DataFrame
         device representation 1  with columns [start_time, end_time, devices]
     """
+    from pyadlml.datasets import get_parallel, get_npartitions
     dev_list = df['device'].unique()
     no_errors = True
     for dev in dev_list:
@@ -74,7 +68,7 @@ def _check_devices_sequ_order(df):
 
 
 
-def _is_dev_rep1(df):
+def _is_dev_rep2(df):
     """
     """
     if not START_TIME in df.columns or not END_TIME in df.columns \
@@ -82,7 +76,7 @@ def _is_dev_rep1(df):
         return False
     return True
 
-def _is_dev_rep3(df):
+def _is_dev_rep1(df):
     """
     """
     if DEVICE in df.columns and VAL in df.columns \
@@ -90,28 +84,73 @@ def _is_dev_rep3(df):
         return True
     return False
 
-def device_rep3_2_rep1(df_rep3):
+def device_rep1_2_rep2(df_rep1, drop=False):
+    """ transforms a device representation 1 into 2
+    Parameters
+    ----------
+    df_rep1 : pd.DataFrame
+        rep1: col (time, device, val)
+        example row: [2008-02-25 00:20:14, Freezer, False]
+    drop : Boolean
+        Indicates whether rows that have no starting/end timestamp should be dropped or the
+        missing counterpart should be added with the first/last timestamp
+    Returns
+    -------
+    df : pd.DataFrame
+        rep: columns are (start time, end_time, device)
+        example row: [2008-02-25 00:20:14, 2008-02-25 00:22:14, Freezer]         
+    or 
+    df, lst
     """
-    transforms a device representation 3 into 2
-    params: df: pd.DataFrame
-                rep3: col (time, device, val)
-                example row: [2008-02-25 00:20:14, Freezer, False]
-    returns: df: (pd.DataFrame)
-                rep: columns are (start time, end_time, device)
-                example row: [2008-02-25 00:20:14, 2008-02-25 00:22:14, Freezer]         
-    """
-    
-    df = df_rep3.copy().reset_index(drop=True)
+    df = df_rep1.copy().reset_index(drop=True)
     df = df.sort_values(TIME)
     df.loc[:,'ones'] = 1
     
+    rows_changed = 0
+    syn_acts = []
+    if drop:
+        to_delete_idx = []
+        for dev in df['device'].unique():
+            df_dev = df[df['device'] == dev]
+            first_row = df_dev.iloc[0].copy()
+            last_row = df_dev.iloc[len(df_dev)-1].copy()
+            if not first_row['val']:
+                to_delete_idx.append(first_row.name)
+            if last_row['val']:
+                to_delete_idx.append(last_row.name)
+        df = df.drop(to_delete_idx)
+        rows_changed = -len(to_delete_idx)
+    else:
+        # add values to things that are false
+        first_timestamp = df['time'].iloc[0]
+        last_timestamp = df['time'].iloc[len(df)-1]
+        eps = pd.Timedelta('1ns')
+        for dev in df['device'].unique():
+            df_dev = df[df['device'] == dev]
+            first_row = df_dev.iloc[0].copy()
+            last_row = df_dev.iloc[len(df_dev)-1].copy()
+            if not first_row['val']:
+                first_row['val'] = True
+                first_row['time'] = first_timestamp + eps
+                syn_acts.append(first_row)
+                df = df.append(first_row, ignore_index=True)
+            if last_row['val']:
+                last_row['val'] = False
+                last_row['time'] = last_timestamp - eps
+                syn_acts.append(last_row)
+                df = df.append(last_row, ignore_index=True)
+            eps += pd.Timedelta('1ns')
+        rows_changed = len(syn_acts)
+            
+    df = df.reset_index(drop=True).sort_values(TIME)
+    
     # seperate the 0to1 and 1to0 device changes
     df.loc[:,VAL] = df[VAL].astype(bool)
-    df_start = df[df[VAL]]
+    df_start = df[df[VAL]] 
     df_end = df[~df[VAL]]    
     df_end = df_end.rename(columns={TIME: END_TIME})
     df_start = df_start.rename(columns={TIME: START_TIME})
-    
+
     # ordered in time to index them and make a correspondence
     df_end.loc[:,'pairs'] = df_end.groupby([DEVICE])['ones'].apply(lambda x: x.cumsum())
     df_start.loc[:,'pairs'] = df_start.groupby([DEVICE])['ones'].apply(lambda x: x.cumsum())        
@@ -120,24 +159,33 @@ def device_rep3_2_rep1(df_rep3):
     df = pd.merge(df_start, df_end, on=['pairs', DEVICE])
     df = df.sort_values(START_TIME)
     
-    # sanity checks
-    diff = int(len(df_rep3)/2) - len(df)
+    # sanity checks        
+    diff = int((len(df_rep1)+rows_changed)/2) - len(df)
     assert diff == 0, 'input {} - {} == {} result. Somewhere two following events of the \
-    #        same device had the same starting point and end point'.format(len(df_rep3)/2, len(df), diff)
-    return df[[START_TIME, END_TIME, DEVICE]]
+        #        same device had the same starting point and end point'.format(int(len(df_rep1)/2), len(df), diff)
+    
+    if drop:
+        return df[[START_TIME, END_TIME, DEVICE]]
+    else:
+        return df[[START_TIME, END_TIME, DEVICE]], syn_acts
 
-def device_rep1_2_rep3(df_rep):
+def device_rep2_2_rep1(df_rep2):
     """
-    params: df: pd.DataFrame
-                rep1: columns (start time, end_time, device)
-    returns: df: (pd.DataFrame)
-                rep3: columns are (time, value, device)
-                example row: [2008-02-25 00:20:14, Freezer, False]
+    Parameters
+    ----------
+    df_rep2 : pd.DataFrame
+        rep2: columns (start time, end_time, device)
+
+    Returns
+    -------
+    df : (pd.DataFrame)
+        rep1: columns are (time, value, device)
+        example row: [2008-02-25 00:20:14, Freezer, False]
     """
     # copy devices to new dfs 
     # one with all values but start time and other way around
-    df_start = df_rep.copy().loc[:, df_rep.columns != END_TIME]
-    df_end = df_rep.copy().loc[:, df_rep.columns != START_TIME]
+    df_start = df_rep2.copy().loc[:, df_rep2.columns != END_TIME]
+    df_end = df_rep2.copy().loc[:, df_rep2.columns != START_TIME]
 
     # set values at the end time to zero because this is the time a device turns off
     df_start[VAL] = True
@@ -151,14 +199,14 @@ def device_rep1_2_rep3(df_rep):
     df = df.reset_index(drop=True)
     return df
 
-def correct_device_rep3_ts_duplicates(df):
+def correct_device_rep1_ts_duplicates(df):
     """
     remove devices that went on and off at the same time. And add a microsecond
     to devices that trigger on the same time
     Parameters
     ----------
     df : pd.DataFrame
-        Devices in representation 3; columns [time, device, value]
+        Devices in representation 1; columns [time, device, value]
     """
     eps = pd.Timedelta('10ms')
     
@@ -200,7 +248,7 @@ def _has_timestamp_duplicates(df):
     Parameters
     ----------
     df : pd.DataFrame
-        data frame representation 3
+        data frame representation 1: [time, device, val]
     """
     df = df.copy()
     try:
@@ -215,61 +263,70 @@ def correct_devices(df):
     Parameters
     ----------
     df : pd.DataFrame
-        either in device representation 1 or 3
+        either in device representation 1 or 2
     Returns
     -------
     cor_rep1 : pd.DataFrame
-    cor_rep3 : pd.DataFrame
     """
     df = df.copy()
     df = df.drop_duplicates()        
     
     # bring in correct representation
-    if _is_dev_rep1(df):
-        cor_rep3 = device_rep1_2_rep3(df)        
-    elif _is_dev_rep3(df):
-        cor_rep3 = df
+    if _is_dev_rep2(df):
+        cor_rep1 = device_rep2_2_rep1(df)        
+    elif _is_dev_rep1(df):
+        cor_rep1 = df
     else:
         raise ValueError
-    cor_rep3 = cor_rep3.sort_values(by='time')    
+    cor_rep1 = cor_rep1.sort_values(by='time').reset_index(drop=True)
 
     # correct timestamp duplicates
-    while _has_timestamp_duplicates(cor_rep3):
-        cor_rep3 = correct_device_rep3_ts_duplicates(cor_rep3)
+    while _has_timestamp_duplicates(cor_rep1):
+        cor_rep1 = correct_device_rep1_ts_duplicates(cor_rep1)
 
     # correct on off incosistency
-    if not is_on_off_consistent(cor_rep3):
-        cor_rep3 = correct_on_off_inconsistency(cor_rep3)
+    if not is_on_off_consistent(cor_rep1):
+        cor_rep1 = correct_on_off_inconsistency(cor_rep1)
 
-    assert not _has_timestamp_duplicates(cor_rep3)
-    assert is_on_off_consistent(cor_rep3)
-
-    cor_rep1 = device_rep3_2_rep1(cor_rep3)
-    assert _check_devices_sequ_order(cor_rep1)
-    
-    return cor_rep1, cor_rep3
+    assert not _has_timestamp_duplicates(cor_rep1)
+    assert is_on_off_consistent(cor_rep1)
+   
+    return cor_rep1
 
 def is_on_off_consistent(df):
     """ devices can only go on after they are off and vice versa. check if this is true
         for every column
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Dataframe in representation 1.
     """
-    # check if every device starts by turning on
-    for dev in df['device'].unique():
-        df_dev = df[df['device'] == dev]
-        assert df_dev.iloc[0].val
-        
     # check if the alternating pattern of devices holds
-    for dev in df['device'].unique():
+    def func(df, dev):
+        """ returns whether there are rows that are different to an alternating pattern
+        """
         df_dev = df[df['device'] == dev].copy().sort_values(by='time').reset_index(drop=True)
-        # create alternating mask
-        mask = np.zeros((len(df_dev)), dtype=bool)
-        mask[::2] = True
-        df_dev['alternating'] = mask
-        df_dev['diff'] = df_dev['val'] ^ mask
-        if df_dev['diff'].sum() > 0:
-            return False
-    return True
+        first_val = df_dev['val'].iloc[0]
+        if first_val:            
+            mask = np.zeros((len(df_dev)), dtype=bool)
+            mask[::2] = True
+        else:
+            mask = np.ones((len(df_dev)), dtype=bool)
+            mask[::2] = False 
+    
+        return not (df_dev['val'] ^ mask).sum() > 0
 
+    lazy_results = []
+    for dev in df['device'].unique():
+        res = dask.delayed(func)(df, dev)
+        lazy_results.append(res)
+
+    results = np.array(list(dask.compute(*lazy_results)))
+    return results.any() 
+
+
+
+from dask import delayed
 def correct_on_off_inconsistency(df):
     """ 
     has multiple strategies for solving the patterns:
@@ -284,27 +341,65 @@ def correct_on_off_inconsistency(df):
     df : pd.DataFrame
         device representation 3
     """
+    from pyadlml.datasets import get_parallel, get_npartitions
     
-    no_inconsistency = False # if one inconsistency is checked the loop is left
-    while not no_inconsistency:
-        no_inconsistency = True
-        for dev in df['device'].unique():            
-            df_dev = df[df['device'] == dev].copy().sort_values(by='time').reset_index()
-            
-            # create alternating mask
+    def get_inconsistent_series(df_dev):            
+        # create alternating mask depending on first value            
+        first_val = df_dev['val'].iloc[0]
+        if first_val:            
             mask = np.zeros((len(df_dev)), dtype=bool)
             mask[::2] = True
-            df_dev['alternating'] = mask
-            df_dev['diff'] = df_dev['val'] ^ mask
-            
-            if df_dev['diff'].sum() > 0:
-                no_inconsistency = False
-                
-                # get index of rows where the previous value was the same and delete row
-                df_dev['same_prec'] = ~(df_dev['val'].shift(1) ^ df_dev['val'])
-                df_dev.loc[0, 'same_prec'] = False # correct shift artefact
-                indices = list(df_dev[df_dev['same_prec']]['index'])
-                
-                df = df.drop(indices, axis=0)
-            
-    return df
+        else:
+            mask = np.ones((len(df_dev)), dtype=bool)
+            mask[::2] = False 
+    
+        df_dev['diff'] = df_dev['val'] ^ mask
+        if df_dev['diff'].sum() > 0:
+            val = True
+        else:
+            val = False
+        return (val, df_dev[['time', 'device', 'val']])
+        
+        
+    def get_inconsistent_parts(df, dev):
+        df_dev = df[df['device'] == dev].copy().sort_values(by='time').reset_index()
+        return get_inconsistent_series(df_dev)
+                    
+    def correct_part(df_dev):
+        """ get index of rows where the previous value was the same and delete row
+        """
+        
+        df_dev['same_prec'] = ~(df_dev['val'].shift(1) ^ df_dev['val'])
+        df_dev.loc[0, 'same_prec'] = False # correct shift artefact
+        indices = list(df_dev[df_dev['same_prec']].index)
+        df_dev = df_dev.drop(indices, axis=0)
+        return df_dev[['time', 'device', 'val']]
+                    
+    def split_incs(dev_df_list):
+        li, lc = [], []
+        for incon, part in dev_df_list:
+            if incon: li.append(part)
+            else: lc.append(part)
+        return lc, li
+    
+    # create list of tuples e.g [(True, df_dev1), (False, df_dev2), ...]
+    dev_list = df['device'].unique()
+    dev_df_list = []
+    for devs in dev_list:
+        dev_df_list.append(delayed(get_inconsistent_parts)(df, devs))
+    cons_lst, incons_lst = delayed(split_incs)(dev_df_list).compute()
+    
+    
+    tmp = []
+    for part in incons_lst:
+        corr_part = delayed(correct_part)(part)
+        tmp.append(delayed(get_inconsistent_series)(corr_part))
+    tmp = delayed(lambda x: x)(tmp).compute()
+    
+    # check if all series is on off consistent
+    for incon, part in tmp:
+        assert not incon
+        cons_lst.append(part)
+    
+    return pd.concat(cons_lst, ignore_index=True)\
+            .sort_values(by='time').reset_index(drop=True)

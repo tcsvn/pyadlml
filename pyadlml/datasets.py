@@ -40,12 +40,13 @@ TUE_2019_FILENAME = 'tuebingen_2019.zip'
 
 DATA_DUMP_NAME = 'data.joblib'
 ENV_DATA_HOME='PYADLML_DATA_HOME'
+ENV_PARALLEL='PYADLML_PARALLEL'
 
 def fetch_tuebingen_2019(keep_original=True, cache=True):
     dataset_name = 'tuebingen_2019'
 
     def load_tuebingen_2019(folder_path):
-        return act_assist.load(folder_path)
+        return act_assist.load(folder_path, subject='M')
 
     data = _fetch_handler(keep_original, cache, dataset_name, 
                         TUE_2019_FILENAME, TUE_2019_URL, 
@@ -231,6 +232,24 @@ def set_data_home(path_to_folder):
 
 def get_data_home():
     return os.environ[ENV_DATA_HOME]
+
+def set_parallel(val):
+    """ tells code to run execute tasks with dask in parallel whenever possible
+    """
+    assert isinstance(val, bool)
+    os.environ[ENV_PARALLEL] = str(val)
+    assert get_parallel() == val
+
+def get_parallel():
+    val = os.environ.get(ENV_PARALLEL)
+    assert val in ["True", "False"]
+    return val == "True"
+ 	
+def get_npartitions():
+    """ returns the num of parallel threads that can work on a computer
+    """
+    import multiprocessing
+    return 4*multiprocessing.cpu_count()
 
 def load_from_data_home(param_dict):
     """

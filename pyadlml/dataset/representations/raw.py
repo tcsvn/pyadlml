@@ -1,14 +1,13 @@
-
 import numpy as np
 import pandas as pd
-from pyadlml.dataset._dataset import DEVICE, TIME
-from pyadlml.dataset.devices import device_rep1_2_rep3, _create_devices
+
+from pyadlml.dataset import DEVICE, TIME, VAL
+from pyadlml.dataset.devices import _create_devices
 from pyadlml.dataset._dataset import label_data
 
 def create_raw(df_devices, t_res=None, sample_strat='ffill', idle=False):
     dev = df_devices.copy()
     raw = _apply_raw(dev)
-    dev = device_rep1_2_rep3(dev)
     
     if t_res is not None:
         raw = _resample_df(raw, t_res, dev=dev, sample_strat=sample_strat)
@@ -17,48 +16,27 @@ def create_raw(df_devices, t_res=None, sample_strat='ffill', idle=False):
 
 def _apply_raw(df):
     """
-        df: 
-        | Start time    | End time  | device_name 
-        ------------------------------------------
-        | ts1           | ts2       | name1       
-
         return df:
         | time  | dev_1 | ....  | dev_n |
         --------------------------------
         | ts1   |   1   | ....  |  0    |
     """
-    # change to rep3
-    df_dev = device_rep1_2_rep3(df)
     dev_lst = df_dev[DEVICE].unique()
-    
-    # create raw dataframe
-    df_res = _create_devices(dev_lst, index=df_dev[TIME])
-    
-    # create first row in dataframe 
-    df_res.iloc[0] = np.zeros(len(dev_lst))
-    col_idx = np.where(dev_lst == df_dev.iloc[0].device)[0][0]
-    df_res.iloc[0,col_idx] = 1
 
-    # update all rows of the dataframe
-    for i, row in enumerate(df_dev.iterrows()):
-        if i == 0: continue
-        
-        #copy previous row into current and update current value
-        df_res.iloc[i] = df_res.iloc[i-1].values
-        col_idx = np.where(dev_lst == df_dev.iloc[i].device)[0][0]
-        df_res.iloc[i, col_idx] = int(df_dev.iloc[i].val)
+    df = df_dev.pivot(index=TIME, columns=DEVICE, values=VAL)
+    df = df.reset_index()
 
-    return df_res
+    # set the first element for each device to the opposite value of the 
+    # first occurence
+    for dev in dev_lst:
+        fvi = df[dev].first_valid_index()
+        if fvi != 0:
+            value = df[dev].iloc[fvi]
+            df.loc[0, dev] = not value
 
-
-def _apply_raw2(df):
-    """
-    TODO create pivot table like in change point 
-    make forward fill with to nans
-    for each column take first valid element and fill with contrary 
-    element 
-    """
-    pass
+    # fill from start to end NaNs with the preceeding correct value
+    df = df.ffill().set_index(TIME)
+    return df
 
 def _resample_df(df, t_res, dev=None, sample_strat='ffill'):
     resampler = df.resample(t_res, kind='timestamp')

@@ -6,7 +6,7 @@ import pandas as pd
 import swifter
 import numpy as np
 from pyadlml.dataset.util import print_df
-
+import dask.dataframe as dd
 
 START_TIME = 'start_time'
 END_TIME = 'end_time'
@@ -15,8 +15,8 @@ NAME = 'name'
 ACTIVITY = 'activity'
 VAL = 'val'
 DEVICE = 'device'
-RAW = 'raw'
 
+RAW = 'raw'
 CHANGEPOINT ='changepoint'
 LAST_FIRED = 'last_fired'
 
@@ -48,21 +48,34 @@ def label_data(df_devices: pd.DataFrame, df_activities: pd.DataFrame, idle=False
         2008-03-20 00:34:39  False  ...   False act1
     """
     df = df_devices.copy()
+
+    # set time as column and not as index
     if df.index.name == TIME:
         df[ACTIVITY] = df.index
+        df = df.reset_index()
     else:
-        df[ACTIVITY] = df[TIME]
+        df[ACTIVITY] = df[TIME].copy()
+        df = df.reset_index(drop=True)
 
-    df[ACTIVITY] = df[ACTIVITY].apply(
-                    _map_timestamp2activity,
-                    df_act=df_activities,
-                    idle=idle)
-
-# TODO check how to vectorize with swifter for speedup
-#    df[ACTIVITY] = df[ACTIVITY].swifter.apply(
-#                    _map_timestamp2activity,
-#                    df_act=df_activities)
+    from pyadlml.datasets import get_parallel, get_npartitions
+    if get_parallel():
+        #ddf_activities = dd.from_pandas(df_activities, npartitions=get_npartitions())
+        # compute with dask in parallel
+        df[ACTIVITY] = dd.from_pandas(df[ACTIVITY], npartitions=get_npartitions()).\
+                    map_partitions( # apply lambda functions on each partition
+                        lambda df: df.apply(
+                            _map_timestamp2activity,
+                            df_act=df_activities,
+                            idle=idle)).\
+                    compute(scheduler='processes')
+    else:
+        df[ACTIVITY] = df[ACTIVITY].apply(
+                            _map_timestamp2activity,
+                            df_act=df_activities,
+                            idle=idle)
     return df
+
+
 
 def _map_timestamp2activity(timestamp, df_act, idle):
     """ given a timestamp map the timestamp to an activity in df_act

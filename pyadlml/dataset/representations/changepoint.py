@@ -1,12 +1,10 @@
 import pandas as pd
 from pyadlml.dataset._dataset import TIME, DEVICE, VAL, label_data
-from pyadlml.dataset.devices import device_rep1_2_rep3
 
 
 def create_changepoint(df_devices, t_res=None, idle=False):
     dev = df_devices.copy()
-    dev = device_rep1_2_rep3(dev)
-    cp = _apply_changepoint(dev)
+    cp = _apply_changepoint(df_devices.copy())
     
     if t_res is not None:
         resampler = cp.resample(t_res, kind='timestamp')

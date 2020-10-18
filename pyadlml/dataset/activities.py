@@ -1,4 +1,4 @@
-from pyadlml.dataset._dataset import START_TIME, ACTIVITY, END_TIME
+from pyadlml.dataset import START_TIME, ACTIVITY, END_TIME
 import pandas as pd
 import numpy as np
 
@@ -314,11 +314,11 @@ def correct_activity_overlap(df, strats=[], excepts=[]):
     
     res = _create_activity_df()
     corrections = [] 
-    
+
     # get all activities that have in an overlap with a direct preceding interval
     mask = (df[START_TIME].shift(-1) - df[END_TIME]) < pd.Timedelta('0ms')
     idxs_succ_overlaps = np.array(list(df[mask].index))
- 
+
     i_l, i = 0, 0
     while i < len(idxs_succ_overlaps):
         i_h = idxs_succ_overlaps[i]
@@ -425,7 +425,6 @@ def _correct_overlapping_activities(area_to_correct, strats, excepts=[]):
     
     result = _create_activity_df()
     stack = area_to_correct.copy().reset_index(drop=True)
-    #print('area_to_correct: ', area_to_correct)
     
     while True:
         # pop first and second item from stack if they overlap otherwise 
