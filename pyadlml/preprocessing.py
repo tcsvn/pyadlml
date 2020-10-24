@@ -1,10 +1,10 @@
-from pyadlml.dataset.representations.raw import create_raw 
-from pyadlml.dataset.representations.changepoint import create_changepoint
-from pyadlml.dataset.representations.lastfired import create_lastfired
-from pyadlml.dataset.representations.image import create_lagged_raw, create_lagged_lastfired, \
+from pyadlml.dataset._representations.raw import create_raw 
+from pyadlml.dataset._representations.changepoint import create_changepoint
+from pyadlml.dataset._representations.lastfired import create_lastfired
+from pyadlml.dataset._representations.image import create_lagged_raw, create_lagged_lastfired, \
                                             create_lagged_changepoint
 from pyadlml.dataset._dataset import label_data
-from pyadlml.dataset.devices import device_rep1_2_rep3
+from pyadlml.dataset.devices import device_rep1_2_rep2
 import sklearn.preprocessing as preprocessing
 import pandas as pd
 import numpy as np
@@ -106,7 +106,7 @@ class LastFiredEncoder():
 
 class LabelEncoder():
     """
-    wrapper around labelencoder to handle time series data
+        wrapper around labelencoder to handle time series data
     """
     def __init__(self, df_devices, idle=False):
         self.labels = None
@@ -115,6 +115,12 @@ class LabelEncoder():
         self._lbl_enc = preprocessing.LabelEncoder()
 
     def fit(self, df_activities):
+        """ labels data and creates the numeric representations 
+        Parameters
+        ----------
+        df_activities : pd.DataFrame
+            Columns are end_time, start_time, activity. 
+        """
         df = label_data(self.df_devices, df_activities, self.idle)
         self._lbl_enc.fit(df['activity'].values)
 
@@ -153,12 +159,23 @@ class LabelEncoder():
     def get_params(self):
         return self.labels, self.idle, self.df_devices
 
-    def transform(self, df_activities):
-        df = label_data(self.df_devices, df_activities, self.idle)
-        encoded_labels = self._lbl_enc.transform(df['activity'].values)
-        return pd.DataFrame(index=df.index, data=encoded_labels, columns=['activity'])
-
-
+    def transform(self, x):
+        """
+        
+        """
+        # if the input is a dataframe of activities, than fit and
+        # transform the data accordingly 
+        col_names = ['start_time', 'end_time', 'activity']
+        if isinstance(x, pd.DataFrame) and set(x.columns) == col_names:
+            df = label_data(self.df_devices, x, self.idle)
+            encoded_labels = self._lbl_enc.transform(df['activity'].values)
+            return pd.DataFrame(index=df.index, data=encoded_labels, columns=['activity'])
+        
+        # return only the labels for a nd array 
+        elif isinstance(x , np.ndarray):
+            return self._lbl_enc.transform(x)
+        else:
+            raise ValueError
 
 class LaggedRawEncoder():
     def __init__(self, window_size, t_res=None, sample_strat='ffill'):
@@ -212,7 +229,6 @@ class LaggedLabelEncoder():
         create the dummy dataframe for the index from the devices
         index | val
         """
-        df = device_rep1_2_rep3(df_devices.copy())
         df = df.pivot(index='time', columns='device', values='val').iloc[:,:1]
         df = df.astype(bool) # just to have a lower memory footprint
         

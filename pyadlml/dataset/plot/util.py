@@ -9,6 +9,28 @@ import copy
 from matplotlib.colors import LogNorm
 
 
+def hm_key_NN(hm, num):
+    """ a nearest neighbor mapping using keys
+    Parameters
+    ----------
+    hm : dict
+        contains key value mappings
+    num : int
+        the key value for which the nearest key should be chosen
+    Returns
+    -------
+    res : mapping
+    """
+    nearest_neighbor = None
+    min_dist = np.inf
+    for key in hm:
+       diff = abs(key-num) 
+       if diff < min_dist:
+           min_dist = diff
+           nearest_neighbor = key
+    return hm[nearest_neighbor]
+           
+
 def func_formatter_log(x, pos):
     x = np.exp(x)
     if x-60 < 0:
@@ -22,13 +44,13 @@ def func_formatter_log(x, pos):
 
 def func_formatter_sec(x, pos):
     if x-60 < 0:
-        return "{:.1f} s".format(x)
+        return "{:.1f}s".format(x)
     elif x-3600 < 0:
-        return "{:.1f} m".format(x/60)
+        return "{:.1f}m".format(x/60)
     elif x-86400 < 0:
-        return "{:.1f} h".format(x/3600)
+        return "{:.1f}h".format(x/3600)
     else:
-        return "{:.1f} t".format(x/86400)
+        return "{:.1f}t".format(x/86400)
 
 def func_formatter_min(x, pos):
     if x-60 < 0:
@@ -38,12 +60,13 @@ def func_formatter_min(x, pos):
     else:
         return "{:.0f}t".format(x/3600)
 
-def heatmap_contingency(vals, acts, devs, cbarlabel, title, valfmt, figsize, z_scale=None):
+def heatmap_contingency(vals, acts, devs, cbarlabel, title, valfmt, figsize, \
+     z_scale=None, numbers=True):
     # cut off the name of the device for every second label to make it more readable
     for i in range(0,len(devs)):
         if i % 2 == 0:
-            tmp = devs[i][:-5]
-            devs[i] = tmp + 'Off'
+            tmp = devs[i][:-4]
+            devs[i] = tmp + ' Off'
         else:
             devs[i] = 'On'
 
@@ -54,8 +77,8 @@ def heatmap_contingency(vals, acts, devs, cbarlabel, title, valfmt, figsize, z_s
 
     fig, ax = plt.subplots(figsize=figsize)
     im, cbar = heatmap(vals, acts, devs, ax=ax, log=log, cbarlabel=cbarlabel)
-      
-    texts = annotate_heatmap(im, textcolors=("white", "black"), log=log, valfmt=valfmt)        
+    if numbers:
+        texts = annotate_heatmap(im, textcolors=("white", "black"), log=log, valfmt=valfmt)        
 
     # create grid for heatmap into every pair
     tcks = np.arange((vals.shape[1])/2)*2 + 1.5
@@ -135,7 +158,7 @@ def heatmap(data, row_labels, col_labels, log=False, ax=None,
     return im, cbar
 
 def heatmap_square(data, row_labels, col_labels, log=False, ax=None,
-            cbar_kw={}, cbarlabel="", **kwargs):
+            cbar_kw={}, cbarlabel="", grid=True, **kwargs):
     """
     Create a heatmap from a numpy array and two lists of labels.
 
@@ -194,12 +217,12 @@ def heatmap_square(data, row_labels, col_labels, log=False, ax=None,
     # Rotate the tick labels and set their alignment.
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
              rotation_mode="anchor")
-
-    # Turn spines off and create white grid.
-    ax.set_xticks(np.arange(data.shape[1]+1)-.5, minor=True)
-    ax.set_yticks(np.arange(data.shape[0]+1)-.5, minor=True)
-    ax.grid(which="minor", color="w", linestyle='-', linewidth=1)
-    ax.tick_params(which="minor", bottom=False, left=False)
+    if grid:
+        # Turn spines off and create white grid.
+        ax.set_xticks(np.arange(data.shape[1]+1)-.5, minor=True)
+        ax.set_yticks(np.arange(data.shape[0]+1)-.5, minor=True)
+        ax.grid(which="minor", color="w", linestyle='-', linewidth=1)
+        ax.tick_params(which="minor", bottom=False, left=False)
 
     return im, cbar
 

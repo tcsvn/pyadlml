@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from pyadlml.dataset._dataset import START_TIME, END_TIME, ACTIVITY
+from pyadlml.dataset import START_TIME, END_TIME, ACTIVITY
 
 def activities_duration_dist(df_activities, freq='minutes'):
     """

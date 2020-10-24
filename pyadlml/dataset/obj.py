@@ -1,5 +1,5 @@
-from pyadlml.dataset.representations.raw import create_raw
-from pyadlml.dataset.representations.changepoint import create_changepoint
+from pyadlml.dataset._representations.raw import create_raw
+from pyadlml.dataset._representations.changepoint import create_changepoint
 from pyadlml.dataset.activities import check_activities
 
 class Data():

@@ -1,12 +1,66 @@
 import numpy as np
 import pandas as pd
-from pyadlml.dataset._dataset import START_TIME, END_TIME, TIME, \
+from pyadlml.dataset import START_TIME, END_TIME, TIME, \
     TIME, NAME, VAL, DEVICE
 from pyadlml.dataset.util import time2int, timestr_2_timedeltas
 from pyadlml.dataset.devices import device_rep1_2_rep2, _create_devices, \
                                     _is_dev_rep1, _is_dev_rep2
 
 from pyadlml.dataset.util import timestr_2_timedeltas
+from pyadlml.dataset._representations.raw import create_raw
+from pyadlml.util import get_npartitions
+from dask import delayed
+import dask.dataframe as dd
+
+def duration_correlation_parallel(df_dev):
+    """ compute the crosscorelation by comparing for every interval the binary values
+    between the devices
+    
+    Parameters
+    ----------
+        df_dev: pd.DataFrame
+            device representation 1 
+            columns [time, device, val]
+    returns
+    -------
+        pd.DataFrame (k x k)
+        crosscorrelation between each device
+    """
+    def func(row):
+        """ gets two rows and returns a crosstab
+        """        
+        try:
+            td = row.td.to_timedelta64()
+        except:
+            return None
+        states = row.iloc[1:len(row)-1].values.astype(int)
+        K = len(states)        
+        
+        for j in range(K):
+            res = np.full((K), 0, dtype='timedelta64[ns]')
+            tdiffs = states[j]*states*td            
+            row.iloc[1+j] = tdiffs 
+        return row
+    def create_meta(raw):
+        devices = {name : 'object' for name in raw.columns[1:-1]}
+        return {**{'time': 'datetime64[ns]', 'td': 'timedelta64[ns]'}, **devices}
+        
+    dev_lst = df_dev['device'].unique()
+    df_dev = df_dev.sort_values(by='time')
+
+    K = len(dev_lst)
+
+    # make off to -1 and on to 1 and then calculate cross correlation between signals
+    raw = create_raw(df_dev).applymap(lambda x: 1 if x else -1).reset_index()    
+    raw['td'] = raw['time'].shift(-1) - raw['time']
+    
+    df = dd.from_pandas(raw.copy(), npartitions=get_npartitions())\
+                .apply(func, axis=1).drop(columns=['time', 'td']).sum(axis=0)\
+                .compute(scheduler='processes')
+                #.apply(func, axis=1, meta=create_meta(raw)).drop(columns=['time', 'td']).sum(axis=0)\
+    res = pd.DataFrame(data=np.vstack(df.values), columns=df.index, index=df.index)        
+    return res/res.iloc[0,0]
+
 
 def duration_correlation(df_dev):
     """ compute the crosscorelation by comparing for every interval the binary values
@@ -91,26 +145,17 @@ def devices_dist(df_dev, t_range='day', n=1000):
     return _create_dist(df_dev, label=DEVICE, t_range=t_range, n=n)
 
 
-def devices_trigger_time_diff(df):
+def trigger_time_diff(df):
+    """ adds a column with time in seconds between triggers of devices 
+    Parameters
+    ----------
+    df : pd.DataFrame
+        devices in representation 1
+    Returns
+    -------
+    X : np.array
+        time deltas in seconds
     """
-    counts the time differences between triggers of devices 
-    """
-    # copy devices to new dfs 
-    # one with all values but start time and other way around
-    df_start = df.copy().loc[:, df.columns != END_TIME]
-    df_end = df.copy().loc[:, df.columns != START_TIME]
-
-    # set values at the end time to zero because this is the time a device turns off
-    df_start[VAL] = True
-    df_end[VAL] = False
-
-    # rename column 'End Time' and 'Start Time' to 'Time'
-    df_start.rename(columns={START_TIME: TIME}, inplace=True)
-    df_end.rename(columns={END_TIME: TIME}, inplace=True)
-
-    df = pd.concat([df_end, df_start]).sort_values(TIME)
-    df = df.reset_index(drop=True)
-
     # create timediff to the previous trigger
     df['time_diff'] = df['time'].diff()
 
@@ -118,11 +163,14 @@ def devices_trigger_time_diff(df):
     df['row_duration'] = df.time_diff.shift(-1)
 
     # calculate the time differences for each device sepeartly
-    df = df.sort_values(by=['device','time'])
-    df['time_diff2'] = df['time'].diff()
-    df.loc[df.device != df.device.shift(), 'time_diff2'] = None
+    #df = df.sort_values(by=['device','time'])
+    #df['time_diff2'] = df['time'].diff()
+    #df.loc[df.device != df.device.shift(), 'time_diff2'] = None
     df = df.sort_values(by=['time'])
-    return df
+    df['sec_to_next'] = df['row_duration']/pd.Timedelta(seconds=1)
+    X = df['sec_to_next'].values[:-1]
+
+    return X
 
 def devices_on_off_stats(df):
     """

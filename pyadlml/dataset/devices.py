@@ -3,6 +3,7 @@ import pandas as pd
 import dask
 from pyadlml.dataset import START_TIME, END_TIME, TIME, \
     TIME, NAME, VAL, DEVICE
+from pyadlml.util import get_parallel, get_npartitions
 
 """
     df_devices:
@@ -44,7 +45,6 @@ def _check_devices_sequ_order(df):
     df : pd.DataFrame
         device representation 1  with columns [start_time, end_time, devices]
     """
-    from pyadlml.datasets import get_parallel, get_npartitions
     dev_list = df['device'].unique()
     no_errors = True
     for dev in dev_list:
@@ -341,7 +341,6 @@ def correct_on_off_inconsistency(df):
     df : pd.DataFrame
         device representation 3
     """
-    from pyadlml.datasets import get_parallel, get_npartitions
     
     def get_inconsistent_series(df_dev):            
         # create alternating mask depending on first value            

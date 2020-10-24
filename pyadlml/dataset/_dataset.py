@@ -1,25 +1,12 @@
 """
 this file is to bring datasets into specific representations
 """
-
 import pandas as pd
-import swifter
 import numpy as np
 from pyadlml.dataset.util import print_df
 import dask.dataframe as dd
-
-START_TIME = 'start_time'
-END_TIME = 'end_time'
-TIME  = 'time'
-NAME = 'name'
-ACTIVITY = 'activity'
-VAL = 'val'
-DEVICE = 'device'
-
-RAW = 'raw'
-CHANGEPOINT ='changepoint'
-LAST_FIRED = 'last_fired'
-
+from pyadlml.util import get_parallel, get_npartitions
+from pyadlml.dataset import TIME, ACTIVITY, START_TIME, END_TIME
 
 def label_data(df_devices: pd.DataFrame, df_activities: pd.DataFrame, idle=False):
     """
@@ -57,7 +44,6 @@ def label_data(df_devices: pd.DataFrame, df_activities: pd.DataFrame, idle=False
         df[ACTIVITY] = df[TIME].copy()
         df = df.reset_index(drop=True)
 
-    from pyadlml.datasets import get_parallel, get_npartitions
     if get_parallel():
         #ddf_activities = dd.from_pandas(df_activities, npartitions=get_npartitions())
         # compute with dask in parallel
