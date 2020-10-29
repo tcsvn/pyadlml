@@ -29,7 +29,7 @@ setup_args = dict(
   ],
 )
 
-install_requires = ['numpy', 'pandas']
+install_requires = ['numpy', 'pandas', 'joblib', 'mega.py', 'dask[complete]']
 
 if __name__ == '__main__':
   setup(**setup_args, install_requires=install_requires)

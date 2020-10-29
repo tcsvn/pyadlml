@@ -9,6 +9,19 @@ import sklearn.preprocessing as preprocessing
 import pandas as pd
 import numpy as np
 
+class DiscreteEncoder():
+    def __init__(self, rep, t_res=None, sample_strat='ffill'):
+        self.rep = rep
+        self.t_res = t_res
+        self.sample_strat = sample_strat
+
+    def fit(self, df_devices):
+        raise NotImplementedError
+
+    def fit_transform(self, df_devcies):
+        raise NotImplementedError
+    
+
 class RawEncoder():
     def __init__(self, t_res=None, sample_strat='ffill'):
         self.raw = None
