@@ -1,11 +1,11 @@
-# Activity of Daily Living - Machine Learning
+# Activities of Daily Living - Machine Learning
 > Contains data preprocessing and visualization methods for ADL datasets.
 
 ![PyPI version](https://img.shields.io/pypi/v/pyadlml?style=flat-square)
 ![Download Stats](https://img.shields.io/pypi/dd/pyadlml?style=flat-square)
 ![License](https://img.shields.io/pypi/l/pyadlml?style=flat-square)
 
-Activity of Daily livings (ADLs) e.g cooking, sleeping, and devices readings are recorded by smart homes inhabitants. The goal is to predict inhabitants activities using device readings. Pyadlml offers an easy way to fetch, visualize and preprocess common datasets. A further goal is to replicate prominent works in this domain.
+Activities of Daily living (ADLs) e.g cooking, sleeping, and devices readings are recorded by smart homes inhabitants. The goal is to predict inhabitants activities using device readings. Pyadlml offers an easy way to fetch, visualize and preprocess common datasets. A further goal is to replicate prominent work in this domain.
 ![](header.png)
 
 ## Last Stable Release
@@ -25,11 +25,11 @@ from pyadlml.dataset import fetch_amsterdam
 # Fetch dataset
 data = fetch_amsterdam(cache=True)
 
-# plot the activity density distribution for the person over one day
+# plot the persons activity density distribution over one day
 from pyadlml.dataset.plot.activities import ridge_line
 ridge_line(data.df_activities)
 
-# plot the signal cross correlation between the devices
+# plot the signal cross correlation between devices
 from pyadlml.dataset.plot.devices import heatmap_cross_correlation
 heatmap_cross_correlation(data.df_devices)
 
@@ -41,7 +41,7 @@ X = enc_dat.fit_transform(data.df_devices).values
 # label the datapoints with the corresponding activity
 y = LabelEncoder(X).fit_transform(data.df_activities)
 
-# do all the other fancy machine learning stuff
+# do all the other fancy machine learning stuff you already know
 from sklearn import SVM 
 SVM().fit(X).score(X,y)
 ...
@@ -50,7 +50,7 @@ SVM().fit(X).score(X,y)
 _For more examples and usage, please refer to the Notebooks _
 
 ## Features
-  - 8 Datasets to fetch
+  - 8 Datasets
   - A bunch of plots visualizing devices, activities and their interaction
   - Different data representations
     - Discrete timeseries
@@ -58,15 +58,18 @@ _For more examples and usage, please refer to the Notebooks _
       - changepoint
       - lastfired
     - Timeseries as images 
+ - methods for importing data from Home Assistant/Activity Assistant
  
 ### Supported Datasets
-  - [x] Casas Aruba (2011)
-  - [x] Casas Milan (2009)
-  - [x] Aras
   - [x] Amsterdam 
+  - [x] Aras
+  - [x] Casas Aruba (2011)
+  - [ ] Casas Milan (2009)
+  - [ ] Kasteren House A,B,C
   - [x] MitLab
   - [x] Tuebingen 2019
-  - [ ] Kasteren House A,B,C
+  - [x] UCI Adl Binary 
+  
   
 ### Models
 #### iid data
@@ -85,7 +88,7 @@ _For more examples and usage, please refer to the Notebooks _
 #### temporal points
   - [ ] THP
   
-### Replication list  
+## Replication list  
 Here are papers I plan to replicate
 
 
