@@ -1,11 +1,11 @@
 # Activity of Daily Living - Machine Learning
 > Contains data preprocessing and visualization methods for ADL datasets.
 
-[![NPM Version][npm-image]][npm-url]  
-[![Build Status][travis-image]][travis-url]  
-[![Downloads Stats][npm-downloads]][npm-url]  
+![PyPI version](https://img.shields.io/pypi/v/pyadlml?style=flat-square)
+![Download Stats](https://img.shields.io/pypi/dd/pyadlml?style=flat-square)
+![License](https://img.shields.io/pypi/l/pyadlml?style=flat-square)
 
-Activity of Daily livings (ADLs) e.g cooking, sleeping, and devices readings are recorded by smart homes inhabitants. The goal is to predict the activities of an inhabitant using the device readings. Pyadlml offers a way to fetch, visualize and preprocess common datasets. A further Goal is to replicate prominent works in this domain.
+Activity of Daily livings (ADLs) e.g cooking, sleeping, and devices readings are recorded by smart homes inhabitants. The goal is to predict inhabitants activities using device readings. Pyadlml offers an easy way to fetch, visualize and preprocess common datasets. A further goal is to replicate prominent works in this domain.
 ![](header.png)
 
 ## Last Stable Release
