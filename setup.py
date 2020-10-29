@@ -8,7 +8,7 @@ with open('HISTORY.md', 'r') as history_file:
 
 setup_args = dict(
   name = "pyadlml",
-  version = "0.0.1-alpha",
+  version = "0.0.2-alpha",
   url = "https://github.com/tcsvn/pyadlml",
   author = "Christian Meier",
   description = "Sklearn like library supporting numerous Activity of Daily Livings datasets",

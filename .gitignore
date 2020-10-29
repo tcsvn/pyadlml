@@ -21,5 +21,9 @@ coverage.xml
 # IPython
 profile_default/
 ipython_config.py
-
 venv_pyadml/*
+
+# pipy
+build/*
+dist/*
+pyadlml.egg-info 
