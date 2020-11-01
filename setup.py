@@ -8,7 +8,7 @@ with open('HISTORY.md', 'r') as history_file:
 
 setup_args = dict(
   name = "pyadlml",
-  version = "0.0.2-alpha",
+  version = "0.0.3-alpha",
   url = "https://github.com/tcsvn/pyadlml",
   author = "Christian Meier",
   description = "Sklearn like library supporting numerous Activity of Daily Livings datasets",
@@ -29,7 +29,9 @@ setup_args = dict(
   ],
 )
 
-install_requires = ['numpy', 'pandas', 'joblib', 'mega.py', 'dask[complete]']
+install_requires = ['numpy', 'pandas', 'joblib', 'mega.py', 'dask[complete]', 
+                    'matplotlib', 'scipy', 'sklearn'
+]
 
 if __name__ == '__main__':
   setup(**setup_args, install_requires=install_requires)
