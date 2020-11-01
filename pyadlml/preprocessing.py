@@ -9,35 +9,41 @@ import sklearn.preprocessing as preprocessing
 import pandas as pd
 import numpy as np
 
+REPS = ['raw', 'lastfired', 'changepoint']
+
 class DiscreteEncoder():
     def __init__(self, rep, t_res=None, sample_strat='ffill'):
+        assert rep in REPS
+
         self.rep = rep
         self.t_res = t_res
         self.sample_strat = sample_strat
+        self.data = None
 
     def fit(self, df_devices):
-        raise NotImplementedError
+        if self.rep == 'raw':
+            self.data = create_raw(
+                df_devices,
+                t_res=self.t_res,
+                sample_strat=self.sample_strat
+            )
+        elif self.rep == 'changepoint':
+            self.data = create_changepoint(
+                df_devices,
+                t_res=self.t_res
+            )
+        elif self.rep == 'lastfired':
+            self.data = create_lastfired(
+                df_devices,
+                t_res=self.t_res
+            )
+        else:
+            raise ValueError
 
-    def fit_transform(self, df_devcies):
-        raise NotImplementedError
-    
-
-class RawEncoder():
-    def __init__(self, t_res=None, sample_strat='ffill'):
-        self.raw = None
-        self.t_res = t_res
-        self.sample_strat = sample_strat
-
-    def fit(self, df_devices):
-        self.raw = create_raw(
-            df_devices,
-            t_res=self.t_res,
-            sample_strat=self.sample_strat
-        )
 
     def fit_transform(self, df_devices):
         self.fit(df_devices)
-        return self.raw
+        return self.data
 
     def inverse_transform(self, raw):
         """
@@ -50,72 +56,23 @@ class RawEncoder():
         if sample_strat is not None:
             self.sample_strat = sample_strat
 
-    def transform(self):
-        return self.raw
-
-
-
-class ChangepointEncoder():
-    def __init__(self, t_res=None):
-        self.cp = None
-        self.t_res = t_res
-
-    def fit(self, df_devices):
-        self.cp = create_changepoint(
-            df_devices,
-            t_res=self.t_res
-        )
-
-    def fit_transform(self, df_devices):
-        self.fit(df_devices)
-        return self.cp
-
-    def inverse_transform(self, cp):
-        """
-        """
-        raise NotImplementedError
-
-    def set_params(self, t_res=None):
-        if t_res is not None:
-            self.t_res = t_res
-
-    def transform(self, df_devices):
-        return create_changepoint(
-            df_devices,
-            t_res=self.t_res
-        )
-
-
-class LastFiredEncoder():
-    def __init__(self, t_res=None):
-        self.lf = None
-        self.t_res = t_res
-
-    def fit(self, df_devices):
-        self.lf = create_lastfired(
-            df_devices,
-            t_res=self.t_res
-        )
-
-    def fit_transform(self, df_devices):
-        self.fit(df_devices)
-        return self.lf
-
-    def inverse_transform(self, lf):
-        """
-        """
-        raise NotImplementedError
-
-    def set_params(self, t_res=None):
-        if t_res is not None:
-            self.t_res = t_res
-
-    def transform(self, df_devices):
-        return create_lastfired(
-            df_devices,
-            t_res=self.t_res
-        )
-
+    def transform(self, df_devices=None):
+        if self.rep == 'raw':
+            return create_raw(
+                df_devices,
+                t_res=self.t_res,
+                sample_strat=self.sample_strat
+            )
+        elif self.rep == 'changepoint':
+            return create_changepoint(
+                df_devices,
+                t_res=self.t_res
+            )
+        elif self.rep == 'lastfired':
+            return create_lastfired(
+                df_devices,
+                t_res=self.t_res
+            )
 
 class LabelEncoder():
     """
@@ -178,7 +135,7 @@ class LabelEncoder():
         """
         # if the input is a dataframe of activities, than fit and
         # transform the data accordingly 
-        col_names = ['start_time', 'end_time', 'activity']
+        col_names = {'start_time', 'end_time', 'activity'}
         if isinstance(x, pd.DataFrame) and set(x.columns) == col_names:
             df = label_data(self.df_devices, x, self.idle)
             encoded_labels = self._lbl_enc.transform(df['activity'].values)
@@ -190,23 +147,38 @@ class LabelEncoder():
         else:
             raise ValueError
 
-class LaggedRawEncoder():
-    def __init__(self, window_size, t_res=None, sample_strat='ffill'):
-        self.lgd_raw = None
+
+class ImageEncoder():
+    def __init__(self, rep, window_size, t_res=None, sample_strat='ffill'):
+        self.data = None
+        self.rep = rep
         self.t_res = t_res
         self.window_size = window_size
         self.sample_strat = sample_strat
 
     def fit(self, df_devices):
-        self.lgd_raw = create_lagged_raw(
+        if self.rep == 'raw':
+            self.data = create_lagged_raw(
+                df_devices, 
+                window_size=self.window_size, 
+                t_res=self.t_res, 
+                sample_strat=self.sample_strat)
+
+        elif self.rep == 'changepoint':
+            self.data = create_lagged_changepoint(
+                df_devices, 
+                window_size=self.window_size, 
+                t_res=self.t_res)
+
+        elif self.rep == 'lastfired':
+            return create_lagged_lastfired(
             df_devices, 
             window_size=self.window_size, 
-            t_res=self.t_res, 
-            sample_strat=self.sample_strat)
+            t_res=self.t_res)
 
     def fit_transform(self, df_devices):
         self.fit(df_devices)
-        return self.lgd_raw
+        return self.data
 
     def inverse_transform(self, lgd_raw):
         """
@@ -219,13 +191,27 @@ class LaggedRawEncoder():
         raise NotImplementedError
 
     def transform(self, df_devices):
-        return create_lagged_raw(
+        if self.rep == 'raw':
+            return create_lagged_raw(
+                df_devices, 
+                window_size=self.window_size, 
+                t_res=self.t_res, 
+                sample_strat=self.sample_strat)
+        elif self.rep == 'changepoint':
+            return create_lagged_changepoint(
+                df_devices, 
+                window_size=self.window_size, 
+                t_res=self.t_res)
+        elif self.rep == 'lastfired':
+            return create_lagged_lastfired(
             df_devices, 
             window_size=self.window_size, 
-            t_res=self.t_res, 
-            sample_strat=self.sample_strat)
+            t_res=self.t_res)
+        else:
+            raise ValueError
 
-class LaggedLabelEncoder():
+
+class ImageLabelEncoder():
     """
     wrapper around labelencoder to handle time series data
     """
@@ -242,6 +228,7 @@ class LaggedLabelEncoder():
         create the dummy dataframe for the index from the devices
         index | val
         """
+        df = df_devices.copy()
         df = df.pivot(index='time', columns='device', values='val').iloc[:,:1]
         df = df.astype(bool) # just to have a lower memory footprint
         
@@ -304,66 +291,3 @@ class LaggedLabelEncoder():
         encoded_labels = self._lbl_enc.transform(df['activity'].values)
         return pd.DataFrame(index=df.index, data=encoded_labels, columns=['activity'])
 
-class LaggedChangepointEncoder():
-    def __init__(self, window_size, t_res=None):
-        self.lgd_cp = None
-        self.t_res = t_res
-        self.window_size = window_size
-
-    def fit(self, df_devices):
-        self.lgd_cp = create_lagged_changepoint(
-            df_devices, 
-            window_size=self.window_size, 
-            t_res=self.t_res)
-
-    def fit_transform(self, df_devices):
-        self.fit(df_devices)
-        return self.lgd_cp
-
-    def inverse_transform(self, lgd_raw):
-        """
-        """
-        raise NotImplementedError
-
-    def set_params(self, t_res=None, window_size=10):
-        if t_res is not None:
-            self.t_res = t_res
-        raise NotImplementedError
-
-    def transform(self, df_devices):
-        return create_lagged_changepoint(
-            df_devices, 
-            window_size=self.window_size, 
-            t_res=self.t_res)
-
-class LaggedLastFiredEncoder():
-    def __init__(self, window_size, t_res=None):
-        self.lgd_lf = None
-        self.t_res = t_res
-        self.window_size = window_size
-
-    def fit(self, df_devices):
-        self.lgd_lf = create_lagged_lastfired(
-            df_devices, 
-            window_size=self.window_size, 
-            t_res=self.t_res)
-
-    def fit_transform(self, df_devices):
-        self.fit(df_devices)
-        return self.lgd_lf
-
-    def inverse_transform(self, lgd_lf):
-        """
-        """
-        raise NotImplementedError
-
-    def set_params(self, t_res=None, window_size=10):
-        if t_res is not None:
-            self.t_res = t_res
-        raise NotImplementedError
-
-    def transform(self, df_devices):
-        return create_lagged_lastfired(
-            df_devices, 
-            window_size=self.window_size, 
-            t_res=self.t_res)
