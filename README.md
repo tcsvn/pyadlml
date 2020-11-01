@@ -62,7 +62,7 @@ _For more examples and usage, please refer to the Notebooks _
  - methods for importing data from Home Assistant/Activity Assistant
  
 ### Supported Datasets
-  - [x] Amsterdam 
+  - [x] Amsterdam [1]
   - [x] Aras
   - [x] Casas Aruba (2011)
   - [ ] Casas Milan (2009)
@@ -107,6 +107,9 @@ Here are papers I plan to replicate
   - Todo buy me o coffee batch
   
 ## Sources
+  - Datasets
+    [1]:  
+    [2]: Ordonez, F.J.; de Toledo, P.; Sanchis, A. Activity Recognition Using Hybrid Generative/Discriminative Models on Home Environments Using Binary Sensors. Sensors 2013, 13, 5460-5477.
   - TODO cite every dataset
   - TODO cite every algorithm package
   - https://github.com/anfederico/Clairvoyant#readme
