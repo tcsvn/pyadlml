@@ -113,15 +113,13 @@ Here are papers I plan to replicate
   - Todo buy me a coffee batch
   
 ## Sources
-  - Datasets  
+  - Datasets (TODO get all correct citations) 
     [1]: https://sites.google.com/site/tim0306/   
-    [2]: H. Alemdar, H. Ertan, O.D. Incel, C. Ersoy, ARAS Human Activity Datasets in Multiple Homes with Multiple Residents, Pervasive Health, Venice, May 2013.
-    [3]: WSU CASAS smart home project:  
-    D. Cook. Learning setting-generalized activity models for smart spaces. IEEE Intelligent Systems, 2011.  
-    [4]: WSU CASAS smart home project:  
-    D. Cook. Learning setting-generalized activity models for smart spaces. IEEE Intelligent Systems, 2011.  
-    [5]:
-    [6]:
+    [2]: H. Alemdar, H. Ertan, O.D. Incel, C. Ersoy, ARAS Human Activity Datasets in Multiple Homes with Multiple Residents, Pervasive Health, Venice, May 2013.  
+    [3]: WSU CASAS smart home project: D. Cook. Learning setting-generalized activity models for smart spaces. IEEE Intelligent Systems, 2011.  
+    [4]: WSU CASAS smart home project: D. Cook. Learning setting-generalized activity models for smart spaces. IEEE Intelligent Systems, 2011.  
+    [5]:  
+    [6]:  
     [7]: Me :)  
     [8]: Ordonez, F.J.; de Toledo, P.; Sanchis, A. Activity Recognition Using Hybrid Generative/Discriminative Models on Home Environments Using Binary Sensors. Sensors 2013, 13, 5460-5477.
   - TODO cite every algorithm package
