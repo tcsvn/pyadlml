@@ -17,7 +17,7 @@ def _read_activities(path_to_file):
 def _read_devices(path_to_dev_file, path_to_mapping):
     devices = pd.read_csv(path_to_dev_file)
     dev_map = pd.read_csv(path_to_mapping, index_col='id')\
-                .to_dict()['devices'] 
+                .to_dict()[DEVICE] 
     devices[DEVICE] = devices[DEVICE].map(dev_map)
     devices[VAL] = devices[VAL].astype(bool)
     devices[TIME] = pd.to_datetime(devices[TIME])
