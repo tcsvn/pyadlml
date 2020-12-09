@@ -1,47 +1,63 @@
 import pandas as pd
+from pyadlml.dataset import TIME, DEVICE, VAL
 
-def hass_db_2_df(db_url, limit=5000000):
-    """
+def load_homeassistant(db_url, limit=5000000, start_time=None):
+    """ returns a dataframe representation of the homeassistant database
     Parameters
     ----------
     db_url : String
-        url to the database 
+        filepath to homeassistant database
+    limit : int
+        the limit TODO don't know ^^
+    start_time : str
+        Datetime string to select the rows later that start_time
+    Returns
+    -------
+    df : pd.DataFrame
     """
-    query = f"""
-    SELECT entity_id, state, last_changed
-    FROM states
-    WHERE
-        state NOT IN ('unknown', 'unavailable')
-    ORDER BY last_changed DESC
-    LIMIT {limit}
-    """
+    if start_time == None:
+        query = f"""
+        SELECT entity_id, state, last_changed
+        FROM states
+        WHERE
+            state NOT IN ('unknown', 'unavailable')
+        ORDER BY last_changed DESC
+        LIMIT {limit}
+        """
+    else:
+        query = f"""
+        SELECT entity_id, state, last_changed
+        FROM states
+        WHERE
+            state NOT IN ('unknown', 'unavailable') AND
+            last_changed BETWEEN 
+            '{start_time}' AND date('now')
+        ORDER BY last_changed ASC
+        LIMIT {limit}        
+        """
     df = pd.read_sql_query(query, db_url)
     return df
 
-def hass_db_2_data(db_url, device_list, start_time=None):
-  """ gets a dataframe with devices in devices list from a start_time up 
-  Parameters
-  ----------
-  Returns
-  -------
-  df : pd.DataFrame
-  df2 : pd.DataFrame
-      
-  """
-  device_dict = {device_list[i]:i for i in range(len(device_list))}
-  
-  df = hass_db_2_df(db_url)
-  df = df[df['entity_id'].isin(device_list)]
-  df['time'] = pd.to_datetime(df['last_changed'])
-  df['val'] = (df['state'] == 'on').astype(int)
-  df['device'] = df['entity_id']
-  df = df[[ 'time', 'device','val']]
-  
-  # encode data
-  df['device'] = df["device"].replace(device_dict)
-  
-  # create feature map
-  df2 = pd.DataFrame(device_list, columns=['devices'])
-  df2 = df2.reset_index()
-  df2.columns = ['id', 'devices']
-  return df, df2
+def load_homeassistant_devices(db_url, device_list, start_time=None):
+    """ creates as dataframe in representation 1 from homeassistant database
+    
+    Parameters
+    ----------
+    db_url : String
+        filepath to homeassistant database        
+    device_list : lst
+        device selection to filter
+    start_time : pd.Timestamp
+        the start time from when to filter
+    Returns
+    -------
+    df : pd.DataFraem
+    """
+    
+    df = load_homeassistant(db_url, start_time=start_time)
+    df = df[df['entity_id'].isin(device_list)]
+    df[TIME] = pd.to_datetime(df['last_changed'])
+    df[VAL] = (df['state'] == 'on').astype(int)
+    df[DEVICE] = df['entity_id']
+    df = df[[TIME, DEVICE, VAL ]]
+    return df

@@ -14,6 +14,13 @@ from pyadlml.dataset._datasets.fetch import (
     fetch_tuebingen_2019,
     fetch_uci_adl_binary
 )
+
+from pyadlml.dataset._datasets.homeassistant import (
+    load_homeassistant, load_homeassistant_devices
+)
+
+from pyadlml.dataset._datasets.activity_assistant import load as load_act_assist
+
 from pyadlml.dataset.io import (
     set_data_home
 )
@@ -26,3 +33,5 @@ from pyadlml.dataset._representations.image import (
     create_lagged_raw
 )
 from pyadlml.dataset._representations.lastfired import create_lastfired
+
+from pyadlml.dataset import plot, plotly, io, obj, util
