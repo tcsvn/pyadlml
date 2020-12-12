@@ -5,7 +5,7 @@
 ![Download Stats](https://img.shields.io/pypi/dd/pyadlml?style=flat-square)
 ![License](https://img.shields.io/pypi/l/pyadlml?style=flat-square)
 <p align="center"><img width=95% src="https://github.com/tcsvn/pyadlml/blob/master/media/pyadlml_banner.png"></p>
-Activities of Daily living (ADLs) e.g cooking, working, sleeping and devices readings are recorded by smart home inhabitants. The goal is to predict inhabitants activities using device readings. Pyadlml offers an easy way to fetch, visualize and preprocess common datasets. My further goal is to replicate prominent work in this domain.
+Activities of Daily living (ADLs) e.g cooking, working, sleeping and device readings are recorded by smart home inhabitants. The goal is to predict inhabitants activities using device readings. Pyadlml offers an easy way to fetch, visualize and preprocess common datasets. A further goal is to replicate prominent work in the domain.
 
 
 
@@ -76,27 +76,9 @@ _For more examples and and how to use, please refer to the Documentation (to com
   - [x] Tuebingen 2019 [7]
   - [x] UCI Adl Binary [8]
   
-  
-### Models
-#### Iid data
-  - [x] SVM
-  - [ ] Winnow algorithm
-  - [ ] Naive bayes
-  - [x] Decision Trees
-#### Sequential discretized 
-  - [ ] RNNs
-  - [ ] LSTMs
-  - [ ] HMMs
-  - [ ] HSMMs
-  - [ ] TCNs
-#### Images  
-  - [ ] CNN
-  - [ ] Transformer
-#### Temporal points
-  - [ ] TPPs
-  
+ 
 ## Replication list  
-Here are papers I plan to replicate
+Here are papers I plan to replicate (TODO)
 
 
 ## Contributing 
