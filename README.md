@@ -92,8 +92,20 @@ Here are papers I plan to replicate (TODO)
   - [activity-assistant](https://github.com/tcsvn/activity-assistant) - Recording, predicting ADLs within Home assistant.
   
 ## Support 
-  - Todo buy me a coffee batch
+[![Buy me a coffee][buy-me-a-coffee-shield]][buy-me-a-coffee]
   
+## How to cite
+If you are using activity-assistant, consider citing the package
+```
+@software{activity-assistant,
+  author = {Christian Meier},
+  title = {pyadlml},    
+  url = {https://github.com/tcsvn/pyadlml},
+  version = {0.0.1-alpha},
+  date = {2020-12-12}
+}
+```
+
 ## Sources
   - Datasets (TODO get all correct citations)  
     [1]: https://sites.google.com/site/tim0306/   
@@ -108,3 +120,8 @@ Here are papers I plan to replicate (TODO)
   
 ## License
 MIT  © [tcsvn](http://deadlink)
+
+
+[buy-me-a-coffee-shield]: https://img.shields.io/static/v1.svg?label=%20&message=Buy%20me%20a%20coffee&color=6f4e37&logo=buy%20me%20a%20coffee&logoColor=white
+
+[buy-me-a-coffee]: https://www.buymeacoffee.com/tscvn
