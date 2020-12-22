@@ -8,29 +8,6 @@ from sklearn.preprocessing import minmax_scale
 import copy
 from matplotlib.colors import LogNorm
 
-
-def hm_key_NN(hm, num):
-    """ a nearest neighbor mapping using keys
-    Parameters
-    ----------
-    hm : dict
-        contains key value mappings
-    num : int
-        the key value for which the nearest key should be chosen
-    Returns
-    -------
-    res : mapping
-    """
-    nearest_neighbor = None
-    min_dist = np.inf
-    for key in hm:
-       diff = abs(key-num) 
-       if diff < min_dist:
-           min_dist = diff
-           nearest_neighbor = key
-    return hm[nearest_neighbor]
-           
-
 def func_formatter_log(x, pos):
     x = np.exp(x)
     if x-60 < 0:
@@ -343,3 +320,152 @@ def ridgeline(data, overlap=0, fill=True, labels=None, n_points=150, dist_scale=
         #break
     if labels:
         plt.yticks(ys, labels)
+
+def savefig(fig, file_path):
+    """ saves figure to folder and if folder doesn't exist create one
+    """
+    import matplotlib.pyplot as plt
+    import os
+    folder_path = file_path.rsplit('/', 1)[0]
+    if not os.path.isdir(folder_path):
+        os.makedirs(folder_path)
+    plt.savefig(file_path)
+
+
+""" --------------------------------------------------------------------------
+these methods are for infering visual correct properties of matplotlib plots
+"""
+def _num_bars_2_figsize(n):
+    """ uses linear regression model to infer adequate figsize
+        from the number of bars in a bar plot
+    Data used for training:
+        x = [7,9,10,12,22,23,26]
+        y = [[8,4],[9,5],[9,5],[7,5],[10,10],[10,9],[10,11]]
+    Returns
+    -------
+    (w,h) : tuple
+        the width and the height of the figure
+    """
+    if n <= 7:
+        return (8,4)
+    else:
+        y1 = int(0.10937*n + 7.29688)
+        y2 = int(0.36367*n + 1.33711)
+    return y1, y2
+
+def _num_boxes_2_figsize(n):
+    """ uses linear regression model to infer adequate figsize
+        from the number of boxes in a boxplot
+    Data used for training:
+        X = [ 7  9 11 22 23 26]
+        y = [[8,4],[9,5],[10,6],[10,10],[10,10],[10,10],[10,11]]
+    Returns
+    -------
+    (w,h) : tuple
+        the width and the height of the figure
+    """
+    if n <= 7:
+        return (8,4)
+    else:
+        y1 = 0.07662*n + 8.24853
+        y2 = 0.36444*n + 1.71415
+    return int(y1), int(y2)
+
+def _num_items_2_heatmap_square_figsize(n):
+    """ uses linear regression model to infer adequate figsize
+        from the number of items 
+    Data used for training:
+        X = [4, 8, 9, 10, 11, 15, 22, 26]
+        y = [[4,4],[5,5],[5,5],[6,6],[8,8],[8,8],[10,10],[11,11]]
+    Parameters
+    ----------
+    n : int
+        number of items
+    Returns
+    -------
+    (w,h) : tuple
+        the width and the height of the figure
+    """
+    w = 0.32626*n + 2.84282
+    h = w
+    return (int(w), int(h))
+
+def _num_items_2_heatmap_square_figsize_ver2(n):
+    """ uses linear regression model to infer adequate figsize
+        from the number of items 
+        the difference from version 1 is from very long names leading
+        to a smaller figure
+    Data used for training:
+        X = [5,10,15,20,25,30,35,50,60]
+        y = [[6,6],[8,8],[9,9],[11,11],[11,11],[12,12],[13,13],[14,14]]
+    Parameters
+    ----------
+    n : int
+        number of items
+    Returns
+    -------
+    (w,h) : tuple
+        the width and the height of the figure
+    """
+    w = 0.12940*n + 6.86068
+    h = w
+    return (int(w), int(h))
+
+
+def _num_items_2_heatmap_one_day_figsize(n):
+    """ uses linear regression model to infer adequate figsize
+        from the number of items 
+    Data used for training:
+        X = [2,4,6,10,15,20,30,40,50,60]
+        y = [[10,1],[10,2],[10,3],[10,4],[10,6],[10,8],[10,10],[10,12],[10,15],[10,17]]
+    Parameters
+    ----------
+    n : int
+        number of items
+    Returns
+    -------
+    (w,h) : tuple
+        the width and the height of the figure
+    """
+    w = 10
+    h = 0.27082*n + 1.38153 
+    return (int(w), int(h))
+
+
+def _num_items_2_ridge_figsize(n):
+    """ uses linear regression model to infer adequate figsize
+        from the number of boxes in a boxplot
+    Data used for training:
+        X = [1, 3, 4, 6, 8, 11, 14, 16, 19, 22]
+        y = [[10,1],[10,3],[10,4],[10,6],[10,8],[10,10],[10,10],[10,12],[10,13],[10,14]]
+    Parameters
+    ----------
+    n : int
+        number of items
+    Returns
+    -------
+    (w,h) : tuple
+        the width and the height of the figure
+    """
+    y1 = 10
+    y2 = 1*n
+    return int(y1), int(y2)
+
+def _num_items_2_ridge_ylimit(n):
+    """ uses linear regression model to infer adequate figsize
+        from the number of boxes in a boxplot
+    Data used for training:
+        X = [1, 3, 4, 6, 8, 11, 14, 16, 19, 22, 24]
+        y = [.15, 0.5, 0.6, 0.9, 1.18, 1.7, 2.1, 2.4, 2.85, 3.3, 3.7]
+    Parameters
+    ----------
+    n : int
+        number of items
+    Returns
+    -------
+    (w,h) : tuple
+        the width and the height of the figure
+    """
+    return 0.15134*n + 0.00076
+ 
+

@@ -7,31 +7,33 @@ from  pyadlml.dataset.stats.activities import activities_duration_dist, activiti
     activities_transitions, activities_count, activities_durations, activities_dist
 from pyadlml.dataset.activities import add_idle 
 from pyadlml.dataset.plot.util import func_formatter_log, func_formatter_min, ridgeline, \
-    func_formatter_sec, heatmap, annotate_heatmap, heatmap_square, hm_key_NN
-
-ACT_BAR_HM = {  7:(8,4), 9:(9,5), 10:(9,5), 12:(7,5), 22:(10,10), 23:(10,9), 
-                26:(10,11)}
-ACT_BP_HM = {   7:(8,4), 9:(9,5), 11:(10,6), 22:(10,10), 23: (10,10), 26:(10,11)}
-ACT_HM_HM = {   9:(5,5), 10:(6,6), 11:(8,6), 22:(10,10), 26:(11,11)}
-ACT_RDG_HM = {  8:(10,8), 11:(10,11), 22:(10,12), 24:(10,12)}
-
-ACT_RDG_YL = {  8:1.1, 11:1.75, 22:3.5, 24:(3.7)}
-ACT_RDG_SC = {  8:0.1, 11:0.12, 22:0.16, 24:0.15}
+    func_formatter_sec, heatmap, annotate_heatmap, heatmap_square, hm_key_NN, savefig, \
+    _num_bars_2_figsize, _num_boxes_2_figsize, \
+    _num_items_2_heatmap_square_figsize, _num_items_2_ridge_figsize,\
+    _num_items_2_ridge_ylimit
 
 
-def num_activity_2_figsize(hm, figsize, df):
-    if figsize is not None:
-        return figsize
-    if isinstance(df, pd.DataFrame):
-        num_act = len(df['activity'].unique())
-    elif isinstance(df, list):
-        num_act = len(df)
-    else:
-        raise ValueError
-    return hm_key_NN(hm, num_act)
 
-def hist_counts(df_act=None, df_ac=None, y_scale=None, idle=False, figsize=None):
-    """ plots the activities durations against each other
+
+def hist_counts(df_act=None, df_ac=None, y_scale=None, idle=False, figsize=None, file_path=None):
+    """ bar chart displaying how often activities are occuring
+    Parameters
+    ----------
+    df_act : pd.DataFrame or None
+        Dataframe of all recorded activities
+    df_ac : pd.DataFrame or None
+        Statistic of activities
+    y_scale : str or None
+        If it is 'log' then scale y appropriately
+    idle : bool
+        indicates if the activity 'idle' should be inserted everywhere
+        where there is no 
+    file_path : String
+        path where the image will be stored
+
+    Returns
+    -------
+        Either a figure if file_path is not specified or nothing 
     """
     assert not (df_act is None and df_ac is None)
     assert y_scale in [None, 'log']
@@ -39,46 +41,75 @@ def hist_counts(df_act=None, df_ac=None, y_scale=None, idle=False, figsize=None)
     title ='Activity occurrences'
     col_label = 'occurence'
     xlabel = 'counts'
+        
+    # create statistics if the don't exists
     if df_ac is None:
         df_act = df_act.copy()
         if idle:
             df_act = add_idle(df_act)
         df = activities_count(df_act)
-        figsize = num_activity_2_figsize(ACT_BAR_HM, figsize, df_act)
-    else: 
+    else:
         df = df_ac
-        figsize = num_activity_2_figsize(ACT_BAR_HM, figsize, list(df['activity']))
-
+    
+    # prepare dataframe for plotting
     df.reset_index(level=0, inplace=True)
     df = df.sort_values(by=['occurence'], axis=0)
     
-    # plot
+    # define plot modalities
+    num_act = len(df)
+    figsize = (_num_bars_2_figsize(num_act) if figsize is None else figsize)
+    
+    # create plot
     fig, ax = plt.subplots(figsize=figsize)
     plt.title(title)
     plt.xlabel(xlabel)
     ax.barh(df['activity'], df['occurence'])
+    
     if y_scale == 'log':
         ax.set_xscale('log')
-    return fig
+
+    # save or return fig
+    if file_path is not None:
+        savefig(fig, file_path)
+        return 
+    else:
+        return fig
 
 
-def boxplot_duration(df_act, y_scale='norm', idle=False, figsize=None):
+def boxplot_duration(df_act, y_scale=None, idle=False, figsize=None, file_path=None):
+    """ boxplot of activity durations (mean) max min
+    Parameters
+    ----------
+    df_act : pd.DataFrame or None
+        Dataframe of all recorded activities
+    y_scale : str or None
+        If it is 'log' then scale y appropriately
+    idle : bool
+        indicates if the activity 'idle' should be inserted everywhere
+        where there is no other activity present
+    file_path : String or None
+        path where the image will be stored
+
+    Returns
+    -------
+        Either a figu
     """
-        plot a boxplot of activity durations (mean) max min 
-    """
-    assert y_scale in ['norm', 'log']
+    assert y_scale in [None, 'log']
+    
     title = 'Activity durations'
     xlabel = 'log seconds'
 
     if idle:
         df_act = add_idle(df_act)
 
-    figsize = num_activity_2_figsize(ACT_BP_HM, figsize, df_act)
-    df = activities_duration_dist(df_act)  
     
+    df = activities_duration_dist(df_act)  
     # select data for each device
     activities = df['activity'].unique()
-    df['seconds'] = df['minutes']*60 
+    df['seconds'] = df['minutes']*60     
+
+    num_act = len(activities)
+    figsize = (_num_bars_2_figsize(num_act) if figsize is None else figsize)
 
     dat = []
     for activity in activities:
@@ -94,41 +125,62 @@ def boxplot_duration(df_act, y_scale='norm', idle=False, figsize=None):
     ax.set_xlabel(xlabel)
     ax.set_xscale('log')
 
-    # create secondary axis with 
-
     # create secondary axis with time format 1s, 1m, 1d
     ax_top = ax.secondary_xaxis('top', functions=(lambda x: x, lambda x: x))
     #ax_top.set_xlabel('time')
     ax_top.xaxis.set_major_formatter(
         ticker.FuncFormatter(func_formatter_sec))
-    return fig
 
-def hist_cum_duration(df_act=None, df_dur=None, y_scale=None, idle=False, figsize=None):
-    """ plots the cummulated activities durations in a histogram for each activity 
+    if file_path is not None:
+        savefig(fig, file_path)
+        return 
+    else:
+        return fig
+
+def hist_cum_duration(df_act=None, df_dur=None, y_scale=None, idle=False, figsize=None, file_path=None):
+    """ plots the cummulated duration for each activity in a bar plot
+
+    Parameters
+    ----------
+    df_act : pd.DataFrame or None
+        Dataframe of all recorded activities
+    df_dur : pd.DataFrame or None
+        Dataframe of statistic
+    y_scale : str or None
+        If it is 'log' then scale y appropriately
+    idle : bool
+        indicates if the activity 'idle' should be inserted everywhere
+        where there is no other activity present
+    figsize : tuple (w,h)
+        size of the figure
+    file_path : String or None
+        path where the image will be stored
+    Returns
+    -------
+        Either a figu
     """
     assert y_scale in [None, 'log']
     assert not (df_act is None and df_dur is None)
 
     title = 'Cummulative activity durations'
-
-    if y_scale == 'log':
-        xlabel = 'log seconds'
-    else: 
-        xlabel = 'seconds'
+    xlabel = ('log seconds' if y_scale == 'log' else 'seconds')
 
     if df_dur is None:
         if idle:
             df_act = add_idle(df_act.copy())
-        act_dur = activities_durations(df_act)
-        figsize = num_activity_2_figsize(ACT_BAR_HM, figsize, df_act)
+        df = activities_durations(df_act)
     else:
-        act_dur = df_dur
-        figsize = num_activity_2_figsize(ACT_BAR_HM, figsize, list(act_dur['activity']))
-    df = act_dur[['minutes']]
+        df = df_dur
+
+    df = df[['minutes']]
     df.reset_index(level=0, inplace=True)
     df = df.sort_values(by=['minutes'], axis=0)
     # TODO change in activities duration to return time in seconds
     df['seconds'] = df['minutes']*60 
+
+    #
+    num_act = len(df)
+    figsize = (_num_bars_2_figsize(num_act) if figsize is None else figsize)
     
     # plot
     fig, ax = plt.subplots(figsize=figsize)
@@ -144,11 +196,15 @@ def hist_cum_duration(df_act=None, df_dur=None, y_scale=None, idle=False, figsiz
     ax_top.set_xlabel('time')
     ax_top.xaxis.set_major_formatter(
         ticker.FuncFormatter(func_formatter_sec))
-    return fig
 
+    if file_path is not None:
+        savefig(fig, file_path)
+        return 
+    else:
+        return fig
 
 def heatmap_transitions(df_act=None, df_trans=None, z_scale=None, figsize=None, \
-    idle=False, numbers=True, grid=True):
+    idle=False, numbers=True, grid=True, file_path=None):
     """    """
     assert z_scale in [None, 'log'], 'z-scale has to be either of type None or log'
     assert not (df_act is None and df_trans is None)
@@ -164,7 +220,9 @@ def heatmap_transitions(df_act=None, df_trans=None, z_scale=None, figsize=None, 
 
     # get the list of cross tabulations per t_window
     act_lst = list(df.columns)
-    figsize = num_activity_2_figsize(ACT_HM_HM, figsize, act_lst)
+
+    num_act = len(act_lst)
+    figsize = (_num_items_2_heatmap_square_figsize(num_act) if figsize is None else figsize)
     x_labels = act_lst
     y_labels = act_lst
     values = df.values
@@ -180,12 +238,14 @@ def heatmap_transitions(df_act=None, df_trans=None, z_scale=None, figsize=None, 
         texts = annotate_heatmap(im, textcolors=("white", "black"),log=log, valfmt=valfmt)
     ax.set_title(title)
     
-    return fig
-
-
+    if file_path is not None:
+        savefig(fig, file_path)
+        return 
+    else:
+        return fig
 
 def ridge_line(df_act=None, act_dist=None, t_range='day', idle=False, \
-        n=1000, dist_scale=None, ylim_upper=None, figsize=None):
+        n=1000, ylim_upper=None, figsize=None, file_path=None):
     """
     Parameters
     ----------
@@ -199,6 +259,8 @@ def ridge_line(df_act=None, act_dist=None, t_range='day', idle=False, \
 
     title = 'Activity distribution over one day'
     xlabel = 'day'
+
+
     if act_dist is None:
         if idle:
             df_act = add_idle(df_act)
@@ -229,16 +291,16 @@ def ridge_line(df_act=None, act_dist=None, t_range='day', idle=False, \
         df[col] = df[col].sort_values()
 
     grouped = [(col, df[col].values) for col in df.columns]
-
     acts, data = zip(*grouped)
-    figsize = num_activity_2_figsize(ACT_RDG_HM, figsize, list(acts))
-    if dist_scale is None:
-        dist_scale = hm_key_NN(ACT_RDG_SC, len(acts))
-    if ylim_upper is None:
-        ylim_upper = hm_key_NN(ACT_RDG_YL, len(acts))
+    num_act = len(list(acts))
 
+    # infer visual properties
+    figsize = (_num_items_2_ridge_figsize(num_act) if figsize is None else figsize)
+    ylim_upper = (_num_items_2_ridge_ylimit(num_act) if ylim_upper is None else ylim_upper)
+
+    # plot the ridgeline
     fig, ax = plt.subplots(figsize=figsize)
-    ridgeline(data, labels=acts, overlap=.85, fill='tab:blue', n_points=100, dist_scale=dist_scale)
+    ridgeline(data, labels=acts, overlap=.85, fill='tab:blue', n_points=100, dist_scale=0.13)
     plt.title(title)
 
     plt.gca().spines['left'].set_visible(False)
@@ -271,4 +333,9 @@ def ridge_line(df_act=None, act_dist=None, t_range='day', idle=False, \
     fig.autofmt_xdate(rotation=45)
     
     plt.grid(zorder=0)
-    plt.show()
+
+    if file_path is not None:
+        savefig(fig, file_path)
+        return 
+    else:
+        return fig

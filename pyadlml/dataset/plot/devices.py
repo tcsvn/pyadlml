@@ -9,27 +9,15 @@ from pyadlml.dataset.stats.devices import duration_correlation, \
     trigger_time_diff, device_tcorr, device_triggers_one_day, \
     devices_trigger_count, devices_on_off_stats
 
-from pyadlml.dataset.plot.util import heatmap_square, hm_key_NN, \
-    func_formatter_sec, heatmap, annotate_heatmap
+from pyadlml.dataset.plot.util import heatmap_square, func_formatter_sec,\
+    heatmap, annotate_heatmap, savefig, _num_bars_2_figsize, \
+    _num_items_2_heatmap_square_figsize, _num_boxes_2_figsize, \
+    _num_items_2_heatmap_one_day_figsize, _num_items_2_heatmap_square_figsize_ver2 
 
-DEV_BAR_HM = {10:(9,5), 12:(10,6), 14: (10,6), 20: (10,9), 22:(10,9),40:(10,15), 72:(10,21)}
-DEV_BP_HM = {12:(9,6), 20:(10,9), 22:(10,8), 72:(11,22)}
-DEV_HM_HM = {12:(8,8), 20:(9,9), 22:(13,13), 40:(15,15),72:(23,22)}
-DEV_HM_TIME = {12:(10,6), 20:(10,8)}
-
-def num_device_2_figsize(hm, figsize, df):
-    if figsize is not None:
-        return figsize
-    if isinstance(df, pd.DataFrame):
-        num_dev = len(df['device'].unique())
-    elif isinstance(df, list):
-        num_dev = len(df)
-    else:
-        raise ValueError
-    return hm_key_NN(hm, num_dev)
+from pyadlml.dataset.devices import _is_dev_rep2, device_rep1_2_rep2
 
 
-def hist_trigger_time_diff(df_dev=None, x=None, n_bins=50, figsize=(10,6)):
+def hist_trigger_time_diff(df_dev=None, x=None, n_bins=50, figsize=(10,6), file_path=None):
     """
         plots
     """
@@ -37,6 +25,7 @@ def hist_trigger_time_diff(df_dev=None, x=None, n_bins=50, figsize=(10,6)):
     title='Time difference between device triggers'
     log_sec_col = 'total_log_secs'
     sec_col = 'total_secs'
+    ylabel='count'
 
     if x is None:
         X = trigger_time_diff(df_dev.copy())
@@ -56,13 +45,13 @@ def hist_trigger_time_diff(df_dev=None, x=None, n_bins=50, figsize=(10,6)):
     plt.xscale('log')
     #plt.yscale('log')
     
-    ax.hist(X, bins=bins, label='amount of trigger with set difference')
-    ax.set_ylabel('count')
+    ax.hist(X, bins=bins, label='triggercount with difference')
+    ax.set_ylabel(ylabel)
     ax.set_xlabel('log seconds')
     
     # create axis for line
     ax2=ax.twinx()
-    ax2.plot(bins, cum_percentage, 'r', label='% of data to the left')
+    ax2.plot(bins, cum_percentage, 'r', label='cummulative percentage')
     ax2.set_ylabel('%')
     ax2.set_xscale('log')
     
@@ -77,21 +66,27 @@ def hist_trigger_time_diff(df_dev=None, x=None, n_bins=50, figsize=(10,6)):
     
     plt.title(title, y=1.08)
     
-    return fig
+    if file_path is not None:
+        savefig(fig, file_path)
+        return 
+    else:
+        return fig
 
-def boxsplot_on_duration(df_dev, figsize=None):
+
+def boxplot_on_duration(df_dev, figsize=None, file_path=None):
     """
-    draws a boxsplot of all devices
+    draws a boxplot of all devices
     Parameters
     ----------
-        df_dev: pd.DataFrame
-            device dataframe in representation 1 
+    df_dev: pd.DataFrame
+        Devices in 
     """
     title = 'Devices on-duration'
-    figsize = num_device_2_figsize(DEV_BP_HM, figsize, df_dev)    
     xlabel = 'log seconds'
     xlabel_top = 'time'
 
+    if not _is_dev_rep2(df_dev):
+        df_dev, _ = device_rep1_2_rep2(df_dev.copy(), drop=False)
 
     # create duration differences
     df_dev = df_dev.copy()
@@ -105,8 +100,10 @@ def boxsplot_on_duration(df_dev, figsize=None):
         #tmp = np.log(df_device['td'].dt.total_seconds())
         tmp = df_device['td'].dt.total_seconds()
         dat.append(tmp)
-    
-    #return df_dev #DEBUG
+
+    num_dev = len(devices)
+    figsize = (_num_boxes_2_figsize(num_dev) if figsize is None else figsize)
+
     # plot boxsplot
     fig, ax = plt.subplots(figsize=figsize)
     ax.boxplot(dat, vert=False)
@@ -122,22 +119,27 @@ def boxsplot_on_duration(df_dev, figsize=None):
     ax_top.set_xlabel(xlabel_top)
     ax_top.xaxis.set_major_formatter(
         ticker.FuncFormatter(func_formatter_sec))
-    return fig
+    if file_path is not None:
+        savefig(fig, file_path)
+        return 
+    else:
+        return fig
 
-def heatmap_trigger_one_day(df_dev=None, df_tod=None, t_res='1h', figsize=None):
+def heatmap_trigger_one_day(df_dev=None, df_tod=None, t_res='1h', figsize=None, file_path=None):
     """
     computes the heatmap for one day where all the device triggers are showed
     """
     assert not (df_dev is None and df_tod is None)
     title = "Device triggers cummulative over one day"
     xlabel =  'time'
-    figsize = num_device_2_figsize(DEV_HM_TIME, figsize, df_dev)
 
     if df_tod is None:
         df = device_triggers_one_day(df_dev.copy(), t_res)
     else:
         df = df_tod
 
+    num_dev = len(list(df.columns))
+    figsize = (_num_items_2_heatmap_one_day_figsize(num_dev) if figsize is None else figsize)
     x_labels = list(df.index)
     y_labels = df.columns
     dat = df.values.T
@@ -165,9 +167,14 @@ def heatmap_trigger_one_day(df_dev=None, df_tod=None, t_res='1h', figsize=None):
     ax.xaxis.set_major_formatter(ticker.FuncFormatter(func))
     ax.xaxis.set_major_locator(x_locator)
     ax.set_aspect(aspect='auto')
-    return fig
 
-def heatmap_trigger_time(df_dev=None, df_tcorr=None, t_window='5s', figsize=None, z_scale=None):
+    if file_path is not None:
+        savefig(fig, file_path)
+        return 
+    else:
+        return fig
+
+def heatmap_trigger_time(df_dev=None, df_tcorr=None, t_window='5s', figsize=None, z_scale=None, numbers=None, file_path=None):
     """
     """
     assert not (df_dev is None and df_tcorr is None)
@@ -175,7 +182,6 @@ def heatmap_trigger_time(df_dev=None, df_tcorr=None, t_window='5s', figsize=None
 
     color = 'trigger count'
     cbarlabel = 'counts'
-    figsize = num_device_2_figsize(DEV_HM_HM, figsize, df_dev)
 
     if df_tcorr is None:
         df = device_tcorr(df_dev, t_window)[0]
@@ -186,6 +192,10 @@ def heatmap_trigger_time(df_dev=None, df_tcorr=None, t_window='5s', figsize=None
     vals = df.astype(int).values.T
     devs = list(df.index)
 
+    num_dev = len(devs)
+    figsize = (_num_items_2_heatmap_square_figsize_ver2(num_dev) if figsize is None else figsize)
+    print('n: ', num_dev)
+    print('figsize: ', figsize)
 
     fig, ax = plt.subplots(figsize=figsize)
 
@@ -195,13 +205,23 @@ def heatmap_trigger_time(df_dev=None, df_tcorr=None, t_window='5s', figsize=None
     im, cbar = heatmap_square(vals, devs, devs, ax=ax, #cmap='viridis', 
                         cbarlabel=cbarlabel, log=log)#, cbar_kw=cbar_kw)
     
-    texts = annotate_heatmap(im, textcolors=("white", "black"), log=log, valfmt=valfmt)
+    # show numbers for small sizes
+    if numbers is None: 
+        if num_dev < 20:
+            texts = annotate_heatmap(im, textcolors=("white", "black"), log=log, valfmt=valfmt)
+    elif numbers:
+        texts = annotate_heatmap(im, textcolors=("white", "black"), log=log, valfmt=valfmt)
 
     ax.set_title(title)
     fig.tight_layout()
-    return fig
 
-def heatmap_cross_correlation(df_dev=None, df_dur_corr=None, figsize=None, parallel=True, numbers=True):
+    if file_path is not None:
+        savefig(fig, file_path)
+        return 
+    else:
+        return fig
+
+def heatmap_cross_correlation(df_dev=None, df_dur_corr=None, figsize=None, parallel=True, numbers=True, file_path=None):
     """ plots the cross correlation between the device signals
     Parameters
     ----------
@@ -225,7 +245,8 @@ def heatmap_cross_correlation(df_dev=None, df_dur_corr=None, figsize=None, paral
     vals = ct.values.T
     devs = list(ct.index)
 
-    figsize = num_device_2_figsize(DEV_HM_HM, figsize, devs)
+    num_dev = len(devs)
+    figsize = (_num_items_2_heatmap_square_figsize_ver2(num_dev) if figsize is None else figsize)
     fig, ax = plt.subplots(figsize=figsize)
     im, cbar = heatmap_square(vals, devs, devs, ax=ax, cmap=cmap, cbarlabel=cbarlabel,
                        vmin=-1, vmax=1)
@@ -237,13 +258,21 @@ def heatmap_cross_correlation(df_dev=None, df_dur_corr=None, figsize=None, paral
     fig.tight_layout()
     plt.show()
 
-
-def hist_on_off(df_dev=None, df_onoff=None, figsize=None):
-    """ plots the percentage a device is on against the percentage it is off
+def hist_on_off(df_dev=None, df_onoff=None, figsize=None, file_path=None):
+    """ bar plotting the on/off fraction of all devices
     Parameters
     ----------
-    df_dev: Dataframe
-        device list in representation 1
+    df_dev : pd.DataFrame or None
+        Dataframe of all recorded devices
+    df_onoff : pd.DataFrame or None
+        On/off statistics
+    figsize : tuple (width, height)
+    file_path : String
+        path where the image will be stored
+
+    Returns
+    -------
+        Either a figure if file_path is not specified or nothing 
     """
     assert not (df_dev is None and df_onoff is None)
 
@@ -251,12 +280,18 @@ def hist_on_off(df_dev=None, df_onoff=None, figsize=None):
     xlabel ='Percentage in binary states' 
     ylabel = 'Devices'
 
-    figsize = num_device_2_figsize(DEV_BAR_HM, figsize, df_dev)
+    if df_dev is not None and not _is_dev_rep2(df_dev):
+        df_dev, _ = device_rep1_2_rep2(df_dev.copy(), drop=False)
 
     if df_onoff is None:
         df = devices_on_off_stats(df_dev)
     else:
         df = df_onoff
+
+    num_dev = len(df)
+    figsize = (_num_bars_2_figsize(num_dev) if figsize is None else figsize)
+    print('figsize: ', figsize)
+
     df = df.sort_values(by='frac_on', axis=0)
     dev_lst = list(df.index)
     # Figure Size 
@@ -288,21 +323,41 @@ def hist_on_off(df_dev=None, df_onoff=None, figsize=None):
 
     plt.show()  
 
-def hist_counts(df_dev=None, df_tc=None, figsize=None, y_scale=None):
-    """
-    plots the trigger count of each device 
+def hist_counts(df_dev=None, df_tc=None, figsize=None, y_scale=None, file_path=None):
+    """ bar chart displaying how often activities are occuring
+    Parameters
+    ----------
+    df_dev : pd.DataFrame or None
+        Dataframe of all recorded devices
+    df_ac : pd.DataFrame or None
+        Statistic of activities
+    y_scale : str or None
+        If it is 'log' then scale y appropriately
+    idle : bool
+        indicates if the activity 'idle' should be inserted everywhere
+        where there is no 
+    file_path : String
+        path where the image will be stored
+
+    Returns
+    -------
+        Either a figure if file_path is not specified or nothing 
     """
     assert not (df_dev is None and df_tc is None)
-    title = 'Count of on/off activations per Device'
-    col_label = 'trigger count'
+    
+    title = 'Device triggers count'
+    col_label = 'count'
     col_device = 'device'
 
-    figsize = num_device_2_figsize(DEV_BAR_HM, figsize, df_dev)
 
     if df_tc is None:
         df = devices_trigger_count(df_dev.copy())
     else:
         df = df_tc
+
+    num_dev = len(df)
+    figsize = (_num_bars_2_figsize(num_dev) if figsize is None else figsize)
+
 
     df.reset_index(level=0, inplace=True)
     df.columns = ['device', col_label]
@@ -316,4 +371,9 @@ def hist_counts(df_dev=None, df_tc=None, figsize=None, y_scale=None):
     ax.barh(df['device'], df['trigger count'])
     if y_scale == 'log':
         ax.set_xscale('log')
-    return fig
+
+    if file_path is not None:
+        savefig(fig, file_path)
+        return 
+    else:
+        return fig
