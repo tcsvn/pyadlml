@@ -5,7 +5,7 @@
 ![Download Stats](https://img.shields.io/pypi/dd/pyadlml?style=flat-square)
 ![License](https://img.shields.io/pypi/l/pyadlml?style=flat-square)
 <p align="center"><img width=95% src="https://github.com/tcsvn/pyadlml/blob/master/media/pyadlml_banner.png"></p>
-Activities of Daily living (ADLs) e.g cooking, working, sleeping and devices readings are recorded by smart home inhabitants. The goal is to predict inhabitants activities using device readings. Pyadlml offers an easy way to fetch, visualize and preprocess common datasets. My further goal is to replicate prominent work in this domain.
+Activities of Daily living (ADLs) e.g cooking, working, sleeping and device readings are recorded by smart home inhabitants. The goal is to predict inhabitants activities using device readings. Pyadlml offers an easy way to fetch, visualize and preprocess common datasets. A further goal is to replicate prominent work in the domain.
 
 
 
@@ -76,27 +76,9 @@ _For more examples and and how to use, please refer to the Documentation (to com
   - [x] Tuebingen 2019 [7]
   - [x] UCI Adl Binary [8]
   
-  
-### Models
-#### Iid data
-  - [x] SVM
-  - [ ] Winnow algorithm
-  - [ ] Naive bayes
-  - [x] Decision Trees
-#### Sequential discretized 
-  - [ ] RNNs
-  - [ ] LSTMs
-  - [ ] HMMs
-  - [ ] HSMMs
-  - [ ] TCNs
-#### Images  
-  - [ ] CNN
-  - [ ] Transformer
-#### Temporal points
-  - [ ] TPPs
-  
+ 
 ## Replication list  
-Here are papers I plan to replicate
+Here are papers I plan to replicate (TODO)
 
 
 ## Contributing 
@@ -110,8 +92,20 @@ Here are papers I plan to replicate
   - [activity-assistant](https://github.com/tcsvn/activity-assistant) - Recording, predicting ADLs within Home assistant.
   
 ## Support 
-  - Todo buy me a coffee batch
+[![Buy me a coffee][buy-me-a-coffee-shield]][buy-me-a-coffee]
   
+## How to cite
+If you are using pyadlml for puplications consider citing the package
+```
+@software{activity-assistant,
+  author = {Christian Meier},
+  title = {pyadlml},    
+  url = {https://github.com/tcsvn/pyadlml},
+  version = {0.0.1-alpha},
+  date = {2020-12-12}
+}
+```
+
 ## Sources
   - Datasets (TODO get all correct citations)  
     [1]: https://sites.google.com/site/tim0306/   
@@ -126,3 +120,8 @@ Here are papers I plan to replicate
   
 ## License
 MIT  © [tcsvn](http://deadlink)
+
+
+[buy-me-a-coffee-shield]: https://img.shields.io/static/v1.svg?label=%20&message=Buy%20me%20a%20coffee&color=6f4e37&logo=buy%20me%20a%20coffee&logoColor=white
+
+[buy-me-a-coffee]: https://www.buymeacoffee.com/tscvn
