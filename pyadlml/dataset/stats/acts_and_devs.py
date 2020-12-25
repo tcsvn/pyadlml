@@ -2,8 +2,9 @@ import pandas as pd
 from pyadlml.dataset._dataset import label_data
 from pyadlml.util import get_npartitions, get_parallel
 import dask.dataframe as dd
-from pyadlml.dataset import create_raw, START_TIME, END_TIME, TIME, DEVICE
-
+from pyadlml.dataset import START_TIME, END_TIME, TIME, DEVICE
+from pyadlml.dataset._representations.raw import create_raw
+#import __logger__
 
 
 def contingency_table_triggers_01(df_devs, df_acts, idle=False):
@@ -22,6 +23,7 @@ def contingency_table_triggers_01(df_devs, df_acts, idle=False):
         dev n 1 | 122   |      | 141  |
     """
     df = label_data(df_devs, df_acts, idle=idle)
+    
     df['val2'] = df['val'].astype(int)
     return pd.pivot_table(df, 
                columns='activity',
@@ -115,42 +117,58 @@ def contingency_intervals(df_dev, df_act):
     TD = 'time_difference_to_succ'
     
     def func(row, raw, dev_lst):
-        """
+        """ determines for each activity row the totol time that was spent in either on or off state for each device
+        Parameters
+        ----------
+        row : pd.Series
+            a row of the activity dataframe contatining the start and end time for one acitivity
         """        
         # get selection of relevant devices
-        raw_sel = raw[(row.start_time <= raw['time']) & (raw['time'] <= row.end_time)].copy()
+        act_start_time = row.start_time
+        act_end_time = row.end_time
+        raw_sel = raw[(act_start_time <= raw['time']) & (raw['time'] <= act_end_time)].copy()
+
         if raw_sel.empty:
+            # the case when no device activation fell into the recorded activity timeframe
             return pd.Series(index=row.index, name=row.name, dtype=row.dtype)
-            
-        try:
-            idx_first = raw_sel.index[0]-1
+
+
+
+        # determine end and start time and correct for the intervals before/after
+        # the first/last state vector s0,sn
+        #     s0 ---------I --activity --sn--------I
+        #     | ~~~tds~~~ |              | ~~tde~~ |
+        #    rs          as             re        ae
+
+        # try to get the preceding state vector of devices before the activity starts
+        idx_first = raw_sel.index[0] - 1
+        if idx_first == -1:
+            # edge case when the first activity starts before the first recording
+            # this case isn't solvable. So a heurstic that doesn't skew the statistic
+            # to much is to assume the same state at the start of the activity
+            raw_sel = raw_sel.append(raw_sel.iloc[0].copy()).sort_values(by=[TIME])
+            raw_sel.iat[0, raw_sel.columns.get_loc(TD)] = raw_sel.iloc[0].time - act_start_time
+        else:
             raw_sel = raw_sel.append(raw.iloc[idx_first]).sort_values(by=[TIME])
-        except:
-            print('rs: ', row.start_time)
-            print('re: ', row.end_time)
-            print('rawsel: ', raw_sel)
-            raise ValueError
-        
-        
-        # determine end and start time and correct for the intervals
-        raw_start = raw_sel.iloc[0]
-        raw_end = raw_sel.iloc[-1]
-        t_diff_start = row.start_time - raw_start.time
-        t_diff_end = row.end_time - raw_end.time
-        raw_sel.at[raw_sel.iloc[0].name, TD] -= t_diff_start
-        raw_sel.at[raw_sel.iloc[-1].name, TD] -= t_diff_end
-        
+            raw_start = raw_sel.iloc[0]
+            t_diff_start = act_start_time - raw_start.time
+            raw_sel.at[raw_sel.iloc[0].name, TD] -= t_diff_start
+
+        # set time difference for last state vector until activity ends
+        raw_sel.at[raw_sel.iloc[-1].name, TD] = act_end_time - raw_sel.iloc[-1].time
+
         for dev in dev_lst:
             ser = raw_sel.groupby(by=[dev])[TD].sum()
+            # the tries are for the cases when a device is on/off the whole time
             try:
                 dev_on_time = ser.ON
-            except:
+            except AttributeError:
                 dev_on_time = pd.Timedelta('0ns')
             try:
                 dev_off_time = ser.OFF
-            except:
+            except AttributeError:
                 dev_off_time = pd.Timedelta('0ns')
-                    
+
             row.at[ser.index.name + " On"] = dev_on_time
             row.at[ser.index.name + " Off"] = dev_off_time        
         return row
@@ -161,7 +179,7 @@ def contingency_intervals(df_dev, df_act):
         
     dev_lst = df_dev['device'].unique()
     df_dev = df_dev.sort_values(by='time')
-    raw = create_raw(df_dev).applymap(lambda x: 'ON' if x else 'OFF').reset_index()
+    raw = create_raw(df_dev).applymap(lambda x: 'ON' if x else 'OFF').reset_index(drop=False)
     raw[TD] = raw['time'].shift(-1) - raw['time']
     
     y = [(d1 + ' Off',d2 + ' On') for d1,d2 in zip(dev_lst, dev_lst)]
@@ -169,8 +187,8 @@ def contingency_intervals(df_dev, df_act):
             
     
     df_act = df_act.copy().join(pd.DataFrame(index=df_act.index, columns=new_cols))
-    
-    if not get_parallel():
+    if True: # TODO parallel is not working
+    #if not get_parallel():
         df = df_act.apply(func, args=[raw, dev_lst], axis=1)
         df = df.drop(columns=['start_time', 'end_time'])
         df = df.groupby('activity').sum()

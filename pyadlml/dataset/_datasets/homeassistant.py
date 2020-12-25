@@ -36,7 +36,7 @@ def load_homeassistant(db_url, limit=5000000, start_time=None, end_time=None):
             last_changed BETWEEN 
             '{start_time}' AND '{end_time}'
         ORDER BY last_changed ASC
-        LIMIT {limit}        
+        LIMIT {limit}
         """
     df = pd.read_sql_query(query, db_url)
     return df

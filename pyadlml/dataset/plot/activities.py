@@ -6,16 +6,17 @@ import pandas as pd
 from  pyadlml.dataset.stats.activities import activities_duration_dist, activities_durations,\
     activities_transitions, activities_count, activities_durations, activities_dist
 from pyadlml.dataset.activities import add_idle 
-from pyadlml.dataset.plot.util import func_formatter_log, func_formatter_min, ridgeline, \
-    func_formatter_sec, heatmap, annotate_heatmap, heatmap_square, hm_key_NN, savefig, \
+from pyadlml.dataset.plot.util import func_formatter_seconds2time_log, ridgeline, \
+    func_formatter_seconds2time, heatmap, annotate_heatmap, heatmap_square, savefig, \
     _num_bars_2_figsize, _num_boxes_2_figsize, \
     _num_items_2_heatmap_square_figsize, _num_items_2_ridge_figsize,\
     _num_items_2_ridge_ylimit
+from pyadlml.util import get_sequential_color, get_secondary_color, get_primary_color, get_diverging_color
 
 
 
 
-def hist_counts(df_act=None, df_ac=None, y_scale=None, idle=False, figsize=None, file_path=None):
+def hist_counts(df_act=None, df_ac=None, y_scale=None, idle=False, figsize=None, color=None, file_path=None):
     """ bar chart displaying how often activities are occuring
     Parameters
     ----------
@@ -41,6 +42,7 @@ def hist_counts(df_act=None, df_ac=None, y_scale=None, idle=False, figsize=None,
     title ='Activity occurrences'
     col_label = 'occurence'
     xlabel = 'counts'
+    color = (get_primary_color() if color is None else color)
         
     # create statistics if the don't exists
     if df_ac is None:
@@ -63,7 +65,7 @@ def hist_counts(df_act=None, df_ac=None, y_scale=None, idle=False, figsize=None,
     fig, ax = plt.subplots(figsize=figsize)
     plt.title(title)
     plt.xlabel(xlabel)
-    ax.barh(df['activity'], df['occurence'])
+    ax.barh(df['activity'], df['occurence'], color=color)
     
     if y_scale == 'log':
         ax.set_xscale('log')
@@ -97,7 +99,7 @@ def boxplot_duration(df_act, y_scale=None, idle=False, figsize=None, file_path=N
     assert y_scale in [None, 'log']
     
     title = 'Activity durations'
-    xlabel = 'log seconds'
+    xlabel = 'seconds'
 
     if idle:
         df_act = add_idle(df_act)
@@ -129,7 +131,7 @@ def boxplot_duration(df_act, y_scale=None, idle=False, figsize=None, file_path=N
     ax_top = ax.secondary_xaxis('top', functions=(lambda x: x, lambda x: x))
     #ax_top.set_xlabel('time')
     ax_top.xaxis.set_major_formatter(
-        ticker.FuncFormatter(func_formatter_sec))
+        ticker.FuncFormatter(func_formatter_seconds2time))
 
     if file_path is not None:
         savefig(fig, file_path)
@@ -137,7 +139,7 @@ def boxplot_duration(df_act, y_scale=None, idle=False, figsize=None, file_path=N
     else:
         return fig
 
-def hist_cum_duration(df_act=None, df_dur=None, y_scale=None, idle=False, figsize=None, file_path=None):
+def hist_cum_duration(df_act=None, df_dur=None, y_scale=None, idle=False, figsize=None, color=None, file_path=None):
     """ plots the cummulated duration for each activity in a bar plot
 
     Parameters
@@ -163,7 +165,8 @@ def hist_cum_duration(df_act=None, df_dur=None, y_scale=None, idle=False, figsiz
     assert not (df_act is None and df_dur is None)
 
     title = 'Cummulative activity durations'
-    xlabel = ('log seconds' if y_scale == 'log' else 'seconds')
+    xlabel = 'seconds'
+    color = (get_primary_color() if color is None else color)
 
     if df_dur is None:
         if idle:
@@ -186,7 +189,7 @@ def hist_cum_duration(df_act=None, df_dur=None, y_scale=None, idle=False, figsiz
     fig, ax = plt.subplots(figsize=figsize)
     plt.title(title)
     plt.xlabel(xlabel)
-    ax.barh(df['activity'], df['seconds'])
+    ax.barh(df['activity'], df['seconds'], color=color)
     if y_scale == 'log':
         ax.set_xscale('log')
         
@@ -195,7 +198,7 @@ def hist_cum_duration(df_act=None, df_dur=None, y_scale=None, idle=False, figsiz
     ax_top = ax.secondary_xaxis('top', functions=(lambda x: x, lambda x: x))
     ax_top.set_xlabel('time')
     ax_top.xaxis.set_major_formatter(
-        ticker.FuncFormatter(func_formatter_sec))
+        ticker.FuncFormatter(func_formatter_seconds2time))
 
     if file_path is not None:
         savefig(fig, file_path)
@@ -204,7 +207,7 @@ def hist_cum_duration(df_act=None, df_dur=None, y_scale=None, idle=False, figsiz
         return fig
 
 def heatmap_transitions(df_act=None, df_trans=None, z_scale=None, figsize=None, \
-    idle=False, numbers=True, grid=True, file_path=None):
+    idle=False, numbers=True, grid=True, cmap=None, file_path=None):
     """    """
     assert z_scale in [None, 'log'], 'z-scale has to be either of type None or log'
     assert not (df_act is None and df_trans is None)
@@ -223,6 +226,8 @@ def heatmap_transitions(df_act=None, df_trans=None, z_scale=None, figsize=None, 
 
     num_act = len(act_lst)
     figsize = (_num_items_2_heatmap_square_figsize(num_act) if figsize is None else figsize)
+    cmap = (get_sequential_color() if cmap is None else cmap)
+
     x_labels = act_lst
     y_labels = act_lst
     values = df.values
@@ -233,7 +238,7 @@ def heatmap_transitions(df_act=None, df_trans=None, z_scale=None, figsize=None, 
         
      # begin plotting
     fig, ax = plt.subplots(figsize=figsize)
-    im, cbar = heatmap_square(values, y_labels, x_labels, log=log, ax=ax, cbarlabel=z_label, grid=grid)
+    im, cbar = heatmap_square(values, y_labels, x_labels, log=log, cmap=cmap, ax=ax, cbarlabel=z_label, grid=grid)
     if numbers:
         texts = annotate_heatmap(im, textcolors=("white", "black"),log=log, valfmt=valfmt)
     ax.set_title(title)
@@ -245,7 +250,7 @@ def heatmap_transitions(df_act=None, df_trans=None, z_scale=None, figsize=None, 
         return fig
 
 def ridge_line(df_act=None, act_dist=None, t_range='day', idle=False, \
-        n=1000, ylim_upper=None, figsize=None, file_path=None):
+        n=1000, ylim_upper=None, color=None, figsize=None, file_path=None):
     """
     Parameters
     ----------
@@ -259,6 +264,7 @@ def ridge_line(df_act=None, act_dist=None, t_range='day', idle=False, \
 
     title = 'Activity distribution over one day'
     xlabel = 'day'
+    color = (get_primary_color() if color is None else color)
 
 
     if act_dist is None:
@@ -300,7 +306,7 @@ def ridge_line(df_act=None, act_dist=None, t_range='day', idle=False, \
 
     # plot the ridgeline
     fig, ax = plt.subplots(figsize=figsize)
-    ridgeline(data, labels=acts, overlap=.85, fill='tab:blue', n_points=100, dist_scale=0.13)
+    ridgeline(data, labels=acts, overlap=.85, fill=color, n_points=100, dist_scale=0.13)
     plt.title(title)
 
     plt.gca().spines['left'].set_visible(False)

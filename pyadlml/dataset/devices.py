@@ -270,6 +270,9 @@ def correct_devices(df):
     """
     df = df.copy()
     df = df.drop_duplicates()        
+
+    if df.empty:
+        return df
     
     # bring in correct representation
     if _is_dev_rep2(df):

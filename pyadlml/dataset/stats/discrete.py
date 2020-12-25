@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 
+ON_APPENDIX = " On"
+OFF_APPENDIX = " Off"
 def contingency_table_01(X, y):
     """ creates a contingency table for the matrix X and labels y
     Parameters
@@ -15,18 +17,30 @@ def contingency_table_01(X, y):
     ---------
     pd.DataFrame
     """
+
+    X = X.copy()
     if isinstance(y, pd.DataFrame):
         y = y['activity']
-    res = pd.crosstab(index=X[X.columns[0]], columns=y)
-    res.index = [X.columns[0] + ' Off', X.columns[0] + ' On']
-    
+
+    X = X.reset_index(drop=True)
+    first_dev = X.columns[0]
+    index = X[first_dev]
+    res = pd.crosstab(index=index, columns=y)
+    res.index = _set_onoffappendix(res.index, first_dev)
+
     for dev_name in X.columns[1:]:
         tmp = pd.crosstab(index=X[dev_name], columns=y)
-        tmp.index = [dev_name + ' Off', dev_name + ' On']
+        tmp.index = _set_onoffappendix(tmp.index, dev_name)
         res = pd.concat([res, tmp])
     return res
 
-
+def _set_onoffappendix(index, dev_name):
+    """ Using a dataframe index with [true, false] to create a new index with [dev_name + 'on', ...]
+    """
+    if not index.values[0] and index.values[1]:
+        return [dev_name + OFF_APPENDIX, dev_name + ON_APPENDIX]
+    elif index.values[0] and not index.values[1]:
+        return [dev_name + ON_APPENDIX, dev_name + OFF_APPENDIX]
 
 def cross_correlation(rep):
     """ compute the crosscorelation by comparing for every binary state

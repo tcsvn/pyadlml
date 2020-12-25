@@ -9,23 +9,28 @@ from pyadlml.dataset.stats.devices import duration_correlation, \
     trigger_time_diff, device_tcorr, device_triggers_one_day, \
     devices_trigger_count, devices_on_off_stats
 
-from pyadlml.dataset.plot.util import heatmap_square, func_formatter_sec,\
+from pyadlml.dataset.plot.util import heatmap_square, func_formatter_seconds2time,\
     heatmap, annotate_heatmap, savefig, _num_bars_2_figsize, \
     _num_items_2_heatmap_square_figsize, _num_boxes_2_figsize, \
     _num_items_2_heatmap_one_day_figsize, _num_items_2_heatmap_square_figsize_ver2 
 
 from pyadlml.dataset.devices import _is_dev_rep2, device_rep1_2_rep2
+from pyadlml.util import get_sequential_color, get_secondary_color, get_primary_color, get_diverging_color
 
-
-def hist_trigger_time_diff(df_dev=None, x=None, n_bins=50, figsize=(10,6), file_path=None):
+def hist_trigger_time_diff(df_dev=None, x=None, n_bins=50, figsize=(10,6), color=None, file_path=None):
     """
         plots
     """
     assert not (df_dev is None and x is None)
-    title='Time difference between device triggers'
+    title='Time difference between succeeding device'
     log_sec_col = 'total_log_secs'
     sec_col = 'total_secs'
     ylabel='count'
+    ax2label = 'cummulative percentage'
+    ax1label = 'timedeltas count '
+    xlabel = 'log seconds'
+    color = (get_primary_color() if color is None else color)
+    color2 = get_secondary_color()
 
     if x is None:
         X = trigger_time_diff(df_dev.copy())
@@ -43,21 +48,19 @@ def hist_trigger_time_diff(df_dev=None, x=None, n_bins=50, figsize=(10,6), file_
     # plots
     fig,ax = plt.subplots(figsize=figsize)
     plt.xscale('log')
-    #plt.yscale('log')
-    
-    ax.hist(X, bins=bins, label='triggercount with difference')
+    ax.hist(X, bins=bins, label=ax1label, color=color)
     ax.set_ylabel(ylabel)
-    ax.set_xlabel('log seconds')
+    ax.set_xlabel(xlabel)
     
     # create axis for line
     ax2=ax.twinx()
-    ax2.plot(bins, cum_percentage, 'r', label='cummulative percentage')
+    ax2.plot(bins, cum_percentage, 'r', label=ax2label, color=color2)
     ax2.set_ylabel('%')
     ax2.set_xscale('log')
     
     ax_top = ax.secondary_xaxis('top', functions=(lambda x: x, lambda x: x))
     ax_top.xaxis.set_major_formatter(
-        ticker.FuncFormatter(func_formatter_sec))
+        ticker.FuncFormatter(func_formatter_seconds2time))
     
     # plot single legend for multiple axis
     h1, l1 = ax.get_legend_handles_labels()
@@ -118,14 +121,14 @@ def boxplot_on_duration(df_dev, figsize=None, file_path=None):
     ax_top = ax.secondary_xaxis('top', functions=(lambda x: x, lambda x: x))
     ax_top.set_xlabel(xlabel_top)
     ax_top.xaxis.set_major_formatter(
-        ticker.FuncFormatter(func_formatter_sec))
+        ticker.FuncFormatter(func_formatter_seconds2time))
     if file_path is not None:
         savefig(fig, file_path)
         return 
     else:
         return fig
 
-def heatmap_trigger_one_day(df_dev=None, df_tod=None, t_res='1h', figsize=None, file_path=None):
+def heatmap_trigger_one_day(df_dev=None, df_tod=None, t_res='1h', figsize=None, cmap=None, file_path=None):
     """
     computes the heatmap for one day where all the device triggers are showed
     """
@@ -133,20 +136,18 @@ def heatmap_trigger_one_day(df_dev=None, df_tod=None, t_res='1h', figsize=None, 
     title = "Device triggers cummulative over one day"
     xlabel =  'time'
 
-    if df_tod is None:
-        df = device_triggers_one_day(df_dev.copy(), t_res)
-    else:
-        df = df_tod
-
+    df = (device_triggers_one_day(df_dev.copy(), t_res) if df_tod is None else df_tod)
     num_dev = len(list(df.columns))
     figsize = (_num_items_2_heatmap_one_day_figsize(num_dev) if figsize is None else figsize)
+    cmap = (get_sequential_color() if cmap is None else cmap)
+
     x_labels = list(df.index)
     y_labels = df.columns
     dat = df.values.T
     
     # begin plotting
     fig, ax = plt.subplots(figsize=figsize)
-    im, cbar = heatmap(dat, y_labels, x_labels, ax=ax, cmap='viridis', cbarlabel='counts')
+    im, cbar = heatmap(dat, y_labels, x_labels, ax=ax, cmap=cmap, cbarlabel='counts')
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     
@@ -174,7 +175,8 @@ def heatmap_trigger_one_day(df_dev=None, df_tod=None, t_res='1h', figsize=None, 
     else:
         return fig
 
-def heatmap_trigger_time(df_dev=None, df_tcorr=None, t_window='5s', figsize=None, z_scale=None, numbers=None, file_path=None):
+def heatmap_trigger_time(df_dev=None, df_tcorr=None, t_window='5s', figsize=None, z_scale=None, cmap=None,
+                         numbers=None, file_path=None):
     """
     """
     assert not (df_dev is None and df_tcorr is None)
@@ -194,15 +196,14 @@ def heatmap_trigger_time(df_dev=None, df_tcorr=None, t_window='5s', figsize=None
 
     num_dev = len(devs)
     figsize = (_num_items_2_heatmap_square_figsize_ver2(num_dev) if figsize is None else figsize)
-    print('n: ', num_dev)
-    print('figsize: ', figsize)
+    cmap = (get_sequential_color() if cmap is None else cmap)
 
     fig, ax = plt.subplots(figsize=figsize)
 
     log = True if z_scale == 'log' else False       
     valfmt = "{x:.0f}"
         
-    im, cbar = heatmap_square(vals, devs, devs, ax=ax, #cmap='viridis', 
+    im, cbar = heatmap_square(vals, devs, devs, ax=ax, cmap=cmap,
                         cbarlabel=cbarlabel, log=log)#, cbar_kw=cbar_kw)
     
     # show numbers for small sizes
@@ -221,7 +222,7 @@ def heatmap_trigger_time(df_dev=None, df_tcorr=None, t_window='5s', figsize=None
     else:
         return fig
 
-def heatmap_cross_correlation(df_dev=None, df_dur_corr=None, figsize=None, parallel=True, numbers=True, file_path=None):
+def heatmap_cross_correlation(df_dev=None, df_dur_corr=None, figsize=None, parallel=True, numbers=None, file_path=None):
     """ plots the cross correlation between the device signals
     Parameters
     ----------
@@ -230,9 +231,9 @@ def heatmap_cross_correlation(df_dev=None, df_dur_corr=None, figsize=None, paral
     """
     assert not (df_dev is None and df_dur_corr is None)
 
-    title = 'Cross-correlation of signals'
-    cmap = 'BrBG'
-    cbarlabel = 'counts'
+    title = 'Devices cross-correlation'
+    cmap = 'RdBu'
+    cbarlabel = 'similarity'
     
     if df_dur_corr is None:
         if parallel:
@@ -250,15 +251,28 @@ def heatmap_cross_correlation(df_dev=None, df_dur_corr=None, figsize=None, paral
     fig, ax = plt.subplots(figsize=figsize)
     im, cbar = heatmap_square(vals, devs, devs, ax=ax, cmap=cmap, cbarlabel=cbarlabel,
                        vmin=-1, vmax=1)
+    if numbers is None:
+        if num_dev < 15:
+            valfmt = "{x:.2f}"
+            texts = annotate_heatmap(im, textcolors=("black", "white"), 
+                             threshold=0.5, valfmt=valfmt)
+        elif num_dev < 30:
+            valfmt = "{x:.1f}"
+            texts = annotate_heatmap(im, textcolors=("black", "white"), 
+                             threshold=0.5, valfmt=valfmt)
     if numbers:
         texts = annotate_heatmap(im, textcolors=("black", "white"), 
                              threshold=0.5, valfmt="{x:.2f}")
-
     ax.set_title(title)
     fig.tight_layout()
-    plt.show()
+    if file_path is not None:
+        savefig(fig, file_path)
+        return
+    else:
+        return fig
 
-def hist_on_off(df_dev=None, df_onoff=None, figsize=None, file_path=None):
+
+def hist_on_off(df_dev=None, df_onoff=None, figsize=None, color=None, color_sec=None, file_path=None):
     """ bar plotting the on/off fraction of all devices
     Parameters
     ----------
@@ -279,7 +293,11 @@ def hist_on_off(df_dev=None, df_onoff=None, figsize=None, file_path=None):
     title = 'Devices fraction on/off'
     xlabel ='Percentage in binary states' 
     ylabel = 'Devices'
+    on_label = 'on'
+    off_label = 'off'
 
+    color = (get_primary_color() if color is None else color)
+    color2 = (get_secondary_color()if color_sec is None else color_sec)
     if df_dev is not None and not _is_dev_rep2(df_dev):
         df_dev, _ = device_rep1_2_rep2(df_dev.copy(), drop=False)
 
@@ -290,16 +308,15 @@ def hist_on_off(df_dev=None, df_onoff=None, figsize=None, file_path=None):
 
     num_dev = len(df)
     figsize = (_num_bars_2_figsize(num_dev) if figsize is None else figsize)
-    print('figsize: ', figsize)
 
     df = df.sort_values(by='frac_on', axis=0)
     dev_lst = list(df.index)
     # Figure Size 
     fig, ax = plt.subplots(figsize=figsize) 
-    plt.barh(dev_lst, df['frac_off'].values, label='off')  
+    plt.barh(dev_lst, df['frac_off'].values, label=off_label, color=color)
 
     # careful: notice "bottom" parameter became "left"
-    plt.barh(dev_lst,  df['frac_on'].values, left=df['frac_off'], label='on')
+    plt.barh(dev_lst,  df['frac_on'].values, left=df['frac_off'], label=on_label, color=color2)
 
     # we also need to switch the labels
     plt.title(title)
@@ -319,11 +336,15 @@ def hist_on_off(df_dev=None, df_onoff=None, figsize=None, file_path=None):
     
     # Remove axes splines 
     for s in ['top', 'right']: 
-        ax.spines[s].set_visible(False) 
+        ax.spines[s].set_visible(False)
 
-    plt.show()  
+    if file_path is not None:
+        savefig(fig, file_path)
+        return
+    else:
+        return fig
 
-def hist_counts(df_dev=None, df_tc=None, figsize=None, y_scale=None, file_path=None):
+def hist_counts(df_dev=None, df_tc=None, figsize=None, y_scale=None, color=None, file_path=None):
     """ bar chart displaying how often activities are occuring
     Parameters
     ----------
@@ -345,30 +366,26 @@ def hist_counts(df_dev=None, df_tc=None, figsize=None, y_scale=None, file_path=N
     """
     assert not (df_dev is None and df_tc is None)
     
-    title = 'Device triggers count'
+    title = 'Device triggers'
     col_label = 'count'
     col_device = 'device'
 
-
-    if df_tc is None:
-        df = devices_trigger_count(df_dev.copy())
-    else:
-        df = df_tc
-
+    df = (devices_trigger_count(df_dev.copy()) if df_tc is None else df_tc)
     num_dev = len(df)
     figsize = (_num_bars_2_figsize(num_dev) if figsize is None else figsize)
-
+    color = (get_primary_color() if color is None else color)
 
     df.reset_index(level=0, inplace=True)
-    df.columns = ['device', col_label]
-
+    df.columns = [col_device, col_label]
     df = df.sort_values(by=col_label, axis=0, ascending=True)
-    
+
+
     # plot
     fig, ax = plt.subplots(figsize=figsize)
     plt.title(title)
     plt.xlabel(col_label)
-    ax.barh(df['device'], df['trigger count'])
+    ax.barh(df[col_device], df[col_label], color=color)
+
     if y_scale == 'log':
         ax.set_xscale('log')
 

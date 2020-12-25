@@ -1,0 +1,7 @@
+id,device
+0,input_boolean.light_03
+1,input_boolean.motion_01
+2,input_boolean.light_02
+3,input_boolean.motion_02
+4,input_boolean.light_04
+5,input_boolean.motion_04

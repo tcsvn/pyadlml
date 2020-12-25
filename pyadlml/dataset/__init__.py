@@ -25,13 +25,4 @@ from pyadlml.dataset.io import (
     set_data_home
 )
 
-from pyadlml.dataset._representations.changepoint import create_changepoint
-from pyadlml.dataset._representations.raw import create_raw
-from pyadlml.dataset._representations.image import (
-    create_lagged_changepoint,
-    create_lagged_lastfired,
-    create_lagged_raw
-)
-from pyadlml.dataset._representations.lastfired import create_lastfired
-
 from pyadlml.dataset import plot, plotly, io, obj, util

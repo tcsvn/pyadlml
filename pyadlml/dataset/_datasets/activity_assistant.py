@@ -24,18 +24,33 @@ def _read_devices(path_to_dev_file, path_to_mapping):
     devices = devices.reset_index(drop=True)
     return devices
 
-def load(folder_path, subject):
+def load(folder_path, subjects):
+    """ loads the dataset from a folder
+    Parameters
+    ----------
+    folder_path : 
+    subjects : list or None
+        The names of the subjects to be included
+
+    Returns
+    -------
+    data: Data obj
     """
-    """
+    assert isinstance(folder_path, str)
+    assert isinstance(subjects, list)
+
     df_dev = _read_devices(folder_path + '/' + DATA_NAME,
                             folder_path + '/' + DEV_MAP_NAME)
-    df_act = _read_activities(folder_path + '/' + ACT_NAME%(subject))
 
-    # correct possible overlaps in activities
-    df_act, cor_lst = correct_activities(df_act)
-    
-    # correct possible duplicates for representation 2    
+    # correct possible duplicates for representation 2
     df_dev = correct_devices(df_dev)
-    data = Data(df_act, df_dev)
-    data.correction_activities = cor_lst
+    data = Data(None, df_dev)
+
+    for subject in subjects:
+        df_act = _read_activities(folder_path + '/' + ACT_NAME%(subject))
+        # correct possible overlaps in activities
+        df_act, cor_lst = correct_activities(df_act)
+        setattr(data, 'df_activities_{}'.format(subject), df_act)
+        setattr(data, 'correction_activities_{}'.format(subject), cor_lst)
+
     return data

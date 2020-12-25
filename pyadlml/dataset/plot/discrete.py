@@ -1,12 +1,14 @@
 from pyadlml.dataset.stats.discrete import contingency_table_01, cross_correlation
-from pyadlml.dataset.plot.util import annotate_heatmap, heatmap, heatmap_square
-
-import matplotlib.pyplot as plt 
+from pyadlml.dataset.plot.util import heatmap_contingency as hm_cont
+from pyadlml.dataset.plot.util import annotate_heatmap, heatmap, heatmap_square, \
+    _num_bars_2_figsize, func_formatter_log_1
+from pyadlml.util import get_primary_color, get_diverging_color
+import matplotlib.pyplot as plt
 import matplotlib
 import pandas as pd 
 import numpy as np
 
-def heatmap_contingency_01(X, y, rep='', z_scale=None, figsize=(16,12)):
+def heatmap_contingency(X, y, rep='', z_scale=None, figsize=None, numbers=True):
     """ plots the contingency between features and labels of data
     Parameters
     ----------
@@ -17,45 +19,22 @@ def heatmap_contingency_01(X, y, rep='', z_scale=None, figsize=(16,12)):
     rep: string
         the name of the representation to add to the title
     """
-    
+    title = rep + " On/Off contingency"
     cbarlabel = 'counts'
-    title = "On/Off contingency for representation " + rep
+    valfmt = ("{x:.0f}" if z_scale!='log' else func_formatter_log_1)
 
     df_con = contingency_table_01(X, y)
-    
     vals = df_con.values.T
-    acts = df_con.columns
+    acts = df_con.columns.values
     devs = list(df_con.index)
     
-    # format x labels
-    for i in range(0,len(devs)):
-        if i % 2 == 0:
-            tmp = devs[i][:-3]
-            devs[i] = tmp + 'Off'
-        else:
+    # format labels by replacing every 'on'
+    for i, dev in enumerate(devs):
+        if 'On' in dev:
             devs[i] = 'On'
+    return hm_cont(acts, devs, vals, title, cbarlabel, z_scale=z_scale, figsize=figsize, valfmt=valfmt, numbers=numbers)
 
-    if z_scale == 'log':
-        log = True
-    else:
-        log = False
-
-    fig, ax = plt.subplots(figsize=figsize)
-    im, cbar = heatmap(vals, acts, devs, ax=ax, log=log, cbarlabel=cbarlabel)
-    
-    texts = annotate_heatmap(im, log=log, textcolors=("white", "black"), valfmt="{x:.0f}")
-    
-    # create grid for heatmap into every pair
-    tcks = np.arange((vals.shape[1])/2)*2 + 1.5
-    ax.set_xticks(tcks, minor=True)
-    ax.grid(which="minor", color="w", linestyle='-', linewidth=2)
-    ax.tick_params(which="minor", bottom=False, left=False) 
-    
-    ax.set_title(title)
-    fig.tight_layout()
-    return fig
-
-def hist_activities(y, scale=None):
+def hist_activities(y, scale=None, color=None, figsize=(9,3)):
     """
     Parameters
     ----------
@@ -65,16 +44,18 @@ def hist_activities(y, scale=None):
     """
     title = 'Label occurence'
     xlabel = 'counts'
-    
+    color = (get_primary_color() if color is None else color)
+
     ser = pd.Series(data=y).value_counts()
     ser = ser.sort_values(ascending=True)
 
-    fig, ax = plt.subplots(1, 1, figsize=(9, 3))
+    figsize = (_num_bars_2_figsize(len(ser)) if figsize is None else figsize)
+    fig, ax = plt.subplots(1, 1, figsize=figsize)
+
     if scale == 'log': 
         plt.xscale('log')
-        xlabel = 'log ' + xlabel
-    ax.barh(ser.index, ser.values, orientation='horizontal')
-    
+
+    ax.barh(ser.index, ser.values, orientation='horizontal', color=color)
     plt.xlabel(xlabel)
     fig.suptitle(title)
 
@@ -134,17 +115,20 @@ def corr_devices_01(rep, figsize=(19,14)):
     plt.show()
 
 def heatmap_cross_correlation(df_dev, figsize=(10,8)):
+
+
+    title = 'Devices cross-correlation'
+    cmap = get_diverging_color()
+    cbarlabel = 'similarity'
+
     ct = cross_correlation(df_dev)
     vals = ct.values.T.astype(np.float64)
     devs = list(ct.index)
     
     fig, ax = plt.subplots(figsize=figsize)
-    im, cbar = heatmap_square(vals, devs, devs, ax=ax, cmap='BrBG', cbarlabel='counts',
+    im, cbar = heatmap_square(vals, devs, devs, ax=ax, cmap=cmap, cbarlabel=cbarlabel,
                        vmin=-1, vmax=1)
-
-    texts = annotate_heatmap(im, textcolors=("black", "white"), valfmt="{x:.2f}",
-                            threshold=0.6)
-
-    ax.set_title("Cross-correlation of signals")
+    annotate_heatmap(im, textcolors=("black", "white"), valfmt="{x:.2f}", threshold=0.6)
+    ax.set_title(title)
     fig.tight_layout()
     plt.show()
