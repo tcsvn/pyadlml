@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import matplotlib.colors as colors
 
+from pyadlml.dataset import DEVICE
 from pyadlml.dataset.stats.devices import duration_correlation, \
     trigger_time_diff, device_tcorr, device_triggers_one_day, \
     devices_trigger_count, devices_on_off_stats
@@ -76,7 +77,7 @@ def hist_trigger_time_diff(df_dev=None, x=None, n_bins=50, figsize=(10,6), color
         return fig
 
 
-def boxplot_on_duration(df_dev, figsize=None, file_path=None):
+def boxplot_on_duration(df_dev, lst_dev=None, figsize=None, file_path=None):
     """
     draws a boxplot of all devices
     Parameters
@@ -87,27 +88,29 @@ def boxplot_on_duration(df_dev, figsize=None, file_path=None):
     title = 'Devices on-duration'
     xlabel = 'log seconds'
     xlabel_top = 'time'
-
-    if not _is_dev_rep2(df_dev):
-        df_dev, _ = device_rep1_2_rep2(df_dev.copy(), drop=False)
-
-    # create duration differences
-    df_dev = df_dev.copy()
-    df_dev['td'] = df_dev['end_time'] - df_dev['start_time']
+    from pyadlml.dataset.stats.devices import devices_td_on
+    df_dev = devices_td_on(df_dev)
 
     # select data for each device
-    devices = df_dev['device'].unique()
+    devices = list(df_dev[DEVICE].unique())
+    devices.sort(reverse=True)
     dat = []
     for device in devices:
-        df_device = df_dev[df_dev['device'] == device]
-        #tmp = np.log(df_device['td'].dt.total_seconds())
+        df_device = df_dev[df_dev[DEVICE] == device]
         tmp = df_device['td'].dt.total_seconds()
         dat.append(tmp)
+
+    if lst_dev is not None:
+        nan_devs = list(set(lst_dev).difference(set(list(devices))))
+        nan_devs.sort(reverse=True)
+        for dev in nan_devs:
+            dat.append([])
+        devices = devices + nan_devs
 
     num_dev = len(devices)
     figsize = (_num_boxes_2_figsize(num_dev) if figsize is None else figsize)
 
-    # plot boxsplot
+    # plotting
     fig, ax = plt.subplots(figsize=figsize)
     ax.boxplot(dat, vert=False)
     ax.set_title(title)
@@ -115,20 +118,20 @@ def boxplot_on_duration(df_dev, figsize=None, file_path=None):
     ax.set_xlabel(xlabel)
     ax.set_xscale('log')
 
-    # create secondary axis with 
-
     # create secondary axis with time format 1s, 1m, 1d
     ax_top = ax.secondary_xaxis('top', functions=(lambda x: x, lambda x: x))
     ax_top.set_xlabel(xlabel_top)
     ax_top.xaxis.set_major_formatter(
         ticker.FuncFormatter(func_formatter_seconds2time))
+
+    # save or return figure
     if file_path is not None:
         savefig(fig, file_path)
         return 
     else:
         return fig
 
-def heatmap_trigger_one_day(df_dev=None, df_tod=None, t_res='1h', figsize=None, cmap=None, file_path=None):
+def heatmap_trigger_one_day(df_dev=None, lst_dev=None, df_tod=None, t_res='1h', figsize=None, cmap=None, file_path=None):
     """
     computes the heatmap for one day where all the device triggers are showed
     """
@@ -136,7 +139,7 @@ def heatmap_trigger_one_day(df_dev=None, df_tod=None, t_res='1h', figsize=None, 
     title = "Device triggers cummulative over one day"
     xlabel =  'time'
 
-    df = (device_triggers_one_day(df_dev.copy(), t_res) if df_tod is None else df_tod)
+    df = (device_triggers_one_day(df_dev.copy(), lst=lst_dev, t_res=t_res) if df_tod is None else df_tod)
     num_dev = len(list(df.columns))
     figsize = (_num_items_2_heatmap_one_day_figsize(num_dev) if figsize is None else figsize)
     cmap = (get_sequential_color() if cmap is None else cmap)
@@ -175,8 +178,8 @@ def heatmap_trigger_one_day(df_dev=None, df_tod=None, t_res='1h', figsize=None, 
     else:
         return fig
 
-def heatmap_trigger_time(df_dev=None, df_tcorr=None, t_window='5s', figsize=None, z_scale=None, cmap=None,
-                         numbers=None, file_path=None):
+def heatmap_trigger_time(df_dev=None, lst_dev=None, df_tcorr=None, t_window='5s', figsize=None,
+                         z_scale=None, cmap=None, numbers=None, file_path=None):
     """
     """
     assert not (df_dev is None and df_tcorr is None)
@@ -186,7 +189,7 @@ def heatmap_trigger_time(df_dev=None, df_tcorr=None, t_window='5s', figsize=None
     cbarlabel = 'counts'
 
     if df_tcorr is None:
-        df = device_tcorr(df_dev, t_window)[0]
+        df = device_tcorr(df_dev, lst_dev=lst_dev, t_window=t_window)
     else:
         df = df_tcorr
 
@@ -222,7 +225,7 @@ def heatmap_trigger_time(df_dev=None, df_tcorr=None, t_window='5s', figsize=None
     else:
         return fig
 
-def heatmap_cross_correlation(df_dev=None, df_dur_corr=None, figsize=None, parallel=True, numbers=None, file_path=None):
+def heatmap_cross_correlation(df_dev=None, lst_dev=None, df_dur_corr=None, figsize=None, numbers=None, file_path=None):
     """ plots the cross correlation between the device signals
     Parameters
     ----------
@@ -236,13 +239,10 @@ def heatmap_cross_correlation(df_dev=None, df_dur_corr=None, figsize=None, paral
     cbarlabel = 'similarity'
     
     if df_dur_corr is None:
-        if parallel:
-            from pyadlml.dataset.stats.devices import duration_correlation_parallel
-            ct = duration_correlation_parallel(df_dev)
-        else:
-            ct = duration_correlation(df_dev)
+        ct = duration_correlation(df_dev, lst_dev=lst_dev)
     else:
-        ct = df_dur_corr 
+        ct = df_dur_corr
+    ct = ct.replace(pd.NA, np.inf)
     vals = ct.values.T
     devs = list(ct.index)
 
@@ -272,7 +272,7 @@ def heatmap_cross_correlation(df_dev=None, df_dur_corr=None, figsize=None, paral
         return fig
 
 
-def hist_on_off(df_dev=None, df_onoff=None, figsize=None, color=None, color_sec=None, file_path=None):
+def hist_on_off(df_dev=None, lst_dev=None, df_onoff=None, figsize=None, color=None, color_sec=None, file_path=None):
     """ bar plotting the on/off fraction of all devices
     Parameters
     ----------
@@ -298,11 +298,9 @@ def hist_on_off(df_dev=None, df_onoff=None, figsize=None, color=None, color_sec=
 
     color = (get_primary_color() if color is None else color)
     color2 = (get_secondary_color()if color_sec is None else color_sec)
-    if df_dev is not None and not _is_dev_rep2(df_dev):
-        df_dev, _ = device_rep1_2_rep2(df_dev.copy(), drop=False)
 
     if df_onoff is None:
-        df = devices_on_off_stats(df_dev)
+        df = devices_on_off_stats(df_dev, lst=lst_dev)
     else:
         df = df_onoff
 
@@ -312,11 +310,16 @@ def hist_on_off(df_dev=None, df_onoff=None, figsize=None, color=None, color_sec=
     df = df.sort_values(by='frac_on', axis=0)
     dev_lst = list(df.index)
     # Figure Size 
-    fig, ax = plt.subplots(figsize=figsize) 
-    plt.barh(dev_lst, df['frac_off'].values, label=off_label, color=color)
-
-    # careful: notice "bottom" parameter became "left"
-    plt.barh(dev_lst,  df['frac_on'].values, left=df['frac_off'], label=on_label, color=color2)
+    fig, ax = plt.subplots(figsize=figsize)
+    if lst_dev is not None:
+        df['tmp'] = 0
+        plt.barh(df[DEVICE], df['tmp'].values, alpha=0.0)
+        plt.barh(df[DEVICE], df['frac_off'].values, label=off_label, color=color)
+        plt.barh(df[DEVICE],  df['frac_on'].values, left=df['frac_off'], label=on_label, color=color2)
+    else:
+        plt.barh(dev_lst, df['frac_off'].values, label=off_label, color=color)
+        # careful: notice "bottom" parameter became "left"
+        plt.barh(dev_lst,  df['frac_on'].values, left=df['frac_off'], label=on_label, color=color2)
 
     # we also need to switch the labels
     plt.title(title)
@@ -344,7 +347,7 @@ def hist_on_off(df_dev=None, df_onoff=None, figsize=None, color=None, color_sec=
     else:
         return fig
 
-def hist_counts(df_dev=None, df_tc=None, figsize=None, y_scale=None, color=None, file_path=None):
+def hist_counts(df_dev=None, df_tc=None, lst_dev=None, figsize=None, y_scale=None, color=None, order='count', file_path=None):
     """ bar chart displaying how often activities are occuring
     Parameters
     ----------
@@ -359,32 +362,37 @@ def hist_counts(df_dev=None, df_tc=None, figsize=None, y_scale=None, color=None,
         where there is no 
     file_path : String
         path where the image will be stored
+    order : str
+        Specifies the order of the devices. Options are ordered by count, alphabetic, room.
 
     Returns
     -------
         Either a figure if file_path is not specified or nothing 
     """
     assert not (df_dev is None and df_tc is None)
+    assert y_scale in ['log', None]
+    assert order in ['alphabetic', 'count', 'room']
     
     title = 'Device triggers'
-    col_label = 'count'
-    col_device = 'device'
+    x_label = 'count'
+    df_col = 'trigger_count'
 
-    df = (devices_trigger_count(df_dev.copy()) if df_tc is None else df_tc)
+    df = (devices_trigger_count(df_dev.copy(), lst=lst_dev) if df_tc is None else df_tc)
     num_dev = len(df)
     figsize = (_num_bars_2_figsize(num_dev) if figsize is None else figsize)
     color = (get_primary_color() if color is None else color)
 
-    df.reset_index(level=0, inplace=True)
-    df.columns = [col_device, col_label]
-    df = df.sort_values(by=col_label, axis=0, ascending=True)
-
+    if order == 'alphabetic':
+        df = df.sort_values(by=[DEVICE], ascending=True)
+    elif order == 'count':
+        #df = df.sort_values(by=[])
+        pass
 
     # plot
     fig, ax = plt.subplots(figsize=figsize)
     plt.title(title)
-    plt.xlabel(col_label)
-    ax.barh(df[col_device], df[col_label], color=color)
+    plt.xlabel(x_label)
+    ax.barh(df[DEVICE], df[df_col], color=color)
 
     if y_scale == 'log':
         ax.set_xscale('log')

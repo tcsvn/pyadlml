@@ -2,10 +2,11 @@ import pandas as pd
 from pyadlml.dataset.activities import correct_activities
 from pyadlml.dataset.devices import correct_devices
 from pyadlml.dataset.obj import Data
-from pyadlml.dataset import START_TIME, END_TIME, DEVICE, VAL, TIME
+from pyadlml.dataset import START_TIME, END_TIME, DEVICE, VAL, TIME, ACTIVITY
 
 DATA_NAME = 'devices.csv'
 DEV_MAP_NAME = 'device_mapping.csv'
+ACT_MAP_NAME = 'activity_mapping.csv'
 ACT_NAME = 'activities_subject_%s.csv'
 
 def _read_activities(path_to_file):
@@ -23,6 +24,14 @@ def _read_devices(path_to_dev_file, path_to_mapping):
     devices[TIME] = pd.to_datetime(devices[TIME])
     devices = devices.reset_index(drop=True)
     return devices
+
+def _read_activity_list(path_to_file):
+    lst_activities = pd.read_csv(path_to_file)
+    return list(lst_activities[ACTIVITY])
+
+def _read_device_list(path_to_file):
+    lst_devices = pd.read_csv(path_to_file)
+    return list(lst_devices[DEVICE])
 
 def load(folder_path, subjects):
     """ loads the dataset from a folder
@@ -44,7 +53,12 @@ def load(folder_path, subjects):
 
     # correct possible duplicates for representation 2
     df_dev = correct_devices(df_dev)
-    data = Data(None, df_dev)
+
+    # get mappings
+    lst_dev = _read_device_list(folder_path + '/' + DEV_MAP_NAME)
+    lst_act = _read_activity_list(folder_path + '/' + ACT_MAP_NAME)
+
+    data = Data(None, df_dev, activity_list=lst_act, device_list=lst_dev)
 
     for subject in subjects:
         df_act = _read_activities(folder_path + '/' + ACT_NAME%(subject))

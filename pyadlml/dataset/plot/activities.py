@@ -3,8 +3,8 @@ import matplotlib.ticker as ticker
 import numpy as np
 import pandas as pd
 
-from  pyadlml.dataset.stats.activities import activities_duration_dist, activities_durations,\
-    activities_transitions, activities_count, activities_durations, activities_dist
+from  pyadlml.dataset.stats.activities import activities_duration_dist, activity_durations,\
+    activities_transitions, activities_count, activity_durations, activities_dist
 from pyadlml.dataset.activities import add_idle 
 from pyadlml.dataset.plot.util import func_formatter_seconds2time_log, ridgeline, \
     func_formatter_seconds2time, heatmap, annotate_heatmap, heatmap_square, savefig, \
@@ -16,7 +16,7 @@ from pyadlml.util import get_sequential_color, get_secondary_color, get_primary_
 
 
 
-def hist_counts(df_act=None, df_ac=None, y_scale=None, idle=False, figsize=None, color=None, file_path=None):
+def hist_counts(df_act=None, df_ac=None, lst_act=None, y_scale=None, idle=False, figsize=None, color=None, file_path=None):
     """ bar chart displaying how often activities are occuring
     Parameters
     ----------
@@ -49,7 +49,7 @@ def hist_counts(df_act=None, df_ac=None, y_scale=None, idle=False, figsize=None,
         df_act = df_act.copy()
         if idle:
             df_act = add_idle(df_act)
-        df = activities_count(df_act)
+        df = activities_count(df_act, lst_activities=lst_act)
     else:
         df = df_ac
     
@@ -78,7 +78,7 @@ def hist_counts(df_act=None, df_ac=None, y_scale=None, idle=False, figsize=None,
         return fig
 
 
-def boxplot_duration(df_act, y_scale=None, idle=False, figsize=None, file_path=None):
+def boxplot_duration(df_act, lst_act=None, y_scale=None, idle=False, figsize=None, file_path=None):
     """ boxplot of activity durations (mean) max min
     Parameters
     ----------
@@ -104,8 +104,7 @@ def boxplot_duration(df_act, y_scale=None, idle=False, figsize=None, file_path=N
     if idle:
         df_act = add_idle(df_act)
 
-    
-    df = activities_duration_dist(df_act)  
+    df = activities_duration_dist(df_act, list_activities=lst_act)
     # select data for each device
     activities = df['activity'].unique()
     df['seconds'] = df['minutes']*60     
@@ -139,7 +138,7 @@ def boxplot_duration(df_act, y_scale=None, idle=False, figsize=None, file_path=N
     else:
         return fig
 
-def hist_cum_duration(df_act=None, df_dur=None, y_scale=None, idle=False, figsize=None, color=None, file_path=None):
+def hist_cum_duration(df_act=None, act_lst=None, df_dur=None, y_scale=None, idle=False, figsize=None, color=None, file_path=None):
     """ plots the cummulated duration for each activity in a bar plot
 
     Parameters
@@ -166,22 +165,17 @@ def hist_cum_duration(df_act=None, df_dur=None, y_scale=None, idle=False, figsiz
 
     title = 'Cummulative activity durations'
     xlabel = 'seconds'
+    freq = 'seconds'
     color = (get_primary_color() if color is None else color)
 
     if df_dur is None:
         if idle:
             df_act = add_idle(df_act.copy())
-        df = activities_durations(df_act)
+        df = activity_durations(df_act, list_activities=act_lst, freq=freq)
     else:
         df = df_dur
+    df = df.sort_values(by=[freq], axis=0)
 
-    df = df[['minutes']]
-    df.reset_index(level=0, inplace=True)
-    df = df.sort_values(by=['minutes'], axis=0)
-    # TODO change in activities duration to return time in seconds
-    df['seconds'] = df['minutes']*60 
-
-    #
     num_act = len(df)
     figsize = (_num_bars_2_figsize(num_act) if figsize is None else figsize)
     
@@ -206,7 +200,7 @@ def hist_cum_duration(df_act=None, df_dur=None, y_scale=None, idle=False, figsiz
     else:
         return fig
 
-def heatmap_transitions(df_act=None, df_trans=None, z_scale=None, figsize=None, \
+def heatmap_transitions(df_act=None, lst_act=None, df_trans=None, z_scale=None, figsize=None, \
     idle=False, numbers=True, grid=True, cmap=None, file_path=None):
     """    """
     assert z_scale in [None, 'log'], 'z-scale has to be either of type None or log'
@@ -217,7 +211,7 @@ def heatmap_transitions(df_act=None, df_trans=None, z_scale=None, figsize=None, 
 
     if df_trans is None:
         df_act = add_idle(df_act) if idle else df_act
-        df = activities_transitions(df_act)
+        df = activities_transitions(df_act, lst_act=lst_act)
     else:
         df = df_trans
 
@@ -249,7 +243,7 @@ def heatmap_transitions(df_act=None, df_trans=None, z_scale=None, figsize=None, 
     else:
         return fig
 
-def ridge_line(df_act=None, act_dist=None, t_range='day', idle=False, \
+def ridge_line(df_act=None, lst_act=None, act_dist=None, t_range='day', idle=False, \
         n=1000, ylim_upper=None, color=None, figsize=None, file_path=None):
     """
     Parameters
@@ -270,7 +264,9 @@ def ridge_line(df_act=None, act_dist=None, t_range='day', idle=False, \
     if act_dist is None:
         if idle:
             df_act = add_idle(df_act)
-        df = activities_dist(df_act.copy(), t_range, n)
+        df = activities_dist(df_act.copy(), lst_act=lst_act, t_range=t_range, n=n)
+        if df.empty:
+            raise ValueError("no activity was recorded and no activity list was given.")
     else:
         df = act_dist
 
@@ -285,6 +281,8 @@ def ridge_line(df_act=None, act_dist=None, t_range='day', idle=False, \
         -------
 
         """
+        if pd.isnull(date):
+            return -1
         val = (date - np.datetime64('1990-01-01')) / np.timedelta64(1, 's')
         total_seconds = 60*60*24
         assert val <= total_seconds and val >= 0
@@ -322,7 +320,7 @@ def ridge_line(df_act=None, act_dist=None, t_range='day', idle=False, \
         #    return ''
         #else:
         if True:
-            if int(x/k) < 10:
+            if np.ceil(x/k) < 10:
                 return '0{}:00'.format(int(x/k)+1)
             else:
                 return '{}:00'.format(int(x/k)+1)

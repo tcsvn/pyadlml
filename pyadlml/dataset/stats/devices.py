@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
-from pyadlml.dataset import START_TIME, END_TIME, TIME, \
-    TIME, NAME, VAL, DEVICE
+from pyadlml.dataset import START_TIME, END_TIME, TIME, NAME, VAL, DEVICE
 from pyadlml.dataset.util import time2int, timestr_2_timedeltas
 from pyadlml.dataset.devices import device_rep1_2_rep2, _create_devices, \
                                     _is_dev_rep1, _is_dev_rep2
@@ -12,7 +11,7 @@ from pyadlml.util import get_npartitions
 from dask import delayed
 import dask.dataframe as dd
 
-def duration_correlation_parallel(df_dev):
+def duration_correlation(df_dev, lst_dev=None):
     """ compute the crosscorelation by comparing for every interval the binary values
     between the devices
     
@@ -41,11 +40,12 @@ def duration_correlation_parallel(df_dev):
             tdiffs = states[j]*states*td            
             row.iloc[1+j] = tdiffs 
         return row
+
     def create_meta(raw):
         devices = {name : 'object' for name in raw.columns[1:-1]}
         return {**{'time': 'datetime64[ns]', 'td': 'timedelta64[ns]'}, **devices}
         
-    dev_lst = df_dev['device'].unique()
+    dev_lst = df_dev[DEVICE].unique()
     df_dev = df_dev.sort_values(by='time')
 
     K = len(dev_lst)
@@ -58,91 +58,49 @@ def duration_correlation_parallel(df_dev):
                 .apply(func, axis=1).drop(columns=['time', 'td']).sum(axis=0)\
                 .compute(scheduler='processes')
                 #.apply(func, axis=1, meta=create_meta(raw)).drop(columns=['time', 'td']).sum(axis=0)\
-    res = pd.DataFrame(data=np.vstack(df.values), columns=df.index, index=df.index)        
-    return res/res.iloc[0,0]
 
+    res = pd.DataFrame(data=np.vstack(df.values), columns=df.index, index=df.index)
+    # normalize
+    res = res/res.iloc[0,0]
 
-def duration_correlation(df_dev):
-    """ compute the crosscorelation by comparing for every interval the binary values
-    between the devices
-    
-    Parameters
-    ----------
-        df_dev: pd.DataFrame
-            device representation 1 
-            columns [time, device, val]
-    returns
-    -------
-        pd.DataFrame (k x k)
-        crosscorrelation between each device
-    """
-    dev_lst = df_dev['device'].unique()
-    df_dev = df_dev.sort_values(by='time')
+    if lst_dev is not None:
+        for dev in set(lst_dev).difference(set(list(res.index))):
+            res[dev] = pd.NA
+            res = res.append(pd.DataFrame(data=pd.NA, columns=res.columns, index=[dev]))
+    return res
 
-    K = len(dev_lst)
-    crosstab = np.full((K,K), 0, dtype='timedelta64[ns]')
-
-    # make off to -1 and on to 1 and then calculate cross correlation between signals
-    
-    states = np.full(K, -1)
-    prae_time = df_dev.iloc[0].time
-    dev_idx = np.where(dev_lst == df_dev.iloc[0].device)[0][0]
-    states[dev_idx] = 1
-    
-    
-    # sweep through all 
-    i=0
-    for row in df_dev.iterrows():
-        if i == 0: i+=1; continue
-
-        # for every device determine cross correlation by multiplying
-        # the state of the device with the vector of states in order 
-        # to know if to subtract or add the time in the previous interval
-        nt = row[1].time
-        td = (nt - prae_time).to_timedelta64()   
-        for j in range(K):
-            dev_st = states[j]
-            tdiffs = dev_st*states*td
-            crosstab[j,:] = crosstab[j,:] + tdiffs
-
-        # update state array with new state and set new time
-        dev_idx = np.where(dev_lst == row[1].device)[0][0]
-        if row[1].val:
-            states[dev_idx] = 1
-        else:
-            states[dev_idx] = -1
-        prae_time = nt
-    
-    # normalize by the whole time. Diagonal contains full timeframe
-    crosstab = crosstab/crosstab[0,0]
-    ct = pd.DataFrame(data=crosstab, index=dev_lst, columns=dev_lst)
-    return ct
-
-
-def devices_trigger_count(df):
+def devices_trigger_count(df, lst=None):
     """ counts the amount a device was triggered
     Parameters
     ----------
     df : pd.DataFrame
         Contains representation 1 of the devices
         column: [time, device, val]
-
+    lst : list
+        Optional list of device names
     Returns
     ------
+    df : pd.DataFrame
+        columns [device, trigger count]
     """
     assert _is_dev_rep1(df)
 
-    df = df.groupby('device')['device'].count()
-    df = pd.DataFrame(df)
-    df.columns = ['trigger count']
-    return df
+    col_label = 'trigger_count'
 
-def devices_dist(df_dev, t_range='day', n=1000):
-    """
-    returns an array where for one (day | week) the device
-    are sampled over time 
-    """
-    return _create_dist(df_dev, label=DEVICE, t_range=t_range, n=n)
+    ser = df.groupby(DEVICE)[DEVICE].count()
+    df = pd.DataFrame({DEVICE:ser.index, col_label:ser.values})
+
+    if lst is not None:
+        for dev in set(lst).difference(set(list(df[DEVICE]))):
+            df = df.append(pd.DataFrame(data=[[dev, 0]], columns=df.columns, index=[len(df)]))
+    return df.sort_values(by=DEVICE)
+
+#def devices_dist(df_dev, t_range='day', n=1000):
+#    """
+#    returns an array where for one (day | week) the device
+#    are sampled over time
+#    """
+#    return _create_dist(df_dev, label=DEVICE, t_range=t_range, n=n)
 
 
 def trigger_time_diff(df):
@@ -153,10 +111,11 @@ def trigger_time_diff(df):
         devices in representation 1
     Returns
     -------
-    X : np.array
+    X : np.array of len(df)
         time deltas in seconds
     """
     # create timediff to the previous trigger
+    df = df.copy()
     df['time_diff'] = df['time'].diff()
 
     # calculate duration to next trigger
@@ -172,7 +131,17 @@ def trigger_time_diff(df):
 
     return X
 
-def devices_on_off_stats(df):
+def devices_td_on(df):
+    """ computes the difference for each datapoint in device
+    """
+    time_difference = 'td'
+    if not _is_dev_rep2(df):
+        df, _ = device_rep1_2_rep2(df.copy(), drop=False)
+    df[time_difference] = df[END_TIME] - df[START_TIME]
+    return df[[DEVICE, time_difference]]
+
+
+def devices_on_off_stats(df, lst=None):
     """
     calculate the time and proportion a device was on vs off
     params:
@@ -181,7 +150,7 @@ def devices_on_off_stats(df):
     returns: pd.DataFrame
         | device | td_on    | td_off   | frac on   | frac off |
         --------------------------------------------------
-        | freezer| 00:10:13 | 27 days   | 0.0025    | 0.999   |
+        | freezer| 00:10:13 | 27 days   | 0.001    | 0.999   |
         ....
 
     """
@@ -191,7 +160,8 @@ def devices_on_off_stats(df):
     td_off = 'td_off'
     frac_on = 'frac_on'
     frac_off = 'frac_off'
-
+    if not _is_dev_rep2(df):
+        df, _ = device_rep1_2_rep2(df.copy(), drop=False)
     df = df.sort_values(START_TIME)
 
     # calculate total time interval for normalization
@@ -212,9 +182,14 @@ def devices_on_off_stats(df):
                     / norm.total_seconds() 
     df[frac_off] = df[td_off].dt.total_seconds() \
                     / norm.total_seconds()
-    return df
+    if lst is not None:
+        for dev in set(lst).difference(set(list(df.index))):
+            df = df.append(pd.DataFrame(data=[[pd.NaT, pd.NaT, pd.NA, pd.NA]], columns=df.columns, index=[dev]))
+    return df.reset_index()\
+        .rename(columns={'index':DEVICE})\
+        .sort_values(by=[DEVICE])
 
-def device_tcorr(df, t_windows=['20s']):
+def device_tcorr(df, lst_dev=None, t_window='20s'):
     """ computes for every time window the prevalence of device triggers
         for each device
 
@@ -229,42 +204,45 @@ def device_tcorr(df, t_windows=['20s']):
 
     Returns 
     -------
-    lst : list of panda dataframes
+    res : pd.DataFrame
     """
 
-    t_windows = timestr_2_timedeltas(t_windows)
+    t_window = timestr_2_timedeltas(t_window)[0]
     
     # create timediff to the previous trigger
     df = df.copy() 
-    df['time_diff'] = df['time'].diff()
+    df['time_diff'] = df[TIME].diff()
 
     #knn
     #    do cumsum for row_duration 
     #    for each row mask the rows that fall into the given area
-    dev_list =  df.device.unique()
+    if lst_dev is not None:
+        dev_list = lst_dev
+    else:
+        dev_list =  df.device.unique()
     
     df.iloc[0,3] = pd.Timedelta(0, 's')
     df['cum_sum'] = df['time_diff'].cumsum()
     
-    lst = []
-    for t_window in t_windows:
-        # create cross table with zeros
-        res_df = pd.DataFrame(columns=dev_list, index=dev_list)
-        for col in res_df.columns:
-            res_df[col].values[:] = 0
+    # create cross table with zeros
+    res_df = pd.DataFrame(columns=dev_list, index=dev_list)
+    for col in res_df.columns:
+        res_df[col].values[:] = 0
 
-        # this whole iterations can be done in parallel
-        for row in df.iterrows():
-            td = row[1].cum_sum
-            dev_name = row[1].device 
-            
-            df['tmp'] = (td-t_window < df['cum_sum']) & (df['cum_sum'] < td+t_window)
-            tmp = df.groupby('device')['tmp'].sum()
-            res_df.loc[dev_name] += tmp
-        lst.append(res_df)
-    return lst
+    # this whole iterations can be done in parallel
+    for row in df.iterrows():
+        td = row[1].cum_sum
+        dev_name = row[1].device
 
-def device_triggers_one_day(df, t_res='1h'):
+        df['tmp'] = (td-t_window < df['cum_sum']) & (df['cum_sum'] < td+t_window)
+        tmp = df.groupby(DEVICE)['tmp'].sum()
+        res_df.loc[dev_name] += tmp
+
+    return res_df.sort_index(axis=0, ascending=True) \
+        .sort_index(axis=1, ascending=True) \
+        .replace(pd.NA, 0)
+
+def device_triggers_one_day(df, lst=None, t_res='1h'):
     """
     computes the amount of triggers of a device for each hour of a day summed
     over all the weeks
@@ -278,9 +256,13 @@ def device_triggers_one_day(df, t_res='1h'):
             values: the amount a device changed states 
     """
     # compute new table
-    df['time'] = df['time'].apply(time2int, args=[t_res])
-    df = df.groupby(['time', 'device']).sum().unstack()
+    df = df.copy()
+    df[TIME] = df[TIME].apply(time2int, args=[t_res])
+    df = df.groupby([TIME, DEVICE]).sum().unstack()
     df = df.fillna(0)
     df.columns = df.columns.droplevel(0)
-    return df
 
+    if lst is not None:
+        for device in set(lst).difference(df.columns):
+           df[device] = 0
+    return df

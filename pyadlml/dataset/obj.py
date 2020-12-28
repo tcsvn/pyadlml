@@ -3,7 +3,7 @@ from pyadlml.dataset._representations.changepoint import create_changepoint
 from pyadlml.dataset.activities import check_activities
 
 class Data():
-    def __init__(self, activities, devices):
+    def __init__(self, activities, devices, activity_list, device_list):
         #assert check_activities(activities) 
         #assert check_devices(devices)
 
@@ -11,11 +11,8 @@ class Data():
         self.df_devices = devices
 
         # list of activities and devices
-        #self.activities = list(activities.activity.unique())
-        #self.devices = list(devices.device.unique())
-        self.df_raw = None
-        self.df_cp = None
-        self.df_lf = None
+        self.lst_activities = activity_list
+        self.lst_devices = device_list
 
     def create_cp(self, t_res):
         raise NotImplementedError

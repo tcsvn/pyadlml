@@ -2,39 +2,62 @@ import pandas as pd
 import numpy as np
 from pyadlml.dataset import START_TIME, END_TIME, ACTIVITY
 
-def activities_duration_dist(df_activities, freq='minutes'):
+def _get_freq_func(freq):
+    """ returns the correct transform function of time differences into integers
+        the column on which the function is applied has to be of type timedelta
+    Parameters
+    """
+    assert freq in ['minutes', 'hours', 'seconds', 'm', 'h', 's']
+    if freq == 'seconds' or freq == 's':
+        return lambda x: x.total_seconds()
+    elif freq == 'minutes' or freq == 'm':
+        return lambda x: x.total_seconds()/60
+    else:
+        return lambda x: x.total_seconds()/3600
+
+def activities_duration_dist(df_activities, list_activities=None, freq='minutes'):
     """
     """
-    assert freq in ['minutes', 'hours', 'seconds']
     df = df_activities.copy()
 
     # integrate the time difference for activities
     diff = 'total_time'
     df[diff] = df[END_TIME] - df[START_TIME]
     df = df[[ACTIVITY, diff]]
-    if freq == 'seconds':
-        func = lambda x: x.total_seconds()
-    elif freq == 'minutes':
-        func = lambda x: x.total_seconds()/60
-    else:
-        func = lambda x: x.total_seconds()/3600
-    df[freq] = df[diff].apply(func)
-    return df
 
-def activities_durations(df_activities, freq='minutes'):
+    # if no data is logged for a certain activity append 0.0 duration value
+    if list_activities is not None:
+        for activity in set(list_activities).difference(set(list(df[ACTIVITY]))):
+            df = df.append(pd.DataFrame(
+                data=[[activity, pd.Timedelta('0ns')]],
+                columns=df.columns, index=[len(df)]))
+    df[freq] = df[diff].apply(_get_freq_func(freq))
+    return df.sort_values(by=ACTIVITY)
+
+def activity_durations(df_activities, list_activities=None, freq='minutes', norm=False):
     """
     returns a dataframe containing statistics about the activities durations
     """
-    df = activities_duration_dist(df_activities, freq=freq)
-    df = df.groupby('activity').sum()
+    df = activities_duration_dist(df_activities, list_activities=list_activities, freq=freq)
+    if df.empty:
+        raise ValueError("no activity was recorded")
+    df = df.groupby(ACTIVITY).sum().reset_index()
+    df.columns = [ACTIVITY, freq]
 
     # compute fractions of activities to each other
-    norm = df[freq].sum()
-    #df[freq] = df[freq].apply(lambda x: x/norm)
-    return df
+    if norm:
+        norm = df[freq].sum()
+        df[freq] = df[freq].apply(lambda x: x/norm)
 
-def activities_count(df_activities):
-    """
+    return df.sort_values(by=ACTIVITY)
+
+def activities_count(df_activities, lst_activities=None):
+    """ computes the count of activities within a dataframe
+    Parameters
+    ----------
+    df_activities : pd.DataFrame
+    df_activity_map : pd.DataFrame
+
     Returns
     -------
     res pd.Dataframe
@@ -42,43 +65,24 @@ def activities_count(df_activities):
         occurence           33         111  ...              10         19
 
     """
+    res_col_name = 'occurence'
     df = df_activities.copy()
 
     # count the occurences of the activity
-    df = df.groupby(ACTIVITY).count()
+    df = df.groupby(ACTIVITY).count().reset_index()
     df = df.drop(columns=[END_TIME])
-    df.columns = ['occurence']
-    return df
+    df.columns = [ACTIVITY, res_col_name]
+
+    # correct for missing activities
+    if lst_activities is not None:
+        diff = set(lst_activities).difference(set(list(df[ACTIVITY])))
+        for activity in diff:
+            df = df.append(pd.DataFrame(data=[[activity, 0.0]], columns=df.columns, index=[len(df) + 1]))
+
+    return df.sort_values(by=ACTIVITY)
 
 
-def activities_dist(df_act, t_range='day', n=1000):
-    """
-    returns an array where for one (day | week) the activities
-    are sampled over time 
-    """
-    return _create_dist(df_act, label=ACTIVITY, t_range=t_range, n=n)
-
-def _create_dist(df, label='activity', t_range='day', n=1000):
-    """
-        principle: ancestral sampling
-            select an interval at random 
-            sample uniform value of the interval
-        # todo
-            make gaussian Distribution centered at interval instead 
-            of uniform 
-            solves the problem that beyond interval limits there can't be
-            any sample
-    """
-    assert t_range in ['day', 'week']
-    df = df.copy()
-
-    res = pd.DataFrame()
-    for i in df[label].unique():
-        series = _sample_ts(df[df[label] == i], n)
-        res[i] = series
-    return res
-
-def activities_transitions(df_act):
+def activities_transitions(df_act, lst_act=None):
     """
     returns the transition matrix (a \times a) of activities
     c_ij describes how often an activity i was followed by activity j
@@ -86,10 +90,50 @@ def activities_transitions(df_act):
     df = df_act.copy()
     df = df[['activity']]
     df['act_after'] = df['activity'].shift(-1)
-
-    #df = df.groupby("activity")['act_after'].value_counts()).unstack(fill_value=0)
     df = pd.crosstab(df["activity"], df['act_after'])
+
+    if lst_act is not None:
+        diff = set(lst_act).difference(set(list(df.index)))
+        for activity in diff:
+            df[activity] = 0
+            df = df.append(pd.DataFrame(data=0.0, columns=df.columns, index=[activity]))
+
+    # sort activities alphabetically
+    df = df.sort_index(axis=0)
+    df = df.sort_index(axis=1)
     return df
+
+
+def activities_dist(df_act, lst_act=None, t_range='day', n=1000):
+    """ use monte-carlo to sample points from interval to approximate an activity density
+        for one day
+        principle: ancestral sampling
+            select an interval at random
+            sample uniform value of the interval
+        # todo
+            sample from gaussian dist centered at interval instead
+            of uniform dist
+            solves the problem that beyond interval limits there can't be
+            any sample
+    Returns
+    -------
+    res : pd.DataFrame
+        activities a columns and n-rows. Each field is a timestamp density point
+    """
+    label='activity'
+    df = df_act
+    assert t_range in ['day', 'week']
+    df = df.copy()
+
+    res = pd.DataFrame(index=range(n))
+    for i in df[label].unique():
+        series = _sample_ts(df[df[label] == i], n)
+        res[i] = series
+
+    if lst_act is not None:
+        for activity in set(lst_act).difference(res.columns):
+            res[activity] = pd.NaT
+    return res
 
 def _sample_ts(sub_df, n):
     """

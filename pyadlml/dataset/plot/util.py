@@ -339,23 +339,28 @@ def ridgeline(data, overlap=0, fill=True, labels=None, n_points=150, dist_scale=
     """
     if overlap > 1 or overlap < 0:
         raise ValueError('overlap must be in [0 1]')
-    xx = np.linspace(np.min(np.concatenate(data)),
-                     np.max(np.concatenate(data)), n_points)
+    #xx = np.linspace(np.min(np.concatenate(data)),
+    #                 np.max(np.concatenate(data)), n_points)
+    xx = np.linspace(0.0, 86400.0, n_points)
     
     curves = []
     ys = []
 
     for i, d in enumerate(data):
-        pdf = gaussian_kde(d)
+        if d[0] == -1:
+            # the case when there is no sample from this activity
+            curve = np.zeros(shape=xx.shape)
+        else:
+            curve = gaussian_kde(d).pdf(xx)
+
         y = i*(1.0-overlap)
         ys.append(y)
-        curve = pdf(xx)
         curve = minmax_scale(curve)*dist_scale
         if fill:
-            plt.fill_between(xx, np.ones(n_points)*y, 
+            plt.fill_between(xx, np.ones(n_points)*y,
                              curve+y, zorder=len(data)-i+1, color=fill)
         plt.plot(xx, curve+y, c='k', zorder=len(data)-i+1)
-        #break
+
     if labels:
         plt.yticks(ys, labels)
 

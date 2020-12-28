@@ -7,7 +7,7 @@ from plotly.colors import n_colors
 
 from pyadlml.dataset import START_TIME
 from pyadlml.dataset.stats.activities import activities_duration_dist, \
-    activities_count, activities_durations, activities_dist, \
+    activities_count, activity_durations, activities_dist, \
     activities_transitions
 
 def ridge_line(df_act, t_range='day', n=1000):
@@ -67,7 +67,7 @@ def hist_cum_duration(df_act, y_scale='both'):
 
     title = 'Activity cummulative durations'
 
-    act_dur = activities_durations(df_act.copy())
+    act_dur = activity_durations(df_act.copy())
     df = act_dur[['minutes']]
     df.reset_index(level=0, inplace=True)
     if y_scale in ['norm', 'log']: 
