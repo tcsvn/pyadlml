@@ -3,7 +3,7 @@ import pandas as pd
 from pyadlml.dataset import START_TIME, END_TIME, TIME, NAME, VAL, DEVICE
 from pyadlml.dataset.util import time2int, timestr_2_timedeltas
 from pyadlml.dataset.devices import device_rep1_2_rep2, _create_devices, \
-                                    _is_dev_rep1, _is_dev_rep2
+    _is_dev_rep1, _is_dev_rep2, contains_non_binary, split_devices_binary
 
 from pyadlml.dataset.util import timestr_2_timedeltas
 from pyadlml.dataset._representations.raw import create_raw
@@ -25,6 +25,9 @@ def duration_correlation(df_dev, lst_dev=None):
         pd.DataFrame (k x k)
         crosscorrelation between each device
     """
+    if contains_non_binary(df_dev):
+        df_dev, _ = split_devices_binary(df_dev)
+
     def func(row):
         """ gets two rows and returns a crosstab
         """        
@@ -115,26 +118,20 @@ def trigger_time_diff(df):
         time deltas in seconds
     """
     # create timediff to the previous trigger
-    df = df.copy()
-    df['time_diff'] = df['time'].diff()
+    diff_seconds = 'ds'
+    df = df.copy().sort_values(by=[TIME])
 
-    # calculate duration to next trigger
-    df['row_duration'] = df.time_diff.shift(-1)
-
-    # calculate the time differences for each device sepeartly
-    #df = df.sort_values(by=['device','time'])
-    #df['time_diff2'] = df['time'].diff()
-    #df.loc[df.device != df.device.shift(), 'time_diff2'] = None
-    df = df.sort_values(by=['time'])
-    df['sec_to_next'] = df['row_duration']/pd.Timedelta(seconds=1)
-    X = df['sec_to_next'].values[:-1]
-
-    return X
+    # compute the seconds to the next device
+    df[diff_seconds] = df[TIME].diff().shift(-1)/pd.Timedelta(seconds=1)
+    return df[diff_seconds].values[:-1]
 
 def devices_td_on(df):
     """ computes the difference for each datapoint in device
     """
     time_difference = 'td'
+    if contains_non_binary(df):
+        df, _ = split_devices_binary(df)
+
     if not _is_dev_rep2(df):
         df, _ = device_rep1_2_rep2(df.copy(), drop=False)
     df[time_difference] = df[END_TIME] - df[START_TIME]
@@ -154,12 +151,15 @@ def devices_on_off_stats(df, lst=None):
         ....
 
     """
-    # colum names of the final dataframe
     diff = 'diff'
     td_on = 'td_on'
     td_off = 'td_off'
     frac_on = 'frac_on'
     frac_off = 'frac_off'
+
+    if contains_non_binary(df):
+        df, _ = split_devices_binary(df)
+
     if not _is_dev_rep2(df):
         df, _ = device_rep1_2_rep2(df.copy(), drop=False)
     df = df.sort_values(START_TIME)
@@ -255,9 +255,12 @@ def device_triggers_one_day(df, lst=None, t_res='1h'):
             columsn devices
             values: the amount a device changed states 
     """
-    # compute new table
     df = df.copy()
+    # set devices time to their time bin
     df[TIME] = df[TIME].apply(time2int, args=[t_res])
+
+    # every trigger should count
+    df[VAL] = 1
     df = df.groupby([TIME, DEVICE]).sum().unstack()
     df = df.fillna(0)
     df.columns = df.columns.droplevel(0)

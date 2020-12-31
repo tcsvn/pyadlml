@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from pyadlml.dataset import VAL, TIME, DEVICE, END_TIME, START_TIME, ACTIVITY
 from pyadlml.dataset.activities import _is_activity_overlapping
 from pyadlml.dataset.devices import correct_devices
 from pyadlml.dataset.obj import Data
@@ -96,22 +97,22 @@ def _create_activity_df(df, res_name):
     
     mask_start = df[res_name] != df[res_name].shift(1)
     df_start = df[mask_start]
-    df_start = df_start.rename(columns={'index' : 'start_time'})
+    df_start = df_start.rename(columns={'index' : START_TIME})
     df_start = df_start.reset_index(drop=True)
 
     mask_end = df[res_name] != df[res_name].shift(-1)
     df_end = df[mask_end].reset_index(drop=True)
     
-    df_start['end_time'] = df_end['index']
+    df_start[END_TIME] = df_end['index']
     
-    df = df_start[['start_time', 'end_time', res_name]]
-    df = df.sort_values(by='start_time')
-    df = df.rename(columns={res_name : 'activity'})
+    df = df_start[[START_TIME, END_TIME, res_name]]
+    df = df.sort_values(by=START_TIME)
+    df = df.rename(columns={res_name : ACTIVITY})
     return df
 
 
 def _create_device_df(df):
-    """ gets a raw representation and returns devices in rep3
+    """ gets a raw representation and returns devices in rep1
     Parameters
     ----------
     df : pd.DataFrame
@@ -127,17 +128,18 @@ def _create_device_df(df):
     mask_1to0 = (df.diff(axis=0) == -1)
     
     # for every device append the rows where the device changes state
-    res = pd.DataFrame(columns=['time', 'device', 'val'])
+    res = pd.DataFrame(columns=[TIME, DEVICE, VAL])
     for device in df.columns:
         dev_0to1 = pd.DataFrame(df[device][mask_0to1[device]])
         dev_1to0 = pd.DataFrame(df[device][mask_1to0[device]])
         tmp = pd.concat([dev_0to1, dev_1to0]).reset_index()
-        tmp.columns=['time', 'val']
-        tmp['device'] = device
+        tmp.columns = [TIME, VAL]
+        tmp[DEVICE] = device
         
         res = res.append(tmp)
     
-    res = res.sort_values(by='time').reset_index(drop=True)
+    res = res.sort_values(by=TIME).reset_index(drop=True)
+    res[VAL] = res[VAL].astype(bool)
     return res
 
 

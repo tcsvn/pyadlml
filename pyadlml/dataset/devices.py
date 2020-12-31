@@ -1,9 +1,7 @@
 import numpy as np
 import pandas as pd
 import dask
-from pyadlml.dataset import START_TIME, END_TIME, TIME, \
-    TIME, NAME, VAL, DEVICE
-from pyadlml.util import get_parallel, get_npartitions
+from pyadlml.dataset import START_TIME, END_TIME, TIME, VAL, DEVICE
 
 """
     df_devices:
@@ -24,6 +22,7 @@ from pyadlml.util import get_parallel, get_npartitions
  
  """
 
+
 def _create_devices(dev_list, index=None):
     """
     creates an empty device dataframe
@@ -32,7 +31,6 @@ def _create_devices(dev_list, index=None):
         return pd.DataFrame(columns=dev_list, index=index)
     else:
         return pd.DataFrame(columns=dev_list)
-
 
 
 def _check_devices_sequ_order(df):
@@ -49,18 +47,18 @@ def _check_devices_sequ_order(df):
     no_errors = True
     for dev in dev_list:
         df_d = df[df['device'] == dev]
-        for i in range(1,len(df_d)):
+        for i in range(1, len(df_d)):
             st_j = df_d.iloc[i-1].start_time
             et_j = df_d.iloc[i-1].end_time
             st_i = df_d.iloc[i].start_time
-            et_i = df_d.iloc[i].end_time
+            # et_i = df_d.iloc[i].end_time
             # if the sequential order is violated return false
             if not (st_j < et_j) or not (et_j < st_i):
                 print('~'*50)
-                if (st_j >= et_j):                    
+                if st_j >= et_j:
                     #raise ValueError('{}; st: {} >= et: {} |\n {} '.format(i-1, st_j, et_j, df_d.iloc[i-1]))
                     print('{}; st: {} >= et: {} |\n {} '.format(i-1, st_j, et_j, df_d.iloc[i-1]))
-                if (et_j >= st_i):                    
+                if et_j >= st_i:
                     #raise ValueError('{},{}; et: {} >= st: {} |\n{}\n\n{}'.format(i-1,i, et_j, st_i, df_d.iloc[i-1], df_d.iloc[i]))
                     print('{},{}; et: {} >= st: {} |\n{}\n\n{}'.format(i-1,i, et_j, st_i, df_d.iloc[i-1], df_d.iloc[i]))
                 no_errors = False
@@ -258,6 +256,36 @@ def _has_timestamp_duplicates(df):
         dup_mask = df.duplicated(subset=[TIME], keep=False)
     return dup_mask.sum() > 0
 
+
+def split_devices_binary(df):
+    """ separate binary devices and non-binary devices
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Dataframe in device representation 1
+    Returns
+    -------
+    df_binary, df_non_binary : pd.DataFrames
+        Dataframe with binary devices and dataframe without binary devices
+    """
+    mask_binary = df[VAL].apply(lambda x: isinstance(x, bool))
+    return df[mask_binary], df[~mask_binary]
+
+
+def contains_non_binary(df) -> bool:
+    """ determines whether the the dataframes values contain non-boolean values
+    These can be continuous values of categorical.
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Dataframe in device representation 1
+    Returns
+    -------
+    boolean
+    """
+    return not df[VAL].apply(lambda x: isinstance(x, bool)).all()
+
+
 def correct_devices(df):
     """
     Parameters
@@ -276,56 +304,79 @@ def correct_devices(df):
     
     # bring in correct representation
     if _is_dev_rep2(df):
-        cor_rep1 = device_rep2_2_rep1(df)        
-    elif _is_dev_rep1(df):
-        cor_rep1 = df
-    else:
-        raise ValueError
-    cor_rep1 = cor_rep1.sort_values(by='time').reset_index(drop=True)
+        df = device_rep2_2_rep1(df)
+    elif not _is_dev_rep1(df):
+        raise ValueError('Devices representation is not known')
+
+    df = df.sort_values(by=TIME).reset_index(drop=True)
 
     # correct timestamp duplicates
-    while _has_timestamp_duplicates(cor_rep1):
-        cor_rep1 = correct_device_rep1_ts_duplicates(cor_rep1)
+    while _has_timestamp_duplicates(df):
+        df = correct_device_rep1_ts_duplicates(df)
+    assert not _has_timestamp_duplicates(df)
 
-    # correct on off incosistency
-    if not is_on_off_consistent(cor_rep1):
-        cor_rep1 = correct_on_off_inconsistency(cor_rep1)
+    if contains_non_binary(df):
+        df_binary, df_non_binary = split_devices_binary(df)
+        non_binary_exist = True
+    else:
+        df_binary = df
+        non_binary_exist = False
 
-    assert not _has_timestamp_duplicates(cor_rep1)
-    assert is_on_off_consistent(cor_rep1)
-   
-    return cor_rep1
+    # correct on/off inconsistency
+    if not is_on_off_consistent(df_binary):
+        df_binary = correct_on_off_inconsistency(df_binary)
+    assert is_on_off_consistent(df_binary)
+
+    # join dataframes
+    if non_binary_exist:
+        df = df_binary.append(df_non_binary).reset_index(drop=True)
+    else:
+        df = df_binary
+
+    return df
+
+
+def on_off_consistent_func(df, dev):
+    """ compute for each device if it is on/off consistent
+    Parameters
+    ----------
+    df : pd.DataFrame
+        the whole activity dataframe
+    dev : str
+        a device that occurs in the dataframe
+    Returns
+    -------
+    tupel [arg1, arg2]
+        first argument is a boolean whether this device is consistent
+        second is
+    """
+    df_dev = df[df[DEVICE] == dev].sort_values(by=TIME).reset_index(drop=True)
+    first_val = df_dev[VAL].iloc[0]
+    if first_val:
+        mask = np.zeros((len(df_dev)), dtype=bool)
+        mask[::2] = True
+    else:
+        mask = np.ones((len(df_dev)), dtype=bool)
+        mask[::2] = False
+    return [not (df_dev[VAL] ^ mask).sum() > 0, df_dev[[TIME, DEVICE, VAL]]]
 
 def is_on_off_consistent(df):
     """ devices can only go on after they are off and vice versa. check if this is true
-        for every column
+        for every device.
     Parameters
     ----------
     df : pd.DataFrame
         Dataframe in representation 1.
+        The dataframe must not include timestamp duplicates! When it does they can be arbitrarily reordered
+        when sorting for time thus destroying the consistency.
     """
-    # check if the alternating pattern of devices holds
-    def func(df, dev):
-        """ returns whether there are rows that are different to an alternating pattern
-        """
-        df_dev = df[df['device'] == dev].copy().sort_values(by='time').reset_index(drop=True)
-        first_val = df_dev['val'].iloc[0]
-        if first_val:            
-            mask = np.zeros((len(df_dev)), dtype=bool)
-            mask[::2] = True
-        else:
-            mask = np.ones((len(df_dev)), dtype=bool)
-            mask[::2] = False 
-    
-        return not (df_dev['val'] ^ mask).sum() > 0
-
     lazy_results = []
-    for dev in df['device'].unique():
-        res = dask.delayed(func)(df, dev)
+    for dev in df[DEVICE].unique():
+        res = dask.delayed(on_off_consistent_func)(df.copy(), dev)
         lazy_results.append(res)
 
     results = np.array(list(dask.compute(*lazy_results)))
-    return results.any() 
+    return results[:,0].all()
 
 
 
@@ -345,63 +396,36 @@ def correct_on_off_inconsistency(df):
         device representation 3
     """
     
-    def get_inconsistent_series(df_dev):            
-        # create alternating mask depending on first value            
-        first_val = df_dev['val'].iloc[0]
-        if first_val:            
-            mask = np.zeros((len(df_dev)), dtype=bool)
-            mask[::2] = True
-        else:
-            mask = np.ones((len(df_dev)), dtype=bool)
-            mask[::2] = False 
-    
-        df_dev['diff'] = df_dev['val'] ^ mask
-        if df_dev['diff'].sum() > 0:
-            val = True
-        else:
-            val = False
-        return (val, df_dev[['time', 'device', 'val']])
-        
-        
-    def get_inconsistent_parts(df, dev):
-        df_dev = df[df['device'] == dev].copy().sort_values(by='time').reset_index()
-        return get_inconsistent_series(df_dev)
-                    
     def correct_part(df_dev):
-        """ get index of rows where the previous value was the same and delete row
+        """ get index of rows where the previous on/off value was the same and delete row
+        Parameters
+        ----------
+        df_dev : pd.DataFrame
+            subset of the big dataframe consisting only of events for a fixed device
         """
-        
-        df_dev['same_prec'] = ~(df_dev['val'].shift(1) ^ df_dev['val'])
+        df_dev['same_prec'] = ~(df_dev[VAL].shift(1) ^ df_dev[VAL])
         df_dev.loc[0, 'same_prec'] = False # correct shift artefact
         indices = list(df_dev[df_dev['same_prec']].index)
         df_dev = df_dev.drop(indices, axis=0)
-        return df_dev[['time', 'device', 'val']]
+        return df_dev[[TIME, DEVICE, VAL]]
                     
-    def split_incs(dev_df_list):
-        li, lc = [], []
-        for incon, part in dev_df_list:
-            if incon: li.append(part)
-            else: lc.append(part)
-        return lc, li
-    
+    df = df.copy()
     # create list of tuples e.g [(True, df_dev1), (False, df_dev2), ...]
-    dev_list = df['device'].unique()
+    dev_list = df[DEVICE].unique()
     dev_df_list = []
     for devs in dev_list:
-        dev_df_list.append(delayed(get_inconsistent_parts)(df, devs))
-    cons_lst, incons_lst = delayed(split_incs)(dev_df_list).compute()
-    
-    
-    tmp = []
-    for part in incons_lst:
-        corr_part = delayed(correct_part)(part)
-        tmp.append(delayed(get_inconsistent_series)(corr_part))
-    tmp = delayed(lambda x: x)(tmp).compute()
-    
-    # check if all series is on off consistent
-    for incon, part in tmp:
-        assert not incon
-        cons_lst.append(part)
-    
-    return pd.concat(cons_lst, ignore_index=True)\
-            .sort_values(by='time').reset_index(drop=True)
+        dev_df_list.append(delayed(on_off_consistent_func)(df, devs))
+    results = np.array(list(dask.compute(*dev_df_list)))
+
+    # filter inconsistent devices
+    incons = results[np.where(np.logical_not(results[:, 0]))[0], :][:, 1]
+
+    corrected = []
+    for part in incons:
+        corrected.append(delayed(correct_part)(part))
+    corr_dfs = delayed(lambda x: x)(corrected).compute()
+    corr_devs = [df[DEVICE].iloc[0] for df in corr_dfs]
+    tmp = [df[~df[DEVICE].isin(corr_devs)], *corr_dfs]
+
+    return pd.concat(tmp, ignore_index=True)\
+            .sort_values(by=TIME).reset_index(drop=True)

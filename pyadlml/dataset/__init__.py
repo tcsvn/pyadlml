@@ -22,7 +22,8 @@ from pyadlml.dataset._datasets.homeassistant import (
 from pyadlml.dataset._datasets.activity_assistant import load as load_act_assist
 
 from pyadlml.dataset.io import (
-    set_data_home
+    set_data_home,
+    clear_data_home
 )
 
 from pyadlml.dataset import plot, plotly, io, obj, util

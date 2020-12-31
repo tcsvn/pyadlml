@@ -272,7 +272,8 @@ def heatmap_cross_correlation(df_dev=None, lst_dev=None, df_dur_corr=None, figsi
         return fig
 
 
-def hist_on_off(df_dev=None, lst_dev=None, df_onoff=None, figsize=None, color=None, color_sec=None, file_path=None):
+def hist_on_off(df_dev=None, lst_dev=None, df_onoff=None, figsize=None,
+                color=None, color_sec=None, order='frac_on', file_path=None):
     """ bar plotting the on/off fraction of all devices
     Parameters
     ----------
@@ -289,6 +290,7 @@ def hist_on_off(df_dev=None, lst_dev=None, df_onoff=None, figsize=None, color=No
         Either a figure if file_path is not specified or nothing 
     """
     assert not (df_dev is None and df_onoff is None)
+    assert order in ['frac_on', 'name', 'area']
 
     title = 'Devices fraction on/off'
     xlabel ='Percentage in binary states' 
@@ -307,8 +309,14 @@ def hist_on_off(df_dev=None, lst_dev=None, df_onoff=None, figsize=None, color=No
     num_dev = len(df)
     figsize = (_num_bars_2_figsize(num_dev) if figsize is None else figsize)
 
-    df = df.sort_values(by='frac_on', axis=0)
-    dev_lst = list(df.index)
+    if order == 'frac_on':
+        df = df.sort_values(by='frac_on', axis=0)
+    elif order == 'name':
+        df = df.sort_values(by=DEVICE, axis=0)
+    else:
+        raise NotImplementedError('room order will be implemented in the future')
+
+    dev_lst = list(df[DEVICE])
     # Figure Size 
     fig, ax = plt.subplots(figsize=figsize)
     if lst_dev is not None:
@@ -326,17 +334,27 @@ def hist_on_off(df_dev=None, lst_dev=None, df_onoff=None, figsize=None, color=No
     plt.xlabel(xlabel)  
     plt.ylabel(ylabel)
     
-    # set 
-    widths = df['frac_off']
-    xcenters = widths/2
-    text_color='white'
-    for y, (x, c) in enumerate(zip(xcenters, widths)):
-        ax.text(x, y, '{:.4f}'.format(c), ha='center', va='center',
-                color=text_color)
-    
-    ax.legend(ncol=2, bbox_to_anchor=(0, 1),
+    # set the text centers to the middle for the greater fraction
+    widths = df['frac_off'].apply(lambda x: x if x >= 0.5 else 1-x)
+    xcenters = df['frac_off'].apply(lambda x: x/2 if x >= 0.5 else (1-x)/2 + x)
+    first_number_left = True
+    for y, c, w in zip(range(len(xcenters)), xcenters, widths):
+        if y == len(xcenters)-1 and c < 0.5:
+           first_number_left = False
+        if c > 0.5:
+            text_color='black'
+        else:
+            text_color='white'
+        ax.text(c, y, '{:.4f}'.format(w), ha='center', va='center', color=text_color)
+
+    if first_number_left:
+        ax.legend(ncol=2, bbox_to_anchor=(0, 1),
               loc='upper left', fontsize='small')
-    
+    else:
+         ax.legend(ncol=2, bbox_to_anchor=(1,1),
+              loc='upper right', fontsize='small')
+
+
     # Remove axes splines 
     for s in ['top', 'right']: 
         ax.spines[s].set_visible(False)
@@ -385,8 +403,9 @@ def hist_counts(df_dev=None, df_tc=None, lst_dev=None, figsize=None, y_scale=Non
     if order == 'alphabetic':
         df = df.sort_values(by=[DEVICE], ascending=True)
     elif order == 'count':
-        #df = df.sort_values(by=[])
-        pass
+        df = df.sort_values(by=[df_col])
+    else:
+        raise NotImplemented('the room order is going to be implemented')
 
     # plot
     fig, ax = plt.subplots(figsize=figsize)

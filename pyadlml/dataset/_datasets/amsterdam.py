@@ -88,8 +88,10 @@ def load(device_fp, activity_fp):
     df_act, cor_lst = correct_activities(df_act)
     
     df_dev = correct_devices(df_dev)
+    lst_act = df_act[ACTIVITY].unique()
+    lst_dev = df_dev[DEVICE].unique()
 
-    data = Data(df_act, df_dev)
+    data = Data(df_act, df_dev, activity_list=lst_act, device_list=lst_dev)
     data.correction_activities = cor_lst
     
     return data
