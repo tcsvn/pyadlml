@@ -21,7 +21,7 @@ class TestAmsterdamDataset(TestDatasetBase):
         self.data = fetch_amsterdam(keep_original=True, cache=False)
         self.fetch_method = fetch_amsterdam
         self.data_home = TEST_DATA_HOME
-        self.df_activity_attrs =  ['df_activities']
+        self.df_activity_attrs = ['df_activities']
         self.num_activities = 7
 
         self.len_devices = 2620

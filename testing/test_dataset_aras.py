@@ -9,17 +9,18 @@ from test_dataset_base import TestDatasetBase
 
 from pyadlml.dataset import set_data_home
 from pyadlml.dataset import ACTIVITY, DEVICE, END_TIME, START_TIME, VAL, TIME,\
-    set_data_home, fetch_amsterdam, clear_data_home
+    set_data_home, fetch_aras, clear_data_home
 TEST_DATA_HOME = '/tmp/pyadlml_testing'
 
-class TestAmsterdamDataset(TestDatasetBase):
+class TestDatasetAras(TestDatasetBase):
     __test__ = True
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def _setUp(self):
-        self.data = fetch_amsterdam(keep_original=True, cache=False)
-        self.fetch_method = fetch_amsterdam
+        set_data_home(TEST_DATA_HOME)
+        self.data = fetch_aras(keep_original=True, cache=False)
+        self.fetch_method = fetch_aras
         self.data_home = TEST_DATA_HOME
         self.df_activity_attrs =  ['df_activities']
         self.num_activities = 7
