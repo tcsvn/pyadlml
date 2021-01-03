@@ -3,6 +3,7 @@
 
 ![PyPI version](https://img.shields.io/pypi/v/pyadlml?style=flat-square)
 ![Download Stats](https://img.shields.io/pypi/dd/pyadlml?style=flat-square)
+![Read the Docs (version)](https://img.shields.io/readthedocs/pyadlml/latest?style=flat-square)
 ![License](https://img.shields.io/pypi/l/pyadlml?style=flat-square)
 <p align="center"><img width=95% src="https://github.com/tcsvn/pyadlml/blob/master/media/pyadlml_banner.png"></p>
 Activities of Daily living (ADLs) e.g cooking, working, sleeping and device readings are recorded by smart home inhabitants. The goal is to predict inhabitants activities using device readings. Pyadlml offers an easy way to fetch, visualize and preprocess common datasets. A further goal is to replicate prominent work in the domain.
@@ -53,7 +54,7 @@ clf.fit(X, y)
 ...
 ```
 
-_For more examples and and how to use, please refer to the Documentation (to come) or the Notebooks_
+_For more examples and and how to use, please refer to the [documentation](https://pyadlml.readthedocs.io/en/latest/)_
 
 ## Features
   - 8 Datasets
