@@ -27,3 +27,6 @@ venv_pyadml/*
 build/*
 dist/*
 pyadlml.egg-info 
+
+# sphinx documentaiton
+docs/_build
