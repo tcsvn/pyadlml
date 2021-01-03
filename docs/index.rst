@@ -27,6 +27,7 @@ Welcome to pyadlml's documentation!
    :maxdepth: 2
 
    user_guide.rst
+   dataset.rst
    support.rst
 
 Indices and tables

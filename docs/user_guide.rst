@@ -10,19 +10,26 @@ At the command line type
 
 and you are done.
 
+.. _Dataset user guide:
 
 Datasets
 --------
 There are 8 supported datasets so far:
 
-- aras
-- casas aruba
-- mitlab subject 1
-- mitlab subject 2
-- tuebingen 2019
-- casas milan
+- Aras
+- Casas aruba
+- Mitlab subject 1
+- Mitlab subject 2
+- Tuebingen 2019
+- Amsterdam
+- Uci adl binary ordonez A
+- Uci adl binary ordonez B
 
-Usually a dataset consists of 2 dataframes, the logged activities and the recorded device readings.
+if you happen to find a dataset in the wild that is not included in this list
+please let me know. It is very hard to
+find the datasets online. You can find more about the :ref:`Dataset View`
+
+Usually a dataset consists of two dataframes, the logged activities and the recorded device readings.
 An entry of the activity dataframe consist of the *start_time*, the *end_time*  and the *activity*
 that is performed. Here is an example how this could look like:
 
@@ -51,25 +58,42 @@ specific *val* ue. Here is an example how a typical device dataframe looks like:
 Getting the data
 ~~~~~~~~~~~~~~~~
 
-You can load a dataset by using a function of the schema
+You can load a dataset by using a function following the schema
 
 .. py:function:: pyadlml.dataset.fetch_datasetname(cache=True, keep_original=True)
 
-   Returns a data object that has attributes *df_activities* and *df_devices*
+   Returns a data object possessing the attributes *df_activities* and *df_devices*
+
+
+
+All datasets and the way to fetch them are listed at :ref:`Dataset View`. The example below shows the amsterdam dataset
+being loaded
+
+.. code:: python
+
+    from pyadlml.dataset import fetch_amsterdam
+
+    data = fetch_amsterdam(cache=True, keep_original=True)
+    dir(data)
+    >>> [..., df_activities, df_devices, ...]
+
+    data.df_devices
+    >>> TODO show dfframe
+
+    data.df_activities
+    >>> TODO show dfframe
 
 .. attention::
     Sometimes activities for multiple inhabitants are recorded and can only be accessed via other
     attribute names. If ``data.df_activities`` returns ``None`` make sure to check for other attributes
     with ``dir(data)``.
 
-All datasets and the way to fetch them are listed at (TODO link). Here is an example where the aras dataset is loaded
+    .. code:: python
 
-.. code:: python
-
-    from pyadlml.dataset import fetch_aras
-    data = fetch_aras(cache=True, keep_original=True)
-    dir(data)
-    >>> [..., df_activities, df_devices, ...]
+        from pyadlml.dataset import fetch_aras
+        data = fetch_aras(cache=True, keep_original=True)
+        dir(data)
+        >>> [..., df_activities_subject_1, df_activities_subject_2, df_devices, ...]
 
 By default datasets are stored in the folder where python is executed. Many datasets are not
 in the representation given above and the preprocessing takes time to compute. Therefore it can
@@ -81,7 +105,7 @@ You can change the folder where the data is stored with
     from pyadlml.dataset import set_data_home
     set_data_home('path/to/folder')
 
-setting an environment variable that is used by pyadlml.
+setting an environment variable used by pyadlml.
 
 Coming from activity-assistant
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -91,6 +115,7 @@ by extracting the ``data_name.zip`` and pointing pyadlml to the folder
 .. code:: python
 
     from pyadlml.dataset import load_act_assist
+
     set_data_home('path/to/datahome')
     data = load_act_assist('path/to/data_name/')
 
@@ -109,9 +134,11 @@ stores altered activity values under ``data.activities_corr_lst`` and omitted de
 
 Statistics
 ----------
-Pyadlml supports methods to calculate some dataset statistics. The methods for devices and activities
-can be found in the modules ``pyadlml.dataset.stats.devices`` or  ``pyadlml.dataset.stats.activities``. Statistics
-combining activities and devices reside in ``pyadlml.dataset.stats``.
+Pyadlml supports methods to calculate rudimentary but interesting information about a dataset. The methods for devices
+and activities respectively can be found in the modules ``pyadlml.dataset.stats.devices`` or  ``pyadlml.dataset.stats.activities``.
+Statistics combining activities and devices reside in ``pyadlml.dataset.stats``.
+
+I could just list all the methods but lets use the :ref:`Amsterdam` dataset as example
 
 Activities
 ~~~~~~~~~~
@@ -161,7 +188,59 @@ Approximate the activity density over one day for all activities using monte-car
 
 Devices
 ~~~~~~~
-blabla
+Compute the similarity between the devices themselves. High values mean they are on at the
+same time and off at the same time. This is bad because their mutual information is high.
+
+.. code:: python
+
+    from pyadlml.dataset.stats.devices import duration_correlation
+    dcorr = duration_correlation(data.df_devices)
+
+TODO add ouput and description
+
+Want to know how many times a device was triggered? here you go
+
+.. code:: python
+
+    from pyadlml.dataset.stats.devices import device_trigger_count
+    dtc = device_trigger_count(data.df_devices)
+
+TODO add ouput and description
+
+Compute the pairwise differences between succedding device triggers for all devices
+
+.. code:: python
+
+    from pyadlml.dataset.stats.devices import trigger_time_diff
+    tdf = trigger_time_diff(data.df_devices)
+
+TODO add ouput and description
+
+Compute the amount of triggers for a selected time resolution integrated to one day
+
+.. code:: python
+
+    from pyadlml.dataset.stats.devices import device_triggers_one_day
+    tdf = device_triggers_one_day(data.df_devices, t_res='1h')
+
+TODO add ouput and description
+
+Compute for a certain time window how much devices trigger in that same window. Is
+a way to show temporal relationships between devices
+
+.. code:: python
+
+    from pyadlml.dataset.stats.devices import device_tcorr
+    tdf = device_tcorr(data.df_devices, t_res='1h')
+
+TODO add ouput and description
+
+Compute the time and the proportion a device was on or off
+
+.. code:: python
+
+    from pyadlml.dataset.stats.devices import devices_on_off_stats
+    tdf = devices_on_off_stats(data.df_devices)
 
 Activites and devices
 ~~~~~~~~~~~~~~~~~~~~~
@@ -180,6 +259,16 @@ Activities
 
 Devices
 ~~~~~~~
+
+Theming
+~~~~~~~
+
+There are global options to set the color and colormaps of the plots.
+
+.. code:: python
+
+    from pyadlml.dataset import set_primary_color
+    set_primary_color()
 
 Representations
 ---------------
@@ -240,7 +329,8 @@ This and more reasons motivate the use of sequential representations and models,
 .. math::
     X = [x_1, ..., x_N]
 
-of binary state vectors x_t.
+of binary state vectors :math:`x_t`.
+
 
 .. math::
     x_t = \begin{bmatrix} 1 & 0 & ... & 1\end{bmatrix}^T
@@ -329,7 +419,7 @@ state vectors not to events (when a device changes its state) but to timeslices.
 to the last the data is divided into timeslices with the same length. A timeslices binary vector entry is
 assigned either the last known device state or the current device state of an event that falls into that timeslice.
 If multiple events of the same device fall into the same timeslice the most prominent state is assumed and
-setting the succeeding timeslice to the last known state.
+the succeeding timeslice is set to the last known state.
 
 For every representations *raw*, *changepoint* and *lastfired* the discretization via timeslices is supported.
 You do this by passing the parameter ``t_res='freq'`` to the DiscreteEncoder where ``t_res`` is a string
@@ -362,4 +452,21 @@ representations mentioned above can be transformed with this method. An example 
     X = raw.values
     y = labels.values
 
-.. rubric:: title
+Miscellaneous
+-------------
+This is the section where everything goes that didn't fit so far.
+
+
+Home Assistant
+~~~~~~~~~~~~~~
+
+It is possible to just load a Home Assistant database. Every valid database url
+will suffice
+
+.. code:: python
+
+    from pyadlml.dataset import load_homeassistant
+
+    db_url = "sqlite:///config/homeassistant-v2.db"
+    df_devices = load_homeassistant(db_url)
+

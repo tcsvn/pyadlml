@@ -21,6 +21,7 @@ project = 'pyadlml'
 copyright = '2020, Christian Meier'
 author = 'Christian Meier'
 
+release = "0.0.1-alpha"
 
 # -- General configuration ---------------------------------------------------
 
@@ -28,6 +29,8 @@ author = 'Christian Meier'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+  "sphinx.ext.autosectionlabel",
+  "numpydoc",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -53,5 +56,7 @@ html_logo = "_static/logo.png"
 html_static_path = ['_static']
 
 html_theme_options = {
+  "github_url": "https://github.com/tcsv/pyadlml",
+  "show_prev_next": False,
   "show_toc_level": 2
 }
