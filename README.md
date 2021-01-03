@@ -108,14 +108,14 @@ If you are using pyadlml for puplications consider citing the package
 ```
 
 ## Sources
-    [1]: T.L.M. van Kasteren; A. K. Noulas; G. Englebienne and B.J.A. Kroese, Tenth International Conference on Ubiquitous Computing 2008
-    [2]: H. Alemdar, H. Ertan, O.D. Incel, C. Ersoy, ARAS Human Activity Datasets in Multiple Homes with Multiple Residents, Pervasive Health, Venice, May 2013.  
-    [3]: WSU CASAS smart home project: D. Cook. Learning setting-generalized activity models for smart spaces. IEEE Intelligent Systems, 2011.  
-    [4]: WSU CASAS smart home project: D. Cook. Learning setting-generalized activity models for smart spaces. IEEE Intelligent Systems, 2011.  
-    [5]: TODO include
-    [6]: E. Munguia Tapia. Activity Recognition in the Home Setting Using Simple and Ubiquitous sensors. S.M Thesis
-    [7]: Me :)  
-    [8]: Ordonez, F.J.; de Toledo, P.; Sanchis, A. Activity Recognition Using Hybrid Generative/Discriminative Models on Home Environments Using Binary Sensors. Sensors 2013, 13, 5460-5477.
+[1]: T.L.M. van Kasteren; A. K. Noulas; G. Englebienne and B.J.A. Kroese, Tenth International Conference on Ubiquitous Computing 2008
+[2]: H. Alemdar, H. Ertan, O.D. Incel, C. Ersoy, ARAS Human Activity Datasets in Multiple Homes with Multiple Residents, Pervasive Health, Venice, May 2013.  
+[3]: WSU CASAS smart home project: D. Cook. Learning setting-generalized activity models for smart spaces. IEEE Intelligent Systems, 2011.  
+[4]: WSU CASAS smart home project: D. Cook. Learning setting-generalized activity models for smart spaces. IEEE Intelligent Systems, 2011.  
+[5]: TODO include
+[6]: E. Munguia Tapia. Activity Recognition in the Home Setting Using Simple and Ubiquitous sensors. S.M Thesis
+[7]: Me :)  
+[8]: Ordonez, F.J.; de Toledo, P.; Sanchis, A. Activity Recognition Using Hybrid Generative/Discriminative Models on Home Environments Using Binary Sensors. Sensors 2013, 13, 5460-5477.
   
 ## License
 MIT  © [tcsvn](http://deadlink)
