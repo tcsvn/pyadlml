@@ -3,9 +3,12 @@
 Datasets
 ========
 
-Here is a list of all datasets supported by pyadlml. Make sure to also check out the `notebooks`_.
-The *activity_number* and *device_number* are of the following format ``#activities/#recorded activities`` and analog
-for the devices.
+Here is a list of datasets supported by pyadlml. Make sure to also check out the `notebooks`_.
+The field *activities* and *devices* follow the scheme  ``#nr/recorded number#``.
+
+.. warning::
+    Project is under heavy development. Dataset information is wrong or incomplete. I am
+    going to update this as soon as possible.
 
 
 Amsterdam
@@ -18,11 +21,11 @@ Amsterdam
 :paper: Tenth International Conference on Ubiquitous Computing 2008 (Ubicomp '08)
 :organization: Universiteit van Amsterdam
 :link: https://sites.google.com/site/tim0306/
-:from: $Date: 2008-02-25 19:40:26.000$
-:to: $Date: 2008-$
-:activities: 7/123
-:devices: 12/2020
-:abstract: The data was recorded in home by two subjects blablabalbal
+:from: 2008-02-25 00:20:14
+:to: 2008-03-23 19:04:58
+:activities: 7/789
+:devices: 14/7890
+:abstract: TODO
 
 To download the dataset execute
 
@@ -34,17 +37,17 @@ To download the dataset execute
     dir(data)
     >>> [..., df_activities, df_devices, ...]
 
-for my personal take on the dataset take a look at the `aras notebook`_.
+to get to know more about the dataset you can take a look at the `amsterdam notebook`_.
 
 Casas Aruba
 ~~~~~~~~~~~
 .. bibliographic fields (which also require a transform):
 
 
-:Authors: H. Alemdar, H. Ertan, O.D. Incel, C. Ersoy
+:Authors: D. Cook.
 :Contact: hande.alemdar@boun.edu.tr
-:paper: ARAS Human Activity Datasets in Multiple Homes with Multiple Residents, Pervasive Health, Venice, May 2013.
-:organization: Boğaziçi University Department of Computer Engineering
+:paper: WSU CASAS smart home project: D. Cook. Learning setting-generalized activity models for smart spaces. IEEE Intelligent Systems, 2011.
+:organization: Washington State University
 :link: http://casas.wsu.edu/datasets/aruba.zip
 :from: $Date: 2012-01-03 19:23:53 +0000 (Tue, 03 Jan 2012) $
 :to: $Date: 2012-01-03 19:23:53 +0000 (Tue, 03 Jan 2012) $
@@ -62,7 +65,7 @@ To download the dataset execute
     dir(data)
     >>> [..., df_activities, df_devices, ...]
 
-for my personal take on the dataset take a look at the `aras notebook`_.
+to get to know more about the dataset you can take a look at the `aras notebook`_.
 
 
 Aras
@@ -92,7 +95,7 @@ To download the dataset execute
     dir(data)
     >>> [..., df_activities_resident1, df_activities_resident2, df_devices, ...]
 
-for my personal take on the dataset take a look at the `aras notebook`_.
+to get to know more about the dataset you can take a look at the  `aras notebook`_.
 
 MitLab
 ~~~~~~

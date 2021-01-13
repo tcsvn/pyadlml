@@ -16,19 +16,64 @@ References
 
 .. warning::
    Project is under heavy development. Things are going to change and break. I am
-   currently writing the documentation. So take everything written here with a huge
+   currently writing the documentation, meaning this is a draft rather than a document
+   that should be taken seriously. So take everything written here with a huge
    grain of salt because it is subject to change.
 
+Modules
+=======
 
-Welcome to pyadlml's documentation!
-===================================
+.. raw:: html
+
+   <div class="row">
+       <div class="col-sm-4 col-sm-offset-1">
+          <a class="reference internal" href="modules/robust.html">
+             <h2>pyadlml.dataset</h2>
+          </a>
+          <p>
+            Provides easy access to datasets that can be used as benchmarks.
+          </p>
+       </div>
+       <div class="col-sm-4 col-sm-offset-1">
+          <a class="reference internal" href="modules/survival.html">
+             <h2>pyadlml.preprocessing</h2>
+          </a>
+          <p>
+            Some tools for preprocessing, such as discrete time encoder and
+            tools for feature generation.
+          </p>
+       </div>
+   </div>
+   <div class="row">
+       <div class="col-sm-4 col-sm-offset-1">
+          <a class="reference internal" href="modules/robust.html">
+             <h2>pyadlml.plot</h2>
+          </a>
+          <p>
+            Numerous visualizations for activities, devices and their interaction.
+          </p>
+       </div>
+       <div class="col-sm-4 col-sm-offset-1">
+          <a class="reference internal" href="modules/survival.html">
+             <h2>pyadlml.models</h2>
+          </a>
+          <p>
+            Wrapper around common models to provide a seamless start for
+            newcomers.
+          </p>
+       </div>
+   </div>
+
+
+Overview
+========
 
 .. toctree::
    :maxdepth: 2
 
    user_guide.rst
    dataset.rst
-   support.rst
+   api.rst
 
 Indices and tables
 ==================
