@@ -14,9 +14,6 @@ and you are done.
 
 Datasets
 --------
-Pyadlml supports 8 datasets so far. If you happen to come by a dataset, that is not included in this list
-please let me know and I will add the dataset to the library. It can be very hard to find datasets online.
-For a full list and more information about each dataset visit :ref:`Dataset View`.
 
 Usually a dataset is composed of two dataframes, the logged activities and the recorded device readings.
 An entry of the activity dataframe consist of the *start_time*, the *end_time*  and the *activity*
@@ -43,6 +40,11 @@ shows how a typical device dataframe could like.
     2020-12-27 15:45:10.470072,switch bedroom,1
     2020-12-27 17:35:11.961696,temp.sensor 3,13.84
     ...
+
+.. Note::
+    Pyadlml supports 8 datasets so far. If you happen to come by a dataset, that is not included in this list
+    please let me know and I will add the dataset to the library. It can be very hard to find datasets online.
+    For a full list and more information about each dataset visit :ref:`Dataset View`.
 
 
 Getting the data
@@ -108,7 +110,7 @@ Storage and cache
 ^^^^^^^^^^^^^^^^^
 
 By default datasets are stored in the folder where python is executed. Many datasets are not
-in the representation given above and the preprocessing takes time to compute. Therefore it can
+in the representation given above and preprocessing takes time to compute. Therefore it can
 be reasonable to use the ``cache=True`` option storing and reusing a binary file of the result after the first load.
 You can change the folder where the data is stored with
 
@@ -312,33 +314,34 @@ You can set global values for diverging and converging colormaps.
 
 Representations
 ---------------
-Besides plotting there is not much we can do with the data as it is. So lets turn it into
-formats digestible by models. Pyadlml supports three discrete and one image representation of the timeseries.
-The overall procedure is transforming the device dataframe into a specific representation and than labeling
-the new representation with activities:
+Besides plotting there is not much the data allows us to do as it is. So lets transform the data into
+representations digestible by models. Pyadlml supports three discrete and one image representation of timeseries.
+The overall procedure is transforming the device dataframe into a specific representation and then labeling
+the new representation with activities.
 
 .. code:: python
 
     from pyadlml.preprocessing import SomeEncoder, LabelEncoder
 
     rep_enc = SomeEncoder(rep='some_representation', *args)
-    enc_devs = rep_enc.fit(data.df_devices)
+    enc_devs = rep_enc.fit_transform(data.df_devices)
 
     lbl_enc = LabelEncoder(data.df_activities, *args)
-    enc_lbls = lbl_enc.fit(rep_enc)
+    enc_lbls = lbl_enc.fit_transform(rep_enc)
 
     X = enc_devs.values
     y = enc_lbls.values
 
-For now all representations regard only devices that are binary, meaning that they either have the state
-``False`` for *off/0* or ``True`` for *on/1*. All representation assume a datapoint as binary vector
+For now all representations utilize only binary devices, that either have the state
+``False`` for *off/0* or ``True`` for *on/1*. All representations assume the incoming device on/off events
+as stream of binary vectors.
 
 .. math::
     x_t = \begin{bmatrix} 1 & 0 & ... & 1\end{bmatrix}^T
 
 
-representing the state of the smart home at a given point *t* in time. Each field corresponds to
-the representation of a specific devices.
+Each binary vector represents the state of the Smart Home at a given point *t* in time. Each field corresponds to
+a specific device.
 
 Raw
 ~~~
@@ -350,8 +353,9 @@ Raw
    :alt: alternate text
    :align: center
 
-The raw representation is an ordered sequence of binary vectors, where the binary
-vector represent the state of the smart home at a given point *t* in time.
+The raw representation uses binary vectors to represent the state of the smart home at a given point :math:`t` in time.
+Each field corresponds to the state the device is in at that given moment. The following example shows
+an event streams slice and the corresponding raw representations state matrix.
 
 .. image:: images/raw_matrix.svg
    :height: 300px
@@ -360,7 +364,7 @@ vector represent the state of the smart home at a given point *t* in time.
    :alt: alternate text
    :align: center
 
-Create a raw representation from your data by
+Transform a device dataframe to the *raw* representation by using the *DiscreteEncoder* and *LabelEncoder*.
 
 .. code:: python
 
@@ -383,10 +387,12 @@ Changepoint
    :align: center
 
 
-The changepoint representation is a ordered sequence of binary vectors. Each field in the vector
-corresponds to a device. A field is only "on" when the device changes its state. This representation
-tries to capture the notion that device triggers may convey more information about the activity than
-the state of the smart home.
+The changepoint representation uses binary vectors to represent the state of the smart home at a given point :math:`t` in time.
+Each field in the vector corresponds to a device. A field possesses the value 1 at timepoint :math:`t`
+if and only if the device changes its state from 1 to 0 or from 0 to 1 at that timepoint. Otherwise all devices are set
+to 0. The changepoint representation tries to capture the notion that device triggers convey information about
+the inhabitants activity. The picture below shows a *raw* representation matrix and its
+*changepoint* counterpart.
 
 .. image:: images/cp_matrix.svg
    :height: 300px
@@ -395,7 +401,7 @@ the state of the smart home.
    :alt: alternate text
    :align: center
 
-The changepoint representation can be loaded by passing the right keyword to the ``rep`` argument
+The changepoint representation can be loaded by using the ``rep`` argument.
 
 .. code:: python
 
@@ -418,8 +424,12 @@ LastFired
    :align: center
 
 
-The changepoint representation is a ordered sequence of binary vectors. Each field in the vector
-corresponds to a device. A field is only "on" for the device that changed its state last.
+The *last_fired* representation uses binary vectors to represent the state of the smart home at a given point
+:math:`t` in time. Each field in the vector corresponds to a device. A field possesses the value 1 at
+timepoint :math:`t` if and only if the device was the last to change its state from 1 to 0 or from 0 to 1 for
+:math:`s<t` Otherwise all fields assume the state 0. The *last_fired* representation is a variation of the
+*changepoint* representation. The picture below shows a *raw* representation matrix and its
+*last_fired* counterpart.
 
 .. image:: images/lf_matrix.svg
    :height: 300px
@@ -428,7 +438,7 @@ corresponds to a device. A field is only "on" for the device that changed its st
    :alt: alternate text
    :align: center
 
-Here is a code example to load the last fired representation
+To transform a device dataframe into the *last_fired* representation use
 
 .. code:: python
 
@@ -440,49 +450,68 @@ Here is a code example to load the last fired representation
     X = raw.values
     y = labels.values
 
-i.i.d
+I.i.d
 ~~~~~
-To transform the data into a format that assumes identical independently distributed data
+There are various models that assume the data to be identical independently distributed (i.i.d).
 
 .. math::
     X = \{x_1 ,..., x_N \}
 
-use
+The following example shows how you would typically load the data when using a model that
+presumes the i.i.d assumption:
 
 .. code:: python
 
     from pyadlml.preprocessing import DiscreteEncoder, LabelEncoder
-    raw = DiscreteEncoder(data.df_devices, rep='raw')
-    y = LabelEncoder(raw, data.df_activities).values
-    x = raw.drop_duplicates().values
-    # maybe shuffle the data
+    from pyadlml.dataset import fetch_aras
+    from sklearn.utils import shuffle
 
-Obviously the i.i.d assumption doesn't hold for data in smart homes.
-- As ADLs have a temporal dependency and are thought of as the generating process behind the observations in a smart home, the recorded device readings
-can't be independent of each other.
-- You could add features being selectively "on" for a specific time of the day
-or the day itself. However this doesn't consider one important characteristic of ADLs. Their order is time invariant.
-For example an inhabitant is very likely to go to bed after he brushes his teeth, but the point in time when he goes
-to bed varies a lot. I.i.d data correlates certain times of a day with certain activities but neglects the activity
-orders time invariance. In Addition it is difficult to choose the right resolution for these features as there
-is a tradeoff between resolution and number of features.
+    data = fetch_aras()
+
+    raw = DiscreteEncoder(rep='raw').fit_transform(data.df_devices)
+
+    y = LabelEncoder(data.df_activities).fit_transform(raw).values
+    X = raw.values
+
+    # shuffle the data as it is still ordered
+    X, y = shuffle(X, y, random_state=0)
+
+
+
+.. Note::
+    Obviously the i.i.d assumption doesn't hold for data in smart homes.
+
+    - As ADLs have a temporal dependency and are thought of as the generating process behind the observations in a smart home, the recorded device readings
+    can't be independent of each other.
+
+    - You could add features being selectively "on" for a specific time of the day
+
+    or the day itself. However this doesn't consider one important characteristic of ADLs. Their order is time invariant.
+    For example an inhabitant is very likely to go to bed after he brushes his teeth, but the point in time when he goes
+    to bed varies a lot.
+    - I.i.d data correlates certain times of a day with certain activities but neglects the activity
+    TODO rewrite
+    orders time invariance. In Addition it is difficult to choose the right resolution for these features as there
+    is a tradeoff between resolution and number of features.
+
+    This and more reasons motivate the use of sequential representations
+
 
 Sequential
 ~~~~~~~~~~
 
-This and more reasons motivate the use of sequential representations and models, where data *X* is an ordered list
+Data is in the form of an ordered list
 
 .. math::
     X = [x_1, ..., x_N]
 
-of binary state vectors :math:`x_t`.
+of binary vectors
 
 .. math::
     x_t = \begin{bmatrix} 1 & 0 & ... & 1\end{bmatrix}^T
 
-
-
-
+Transforming the data into one of the representations *raw*, *changepoint* or *last_fired* usually yields the
+datapoints already being ordered. There is no change in loading the dataset assuming a sequential format.
 
 .. code:: python
 
@@ -494,49 +523,76 @@ of binary state vectors :math:`x_t`.
     y = lbls.values
     x = raw.drop_duplicates().values
 
+.. Note::
+    The drawback using only an ordered event list is neglecting the time passed between consecutive
+    event triggers. One way to account for this is to discretize time and assigning binary state
+    vectors to timeslices rather than to events.
+
 Timeslice
 ~~~~~~~~~
-The drawback of these representations is that they assume data in a sequential manner but disregard the
-time between the device triggers in the smart home. One way to account for this is by assigning binary
-state vectors not to events (when a device changes its state) but to timeslices. From the first event
-to the last the data is divided into timeslices with the same length. A timeslices binary vector entry is
-assigned either the last known device state or the current device state of an event that falls into that timeslice.
-If multiple events of the same device fall into the same timeslice the most prominent state is assumed and
-the succeeding timeslice is set to the last known state.
 
-The following picture depicts the how the different representations *raw*, *changepoint* and *last_fired*
-behave under the sequential assumption:
+.. image:: images/timeslice.svg
+   :height: 200px
+   :width: 500 px
+   :scale: 90%
+   :alt: alternate text
+   :align: center
 
 
+From the first unto the last event, the data is divided into equal-length timeslices. Each timeslice is
+assigned a binary vector. How the vectors are assigned differs for each representation. For the *raw*
+representation a timeslices binary vector entry is assigned either the last known device state or
+the current device state of an event that falls into the timeslice. If multiple events originating from
+the same device fall into the same timeslice, the most prominent state is assumed and the succeeding
+timeslice is set to the last known event state. The *changepoint* representation sets a field to 1 if at
+least one event of the specific device falls into the timeslice. The *last fired* representation TODO
+look up.
 
-
-You do this by passing the parameter ``t_res='freq'`` to the DiscreteEncoder where ``t_res`` is a string
-representing the timeslice length. Here is an example for the *raw* representation with a timeslice of 10 seconds:
+The timeslices can be created by passing a resolution ``t_res='freq'`` to the DiscreteEncoder. Here is
+an example for the *raw* representation with a timeslice-length of 10 seconds.
 
 .. code:: python
 
     from pyadlml.preprocessing import DiscreteEncoder, LabelEncoder
-    raw = DiscreteEncoder(data.df_devices, rep='raw', t_res='10s')
-    labels = LabelEncoder(raw, data.df_activities)
+
+    raw = DiscreteEncoder(rep='raw', t_res='10s').fit_transform(data.df_devices)
+    labels = LabelEncoder(raw).fit_transform(data.df_activities)
 
     X = raw.values
     y = labels.values
 
+.. Note::
+    The drawback using timeslices as data representation is a trade-off originating in the choice of
+    timeslice resolution. The greater the timeslice-length the higher the probability multiple events
+    fall into the same timeslice, leading to a higher information loss. Smaller timeslice-length lead to
+    a higher dataset size, which can lead to problems when learning the parameters of some models. Looking
+    at you HSMM :/. If a model is used in a real-time context the time for performing inference
+    must not exceed the timeslice-length to ensure reliable predictions.
 
 Image
 ~~~~~
 
+.. image:: images/image.svg
+   :height: 200px
+   :width: 500 px
+   :scale: 80%
+   :alt: alternate text
+   :align: center
+
 With the rise of machine learning models that are good at recognizing images it can
-be reasonable to represent a time series as an image to make use of these models capabilities.
-The image is being generated by sliding a window over the sequential data. All
-representations mentioned above can be transformed with this method. An example is
+be reasonable to represent a timeseries as an image in order to make use of these models capabilities.
+The image is being generated by sliding a window over the sequential data. For each image the
+corresponding activity is that of the images last timestamp. *Raw*, *changepoint* and *last_fired* representation
+can be transformed into images.
 
 .. code:: python
 
-    from pyadlml.preprocessing import ImageEncoder, LabelEncoder
+    from pyadlml.preprocessing import ImageEncoder, ImageLabelEncoder
 
-    raw = ImageEncoder(data.df_devices, window_length='30s', rep='raw', t_res='10s')
-    labels = LabelEncoder(raw, data.df_activities)
+    img_enc = ImageEncoder(rep='raw', t_res='10s', window_length='30s')
+    raw_img = img_enc.fit_transform(data.df_devices)
+
+    labels = ImageLabelEncoder(raw_img, data.df_activities)
 
     X = raw.values
     y = labels.values
@@ -553,6 +609,7 @@ methods can be used in combination with the sklearn pipeline.
     raw = ImageEncoder(data.df_devices, window_length='30s', rep='raw', t_res='10s')
     labels = LabelEncoder(raw, data.df_activities)
 
+    # TODO full code example
     list = []
 
 
