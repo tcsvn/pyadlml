@@ -82,14 +82,7 @@ The example below shows the :ref:`amsterdam` dataset being loaded
                      start_time            end_time        activity
     0   2008-02-25 19:40:26.000 2008-02-25 20:22:58  prepare Dinner
     1   2008-02-25 20:23:12.000 2008-02-25 20:23:35       get drink
-    2   2008-02-25 21:51:29.000 2008-02-25 21:52:36      use toilet
-    3   2008-02-25 23:21:15.000 2008-02-25 23:28:30       go to bed
-    4   2008-02-25 23:28:30.001 2008-02-25 23:29:14      use toilet
     ..                      ...                 ...             ...
-    258 2008-03-21 09:42:28.000 2008-03-21 15:51:38     leave house
-    259 2008-03-21 15:51:58.000 2008-03-21 15:53:10      use toilet
-    260 2008-03-21 17:03:48.000 2008-03-21 18:05:18       go to bed
-    261 2008-03-21 18:24:24.000 2008-03-21 18:25:05      use toilet
     262 2008-03-21 19:10:36.000 2008-03-23 19:04:58     leave house
     [263 rows x 3 columns]
 
@@ -146,150 +139,391 @@ done by researches like having overlapping activity intervals, when they were de
 stores altered activity values under ``data.activities_corr_lst`` and omitted device values under ``data.todo``.
 (TODO write more about this subject and how the different error correction strategies are done).
 
-Statistics
-----------
-Pyadlml supports methods to calculate rudimentary but interesting information about a dataset. The methods for devices
-and activities respectively can be found in the modules ``pyadlml.dataset.stats.devices`` or  ``pyadlml.dataset.stats.activities``.
-Statistics combining activities and devices reside in ``pyadlml.dataset.stats``.
+Statistics and Visualization
+-----------------------------
+Pyadlml supports methods to quickly calculate summary statistics about a dataset. The methods
+can be imported from the module ``pyadlml.stats``. Most plots visualize the summary statistics, therefore
+the following sections lists them jointly. Methods for plotting can be found in the modules ``pyadlml.plot``.
+For a complete list check the api :ref:`TODOAPILINK`. The :ref:`Amsterdam` dataset is used for the examples.
 
-The following examples use the :ref:`Amsterdam` dataset for presentation.
 
 Activities
 ~~~~~~~~~~
 
-Get the count of a device by
+Count
+^^^^^
+
+Get the total activity count with
 
 .. code:: python
 
-    from pyadlml.dataset.stats.activities import activities_count
+    >>> from pyadlml.stats import activity_count
 
-    counts = activities_count(data.df_activities)
+    >>> activity_count(data.df_activities)
+                activity  occurrence
+    0          get drink         19
+    1          go to bed         47
+    2        leave house         33
+    3  prepare Breakfast         19
+    4     prepare Dinner         12
+    5        take shower         22
+    6         use toilet        111
 
-TODO add ouput and description
-
-Compute a markovian transition matrix
-
-.. code:: python
-
-    from pyadlml.dataset.stats.activities import activities_transitions
-
-    transitions = activities_transitions(data.df_activities)
-
-TODO add ouput and description
-
-Compute how much total time the inhabitant spent in an activity
+and for a bar plot type
 
 .. code:: python
 
-    from pyadlml.dataset.stats.activities import activities_duration_dist
+    from pyadlml.plot import plot_activity_bar_count
 
-    act_durs = activities_duration_dist(data.df_activities)
+    # for the use of idle see note below
+    plot_activity_bar_count(data.df_activities, idle=True);
 
-TODO add ouput and description
+.. image:: images/plots/act_bar_cnt.png
+   :height: 300px
+   :width: 500 px
+   :scale: 90 %
+   :alt: alternate text
+   :align: center
+
+
+.. Note::
+    In almost every dataset there are gaps between activities where device readings are
+    recorded but a corresponding activity label is missing. In order to still use a cohesive
+    sequence some people (TODO cite) create an *idle* activity filling the gaps. To include
+    the *idle* activity in the statistics pass the parameter ``idle=True`` to the method.
+
+Duration
+^^^^^^^^
+
+Compute how much time an inhabitant spent performing an activity
 
 .. code:: python
 
-    from pyadlml.dataset.stats.activities import activity_durations
+    >>> from pyadlml.stats import activity_duration
 
-    transitions = activities_transitions(data.df_activities)
+    >>> activity_duration(data.df_activities)
+                activity       minutes
+    0          get drink     16.700000
+    1          go to bed  11070.166267
+    2        leave house  22169.883333
+    3  prepare Breakfast     63.500000
+    4     prepare Dinner    338.899967
+    5        take shower    209.566667
+    6         use toilet    195.249567
 
-TODO add ouput and description
+Visualize the duration for the activities with a bar plot
+
+.. code:: python
+
+    from pyadlml.plots import plot_activity_bar_duration
+
+    plot_activity_bar_duration(data.df_activities)
+
+.. image:: images/plots/act_bar_dur.png
+   :height: 300px
+   :width: 500 px
+   :scale: 90 %
+   :alt: alternate text
+   :align: center
+
+or use a boxsplot for more information
+
+.. code:: python
+
+    from pyadlml.plots import plot_devices_bp_duration
+
+    plot_devices_bp_duration(data.df_activities)
+
+.. image:: images/plots/act_bp.png
+   :height: 300px
+   :width: 500 px
+   :scale: 90 %
+   :alt: alternate text
+   :align: center
+
+Transition
+^^^^^^^^^^
+
+Compute a transition matrix that displays how often one activity was followed
+by another.
+
+.. code:: python
+
+    >>> from pyadlml.stats import activity_transition
+
+    >>> activity_transition(data.df_activities)
+    act_after          get drink  go to bed  ...  use toilet
+    activity
+    get drink                  3          0  ...          15
+    go to bed                  0          0  ...          43
+    leave house                3          1  ...          22
+    prepare Breakfast          1          0  ...           8
+    prepare Dinner             7          0  ...           4
+    take shower                0          0  ...           1
+    use toilet                 5         46  ...          18
+
+.. code:: python
+
+    from pyadlml.plots import plot_activity_hm_transitions
+
+    plot_activity_hm_transitions(data.df_activities)
+
+.. image:: images/plots/act_hm_trans.png
+   :height: 300px
+   :width: 500 px
+   :scale: 90 %
+   :alt: alternate text
+   :align: center
+
+
+Density
+^^^^^^^
 
 Approximate the activity density over one day for all activities using monte-carlo sampling
 
 .. code:: python
 
-    from pyadlml.dataset.stats.activities import activities_dist
+    >>> from pyadlml.stats import activities_dist
 
-    transitions = activities_dist(data.df_activities, n=1000)
+    >>> transitions = activities_dist(data.df_activities, n=1000)
+             prepare Dinner           get drink ...         leave house
+    0   1990-01-01 18:12:39 1990-01-01 21:14:07 ... 1990-01-01 13:30:33
+    1   1990-01-01 20:15:14 1990-01-01 20:23:31 ... 1990-01-01 12:03:13
+    ..                      ...                 ...                 ...
+    999 1990-01-01 18:16:27 1990-01-01 08:49:38 ... 1990-01-01 16:18:25
+
+.. code:: python
+
+    from pyadlml.plots import plot_activity_ridgeline
+
+    plot_activity_ridgeline(data.df_activities)
+
+.. image:: images/plots/act_ridge_line.png
+   :height: 300px
+   :width: 500 px
+   :scale: 90 %
+   :alt: alternate text
+   :align: center
+
 
 .. note::
-    You can pass every method with the optional parameter ``activity_list`` a list of activities. This
-    can be useful if some activities were never recorded but should still be included in the statistics.
+    It can happen that an activity is specified that does not appear in the activity file. To
+    include those activities in the statistics, pass an activity list to the parameter
+    ``activity_lst``.
 
 Devices
 ~~~~~~~
-Compute the similarity between the devices themselves. High values mean they are on at the
-same time and off at the same time. This is bad because their mutual information is high.
+
+Information can be gathered by taking a closer look at how and when devices trigger as
+well as how the different states depend on each other.
+
+Compute the time and the proportion a device was on and off
 
 .. code:: python
 
-    from pyadlml.dataset.stats.devices import duration_correlation
+    >>> from pyadlml.stats import device_on_off
 
-    dcorr = duration_correlation(data.df_devices)
-
-TODO add ouput and description
-
-Want to know how many times a device was triggered? here you go
-
-.. code:: python
-
-    from pyadlml.dataset.stats.devices import device_trigger_count
-
-    dtc = device_trigger_count(data.df_devices)
-
-TODO add ouput and description
-
-Compute the pairwise differences between succedding device triggers for all devices
+    >>> device_on_off(data.df_devices)
+                    device                  td_on                  td_off   frac_on  frac_off
+    0        Cups cupboard 0 days 00:10:13.010000 27 days 18:34:19.990000  0.000255  0.999745
+    1           Dishwasher        0 days 00:55:02        27 days 17:49:31  0.001376  0.998624
+    ...                ...                    ...                     ...        ...      ...
+    13      Washingmachine        0 days 00:08:08        27 days 18:36:25  0.000203  0.999797
 
 .. code:: python
 
-    from pyadlml.dataset.stats.devices import trigger_time_diff
+    from pyadlml.plots import plot_device_on_off
 
-    tdf = trigger_time_diff(data.df_devices)
+    plot_device_on_off(data.df_devices)
 
-TODO add ouput and description
+.. image:: images/plots/dev_on_off.png
+   :height: 300px
+   :width: 500 px
+   :scale: 90 %
+   :alt: alternate text
+   :align: center
 
-Compute the amount of triggers for a selected time resolution integrated to one day
+Compute the similarity between device states. Values close to one indicate both devices being
+on/off for the same time periods. It is good if the devices have dissimilar states.
 
 .. code:: python
 
-    from pyadlml.dataset.stats.devices import device_triggers_one_day
+    >>> from pyadlml.stats import device_duration_corr
 
-    tdf = device_triggers_one_day(data.df_devices, t_res='1h')
+    >>> device_duration_corr(data.df_devices)
+    device              Cups cupboard  Dishwasher  ...  Washingmachine
+    device                                         ...
+    Cups cupboard            1.000000    0.997571  ...        0.999083
+    Dishwasher               0.997571    1.000000  ...        0.996842
+    ...
+    Washingmachine           0.999083    0.996842  ...        1.000000
+    [14 rows x 14 columns]
 
-TODO add ouput and description
+.. code:: python
+
+    from pyadlml.plots import plot_dev_hm_similarity
+
+    plot_dev_hm_similarity(data.df_devices)
+
+.. image:: images/plots/dev_hm_dur_cor.png
+   :height: 300px
+   :width: 500 px
+   :scale: 90 %
+   :alt: alternate text
+   :align: center
+
+
+Compute the amount a device was turned on/off.
+
+.. code:: python
+
+    >>> from pyadlml.stats import device_trigger_count
+
+    >>> device_trigger_count(data.df_devices)
+                    device  trigger_count
+    0        Cups cupboard             98
+    1           Dishwasher             42
+    ..                 ...            ...
+    13      Washingmachine             34
+
+.. code:: python
+
+    from pyadlml.plots import plot_device_bar_count
+
+    plot_device_bar_count(data.df_devices)
+
+.. image:: images/plots/dev_bar_trigger.png
+   :height: 300px
+   :width: 500 px
+   :scale: 90 %
+   :alt: alternate text
+   :align: center
+
+
+Compute the pairwise differences between succeeding device triggers for all devices
+
+.. code:: python
+
+    >>> from pyadlml.stats import device_time_diff
+
+    >>> device_time_diff(data.df_devices)
+    array([1.63000e+02, 3.30440e+04, 1.00000e+00, ..., 4.00000e+00,
+           1.72412e+05, 1.00000e+00])
+
+.. image:: images/plots/dev_hm_dur_cor.png
+   :height: 300px
+   :width: 500 px
+   :scale: 90 %
+   :alt: alternate text
+   :align: center
+
+Compute the amount of triggers falling into timeframes spanning one day
+
+.. code:: python
+
+    >>> from pyadlml.stats import device_trigger_one_day
+
+    >>> device_trigger_one_day(data.df_devices, t_res='1h')
+
+    device    Cups cupboard  Dishwasher   ...  Washingmachine
+    time                                  ...
+    00:00:00            0.0         0.0   ...             0.0
+    01:00:00           16.0         0.0   ...             0.0
+    ...
+    23:00:00            6.0         8.0   ...             2.0
+
+.. image:: images/plots/dev_hm_dur_cor.png
+   :height: 300px
+   :width: 500 px
+   :scale: 90 %
+   :alt: alternate text
+   :align: center
 
 Compute for a certain time window how much devices trigger in that same window. Is
 a way to show temporal relationships between devices
 
 .. code:: python
 
-    from pyadlml.dataset.stats.devices import device_tcorr
+    >>> from pyadlml.stats import device_trigger_sliding_window
 
-    tdf = device_tcorr(data.df_devices, t_res='1h')
+    >>> device_trigger_sliding_window(data.df_devices)
+                       Cups cupboard Dishwasher  ...  Washingmachine
+    Cups cupboard                332         10  ...               0
+    Dishwasher                    10         90  ...
+    ...                          ...        ...  ...             ...
+    Washingmachine                 0          0  ...              86
 
-TODO add ouput and description
-
-Compute the time and the proportion a device was on or off
-
-.. code:: python
-
-    from pyadlml.dataset.stats.devices import devices_on_off_stats
-
-    tdf = devices_on_off_stats(data.df_devices)
+.. image:: images/plots/dev_hm_dur_cor.png
+   :height: 300px
+   :width: 500 px
+   :scale: 90 %
+   :alt: alternate text
+   :align: center
 
 Activites and devices
 ~~~~~~~~~~~~~~~~~~~~~
-blabla
 
+The interaction between devices and activities is of particular interest as the devices predictive
+value for certain activities can be revealed.
 
-Visualizations
---------------
+To compute the duration each device
 
-Most of the plots visualize the statistics from above. The methods for devices and activities
-can be found in the modules ``pyadlml.dataset.plot.devices`` or  ``pyadlml.dataset.plot.activities``. Visualizations
-combining activities and devices reside in ``pyadlml.dataset.plot``.
+.. code:: python
 
-Activities
-~~~~~~~~~~
+    >>> from pyadlml.stats import contingency_duration
 
-TODO add visualization for activities
+    >>> contingency_duration(data.df_devices, data.df_activities)
+    activity                     get drink ...             use toilet
+    Hall-Bedroom door Off  0 days 00:01:54 ... 0 days 00:12:24.990000
+    Hall-Bedroom door On   0 days 00:14:48 ... 0 days 03:02:49.984000
+    ...                                ...
+    Washingmachine On      0 days 00:00:00 ...        0 days 00:00:00
+    [28 rows x 7 columns]
 
-Devices
-~~~~~~~
+.. image:: images/plots/cont_hm_trigger.png
+   :height: 300px
+   :width: 500 px
+   :scale: 90 %
+   :alt: alternate text
+   :align: center
 
-TODO add visualization for devices
+.. code:: python
+
+    >>> from pyadlml.stats import contingency_duration
+
+    >>> contingency_duration(data.df_devices, data.df_activities)
+    activity                     get drink ...             use toilet
+    Hall-Bedroom door Off  0 days 00:01:54 ... 0 days 00:12:24.990000
+    Hall-Bedroom door On   0 days 00:14:48 ... 0 days 03:02:49.984000
+    ...                                ...
+    Washingmachine On      0 days 00:00:00 ...        0 days 00:00:00
+    [28 rows x 7 columns]
+
+.. image:: images/plots/cont_hm_trigger_01.png
+   :height: 300px
+   :width: 500 px
+   :scale: 90 %
+   :alt: alternate text
+   :align: center
+
+.. code:: python
+
+    >>> from pyadlml.stats import contingency_duration
+
+    >>> contingency_duration(data.df_devices, data.df_activities)
+    activity                     get drink ...             use toilet
+    Hall-Bedroom door Off  0 days 00:01:54 ... 0 days 00:12:24.990000
+    Hall-Bedroom door On   0 days 00:14:48 ... 0 days 03:02:49.984000
+    ...                                ...
+    Washingmachine On      0 days 00:00:00 ...        0 days 00:00:00
+    [28 rows x 7 columns]
+
+.. image:: images/plots/cont_hm_duration.png
+   :height: 300px
+   :width: 800 px
+   :scale: 90 %
+   :alt: alternate text
+   :align: center
 
 Theming
 ~~~~~~~
@@ -346,7 +580,7 @@ a specific device.
 Raw
 ~~~
 
-.. image:: images/raw.svg
+.. image:: images/reps/raw.svg
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -357,7 +591,7 @@ The raw representation uses binary vectors to represent the state of the smart h
 Each field corresponds to the state the device is in at that given moment. The following example shows
 an event streams slice and the corresponding raw representations state matrix.
 
-.. image:: images/raw_matrix.svg
+.. image:: images/reps/raw_matrix.svg
    :height: 300px
    :width: 500 px
    :scale: 60 %
@@ -379,7 +613,7 @@ Transform a device dataframe to the *raw* representation by using the *DiscreteE
 Changepoint
 ~~~~~~~~~~~
 
-.. image:: images/cp.svg
+.. image:: images/reps/cp.svg
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -394,7 +628,7 @@ to 0. The changepoint representation tries to capture the notion that device tri
 the inhabitants activity. The picture below shows a *raw* representation matrix and its
 *changepoint* counterpart.
 
-.. image:: images/cp_matrix.svg
+.. image:: images/reps/cp_matrix.svg
    :height: 300px
    :width: 500 px
    :scale: 60 %
@@ -416,7 +650,7 @@ The changepoint representation can be loaded by using the ``rep`` argument.
 LastFired
 ~~~~~~~~~
 
-.. image:: images/lf.svg
+.. image:: images/reps/lf.svg
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -431,7 +665,7 @@ timepoint :math:`t` if and only if the device was the last to change its state f
 *changepoint* representation. The picture below shows a *raw* representation matrix and its
 *last_fired* counterpart.
 
-.. image:: images/lf_matrix.svg
+.. image:: images/reps/lf_matrix.svg
    :height: 300px
    :width: 500 px
    :scale: 60 %
@@ -531,7 +765,7 @@ datapoints already being ordered. There is no change in loading the dataset assu
 Timeslice
 ~~~~~~~~~
 
-.. image:: images/timeslice.svg
+.. image:: images/reps/timeslice.svg
    :height: 200px
    :width: 500 px
    :scale: 90%
@@ -572,7 +806,7 @@ an example for the *raw* representation with a timeslice-length of 10 seconds.
 Image
 ~~~~~
 
-.. image:: images/image.svg
+.. image:: images/reps/image.svg
    :height: 200px
    :width: 500 px
    :scale: 80%
@@ -606,6 +840,7 @@ methods can be used in combination with the sklearn pipeline.
 .. code:: python
 
     from pyadlml.preprocessing import ImageEncoder, LabelEncoder
+
     raw = ImageEncoder(data.df_devices, window_length='30s', rep='raw', t_res='10s')
     labels = LabelEncoder(raw, data.df_activities)
 
