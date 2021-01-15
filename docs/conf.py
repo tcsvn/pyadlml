@@ -10,10 +10,9 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
-
+import os
+import sys
+sys.path.insert(0, os.path.abspath('../'))
 
 # -- Project information -----------------------------------------------------
 
@@ -56,7 +55,7 @@ html_logo = "_static/logo.png"
 html_static_path = ['_static']
 
 html_theme_options = {
-  "github_url": "https://github.com/tcsv/pyadlml",
+  "github_url": "https://github.com/tcsvn/pyadlml",
   "show_prev_next": False,
   "show_toc_level": 2
 }

@@ -178,7 +178,7 @@ and for a bar plot type
     # for the use of idle see note below
     plot_activity_bar_count(data.df_activities, idle=True);
 
-.. image:: images/plots/act_bar_cnt.png
+.. image:: _static/images/plots/act_bar_cnt.png
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -219,7 +219,7 @@ Visualize the duration for the activities with a bar plot
 
     plot_activity_bar_duration(data.df_activities)
 
-.. image:: images/plots/act_bar_dur.png
+.. image:: _static/images/plots/act_bar_dur.png
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -234,7 +234,7 @@ or use a boxsplot for more information
 
     plot_devices_bp_duration(data.df_activities)
 
-.. image:: images/plots/act_bp.png
+.. image:: _static/images/plots/act_bp.png
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -268,7 +268,7 @@ by another.
 
     plot_activity_hm_transitions(data.df_activities)
 
-.. image:: images/plots/act_hm_trans.png
+.. image:: _static/images/plots/act_hm_trans.png
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -298,7 +298,7 @@ Approximate the activity density over one day for all activities using monte-car
 
     plot_activity_ridgeline(data.df_activities)
 
-.. image:: images/plots/act_ridge_line.png
+.. image:: _static/images/plots/act_ridge_line.png
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -317,6 +317,10 @@ Devices
 Information can be gathered by taking a closer look at how and when devices trigger as
 well as how the different states depend on each other.
 
+
+Duration
+~~~~~~~~
+
 Compute the time and the proportion a device was on and off
 
 .. code:: python
@@ -330,21 +334,39 @@ Compute the time and the proportion a device was on and off
     ...                ...                    ...                     ...        ...      ...
     13      Washingmachine        0 days 00:08:08        27 days 18:36:25  0.000203  0.999797
 
+and plot the result
+
 .. code:: python
 
     from pyadlml.plots import plot_device_on_off
 
     plot_device_on_off(data.df_devices)
 
-.. image:: images/plots/dev_on_off.png
+.. image:: _static/images/plots/dev_on_off.png
+   :height: 300px
+   :width: 500 px
+   :scale: 100 %
+   :alt: alternate text
+   :align: center
+
+More information about the time a device is *on* available using a boxplot.
+
+.. code:: python
+
+    from pyadlml.plots import plot_device_bp_on_duration
+
+    plot_device_bp_on_duration(data.df_devices)
+
+.. image:: _static/images/plots/dev_bp_dur.png
    :height: 300px
    :width: 500 px
    :scale: 90 %
    :alt: alternate text
    :align: center
 
-Compute the similarity between device states. Values close to one indicate both devices being
-on/off for the same time periods. It is good if the devices have dissimilar states.
+Very often the similarity between device states is useful to evaluate, because uncorrelated device states provide
+a better basis for machine learning algorithms. Values close to one indicate both devices being
+on/off for the same time periods.
 
 .. code:: python
 
@@ -359,21 +381,26 @@ on/off for the same time periods. It is good if the devices have dissimilar stat
     Washingmachine           0.999083    0.996842  ...        1.000000
     [14 rows x 14 columns]
 
+The visualization with a heatmap can be achieved by using the following code.
+
 .. code:: python
 
     from pyadlml.plots import plot_dev_hm_similarity
 
     plot_dev_hm_similarity(data.df_devices)
 
-.. image:: images/plots/dev_hm_dur_cor.png
-   :height: 300px
+.. image:: _static/images/plots/dev_hm_dur_cor.png
+   :height: 400px
    :width: 500 px
    :scale: 90 %
    :alt: alternate text
    :align: center
 
 
-Compute the amount a device was turned on/off.
+Triggers
+^^^^^^^^
+
+Compute the amount a device switches its state from on to off or the other way around.
 
 .. code:: python
 
@@ -392,15 +419,14 @@ Compute the amount a device was turned on/off.
 
     plot_device_bar_count(data.df_devices)
 
-.. image:: images/plots/dev_bar_trigger.png
+.. image:: _static/images/plots/dev_bar_trigger.png
    :height: 300px
    :width: 500 px
    :scale: 90 %
    :alt: alternate text
    :align: center
 
-
-Compute the pairwise differences between succeeding device triggers for all devices
+Compute the pairwise differences between succeeding device triggers for all devices.
 
 .. code:: python
 
@@ -410,10 +436,13 @@ Compute the pairwise differences between succeeding device triggers for all devi
     array([1.63000e+02, 3.30440e+04, 1.00000e+00, ..., 4.00000e+00,
            1.72412e+05, 1.00000e+00])
 
-.. image:: images/plots/dev_hm_dur_cor.png
+Using the :math:`\Delta t` s in a histogram provides an overview on how to choose the length
+of a timeslice without destroying to much information. (see hint TODO link).
+
+.. image:: _static/images/plots/dev_hist_trigger_td.png
    :height: 300px
    :width: 500 px
-   :scale: 90 %
+   :scale: 100 %
    :alt: alternate text
    :align: center
 
@@ -432,10 +461,18 @@ Compute the amount of triggers falling into timeframes spanning one day
     ...
     23:00:00            6.0         8.0   ...             2.0
 
-.. image:: images/plots/dev_hm_dur_cor.png
+Visualizing this as heatmap can ...
+
+.. code:: python
+
+    from pyadlml.plots import plot_device_hm_time_trigger
+
+    plot_device_hm_time_trigger(data.df_devices, t_res='1h')
+
+.. image:: _static/images/plots/dev_hm_trigger_one_day.png
    :height: 300px
    :width: 500 px
-   :scale: 90 %
+   :scale: 100 %
    :alt: alternate text
    :align: center
 
@@ -453,12 +490,15 @@ a way to show temporal relationships between devices
     ...                          ...        ...  ...             ...
     Washingmachine                 0          0  ...              86
 
-.. image:: images/plots/dev_hm_dur_cor.png
-   :height: 300px
+.. image:: _static/images/plots/dev_hm_trigger_sw.png
+   :height: 400px
    :width: 500 px
    :scale: 90 %
    :alt: alternate text
    :align: center
+
+.. note:: Grey fields should be negativ infinity when using the ``z_scale=log`` and are
+    presented as having no value for better visual bla.
 
 Activites and devices
 ~~~~~~~~~~~~~~~~~~~~~
@@ -466,7 +506,7 @@ Activites and devices
 The interaction between devices and activities is of particular interest as the devices predictive
 value for certain activities can be revealed.
 
-To compute the duration each device
+The following code shows how to compute triggers happening during different activities.
 
 .. code:: python
 
@@ -480,13 +520,22 @@ To compute the duration each device
     Washingmachine On      0 days 00:00:00 ...        0 days 00:00:00
     [28 rows x 7 columns]
 
-.. image:: images/plots/cont_hm_trigger.png
+.. code:: python
+
+    from pyadlml.plot import plot_hm_contingency_trigger
+
+    plot_hm_contingency_trigger(data.df_devices, data.df_activities)
+
+.. image:: _static/images/plots/cont_hm_trigger.png
    :height: 300px
    :width: 500 px
-   :scale: 90 %
+   :scale: 100 %
    :alt: alternate text
    :align: center
 
+It may be the case that some devices turn *on* but not *off* during a specific activity. To
+get to know those devices the triggers can be divided into the on and off states of the devices.
+
 .. code:: python
 
     >>> from pyadlml.stats import contingency_duration
@@ -499,13 +548,24 @@ To compute the duration each device
     Washingmachine On      0 days 00:00:00 ...        0 days 00:00:00
     [28 rows x 7 columns]
 
-.. image:: images/plots/cont_hm_trigger_01.png
+This leads to the following plot.
+
+.. code:: python
+
+    from pyadlml.plot import plot_hm_contingency_trigger_01
+
+    plot_hm_contingency_trigger_01(data.df_devices, data.df_activities)
+
+.. image:: _static/images/plots/cont_hm_trigger_01.png
    :height: 300px
    :width: 500 px
-   :scale: 90 %
+   :scale: 100 %
    :alt: alternate text
    :align: center
 
+However more interesting than the triggers are the total durations that each device state
+shares with an activity.
+
 .. code:: python
 
     >>> from pyadlml.stats import contingency_duration
@@ -518,7 +578,13 @@ To compute the duration each device
     Washingmachine On      0 days 00:00:00 ...        0 days 00:00:00
     [28 rows x 7 columns]
 
-.. image:: images/plots/cont_hm_duration.png
+.. code:: python
+
+    from pyadlml.plot import plot_hm_contingency_duration
+
+    plot_hm_contingency_duration(data.df_devices, data.df_activities)
+
+.. image:: _static/images/plots/cont_hm_duration.png
    :height: 300px
    :width: 800 px
    :scale: 90 %
@@ -580,7 +646,7 @@ a specific device.
 Raw
 ~~~
 
-.. image:: images/reps/raw.svg
+.. image:: _static/images/reps/raw.svg
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -591,7 +657,7 @@ The raw representation uses binary vectors to represent the state of the smart h
 Each field corresponds to the state the device is in at that given moment. The following example shows
 an event streams slice and the corresponding raw representations state matrix.
 
-.. image:: images/reps/raw_matrix.svg
+.. image:: _static/images/reps/raw_matrix.svg
    :height: 300px
    :width: 500 px
    :scale: 60 %
@@ -613,7 +679,7 @@ Transform a device dataframe to the *raw* representation by using the *DiscreteE
 Changepoint
 ~~~~~~~~~~~
 
-.. image:: images/reps/cp.svg
+.. image:: _static/images/reps/cp.svg
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -628,7 +694,7 @@ to 0. The changepoint representation tries to capture the notion that device tri
 the inhabitants activity. The picture below shows a *raw* representation matrix and its
 *changepoint* counterpart.
 
-.. image:: images/reps/cp_matrix.svg
+.. image:: _static/images/reps/cp_matrix.svg
    :height: 300px
    :width: 500 px
    :scale: 60 %
@@ -650,7 +716,7 @@ The changepoint representation can be loaded by using the ``rep`` argument.
 LastFired
 ~~~~~~~~~
 
-.. image:: images/reps/lf.svg
+.. image:: _static/images/reps/lf.svg
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -665,7 +731,7 @@ timepoint :math:`t` if and only if the device was the last to change its state f
 *changepoint* representation. The picture below shows a *raw* representation matrix and its
 *last_fired* counterpart.
 
-.. image:: images/reps/lf_matrix.svg
+.. image:: _static/images/reps/lf_matrix.svg
    :height: 300px
    :width: 500 px
    :scale: 60 %
@@ -765,7 +831,7 @@ datapoints already being ordered. There is no change in loading the dataset assu
 Timeslice
 ~~~~~~~~~
 
-.. image:: images/reps/timeslice.svg
+.. image:: _static/images/reps/timeslice.svg
    :height: 200px
    :width: 500 px
    :scale: 90%
@@ -806,7 +872,7 @@ an example for the *raw* representation with a timeslice-length of 10 seconds.
 Image
 ~~~~~
 
-.. image:: images/reps/image.svg
+.. image:: _static/images/reps/image.svg
    :height: 200px
    :width: 500 px
    :scale: 80%

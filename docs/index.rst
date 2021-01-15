@@ -7,18 +7,25 @@
 Activities of Daily Living - Machine Learning
 =============================================
 
-TODO insert readme introduction
-
-References
-
-- want to collect your own data: https://github.com/tcsvn/activity-assistant
-- notebooks: https://github.com/tcsvn/pyadlml/notebooks
-
 .. warning::
    Project is under heavy development. Things are going to change and break. I am
-   currently writing the documentation, meaning this is a draft rather than a document
-   that should be taken seriously. So take everything written here with a huge
-   grain of salt because it is subject to change.
+   currently in the process of writing the documentation. So take everything written
+   here with a huge grain of salt because it is subject to change and may be wrong.
+
+Activities of Daily living (ADLs) e.g cooking, working, sleeping and device readings
+are recorded by smart home inhabitants. The objective is to predict inhabitants activities
+using device readings. Pyadlml offers an easy way to fetch, visualize and preprocess common datasets
+
+- Development: https://github.com/tcsvn/pyadlml
+- Documentation: https://pyadlml.readthedocs.io/
+- PyPi: https://pypi.python.org/pypi/pyadlml/
+
+Other useful references are
+
+- Notebooks: https://github.com/tcsvn/pyadlml/notebooks
+- Collect your own data: https://github.com/tcsvn/activity-assistant
+- Paperlist: https://github.com/tcsvn/pyadlml/todo
+
 
 Modules
 =======
@@ -35,7 +42,7 @@ Modules
           </p>
        </div>
        <div class="col-sm-4 col-sm-offset-1">
-          <a class="reference internal" href="modules/survival.html">
+          <a class="reference internal" href="api/.html">
              <h2>pyadlml.preprocessing</h2>
           </a>
           <p>
@@ -65,8 +72,8 @@ Modules
    </div>
 
 
-Overview
-========
+Documentation
+=============
 
 .. toctree::
    :maxdepth: 2
@@ -74,10 +81,3 @@ Overview
    user_guide.rst
    dataset.rst
    api.rst
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
