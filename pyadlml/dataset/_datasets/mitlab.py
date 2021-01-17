@@ -115,7 +115,6 @@ def _read_data(path_to_file, df_dev, df_act):
                         
                 # create rows
                 for dev, ts_start, ts_end in zip(devices, ts_act, ts_deact):
-                    #print('dev: ', dev, ' ts_start: ', ts_start, ' ts_end: ', ts_end)
                     new_row = {DEVICE:dev,
                                START_TIME:pd.Timestamp(date +'T' + ts_start),
                                END_TIME:pd.Timestamp(date +'T' + ts_end)

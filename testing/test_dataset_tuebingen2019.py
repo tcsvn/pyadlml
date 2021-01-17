@@ -30,7 +30,6 @@ class TestTuebingen2019Dataset(TestDatasetBase):
         self.num_rec_binary_devs = 22
 
     def _setUp(self):
-        set_data_home(TEST_DATA_HOME)
         self.data = fetch_tuebingen_2019(keep_original=True, cache=False)
 
 if __name__ == '__main__':

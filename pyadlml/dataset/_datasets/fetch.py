@@ -49,12 +49,12 @@ def fetch_uci_adl_binary(keep_original=True, cache=True, subject='OrdonezA'):
     dataset_name = 'uci_adl_binary'
 
     def load_uci_adl_binary(folder_path):
-        sub_dev_file = folder_path + '/{}_Sensors.txt'.format(subject)
+        sub_dev_file = os.path.join(folder_path, '{}_Sensors.txt'.format(subject))
         if subject == 'OrdonezB':
-            fix_OrdonezB_ADLS(folder_path + '/OrdonezB_ADLs.txt')
-            sub_act_file = folder_path + '/{}_ADLs_corr.txt'.format(subject)
+            fix_OrdonezB_ADLS(os.path.join(folder_path, 'OrdonezB_ADLs.txt'))
+            sub_act_file = os.path.join(folder_path, '{}_ADLs_corr.txt'.format(subject))
         else:
-            sub_act_file = folder_path + '/{}_ADLs.txt'.format(subject)
+            sub_act_file = os.path.join(folder_path, '{}_ADLs.txt'.format(subject))
 
         return uci_adl_binary.load(sub_dev_file, sub_act_file, subject)
 
@@ -69,9 +69,9 @@ def fetch_mitlab(keep_original=True, cache=True, subject='subject1'):
     dataset_name = 'mitlab'
 
     def load_mitlab(folder_path):
-        sub_act = folder_path + '/' + subject + "/Activities.csv"
-        sub_dev = folder_path + '/' + subject + "/sensors.csv"
-        sub_data = folder_path + '/' + subject + "/activities_data.csv"
+        sub_act = os.path.join(folder_path, subject, "Activities.csv")
+        sub_dev = os.path.join(folder_path, subject, "sensors.csv")
+        sub_data = os.path.join(folder_path, subject, "activities_data.csv")
         return mitlab.load(sub_dev, sub_act, sub_data)
 
     data = _fetch_handler(keep_original, cache, dataset_name, 
@@ -95,8 +95,8 @@ def fetch_amsterdam(keep_original=True, cache=True):
     dataset_name = 'amsterdam'
 
     def load_amsterdam(folder_path):
-        sensorData = folder_path + "/kasterenSenseData.txt"
-        activityData = folder_path + "/kasterenActData.txt"
+        sensorData = os.path.join(folder_path, "kasterenSenseData.txt")
+        activityData = os.path.join(folder_path, "kasterenActData.txt")
         return amsterdam.load(sensorData, activityData)
 
     data = _fetch_handler(keep_original, cache, dataset_name, 
@@ -110,8 +110,8 @@ def fetch_casas_aruba(keep_original=True, cache=True):
     dataset_name = 'casas_aruba'
     def load_casas_aruba(folder_path):
         from pyadlml.dataset._datasets.casas_aruba import _fix_data
-        _fix_data(folder_path + "/data")
-        return casas_aruba.load(folder_path + '/corrected_data.csv')
+        _fix_data(os.path.join(folder_path, "data"))
+        return casas_aruba.load(os.path.join(folder_path, 'corrected_data.csv'))
 
     data = _fetch_handler(keep_original, cache, dataset_name, 
                         CASAS_ARUBA_FILENAME, CASAS_ARUBA_URL, 

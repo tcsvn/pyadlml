@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import pandas as pd
 from pyadlml.dataset import VAL, TIME, DEVICE, END_TIME, START_TIME, ACTIVITY
 from pyadlml.dataset.activities import _is_activity_overlapping
@@ -19,7 +20,7 @@ def _get_device_map(data_path):
     """
     cols = ['Sensor ID', 'Sensor Type', 'Place']
     devices = pd.DataFrame(columns=cols)
-    with open (data_path + 'README', 'r') as file:
+    with open(os.path.join(data_path, 'README'), 'r') as file:
         lines = file.readlines()
         # create header
         for line in lines[7:27]:
@@ -46,7 +47,7 @@ def _get_activity_map(data_path):
     cols = ['ID', 'activity']
     activities = pd.DataFrame(columns=cols)
 
-    with open (data_path + 'README', 'r') as file:
+    with open(os.path.join(data_path, 'README'), 'r') as file:
         lines = file.readlines()
         # create header
         for line in lines[33:60]:
@@ -67,7 +68,7 @@ def _read_data(data_path, activity_map, device_map):
 
     # read in all files
     for i in range(1,31):
-        file_path = data_path + file_name.format(i)
+        file_path = os.path.join(data_path, file_name.format(i))
         df = pd.read_table(file_path, sep=' ', header=None)
         df.columns = cols
         if i < 10:

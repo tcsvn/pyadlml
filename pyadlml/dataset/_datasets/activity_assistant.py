@@ -58,12 +58,12 @@ def load(folder_path, subjects):
     assert isinstance(subjects, list)
 
     df_dev = _read_devices(os.path.join(folder_path, DATA_NAME),
-                            os.path.join(folder_path, DEV_MAP_NAME))
+                           os.path.join(folder_path, DEV_MAP_NAME))
     df_dev = correct_devices(df_dev)
 
     # get mappings
     lst_dev = _read_device_list(os.path.join(folder_path, DEV_MAP_NAME))
-    lst_act = _read_activity_list(os.path.join(folder_path,ACT_MAP_NAME))
+    lst_act = _read_activity_list(os.path.join(folder_path, ACT_MAP_NAME))
 
     data = Data(None, df_dev, activity_list=lst_act, device_list=lst_dev)
 

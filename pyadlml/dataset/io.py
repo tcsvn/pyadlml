@@ -5,19 +5,21 @@ import hashlib
 import zipfile
 import shutil
 from mega import Mega
-
 DATA_DUMP_NAME = 'data.joblib'
-ENV_DATA_HOME = 'PYADLML_DATA_HOME'
+DATA_HOME_FOLDER_NAME = 'pyadlml_data_home'
 
 
 def set_data_home(path_to_folder):
     """ sets the environment variable data home and creates a folder
     """
-    os.environ[ENV_DATA_HOME] = path_to_folder
+    from pyadlml import DATA_HOME
+    global DATA_HOME
+    DATA_HOME[0] = path_to_folder
     _create_folder(path_to_folder)
 
 def get_data_home():
-    return os.environ[ENV_DATA_HOME]
+    import pyadlml
+    return pyadlml.DATA_HOME[0]
 
 def load_from_data_home(param_dict):
     """
@@ -34,14 +36,14 @@ def load_from_data_home(param_dict):
     """
     # create folder name
     folder_name = hashdict2str(param_dict)
-    folder_path = os.environ[ENV_DATA_HOME] + '/' + folder_name + '/'
+    folder_path = os.path.join(get_data_home(), folder_name)
 
     if not os.path.exists(folder_path):
         raise EnvironmentError  # the dataset was not saved in this location
 
     # check if folder exists and return either result or raise an exception
-    X = joblib.load(folder_path + 'X.joblib') 
-    y = joblib.load(folder_path + 'y.joblib') 
+    X = joblib.load(os.path.join(folder_path, 'X.joblib'))
+    y = joblib.load(os.path.join(folder_path, 'y.joblib'))
    
     return X, y
 
@@ -59,8 +61,8 @@ def dump_in_data_home(X, y, param_dict):
     """
     # create string representation of dictionary
     folder_name = hashdict2str(param_dict)
-    folder_path = os.environ[ENV_DATA_HOME] + '/' + folder_name + '/'
-    
+    folder_path = os.path.join(get_data_home(), folder_name)
+
     # remove folder if it already exists
     if os.path.exists(folder_path):        
         shutil.rmtree(folder_path)
@@ -68,9 +70,9 @@ def dump_in_data_home(X, y, param_dict):
     _create_folder(folder_path)
 
     # save all data
-    joblib.dump(X, folder_path + 'X.joblib') 
-    joblib.dump(y, folder_path + 'y.joblib') 
-    joblib.dump(param_dict, folder_path + 'param_dict.joblib') 
+    joblib.dump(X, os.path.join(folder_path, 'X.joblib'))
+    joblib.dump(y, os.path.join(folder_path, 'y.joblib'))
+    joblib.dump(param_dict, os.path.join(folder_path, 'param_dict.joblib'))
 
 
 def _create_folder(path_to_folder):
@@ -95,16 +97,19 @@ def hashdict2str(param_dict):
     folder_name = hashlib.md5(param_string).hexdigest()
     return str(folder_name)
 
+
 def _delete_data(path_to_folder):
     # make sure only data in home directory are deleted
     #assert '/home/' == path_to_folder[:6]
     shutil.rmtree(path_to_folder)
 
+
 def _data_2_folder_name(path_to_folder, data_name):
-    param_dict = {'dataset' : data_name}
+    param_dict = {'dataset': data_name}
     folder_name = hashdict2str(param_dict)
-    folder_path = path_to_folder + '/' + folder_name
+    folder_path = os.path.join(path_to_folder, folder_name)
     return folder_path
+
 
 def fetch_handler(keep_original, cache, dataset_name, 
         mega_filename, mega_url,
@@ -140,7 +145,7 @@ def fetch_handler(keep_original, cache, dataset_name,
         if cache:
             _create_folder(cache_data_folder)
             joblib.dump(data, data_name)
-            Path(cache_data_folder + '/' + dataset_name).touch()
+            Path(os.path.join(cache_data_folder,dataset_name)).touch()
 
 
     # clean up data
@@ -167,7 +172,7 @@ def clear_data_home():
 def _download_from_mega(data_home, file_name, url):
     """ downloads dataset from MEGA and extracts it
     """
-    file_dp = data_home + '/' + file_name
+    file_dp = os.path.join(data_home, file_name)
     
     # download from mega
     m = Mega()    

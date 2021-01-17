@@ -36,7 +36,7 @@ def _load_devices(dev_path):
     df_dev = pd.read_csv(dev_path, delimiter='\t+', skiprows=[0, 1], 
                          names=[START_TIME, END_TIME, 'Location', 'Type', 'Place'], 
                          engine='python')
-    df_dev[DEVICE] = df_dev['Place'] + ' ' +  df_dev['Location'] + ' ' + df_dev['Type']
+    df_dev[DEVICE] = df_dev['Place'] + ' ' + df_dev['Location'] + ' ' + df_dev['Type']
     
     # get room mapping devices
     df_locs = df_dev.copy().groupby([DEVICE, 'Type', 'Place', 'Location']).sum()
