@@ -1,3 +1,13 @@
 pydata_sphinx_theme
 numpydoc
+
+# pyadlml requirements
+pandas
+numpy
+sklearn
 joblib
+mega.py
+dask[complete]
+matplotlib
+scipy
+sqlalchemy
