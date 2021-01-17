@@ -7,11 +7,14 @@ import shutil
 from mega import Mega
 
 DATA_DUMP_NAME = 'data.joblib'
-ENV_DATA_HOME='PYADLML_DATA_HOME'
+ENV_DATA_HOME = 'PYADLML_DATA_HOME'
+
 
 def set_data_home(path_to_folder):
-    # TODO restrict to home folder and full paths
+    """ sets the environment variable data home and creates a folder
+    """
     os.environ[ENV_DATA_HOME] = path_to_folder
+    _create_folder(path_to_folder)
 
 def get_data_home():
     return os.environ[ENV_DATA_HOME]
@@ -34,7 +37,7 @@ def load_from_data_home(param_dict):
     folder_path = os.environ[ENV_DATA_HOME] + '/' + folder_name + '/'
 
     if not os.path.exists(folder_path):
-        raise EnvironmentError # the dataset was not saved in this location
+        raise EnvironmentError  # the dataset was not saved in this location
 
     # check if folder exists and return either result or raise an exception
     X = joblib.load(folder_path + 'X.joblib') 
@@ -73,6 +76,7 @@ def dump_in_data_home(X, y, param_dict):
 def _create_folder(path_to_folder):
     Path(path_to_folder).mkdir(parents=True, exist_ok=True)
 
+
 def hashdict2str(param_dict):
     """ creates a unique string for a dictionary 
     Parameters
@@ -92,8 +96,8 @@ def hashdict2str(param_dict):
     return str(folder_name)
 
 def _delete_data(path_to_folder):
-    # make shure only data in home directorys are deleted
-    assert '/home/' == path_to_folder[:6] 
+    # make sure only data in home directory are deleted
+    #assert '/home/' == path_to_folder[:6]
     shutil.rmtree(path_to_folder)
 
 def _data_2_folder_name(path_to_folder, data_name):
@@ -122,7 +126,6 @@ def fetch_handler(keep_original, cache, dataset_name,
         # download file from mega # TODO make official way available
         _download_from_mega(get_data_home(), mega_filename, mega_url)
 
-    
     # load data
     if data_postfix != '':
         data_name = cache_data_folder + '/' \
@@ -158,8 +161,8 @@ def clear_data_home():
     """ Delete all the content of the data home cache.
     """
     data_home = get_data_home()
-    _delete_data(data_home) 
-    Path.mkdir(data_home)
+    _delete_data(data_home)
+    _create_folder(data_home)
 
 def _download_from_mega(data_home, file_name, url):
     """ downloads dataset from MEGA and extracts it
@@ -171,7 +174,7 @@ def _download_from_mega(data_home, file_name, url):
     m.download_url(url, dest_path=data_home, dest_filename=file_name)
 
     # unzip data 
-    with zipfile.ZipFile(file_dp,"r") as zip_ref:
+    with zipfile.ZipFile(file_dp, "r") as zip_ref:
         zip_ref.extractall(data_home)
 
     # remove zip file

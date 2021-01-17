@@ -23,7 +23,10 @@ from pyadlml.dataset._datasets.activity_assistant import load as load_act_assist
 
 from pyadlml.dataset.io import (
     set_data_home,
-    clear_data_home
+    get_data_home,
+    load_from_data_home,
+    dump_in_data_home,
+    clear_data_home,
 )
 
 from pyadlml.dataset import plot, plotly, io, obj, util

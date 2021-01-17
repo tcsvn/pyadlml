@@ -40,7 +40,7 @@ def hist_counts(df_act=None, df_ac=None, lst_act=None, y_scale=None, idle=False,
     assert y_scale in [None, 'log']
 
     title ='Activity occurrences'
-    col_label = 'occurence'
+    col_label = 'occurrence'
     xlabel = 'counts'
     color = (get_primary_color() if color is None else color)
         
@@ -55,7 +55,7 @@ def hist_counts(df_act=None, df_ac=None, lst_act=None, y_scale=None, idle=False,
     
     # prepare dataframe for plotting
     df.reset_index(level=0, inplace=True)
-    df = df.sort_values(by=['occurence'], axis=0)
+    df = df.sort_values(by=[col_label], axis=0)
     
     # define plot modalities
     num_act = len(df)
@@ -65,7 +65,7 @@ def hist_counts(df_act=None, df_ac=None, lst_act=None, y_scale=None, idle=False,
     fig, ax = plt.subplots(figsize=figsize)
     plt.title(title)
     plt.xlabel(xlabel)
-    ax.barh(df['activity'], df['occurence'], color=color)
+    ax.barh(df['activity'], df[col_label], color=color)
     
     if y_scale == 'log':
         ax.set_xscale('log')

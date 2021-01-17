@@ -3,8 +3,8 @@ import matplotlib
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from pyadlml.dataset.stats import contingency_intervals, contingency_table_triggers,\
-     contingency_table_triggers_01
+from pyadlml.dataset.stats import contingency_duration, contingency_triggers,\
+    contingency_triggers_01
 from pyadlml.dataset.plot.util import func_formatter_seconds2time, \
     heatmap_square, heatmap, annotate_heatmap, heatmap_contingency
 from pyadlml.dataset.activities import add_idle
@@ -38,7 +38,7 @@ def heatmap_contingency_triggers(df_dev=None, df_act=None, con_tab=None, figsize
     valfmt = "{x:.0f}"
 
     if con_tab is None:
-        ct = contingency_table_triggers(df_dev, df_act, idle=idle)
+        ct = contingency_triggers(df_dev, df_act, idle=idle)
     else:
         ct = con_tab
     
@@ -76,7 +76,7 @@ def heatmap_contingency_triggers_01(df_dev=None, df_act=None, con_tab_01=None, f
 
 
     if con_tab_01 is None:
-        df_con = contingency_table_triggers_01(df_dev.copy(), df_act, idle=idle)
+        df_con = contingency_triggers_01(df_dev.copy(), df_act, idle=idle)
     else:
         df_con = con_tab_01.copy()
 
@@ -118,7 +118,7 @@ def heatmap_contingency_overlaps(df_dev=None, df_act=None, con_tab=None, figsize
     if con_tab is None:
         if idle:
             df_act = add_idle(df_act.copy())
-        df_con = contingency_intervals(df_dev, df_act) 
+        df_con = contingency_duration(df_dev, df_act)
     else:
         df_con = con_tab
 

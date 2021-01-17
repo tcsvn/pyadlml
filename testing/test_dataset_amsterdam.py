@@ -16,17 +16,23 @@ class TestAmsterdamDataset(TestDatasetBase):
     __test__ = True
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-    def _setUp(self):
-        self.data = fetch_amsterdam(keep_original=True, cache=False)
         self.fetch_method = fetch_amsterdam
         self.data_home = TEST_DATA_HOME
-        self.df_activity_attrs =  ['df_activities']
-        self.num_activities = 7
+        self.df_activity_attrs = ['df_activities']
+        self.lst_activity_attrs = ['lst_activities']
+        self.num_activities = [7]
+        self.len_activities = [263]
+        self.num_rec_acts = [7]
 
         self.len_devices = 2620
+        self.num_devices = 14
         self.num_rec_devs = 14
         self.num_rec_binary_devs = 14
+
+    def _setUp(self):
+        set_data_home(TEST_DATA_HOME)
+        self.data = fetch_amsterdam(keep_original=True, cache=False)
+
 
 if __name__ == '__main__':
     unittest.main()

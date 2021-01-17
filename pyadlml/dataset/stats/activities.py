@@ -65,7 +65,7 @@ def activities_count(df_activities, lst_activities=None):
         occurence           33         111  ...              10         19
 
     """
-    res_col_name = 'occurence'
+    res_col_name = 'occurrence'
     df = df_activities.copy()
 
     # count the occurences of the activity

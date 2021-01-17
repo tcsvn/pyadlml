@@ -29,7 +29,7 @@ UCI_ADL_BINARY_URL = 'https://mega.nz/file/AQIgDQJD#oximAQFjexTKwNP3WYzlPnOGew06
 UCI_ADL_BINARY_FILENAME = 'uci_adl_binary.zip'
 
 import pyadlml.dataset._datasets.activity_assistant as act_assist
-TUE_2019_URL = 'https://mega.nz/file/sBoCXBrR#Z5paOUwjTo6GWVPxf39ACDs5faPaNbpHah51Q964PBI'
+TUE_2019_URL = 'https://mega.nz/file/dJ5yibbD#NSkHp-fcKSSNwpcuhJwq6AxPCBJnCnLEwZvhhfX1EXk'
 TUE_2019_FILENAME = 'tuebingen_2019.zip'
 
 
@@ -37,7 +37,7 @@ def fetch_tuebingen_2019(keep_original=True, cache=True):
     dataset_name = 'tuebingen_2019'
 
     def load_tuebingen_2019(folder_path):
-        return act_assist.load(folder_path, subject='M')
+        return act_assist.load(folder_path, subjects=['M'])
 
     data = _fetch_handler(keep_original, cache, dataset_name, 
                         TUE_2019_FILENAME, TUE_2019_URL, 
@@ -80,6 +80,18 @@ def fetch_mitlab(keep_original=True, cache=True, subject='subject1'):
     return data
 
 def fetch_amsterdam(keep_original=True, cache=True):
+    """ downloads the amsterdam dataset
+    Parameters
+    ----------
+
+    keep_original : bool
+
+    cache : bool
+
+    Returns
+    -------
+    data : object
+    """
     dataset_name = 'amsterdam'
 
     def load_amsterdam(folder_path):

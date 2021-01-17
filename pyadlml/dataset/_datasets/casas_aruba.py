@@ -90,10 +90,15 @@ def load(data_path):
     df_dev = _get_devices_df(df)
     df_act = _get_activity_df(df)
     
-    dev_rep1 = correct_devices(df_dev)
+    df_dev = correct_devices(df_dev)
     df_act, cor_lst = correct_activities(df_act)
-    
-    data = Data(df_act, dev_rep1)
+
+
+
+    lst_act = df_act[ACTIVITY].unique()
+    lst_dev = df_dev[DEVICE].unique()
+
+    data = Data(df_act, df_dev, activity_list=lst_act, device_list=lst_dev)
     return data
 
 def _get_activity_df(df):

@@ -1,6 +1,6 @@
 import pandas as pd
 
-def add_devices_timeint(df_dev, freq='2h'):
+def add_time_bins(df_dev, freq='2h'):
     """ creates devices for the specified frequency with value on during
         that frequency
         
@@ -40,7 +40,7 @@ def add_devices_timeint(df_dev, freq='2h'):
     return res.reset_index(drop=True)
 
 
-def add_devices_dayofweek(df_dev):
+def add_day_of_week(df_dev):
     """ creates devices for the specified frequency with value on during
         that frequency
         

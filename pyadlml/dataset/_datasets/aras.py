@@ -153,13 +153,24 @@ def load(data_path):
 
     assert not _is_activity_overlapping(df_res1_act) \
         or not _is_activity_overlapping(df_res2_act)
+
     df_dev = _create_device_df(df)
 
     df_dev = correct_devices(df_dev)
 
-    data = Data(df_res1_act, df_dev)
+    lst_res1_act = df_res1_act[ACTIVITY].unique()
+    lst_res2_act = df_res2_act[ACTIVITY].unique()
+    lst_dev = df_dev[DEVICE].unique()
+
+    data = Data(None, df_dev, activity_list=None, device_list=lst_dev)
 
     data.df_dev_map = device_map
-    data.df_act_map = activity_map        
+    data.df_act_map = activity_map
+
+    data.df_activities_res1 = df_res1_act
+    data.lst_activities_res1 = lst_res1_act
+
     data.df_activities_res2 = df_res2_act
+    data.lst_activities_res2 = lst_res2_act
+
     return data

@@ -57,13 +57,15 @@ def load(dev_path, act_path, subject):
     if subject == 'OrdonezB':
         # the activity grooming is often overlapped by sleeping
         # as I deem this activity as important i make it dominant
-        
         df_act, cor_lst = correct_activities(df_act, excepts=['Grooming'])
     elif subject == 'OrdonezA':
         df_act, cor_lst = correct_activities(df_act)
 
+    lst_act = df_act[ACTIVITY].unique()
+    lst_dev = df_dev[DEVICE].unique()
+
     df_dev = correct_devices(df_dev)
-    data = Data(df_act, df_dev)
+    data = Data(df_act, df_dev, activity_list=lst_act, device_list=lst_dev)
     data.correction_activities = cor_lst
     data.df_dev_rooms = df_loc
     

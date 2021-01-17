@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 from pyadlml.dataset.activities import correct_activities
 from pyadlml.dataset.devices import correct_devices
@@ -55,18 +57,18 @@ def load(folder_path, subjects):
     assert isinstance(folder_path, str)
     assert isinstance(subjects, list)
 
-    df_dev = _read_devices(folder_path + '/' + DATA_NAME,
-                            folder_path + '/' + DEV_MAP_NAME)
+    df_dev = _read_devices(os.path.join(folder_path, DATA_NAME),
+                            os.path.join(folder_path, DEV_MAP_NAME))
     df_dev = correct_devices(df_dev)
 
     # get mappings
-    lst_dev = _read_device_list(folder_path + '/' + DEV_MAP_NAME)
-    lst_act = _read_activity_list(folder_path + '/' + ACT_MAP_NAME)
+    lst_dev = _read_device_list(os.path.join(folder_path, DEV_MAP_NAME))
+    lst_act = _read_activity_list(os.path.join(folder_path,ACT_MAP_NAME))
 
     data = Data(None, df_dev, activity_list=lst_act, device_list=lst_dev)
 
     for subject in subjects:
-        df_act = _read_activities(folder_path + '/' + ACT_NAME%(subject))
+        df_act = _read_activities(os.path.join(folder_path, ACT_NAME%(subject)))
         # correct possible overlaps in activities
         df_act, cor_lst = correct_activities(df_act)
         setattr(data, 'df_activities_{}'.format(subject), df_act)
