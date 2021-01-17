@@ -4,10 +4,10 @@ API
 TODO here will be a full docu of all features supported by pyadlml. Listed after modules
 
 Dataset
-=======
+~~~~~~~
 
 Get data
-~~~~~~~~
+^^^^^^^^
 
 .. autofunction:: pyadlml.dataset.fetch_amsterdam
 
@@ -27,7 +27,7 @@ Get data
 
 
 Input/Output
-~~~~~~~~~~~~
+^^^^^^^^^^^^
 
 .. autofunction:: pyadlml.dataset.set_data_home
 
@@ -40,30 +40,30 @@ Input/Output
 .. autofunction:: pyadlml.dataset.clear_data_home
 
 Preprocessing
-=============
+~~~~~~~~~~~~~
 
 Encoder
-~~~~~~~
+^^^^^^^
 
 .. autoclass:: pyadlml.dataset._dataset.DiscreteEncoder
 
 Feature creation
-~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^
 
 .. autofunction::  pyadlml.feature_creation.add_day_of_week
 
 .. autofunction::  pyadlml.feature_creation.add_time_bins
 
 Evaluation
-~~~~~~~~~~
+^^^^^^^^^^
 
 .. autoclass:: pyadlml.model_selection.LeaveOneDayOut
 
 Statistic
-=========
+~~~~~~~~~
 
 Activities
-~~~~~~~~~~
+^^^^^^^^^^
 
 .. autofunction:: pyadlml.stats.activity_dist
 
@@ -94,7 +94,7 @@ Devices
 .. autofunction:: pyadlml.stats.device_duration_corr
 
 Activities ~ Devices
-~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^
 
 .. autofunction:: pyadlml.stats.contingency_triggers
 
@@ -104,10 +104,10 @@ Activities ~ Devices
 
 
 Plots
-=====
+~~~~~
 
 Activities
-~~~~~~~~~~
+^^^^^^^^^^
 
 .. autofunction:: pyadlml.plot.plot_activity_bar_count
 
@@ -121,7 +121,7 @@ Activities
 
 
 Devices
-~~~~~~~
+^^^^^^^
 
 .. autofunction:: pyadlml.plot.plot_device_bar_count
 
@@ -137,7 +137,7 @@ Devices
 
 
 Activities ~ Devices
-~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^
 
 .. autofunction:: pyadlml.plot.plot_hm_contingency_duration
 
