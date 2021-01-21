@@ -78,6 +78,6 @@ Documentation
 .. toctree::
    :maxdepth: 2
 
-   user_guide.rst
+   user_guide/index.rst
    dataset.rst
-   api.rst
+   api/index.rst
