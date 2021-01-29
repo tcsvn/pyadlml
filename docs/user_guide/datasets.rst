@@ -3,9 +3,11 @@
 Datasets
 ********
 
+.. _activity_dataframe:
+
 Usually a dataset is composed of two dataframes, the logged activities and the recorded device readings.
 An entry of the activity dataframe consist of the *start_time*, the *end_time*  and the *activity*
-that is being performed. Below is an example how this could look like.
+that is being performed.
 
 .. csv-table:: df_activities
    :header: "start_time", "end_time", "activity"
@@ -16,9 +18,10 @@ that is being performed. Below is an example how this could look like.
     27-12-2020 16:35:29.808,27-12-2020 16:35:36.057,eating
     ...
 
-An entry of the device dataframe consist of the *time* a certain *device* reported a
-specific *val*\ue. Most of the time the values are, but don't necessarily have to be, binary. The following table
-shows how a typical device dataframe could like.
+.. _device_dataframe:
+
+A device dataframe entry consists of the *time* a certain *device* reported a
+specific *val*\ue. Usually the values are, but don't necessarily have to be, binary.
 
 .. csv-table:: df_devices
    :header: "time", "device", "val"
@@ -30,15 +33,15 @@ shows how a typical device dataframe could like.
     ...
 
 .. Note::
-    Pyadlml supports 8 datasets so far. If you happen to come by a dataset, that is not included in this list
-    please let me know and I will add the dataset to the library. It can be very hard to find datasets online.
-    For a full list and more information about each dataset visit :ref:`Dataset View`.
+    Pyadlml supports 8 datasets so far. If you happen to come by a dataset, not included in this list
+    please open an issue on github and I will add the dataset to the library. It is hard to find datasets
+    online. For a full list and detailed dataset information visit :ref:`datasets <Dataset View>`.
 
 
 Getting the data
 ================
 
-A dataset is loaded by using a function following the schema
+A dataset is loaded using a function following the schema
 
 .. py:function:: pyadlml.dataset.fetch_datasetname(cache=True, keep_original=True)
 
@@ -47,8 +50,8 @@ A dataset is loaded by using a function following the schema
 
 
 The data object functions as a container for relevant attributes of the dataset. The attributes can differ
-from dataset to dataset. All datasets and the way to fetch them are listed at :ref:`Dataset View`.
-The example below shows the :ref:`amsterdam` dataset being loaded
+from dataset to dataset. All datasets and the way to fetch them are listed at :ref:`datasets <Dataset View>`.
+The example below shows the :ref:`amsterdam <amsterdam>` dataset being loaded
 
 .. code:: python
 
@@ -87,13 +90,15 @@ The example below shows the :ref:`amsterdam` dataset being loaded
         dir(data)
         >>> [..., df_activities_subject_1, df_activities_subject_2, df_devices, ...]
 
+.. _storage:
+
 Storage and cache
 =================
 
 By default datasets are stored in the folder where python is executed. Many datasets are not
-in the representation given above and preprocessing takes time to compute. Therefore it can
-be reasonable to use the ``cache=True`` option storing and reusing a binary file of the result after the first load.
-You can change the folder where the data is stored with
+in the representation given above and have to be transformed beforehand. As the preprocessing takes time to compute,
+it can be reasonable to use the ``cache=True`` option storing and reusing the dataset as binary file after
+the first load. You can change the folder where the data is stored with
 
 .. code:: python
 
@@ -101,28 +106,36 @@ You can change the folder where the data is stored with
 
     set_data_home('path/to/folder')
 
-setting an environment variable used by pyadlml.
-
 Coming from activity-assistant
 ==============================
-If you collected your own data with `activity-assistant`_, you can load the dataset
+If you collect your own data with :ref:`activity-assistant` you can load the dataset
 by extracting the ``data_name.zip`` and pointing pyadlml to the folder
 
 .. code:: python
 
     from pyadlml.dataset import load_act_assist
 
-    data = load_act_assist('path/to/data_name/')
+    data = load_act_assist('path/to/data_name/' subjects=['chris'])
 
 .. note::
     Activity-assistant creates an activity file using the naming convention ``activities_[subject_name].csv``.
     Pyadlml loads the file into a dataframe referenced by the attribute ``data.df_activities_[subject_name]``.
 
+.. _error_correction:
 
 Error correction
 ================
-Some datasets are in a desolate state. Therefore the fetch method does some data cleaning beforehand.
-This includes e.g deleting succeeding events that report the same value. Some corrections deal with errors
-done by researches like having overlapping activity intervals, when they were defined as exclusive ect. Pyadlml
+Some datasets are in a desolate state. The ``fetch_datasetname`` method does some data cleaning beforehand.
+This includes e.g deleting succeeding events reporting the same value. Some corrections deal with errors
+done by researches like having overlapping activity intervals when they were defined as exclusive ect. Pyadlml
 stores altered activity values under ``data.activities_corr_lst`` and omitted device values under ``data.todo``.
 (TODO write more about this subject and how the different error correction strategies are done).
+
+
+        Overlapping activity
+        intervals and their correction are saved in *data.corr_acts_intervals*. Dropped
+        duplicates can be accessed in *data.corr_acts_duplicates* or
+
+        *data.corr_devs_duplicates*
+
+.. _activity-assistant:

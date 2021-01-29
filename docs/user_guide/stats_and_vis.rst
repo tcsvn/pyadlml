@@ -37,7 +37,7 @@ and for a bar plot type
     # for the use of idle see note below
     plot_activity_bar_count(data.df_activities, idle=True);
 
-.. image:: _static/images/plots/act_bar_cnt.png
+.. image:: ../_static/images/plots/act_bar_cnt.png
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -78,7 +78,7 @@ Visualize the duration for the activities with a bar plot
 
     plot_activity_bar_duration(data.df_activities)
 
-.. image:: _static/images/plots/act_bar_dur.png
+.. image:: ../_static/images/plots/act_bar_dur.png
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -93,7 +93,7 @@ or use a boxsplot for more information
 
     plot_devices_bp_duration(data.df_activities)
 
-.. image:: _static/images/plots/act_bp.png
+.. image:: ../_static/images/plots/act_bp.png
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -127,7 +127,7 @@ by another.
 
     plot_activity_hm_transitions(data.df_activities)
 
-.. image:: _static/images/plots/act_hm_trans.png
+.. image:: ../_static/images/plots/act_hm_trans.png
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -157,7 +157,7 @@ Approximate the activity density over one day for all activities using monte-car
 
     plot_activity_ridgeline(data.df_activities)
 
-.. image:: _static/images/plots/act_ridge_line.png
+.. image:: ../_static/images/plots/act_ridge_line.png
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -201,7 +201,7 @@ and plot the result
 
     plot_device_on_off(data.df_devices)
 
-.. image:: _static/images/plots/dev_on_off.png
+.. image:: ../_static/images/plots/dev_on_off.png
    :height: 300px
    :width: 500 px
    :scale: 100 %
@@ -216,7 +216,7 @@ More information about the time a device is *on* available using a boxplot.
 
     plot_device_bp_on_duration(data.df_devices)
 
-.. image:: _static/images/plots/dev_bp_dur.png
+.. image:: ../_static/images/plots/dev_bp_dur.png
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -240,7 +240,7 @@ on/off for the same time periods.
     Washingmachine           0.999083    0.996842  ...        1.000000
     [14 rows x 14 columns]
 
-The visualization with a heatmap can be achieved by using the following code.
+The visualization with a heatmap can be achieved by
 
 .. code:: python
 
@@ -248,7 +248,7 @@ The visualization with a heatmap can be achieved by using the following code.
 
     plot_dev_hm_similarity(data.df_devices)
 
-.. image:: _static/images/plots/dev_hm_dur_cor.png
+.. image:: ../_static/images/plots/dev_hm_dur_cor.png
    :height: 400px
    :width: 500 px
    :scale: 90 %
@@ -278,7 +278,7 @@ Compute the amount a device switches its state from on to off or the other way a
 
     plot_device_bar_count(data.df_devices)
 
-.. image:: _static/images/plots/dev_bar_trigger.png
+.. image:: ../_static/images/plots/dev_bar_trigger.png
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -298,7 +298,7 @@ Compute the pairwise differences between succeeding device triggers for all devi
 Using the :math:`\Delta t` s in a histogram provides an overview on how to choose the length
 of a timeslice without destroying to much information. (see hint TODO link).
 
-.. image:: _static/images/plots/dev_hist_trigger_td.png
+.. image:: ../_static/images/plots/dev_hist_trigger_td.png
    :height: 300px
    :width: 500 px
    :scale: 100 %
@@ -328,7 +328,7 @@ Visualizing this as heatmap can ...
 
     plot_device_hm_time_trigger(data.df_devices, t_res='1h')
 
-.. image:: _static/images/plots/dev_hm_trigger_one_day.png
+.. image:: ../_static/images/plots/dev_hm_trigger_one_day.png
    :height: 300px
    :width: 500 px
    :scale: 100 %
@@ -349,7 +349,7 @@ a way to show temporal relationships between devices
     ...                          ...        ...  ...             ...
     Washingmachine                 0          0  ...              86
 
-.. image:: _static/images/plots/dev_hm_trigger_sw.png
+.. image:: ../_static/images/plots/dev_hm_trigger_sw.png
    :height: 400px
    :width: 500 px
    :scale: 90 %
@@ -362,16 +362,16 @@ a way to show temporal relationships between devices
 Activites and devices
 =====================
 
-The interaction between devices and activities is of particular interest as the devices predictive
-value for certain activities can be revealed.
+The interaction between devices and activities is of particular interest as the devices
+predictive value for certain activities can be revealed.
 
 The following code shows how to compute triggers happening during different activities.
 
 .. code:: python
 
-    >>> from pyadlml.stats import contingency_duration
+    >>> from pyadlml.stats import contingency_triggers
 
-    >>> contingency_duration(data.df_devices, data.df_activities)
+    >>> contingency_triggers(data.df_devices, data.df_activities)
     activity                     get drink ...             use toilet
     Hall-Bedroom door Off  0 days 00:01:54 ... 0 days 00:12:24.990000
     Hall-Bedroom door On   0 days 00:14:48 ... 0 days 03:02:49.984000
@@ -385,7 +385,7 @@ The following code shows how to compute triggers happening during different acti
 
     plot_hm_contingency_trigger(data.df_devices, data.df_activities)
 
-.. image:: _static/images/plots/cont_hm_trigger.png
+.. image:: ../_static/images/plots/cont_hm_trigger.png
    :height: 300px
    :width: 500 px
    :scale: 100 %
@@ -397,7 +397,7 @@ get to know those devices the triggers can be divided into the on and off states
 
 .. code:: python
 
-    >>> from pyadlml.stats import contingency_duration
+    >>> from pyadlml.stats import contingency_triggers
 
     >>> contingency_duration(data.df_devices, data.df_activities)
     activity                     get drink ...             use toilet
@@ -415,7 +415,7 @@ This leads to the following plot.
 
     plot_hm_contingency_trigger_01(data.df_devices, data.df_activities)
 
-.. image:: _static/images/plots/cont_hm_trigger_01.png
+.. image:: ../_static/images/plots/cont_hm_trigger_01.png
    :height: 300px
    :width: 500 px
    :scale: 100 %
@@ -443,7 +443,7 @@ shares with an activity.
 
     plot_hm_contingency_duration(data.df_devices, data.df_activities)
 
-.. image:: _static/images/plots/cont_hm_duration.png
+.. image:: ../_static/images/plots/cont_hm_duration.png
    :height: 300px
    :width: 800 px
    :scale: 90 %

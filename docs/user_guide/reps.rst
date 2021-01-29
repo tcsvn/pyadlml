@@ -38,7 +38,7 @@ a specific device.
 Raw
 ~~~
 
-.. image:: _static/images/reps/raw.svg
+.. image:: ../_static/images/reps/raw.svg
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -49,7 +49,7 @@ The raw representation uses binary vectors to represent the state of the smart h
 Each field corresponds to the state the device is in at that given moment. The following example shows
 an event streams slice and the corresponding raw representations state matrix.
 
-.. image:: _static/images/reps/raw_matrix.svg
+.. image:: ../_static/images/reps/raw_matrix.svg
    :height: 300px
    :width: 500 px
    :scale: 60 %
@@ -71,7 +71,7 @@ Transform a device dataframe to the *raw* representation by using the *DiscreteE
 Changepoint
 ~~~~~~~~~~~
 
-.. image:: _static/images/reps/cp.svg
+.. image:: ../_static/images/reps/cp.svg
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -86,7 +86,7 @@ to 0. The changepoint representation tries to capture the notion that device tri
 the inhabitants activity. The picture below shows a *raw* representation matrix and its
 *changepoint* counterpart.
 
-.. image:: _static/images/reps/cp_matrix.svg
+.. image:: ../_static/images/reps/cp_matrix.svg
    :height: 300px
    :width: 500 px
    :scale: 60 %
@@ -108,7 +108,7 @@ The changepoint representation can be loaded by using the ``rep`` argument.
 LastFired
 ~~~~~~~~~
 
-.. image:: _static/images/reps/lf.svg
+.. image:: ../_static/images/reps/lf.svg
    :height: 300px
    :width: 500 px
    :scale: 90 %
@@ -123,7 +123,7 @@ timepoint :math:`t` if and only if the device was the last to change its state f
 *changepoint* representation. The picture below shows a *raw* representation matrix and its
 *last_fired* counterpart.
 
-.. image:: _static/images/reps/lf_matrix.svg
+.. image:: ../_static/images/reps/lf_matrix.svg
    :height: 300px
    :width: 500 px
    :scale: 60 %
@@ -223,7 +223,7 @@ datapoints already being ordered. There is no change in loading the dataset assu
 Timeslice
 =========
 
-.. image:: _static/images/reps/timeslice.svg
+.. image:: ../_static/images/reps/timeslice.svg
    :height: 200px
    :width: 500 px
    :scale: 90%
@@ -264,7 +264,7 @@ an example for the *raw* representation with a timeslice-length of 10 seconds.
 Image
 =====
 
-.. image:: _static/images/reps/image.svg
+.. image:: ../_static/images/reps/image.svg
    :height: 200px
    :width: 500 px
    :scale: 80%

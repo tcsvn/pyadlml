@@ -1,10 +1,19 @@
 Preprocessing
 =============
 
-Encoder
-~~~~~~~
+BinaryEncoder
+~~~~~~~~~~~~~
 
-.. autoclass:: pyadlml.dataset._dataset.DiscreteEncoder
+.. autoclass:: pyadlml.preprocessing.DiscreteEncoder
+
+.. autoclass:: pyadlml.preprocessing.LabelEncoder
+
+ImageEncoder
+~~~~~~~~~~~~
+
+.. autoclass:: pyadlml.preprocessing.ImageEncoder
+
+.. autoclass:: pyadlml.preprocessing.ImageLabelEncoder
 
 Evaluation
 ^^^^^^^^^^

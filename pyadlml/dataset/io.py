@@ -10,7 +10,14 @@ DATA_HOME_FOLDER_NAME = 'pyadlml_data_home'
 
 
 def set_data_home(path_to_folder):
-    """ sets the environment variable data home and creates a folder
+    """
+    Sets the global variable ``data_home`` and creates the according folder.
+    All dump, load and fetch operations assume this folder as the base of operation.
+
+    Parameters
+    ----------
+    path_to_folder : str
+        Specifies the path where the data_home is located.
     """
     from pyadlml import DATA_HOME
     global DATA_HOME
@@ -18,21 +25,41 @@ def set_data_home(path_to_folder):
     _create_folder(path_to_folder)
 
 def get_data_home():
+    """ Returns the current folder where pyadlml saves all datasets to.
+
+    Returns
+    -------
+    path_to_data_home : str
+    """
     import pyadlml
     return pyadlml.DATA_HOME[0]
 
 def load_from_data_home(param_dict):
-    """
+    """ Loads a python object from the data_home folder if it exists.
+
     Parameters
     ----------
     param_dict : dict
-        contains values for X and y e.g frequency, name of dataset 
-        example: 
-            {'dataset': kasteren, 'freq':'10s', 'repr': 'raw'}
+        A dictionary identifying the object that is to be loaded. The keys and
+        values have to exactly match the objects keys and values when it was
+        dumped with *dump_in_data_home*.
+
+    Examples
+    --------
+    >>> from pyadlml import load_from_data_home
+    >>> dct = {'dataset': 'kasteren', 'freq':'10s', 'repr': 'raw'}
+    >>> X, y = load_from_data_home(X, y, param_dict=dct)
+    >>> X
+    np.array([1,2,3,4])
+    >>> y
+    np.array(['a','b','a','c'])
+
     Returns
     -------
     X : pd.DataFrame
+        Some observations
     y : pd.DataFrame
+        Some labels
     """
     # create folder name
     folder_name = hashdict2str(param_dict)
@@ -49,15 +76,26 @@ def load_from_data_home(param_dict):
 
 def dump_in_data_home(X, y, param_dict):
     """
+    Creates a folder inside the *data_home* and dumps X and y in that folder.
+
     Parameters
     ----------
-
     X : pd.DataFrame
+        Some observations.
     y : pd.DataFrame
+        Some observations.
     param_dict : dict
-        contains values for X and y e.g frequency, name of dataset 
-        example: 
-            {'dataset': kasteren, 'freq':'10s', 'repr': 'raw'}
+        Is used as a key to identify the dataset. From the dictionary a hash
+        is generated, that servers as the folder name.
+
+    Examples
+    --------
+    >>> from pyadlml import dump_in_data_home
+    >>> dct = {'dataset': 'kasteren', 'freq':'10s', 'repr': 'raw'}
+    >>> X = np.array([1,2,3,4])
+    >>> y = np.array(['a','b','a','c'])
+    >>> dump_in_data_home(X, y, param_dict=dct)
+
     """
     # create string representation of dictionary
     folder_name = hashdict2str(param_dict)
@@ -163,7 +201,7 @@ def fetch_handler(keep_original, cache, dataset_name,
 
 
 def clear_data_home():
-    """ Delete all the content of the data home cache.
+    """ Delete all content inside the data home folder.
     """
     data_home = get_data_home()
     _delete_data(data_home)

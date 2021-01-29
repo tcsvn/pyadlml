@@ -139,7 +139,7 @@ def heatmap_trigger_one_day(df_dev=None, lst_dev=None, df_tod=None, t_res='1h', 
     title = "Device triggers cummulative over one day"
     xlabel =  'time'
 
-    df = (device_triggers_one_day(df_dev.copy(), lst=lst_dev, t_res=t_res) if df_tod is None else df_tod)
+    df = (device_triggers_one_day(df_dev.copy(), lst_devs=lst_dev, t_res=t_res) if df_tod is None else df_tod)
     num_dev = len(list(df.columns))
     figsize = (_num_items_2_heatmap_one_day_figsize(num_dev) if figsize is None else figsize)
     cmap = (get_sequential_color() if cmap is None else cmap)
@@ -189,7 +189,7 @@ def heatmap_trigger_time(df_dev=None, lst_dev=None, df_tcorr=None, t_window='5s'
     cbarlabel = 'counts'
 
     if df_tcorr is None:
-        df = device_tcorr(df_dev, lst_dev=lst_dev, t_window=t_window)
+        df = device_tcorr(df_dev, lst_devs=lst_dev, t_window=t_window)
     else:
         df = df_tcorr
 
@@ -239,7 +239,7 @@ def heatmap_cross_correlation(df_dev=None, lst_dev=None, df_dur_corr=None, figsi
     cbarlabel = 'similarity'
     
     if df_dur_corr is None:
-        ct = duration_correlation(df_dev, lst_dev=lst_dev)
+        ct = duration_correlation(df_dev, lst_devs=lst_dev)
     else:
         ct = df_dur_corr
     ct = ct.replace(pd.NA, np.inf)
@@ -302,7 +302,7 @@ def hist_on_off(df_dev=None, lst_dev=None, df_onoff=None, figsize=None,
     color2 = (get_secondary_color()if color_sec is None else color_sec)
 
     if df_onoff is None:
-        df = devices_on_off_stats(df_dev, lst=lst_dev)
+        df = devices_on_off_stats(df_dev, lst_devs=lst_dev)
     else:
         df = df_onoff
 
@@ -395,7 +395,7 @@ def hist_counts(df_dev=None, df_tc=None, lst_dev=None, figsize=None, y_scale=Non
     x_label = 'count'
     df_col = 'trigger_count'
 
-    df = (devices_trigger_count(df_dev.copy(), lst=lst_dev) if df_tc is None else df_tc)
+    df = (devices_trigger_count(df_dev.copy(), lst_devs=lst_dev) if df_tc is None else df_tc)
     num_dev = len(df)
     figsize = (_num_bars_2_figsize(num_dev) if figsize is None else figsize)
     color = (get_primary_color() if color is None else color)

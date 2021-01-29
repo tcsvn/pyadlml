@@ -34,6 +34,26 @@ TUE_2019_FILENAME = 'tuebingen_2019.zip'
 
 
 def fetch_tuebingen_2019(keep_original=True, cache=True):
+    """
+
+    Parameters
+    ----------
+    keep_original : bool, optional
+        Determines whether the original dataset is deleted after downloading
+        or kept on the hard drive.
+    cache : bool, optional
+        Determines whether the data object should be stored as a binary file for quicker access.
+        For more information how caching is used refer to the :ref:`user guide <storage>`.
+
+    remember_corrections : bool, optional
+        When set to *true* data points that are changed or dropped during preprocessing
+        are listed in the respective attributes of the data object.  Fore more information
+        about the attributes refer to the :ref:`user guide <error_correction>`.
+
+    Returns
+    -------
+    data : object
+    """
     dataset_name = 'tuebingen_2019'
 
     def load_tuebingen_2019(folder_path):
@@ -45,6 +65,26 @@ def fetch_tuebingen_2019(keep_original=True, cache=True):
     return data
 
 def fetch_uci_adl_binary(keep_original=True, cache=True, subject='OrdonezA'):
+    """
+
+    Parameters
+    ----------
+    keep_original : bool
+        Determines whether the original dataset is deleted after downloading
+        or kept on the hard drive.
+    cache : bool
+        Determines whether the data object should be stored as a binary file for quicker access.
+        For more information how caching is used refer to the :ref:`user guide <storage>`.
+
+    remember_corrections : bool
+        When set to *true* data points that are changed or dropped during preprocessing
+        are listed in the respective attributes of the data object.  Fore more information
+        about the attribtues refer to the :ref:`user guide <error_correction>`.
+
+    Returns
+    -------
+    data : object
+    """
     assert subject in ['OrdonezA', 'OrdonezB']
     dataset_name = 'uci_adl_binary'
 
@@ -65,6 +105,26 @@ def fetch_uci_adl_binary(keep_original=True, cache=True, subject='OrdonezA'):
     
 
 def fetch_mitlab(keep_original=True, cache=True, subject='subject1'):
+    """
+
+    Parameters
+    ----------
+    keep_original : bool
+        Determines whether the original dataset is deleted after downloading
+        or kept on the hard drive.
+    cache : bool
+        Determines whether the data object should be stored as a binary file for quicker access.
+        For more information how caching is used refer to the :ref:`user guide <storage>`.
+
+    remember_corrections : bool
+        When set to *true* data points that are changed or dropped during preprocessing
+        are listed in the respective attributes of the data object.  Fore more information
+        about the attribtues refer to the :ref:`user guide <error_correction>`.
+
+    Returns
+    -------
+    data : object
+    """
     assert subject in ['subject1', 'subject2']
     dataset_name = 'mitlab'
 
@@ -79,14 +139,31 @@ def fetch_mitlab(keep_original=True, cache=True, subject='subject1'):
                         load_mitlab, data_postfix=subject)
     return data
 
-def fetch_amsterdam(keep_original=True, cache=True):
-    """ downloads the amsterdam dataset
+def fetch_amsterdam(keep_original=True, cache=True, remember_corrections=False):
+    """
+    Fetches the amsterdam dataset from the internet. The original dataset or its cached version
+    is stored in the :ref:`data home <storage>` folder.
+
     Parameters
     ----------
-
     keep_original : bool
-
+        Determines whether the original dataset is deleted after downloading
+        or kept on the hard drive.
     cache : bool
+        Determines whether the data object should be stored as a binary file for quicker access.
+        For more information how caching is used refer to the :ref:`user guide <storage>`.
+
+    remember_corrections : bool
+        When set to *true* data points that are changed or dropped during preprocessing
+        are listed in the respective attributes of the data object.  Fore more information
+        about the attributes refer to the :ref:`user guide <error_correction>`.
+
+    Examples
+    --------
+    >>> from pyadlml.dataset import fetch_amsterdam
+    >>> data = fetch_amsterdam()
+    >>> dir(data)
+    >>> [..., df_activities, df_devices, ...]
 
     Returns
     -------
@@ -104,8 +181,36 @@ def fetch_amsterdam(keep_original=True, cache=True):
                         load_amsterdam)
     return data
 
-def fetch_casas_aruba(keep_original=True, cache=True):
+
+def fetch_casas_aruba(keep_original=True, cache=True, remember_corrections=False):
     """
+    Fetches the casas aruba dataset from the internet. The original dataset or its cached version
+    is stored in the :ref:`data home <storage>` folder.
+
+    Parameters
+    ----------
+    keep_original : bool
+        Determines whether the original dataset is deleted after downloading
+        or kept on the hard drive.
+    cache : bool
+        Determines whether the data object should be stored as a binary file for quicker access.
+        For more information how caching is used refer to the :ref:`user guide <storage>`.
+
+    remember_corrections : bool
+        When set to *true* data points that are changed or dropped during preprocessing
+        are listed in the respective attributes of the data object.  Fore more information
+        about the attribtues refer to the :ref:`user guide <error_correction>`.
+
+    Examples
+    --------
+    >>> from pyadlml.dataset import fetch_casas_aruba
+    >>> data = fetch_casas_aruba()
+    >>> dir(data)
+    >>> [..., df_activities, df_devices, ...]
+
+    Returns
+    -------
+    data : object
     """
     dataset_name = 'casas_aruba'
     def load_casas_aruba(folder_path):
@@ -120,19 +225,34 @@ def fetch_casas_aruba(keep_original=True, cache=True):
 
 
 def fetch_aras(keep_original=True, cache=True):
-    """ downloads aras dataset into the datahome folder of pyadlml if 
-        it wasn't already downloaded and returns data object
+    """
+    Fetches the aras dataset from the internet. The original dataset or its cached version
+    is stored in the :ref:`data home <storage>` folder.
 
     Parameters
     ----------
     keep_original : bool
-        Determines whether the original dataset is kept on drive or removed
+        Determines whether the original dataset is deleted after downloading
+        or kept on the hard drive.
     cache : bool
-        Determines whether the loaded data object is stored on disk or not   
-    
+        Determines whether the data object should be stored as a binary file for quicker access.
+        For more information how caching is used refer to the :ref:`user guide <storage>`.
+
+    remember_corrections : bool
+        When set to *true* data points that are changed or dropped during preprocessing
+        are listed in the respective attributes of the data object.  Fore more information
+        about the attributes refer to the :ref:`user guide <error_correction>`.
+
+    Examples
+    --------
+    >>> from pyadlml.dataset import fetch_aras
+    >>> data = fetch_aras()
+    >>> dir(data)
+    >>> [..., df_activities, df_devices, ...]
+
     Returns
     -------
-    data : Data.obj
+    data : object
     """
     dataset_name = 'aras'
 

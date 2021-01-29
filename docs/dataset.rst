@@ -134,14 +134,14 @@ UCI_ADL_Binary
 :publication: Activity Recognition Using Hybrid Generative/Discriminative Models on Home Environments Using Binary Sensors. Sensors 2013, 13, 5460-5477.
 :organization: Carlos III University of Madrid
 :link: https://archive.ics.uci.edu/ml/datasets/Activities+of+Daily+Living+%28ADLs%29+Recognition+Using+Binary+Sensors
-:Ordonez A from: 2011-11-28 02:27:59
-:Ordonez A to: 2011-12-12 07:22:21
-:Ordonez A activities: 9/248
-:Ordonez A devices: 12/816
-:Ordonez B from: 2012-11-11 21:14:00
-:Ordonez B to: 2012-12-03 01:03:59
-:Ordonez B activities: 10/493
-:Ordonez B devices: 12/4666
+:Ord.A from: 2011-11-28 02:27:59
+:Ord.A to: 2011-12-12 07:22:21
+:Ord.A activities: 9/248
+:Ord.A devices: 12/816
+:Ord.B from: 2012-11-11 21:14:00
+:Ord.B to: 2012-12-03 01:03:59
+:Ord.B activities: 10/493
+:Ord.B devices: 12/4666
 :abstract: This dataset comprises information regarding the ADLs performed by two users on a daily basis in their
     own homes. This dataset is composed by two instances of data, each one corresponding to a different
     user and summing up to 35 days of fully labelled data. Each instance of the dataset is described by

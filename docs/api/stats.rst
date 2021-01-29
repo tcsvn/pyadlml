@@ -12,8 +12,6 @@ Activities
 
 .. autofunction:: pyadlml.stats.activity_duration
 
-.. autofunction:: pyadlml.stats.activity_duration_dist
-
 
 Devices
 ~~~~~~~

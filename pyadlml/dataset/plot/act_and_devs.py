@@ -80,15 +80,14 @@ def heatmap_contingency_triggers_01(df_dev=None, df_act=None, con_tab_01=None, f
     else:
         df_con = con_tab_01.copy()
 
-    # format text strings   
-    df = df_con.reset_index()
-    df['index'] = df['device'] + df['val'].astype(str)
-    df['index'] = df['index'].apply(lambda x: x[:-len("False")] if "False" in x else "On")
-    df = df.set_index('index')
-    df = df.drop(['device', 'val'], axis=1)
-    vals = df.values.T
-    acts = df.columns
-    devs = list(df.index)
+    # rename labels
+    df_con = df_con.reset_index(drop=False)
+    df_con['index'] = df_con['index'].apply(lambda x: x if "Off" in x else "On")
+    df_con = df_con.set_index('index')
+
+    vals = df_con.values.T
+    acts = df_con.columns
+    devs = list(df_con.index)
 
     heatmap_contingency(acts, devs, vals, title, cbarlabel, textcolors=textcolors,
         valfmt=valfmt, z_scale=z_scale, numbers=numbers, figsize=figsize)

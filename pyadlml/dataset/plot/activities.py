@@ -16,27 +16,31 @@ from pyadlml.util import get_sequential_color, get_secondary_color, get_primary_
 
 
 
-def hist_counts(df_act=None, df_ac=None, lst_act=None, y_scale=None, idle=False, figsize=None, color=None, file_path=None):
-    """ bar chart displaying how often activities are occuring
+def hist_counts(df_acts=None, lst_acts=None, df_ac=None, y_scale=None, idle=False, figsize=None, color=None, file_path=None):
+    """
+    Plot a bar chart displaying how often activities are occuring.
+
     Parameters
     ----------
-    df_act : pd.DataFrame or None
-        Dataframe of all recorded activities
-    df_ac : pd.DataFrame or None
+    df_acts : pd.DataFrame or None
+        Dataframe of all recorded activities. Fore more information refer to :ref:`df_activities<activity_dataframe>`.
+    lst_acts: lst, optional
+    df_ac : pd.DataFrame, optional
         Statistic of activities
-    y_scale : str or None
+    y_scale : str, optional
         If it is 'log' then scale y appropriately
-    idle : bool
+    idle : bool, optional
         indicates if the activity 'idle' should be inserted everywhere
         where there is no 
-    file_path : String
+    file_path : String, optional
         path where the image will be stored
 
     Returns
     -------
+    res : fig or None
         Either a figure if file_path is not specified or nothing 
     """
-    assert not (df_act is None and df_ac is None)
+    assert not (df_acts is None and df_ac is None)
     assert y_scale in [None, 'log']
 
     title ='Activity occurrences'
@@ -46,10 +50,10 @@ def hist_counts(df_act=None, df_ac=None, lst_act=None, y_scale=None, idle=False,
         
     # create statistics if the don't exists
     if df_ac is None:
-        df_act = df_act.copy()
+        df_acts = df_acts.copy()
         if idle:
-            df_act = add_idle(df_act)
-        df = activities_count(df_act, lst_activities=lst_act)
+            df_acts = add_idle(df_acts)
+        df = activities_count(df_acts, lst_acts=lst_acts)
     else:
         df = df_ac
     
@@ -78,23 +82,26 @@ def hist_counts(df_act=None, df_ac=None, lst_act=None, y_scale=None, idle=False,
         return fig
 
 
-def boxplot_duration(df_act, lst_act=None, y_scale=None, idle=False, figsize=None, file_path=None):
-    """ boxplot of activity durations (mean) max min
+def boxplot_duration(df_acts, lst_acts=None, y_scale=None, idle=False, figsize=None, file_path=None):
+    """
+    Plots a boxplot of activity durations.
+
     Parameters
     ----------
-    df_act : pd.DataFrame or None
+    df_acts : pd.DataFrame or None
         Dataframe of all recorded activities
-    y_scale : str or None
+    lst_acts : lst, optional
+    y_scale : 'log', optional
         If it is 'log' then scale y appropriately
-    idle : bool
+    idle : bool, optional
         indicates if the activity 'idle' should be inserted everywhere
         where there is no other activity present
-    file_path : String or None
+    file_path : str, optional
         path where the image will be stored
 
     Returns
     -------
-        Either a figu
+    res : fig or None
     """
     assert y_scale in [None, 'log']
     
@@ -102,9 +109,9 @@ def boxplot_duration(df_act, lst_act=None, y_scale=None, idle=False, figsize=Non
     xlabel = 'seconds'
 
     if idle:
-        df_act = add_idle(df_act)
+        df_acts = add_idle(df_acts)
 
-    df = activities_duration_dist(df_act, list_activities=lst_act)
+    df = activities_duration_dist(df_acts, lst_acts=lst_acts)
     # select data for each device
     activities = df['activity'].unique()
     df['seconds'] = df['minutes']*60     
@@ -139,7 +146,8 @@ def boxplot_duration(df_act, lst_act=None, y_scale=None, idle=False, figsize=Non
         return fig
 
 def hist_cum_duration(df_act=None, act_lst=None, df_dur=None, y_scale=None, idle=False, figsize=None, color=None, file_path=None):
-    """ plots the cummulated duration for each activity in a bar plot
+    """
+    Plots the cumulative duration for each activity in a bar plot.
 
     Parameters
     ----------
@@ -171,7 +179,7 @@ def hist_cum_duration(df_act=None, act_lst=None, df_dur=None, y_scale=None, idle
     if df_dur is None:
         if idle:
             df_act = add_idle(df_act.copy())
-        df = activity_durations(df_act, list_activities=act_lst, freq=freq)
+        df = activity_durations(df_act, lst_acts=act_lst, time_unit=freq)
     else:
         df = df_dur
     df = df.sort_values(by=[freq], axis=0)
@@ -211,7 +219,7 @@ def heatmap_transitions(df_act=None, lst_act=None, df_trans=None, z_scale=None, 
 
     if df_trans is None:
         df_act = add_idle(df_act) if idle else df_act
-        df = activities_transitions(df_act, lst_act=lst_act)
+        df = activities_transitions(df_act, lst_acts=lst_act)
     else:
         df = df_trans
 
@@ -264,7 +272,7 @@ def ridge_line(df_act=None, lst_act=None, act_dist=None, t_range='day', idle=Fal
     if act_dist is None:
         if idle:
             df_act = add_idle(df_act)
-        df = activities_dist(df_act.copy(), lst_act=lst_act, t_range=t_range, n=n)
+        df = activities_dist(df_act.copy(), lst_acts=lst_act, t_range=t_range, n=n)
         if df.empty:
             raise ValueError("no activity was recorded and no activity list was given.")
     else:

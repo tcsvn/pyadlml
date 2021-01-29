@@ -2,55 +2,113 @@ import pandas as pd
 from pyadlml.dataset._dataset import label_data
 from pyadlml.util import get_npartitions, get_parallel
 import dask.dataframe as dd
-from pyadlml.dataset import START_TIME, END_TIME, TIME, DEVICE
+from pyadlml.dataset import START_TIME, END_TIME, TIME, DEVICE, VAL, ACTIVITY
 from pyadlml.dataset._representations.raw import create_raw
 #import __logger__
 
 
 def contingency_table_triggers_01(df_devs, df_acts, idle=False):
+    """
+    Compute the amount a device turns "on" or "off" respectively
+    during the different activities.
 
+    Parameters
+    ----------
+    df_devs : pd.DataFrame
+        All recorded devices from a dataset. For more information refer to
+        :ref:`user guide<device_dataframe>`.
+    df_acts : pd.DataFrame
+        All recorded activities from a dataset. Fore more information refer to the
+        :ref:`user guide<activity_dataframe>`.
+    idle : bool
+        Determines whether gaps between activities should be assigned
+        the activity *idle* or be ignored.
+
+    Examples
+    --------
+    >>> from pyadlml.stats import contingency_triggers_01
+    >>> contingency_triggers_01(data.df_devices, data.df_activities)
+    activity            get drink  go to bed  ... use toilet
+    devices                                   ...
+    Cups cupboard Off   18          0         ...          0
+    Cups cupboard On    18          0         ...          0
+    Dishwasher Off       1          0         ...          0
+    Dishwasher On        1          0         ...          0
+                   ... ...        ...         ...        ...
+    Washingmachine Off   0          0         ...          0
+    Washingmachine On    0          0         ...          0
+    [14 rows x 7 columns]
+
+    Results
+    -------
+    df : pd.DataFrame
     """
-    output: 
-        read like this: dev 1 turned 123 times from 1 to 0 while act 1 was present
-        example
-        ---------------------------
-                | act 1 | .... | act n|
-        ------------------------------- 
-        dev 1 0 | 123   |      | 123  | 
-        dev 1 1 | 122   |      | 141  |
-        ... 
-        dev n 0 | 123   |      | 123  | 
-        dev n 1 | 122   |      | 141  |
-    """
+    dev_index = 'devices'
+    ON = 'On'
+    OFF = 'Off'
     df = label_data(df_devs, df_acts, idle=idle)
     
-    df['val2'] = df['val'].astype(int)
-    return pd.pivot_table(df, 
-               columns='activity',
-               index=['device', 'val'],
+    df['val2'] = df[VAL].astype(int)
+    df = pd.pivot_table(df,
+               columns=ACTIVITY,
+               index=[DEVICE, VAL],
                values='val2',
                aggfunc=len,
                fill_value=0)
 
+    # format text strings
+    def func(x):
+        if "False" in x:
+            return x[:-len("False")] + " Off"
+        else:
+            return x[:-len("True")] + " On"
+
+    df = df.reset_index()
+    df[dev_index] = df[DEVICE] + df[VAL].astype(str)
+    df[dev_index] = df[dev_index].apply(func)
+    df = df.set_index(dev_index)
+    df = df.drop([DEVICE, VAL], axis=1)
+    return df
+
 
 def contingency_table_triggers(df_devs, df_acts, idle=False):
     """
-    output: 
-        read like this: dev 1 was 123 times triggered while act 1 was present
-        example
-        ---------------------------
-                | act 1 | .... | act n|
-        ------------------------------- 
-        dev 1 | 123   |      | 123  |
-        ... 
-        dev n | 123   |      | 123  | 
+    Compute the amount of device triggers occuring during the different activities.
+
+    Parameters
+    ----------
+    df_devs : pd.DataFrame
+        All recorded devices from a dataset. For more information refer to
+        :ref:`user guide<device_dataframe>`.
+    df_acts : pd.DataFrame
+        All recorded activities from a dataset. Fore more information refer to the
+        :ref:`user guide<activity_dataframe>`.
+    idle : bool
+        Determines whether gaps between activities should be assigned
+        the activity *idle* or be ignored.
+
+    Examples
+    --------
+    >>> from pyadlml.stats import contingency_triggers
+    >>> contingency_triggers(data.df_devices, data.df_activities)
+    activity            get drink  go to bed  ...  use toilet
+    device
+    Cups cupboard              36          0  ...           0
+    Dishwasher                  2          0  ...           0
+               ...            ...        ...  ...         ...
+    Washingmachine              0          0  ...           0
+    [7 rows x 7 columns]
+
+    Results
+    -------
+    df : pd.DataFrame
     """
     df = label_data(df_devs, df_acts, idle=idle)    
-    df['val'] = 1
+    df[VAL] = 1
     return pd.pivot_table(df, 
-               columns='activity',
-               index='device',
-               values='val',
+               columns=ACTIVITY,
+               index=DEVICE,
+               values=VAL,
                aggfunc=len,
                fill_value=0)
 
@@ -65,8 +123,9 @@ def _create_cont_df():
         -----------------------------
           1 | dev1   | 0   | act1      | td
     """
-    df = pd.DataFrame(columns=['device', 'val', 'activity', 'time_diff'])
-    df['time_diff'] = pd.to_timedelta(df['time_diff'])
+    td = 'time_diff'
+    df = pd.DataFrame(columns=[DEVICE, VAL, ACTIVITY, td])
+    df[td] = pd.to_timedelta(df[td])
     return df 
 
 def _calc_intervall_diff(i1, i2):
@@ -87,32 +146,38 @@ def _calc_intervall_diff(i1, i2):
     #return pd.Interval(mi, ma)
     return ma-mi
 
-def contingency_intervals(df_dev, df_act):
-    """ compute the crosscorelation by comparing for every interval the binary values
-    between the devices
-    
+
+def contingency_intervals(df_devs, df_acts, idle=False):
+    """
+    Compute the time a device is "on" or "off" respectively
+    during the different activities.
+
     Parameters
     ----------
-    df_dev: pd.DataFrame
-        device representation 1 
-        columns [time, device, val]
-    df_act : pd.DataFrame
-        contains activities
-        columns [start_time, end_time, activity]
-        
+    df_devs : pd.DataFrame
+        All recorded devices from a dataset. For more information refer to
+        :ref:`user guide<device_dataframe>`.
+    df_acts : pd.DataFrame
+        All recorded activities from a dataset. Fore more information refer to the
+        :ref:`user guide<activity_dataframe>`.
+    idle : bool
+        Determines whether gaps between activities should be assigned
+        the activity *idle* or be ignored.
+
+    Examples
+    --------
+    >>> from pyadlml.stats import contingency_duration
+    >>> contingency_duration(data.df_devices, data.df_activities)
+    activity                     get drink ...             use toilet
+    Hall-Bedroom door Off  0 days 00:01:54 ... 0 days 00:12:24.990000
+    Hall-Bedroom door On   0 days 00:14:48 ... 0 days 03:02:49.984000
+    ...                                ...
+    Washingmachine On      0 days 00:00:00 ...        0 days 00:00:00
+    [14 rows x 7 columns]
+
     Returns
     -------
-    output : pd.DataFrame
-        read like this: dev 1 turned 123 times from 1 to 0 while act 1 was present
-        example
-        ---------------------------
-                | act 1 | .... | act n|
-        ------------------------------- 
-        dev 1 0 | 123   |      | 123  | 
-        dev 1 1 | 122   |      | 141  |
-        ... 
-        dev n 0 | 123   |      | 123  | 
-        dev n 1 | 122   |      | 141  
+    df : pd.DataFrame
     """
     TD = 'time_difference_to_succ'
     
@@ -126,7 +191,7 @@ def contingency_intervals(df_dev, df_act):
         # get selection of relevant devices
         act_start_time = row.start_time
         act_end_time = row.end_time
-        raw_sel = raw[(act_start_time <= raw['time']) & (raw['time'] <= act_end_time)].copy()
+        raw_sel = raw[(act_start_time <= raw[TIME]) & (raw[TIME] <= act_end_time)].copy()
 
         if raw_sel.empty:
             # the case when no device activation fell into the recorded activity timeframe
@@ -175,30 +240,28 @@ def contingency_intervals(df_dev, df_act):
     
     def create_meta(raw):
         devices = {name : 'object' for name in raw.columns[1:-1]}
-        return {**{'time': 'datetime64[ns]', 'td': 'timedelta64[ns]'}, **devices}
+        return {**{TIME: 'datetime64[ns]', 'td': 'timedelta64[ns]'}, **devices}
         
-    dev_lst = df_dev['device'].unique()
-    df_dev = df_dev.sort_values(by='time')
-    raw = create_raw(df_dev).applymap(lambda x: 'ON' if x else 'OFF').reset_index(drop=False)
-    raw[TD] = raw['time'].shift(-1) - raw['time']
+    dev_lst = df_devs[DEVICE].unique()
+    df_devs = df_devs.sort_values(by=TIME)
+    raw = create_raw(df_devs).applymap(lambda x: 'ON' if x else 'OFF').reset_index(drop=False)
+    raw[TD] = raw[TIME].shift(-1) - raw[TIME]
     
     y = [(d1 + ' Off',d2 + ' On') for d1,d2 in zip(dev_lst, dev_lst)]
     new_cols = [d for tup in y for d in tup] 
             
     
-    df_act = df_act.copy().join(pd.DataFrame(index=df_act.index, columns=new_cols))
+    df_acts = df_acts.copy().join(pd.DataFrame(index=df_acts.index, columns=new_cols))
     if True: # TODO parallel is not working
     #if not get_parallel():
-        df = df_act.apply(func, args=[raw, dev_lst], axis=1)
-        df = df.drop(columns=['start_time', 'end_time'])
-        df = df.groupby('activity').sum()
+        df = df_acts.apply(func, args=[raw, dev_lst], axis=1)
+        df = df.drop(columns=[START_TIME, END_TIME])
+        df = df.groupby(ACTIVITY).sum()
         return df.T
     else:
-        df = dd.from_pandas(df_act.copy(), npartitions=get_npartitions())\
+        df = dd.from_pandas(df_acts.copy(), npartitions=get_npartitions())\
                 .apply(func, args=[raw, dev_lst], axis=1)\
-                .drop(columns=['start_time', 'end_time'])\
-                .groupby('activity').sum()\
+                .drop(columns=[START_TIME, END_TIME])\
+                .groupby(ACTIVITY).sum()\
                 .compute(scheduler='processes')
-                
         return df.T
-    
