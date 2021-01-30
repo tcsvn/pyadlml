@@ -1,6 +1,10 @@
 Preprocessing
 =============
 
+.. warning::
+    The classes naming will change. The description as of now does not match the behavior.
+
+
 BinaryEncoder
 ~~~~~~~~~~~~~
 
@@ -16,6 +20,6 @@ ImageEncoder
 .. autoclass:: pyadlml.preprocessing.ImageLabelEncoder
 
 Evaluation
-^^^^^^^^^^
+~~~~~~~~~~
 
 .. autoclass:: pyadlml.model_selection.LeaveOneDayOut
