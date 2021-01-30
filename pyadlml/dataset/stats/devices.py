@@ -233,6 +233,7 @@ def devices_on_off_stats(df_devs, lst_devs=None):
     -------
     df : pd.DataFrame
     """
+
     diff = 'diff'
     td_on = 'td_on'
     td_off = 'td_off'

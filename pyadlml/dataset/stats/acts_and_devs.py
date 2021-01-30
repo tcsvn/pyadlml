@@ -20,7 +20,7 @@ def contingency_table_triggers_01(df_devs, df_acts, idle=False):
     df_acts : pd.DataFrame
         All recorded activities from a dataset. Fore more information refer to the
         :ref:`user guide<activity_dataframe>`.
-    idle : bool
+    idle : bool, optional, default: False
         Determines whether gaps between activities should be assigned
         the activity *idle* or be ignored.
 

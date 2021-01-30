@@ -9,7 +9,7 @@ from pyadlml.dataset.plot.activities import (
     boxplot_duration as plot_activity_bp_duration,
     hist_cum_duration as plot_activity_bar_duration,
     heatmap_transitions as plot_activity_hm_transition,
-    ridgeline as plot_activity_rl_daily_density
+    ridge_line as plot_activity_rl_daily_density
 )
 
 from pyadlml.dataset.plot.devices import (

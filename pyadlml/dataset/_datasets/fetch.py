@@ -38,10 +38,10 @@ def fetch_tuebingen_2019(keep_original=True, cache=True):
 
     Parameters
     ----------
-    keep_original : bool, optional
+    keep_original : bool, default=True
         Determines whether the original dataset is deleted after downloading
         or kept on the hard drive.
-    cache : bool, optional
+    cache : bool, default=True
         Determines whether the data object should be stored as a binary file for quicker access.
         For more information how caching is used refer to the :ref:`user guide <storage>`.
 
@@ -69,7 +69,7 @@ def fetch_uci_adl_binary(keep_original=True, cache=True, subject='OrdonezA'):
 
     Parameters
     ----------
-    keep_original : bool
+    keep_original : bool, default=True
         Determines whether the original dataset is deleted after downloading
         or kept on the hard drive.
     cache : bool
@@ -109,10 +109,10 @@ def fetch_mitlab(keep_original=True, cache=True, subject='subject1'):
 
     Parameters
     ----------
-    keep_original : bool
+    keep_original : bool, default=True
         Determines whether the original dataset is deleted after downloading
         or kept on the hard drive.
-    cache : bool
+    cache : bool, default=True
         Determines whether the data object should be stored as a binary file for quicker access.
         For more information how caching is used refer to the :ref:`user guide <storage>`.
 
@@ -146,10 +146,10 @@ def fetch_amsterdam(keep_original=True, cache=True, remember_corrections=False):
 
     Parameters
     ----------
-    keep_original : bool
+    keep_original : bool, default=True
         Determines whether the original dataset is deleted after downloading
         or kept on the hard drive.
-    cache : bool
+    cache : bool, default=True
         Determines whether the data object should be stored as a binary file for quicker access.
         For more information how caching is used refer to the :ref:`user guide <storage>`.
 
@@ -189,14 +189,14 @@ def fetch_casas_aruba(keep_original=True, cache=True, remember_corrections=False
 
     Parameters
     ----------
-    keep_original : bool
+    keep_original : bool, default=True
         Determines whether the original dataset is deleted after downloading
         or kept on the hard drive.
-    cache : bool
+    cache : bool, default=True
         Determines whether the data object should be stored as a binary file for quicker access.
         For more information how caching is used refer to the :ref:`user guide <storage>`.
 
-    remember_corrections : bool
+    remember_corrections : bool, default=False
         When set to *true* data points that are changed or dropped during preprocessing
         are listed in the respective attributes of the data object.  Fore more information
         about the attribtues refer to the :ref:`user guide <error_correction>`.
@@ -231,10 +231,10 @@ def fetch_aras(keep_original=True, cache=True):
 
     Parameters
     ----------
-    keep_original : bool
+    keep_original : bool, default=True
         Determines whether the original dataset is deleted after downloading
         or kept on the hard drive.
-    cache : bool
+    cache : bool, default=True
         Determines whether the data object should be stored as a binary file for quicker access.
         For more information how caching is used refer to the :ref:`user guide <storage>`.
 

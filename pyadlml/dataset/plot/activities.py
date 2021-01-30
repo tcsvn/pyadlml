@@ -16,24 +16,44 @@ from pyadlml.util import get_sequential_color, get_secondary_color, get_primary_
 
 
 
-def hist_counts(df_acts=None, lst_acts=None, df_ac=None, y_scale=None, idle=False, figsize=None, color=None, file_path=None):
+def hist_counts(df_acts=None, lst_acts=None, df_ac=None, y_scale="linear", idle=False,
+                figsize=None, color=None, file_path=None):
     """
-    Plot a bar chart displaying how often activities are occuring.
+    Plot a bar chart displaying how often activities are occurring.
 
     Parameters
     ----------
-    df_acts : pd.DataFrame or None
-        Dataframe of all recorded activities. Fore more information refer to :ref:`df_activities<activity_dataframe>`.
-    lst_acts: lst, optional
-    df_ac : pd.DataFrame, optional
-        Statistic of activities
-    y_scale : str, optional
-        If it is 'log' then scale y appropriately
-    idle : bool, optional
-        indicates if the activity 'idle' should be inserted everywhere
-        where there is no 
-    file_path : String, optional
-        path where the image will be stored
+    df_acts : pd.DataFrame, optional
+        recorded activities from a dataset. Fore more information refer to the
+        :ref:`user guide<activity_dataframe>`.
+    lst_acts : lst of str, optional
+        A list of activities that are included in the statistic. The list can be a
+        subset of the recorded activities or contain activities that are not recorded.
+    idle : bool, default: False
+        Determines whether gaps between activities should be assigned
+        the activity *idle* or be ignored.
+    y_scale : {"log", "linear"}, default: linear
+        The axis scale type to apply.
+    figsize : (float, float), default: None
+        width, height in inches. If not provided, the figsize is inferred by automatically.
+    color : str, optional
+        sets the color of the plot. When not set, the primary theming color is used.
+        Learn more about theming in the :ref:`user guide <theming>`
+    file_path : str, optional
+        If set, saves the plot under the given file path and return *None* instead
+        of returning the figure.
+
+    Examples
+    --------
+    >>> from pyadlml.plot import plot_activity_bar_count
+    >>> plot_activity_bar_count(data.df_activities, idle=True);
+
+    .. image:: ../_static/images/plots/act_bar_cnt.png
+       :height: 300px
+       :width: 500 px
+       :scale: 90 %
+       :alt: alternate text
+       :align: center
 
     Returns
     -------
@@ -82,26 +102,46 @@ def hist_counts(df_acts=None, lst_acts=None, df_ac=None, y_scale=None, idle=Fals
         return fig
 
 
-def boxplot_duration(df_acts, lst_acts=None, y_scale=None, idle=False, figsize=None, file_path=None):
+def boxplot_duration(df_acts, lst_acts=None, y_scale=None, idle=False,
+                     figsize=None, file_path=None):
     """
-    Plots a boxplot of activity durations.
+    Plot a boxplot for activity durations.
 
     Parameters
     ----------
-    df_acts : pd.DataFrame or None
-        Dataframe of all recorded activities
-    lst_acts : lst, optional
-    y_scale : 'log', optional
-        If it is 'log' then scale y appropriately
-    idle : bool, optional
-        indicates if the activity 'idle' should be inserted everywhere
-        where there is no other activity present
+    df_acts : pd.DataFrame, optional
+        recorded activities from a dataset. Fore more information refer to the
+        :ref:`user guide<activity_dataframe>`.
+    lst_acts : lst of str, optional
+        A list of activities that are included in the statistic. The list can be a
+        subset of the recorded activities or contain activities that are not recorded.
+    figsize : (float, float), default: None
+        width, height in inches. If not provided, the figsize is inferred by automatically.
+    y_scale : {"log", "linear"}, default: None
+        The axis scale type to apply.
+    idle : bool, default: False
+        Determines whether gaps between activities should be assigned
+        the activity *idle* or be ignored.
     file_path : str, optional
-        path where the image will be stored
+        If set, saves the plot under the given file path and return *None* instead
+        of returning the figure.
+
+    Examples
+    --------
+    >>> from pyadlml.plots import plot_devices_bp_duration
+    >>> plot_devices_bp_duration(data.df_activities)
+
+    .. image:: ../_static/images/plots/act_bp.png
+       :height: 300px
+       :width: 500 px
+       :scale: 90 %
+       :alt: alternate text
+       :align: center
 
     Returns
     -------
     res : fig or None
+        Either a figure if file_path is not specified or nothing
     """
     assert y_scale in [None, 'log']
     
@@ -145,31 +185,52 @@ def boxplot_duration(df_acts, lst_acts=None, y_scale=None, idle=False, figsize=N
     else:
         return fig
 
-def hist_cum_duration(df_act=None, act_lst=None, df_dur=None, y_scale=None, idle=False, figsize=None, color=None, file_path=None):
+def hist_cum_duration(df_acts=None, lst_acts=None, df_dur=None, y_scale=None, idle=False,
+                      figsize=None, color=None, file_path=None):
     """
     Plots the cumulative duration for each activity in a bar plot.
 
     Parameters
     ----------
-    df_act : pd.DataFrame or None
-        Dataframe of all recorded activities
-    df_dur : pd.DataFrame or None
-        Dataframe of statistic
-    y_scale : str or None
-        If it is 'log' then scale y appropriately
-    idle : bool
-        indicates if the activity 'idle' should be inserted everywhere
-        where there is no other activity present
-    figsize : tuple (w,h)
-        size of the figure
-    file_path : String or None
-        path where the image will be stored
+    df_acts : pd.DataFrame, optional
+        recorded activities from a dataset. Fore more information refer to the
+        :ref:`user guide<activity_dataframe>`.
+    lst_acts : lst of str, optional
+        A list of activities that are included in the statistic. The list can be a
+        subset of the recorded activities or contain activities that are not recorded.
+    y_scale : {"log", "linear"}, default: None
+        The axis scale type to apply.
+    idle : bool, default: False
+        Determines whether gaps between activities should be assigned
+        the activity *idle* or be ignored.
+    figsize : (float, float), default: None
+        width, height in inches. If not provided, the figsize is inferred by automatically.
+    color : str, optional
+        sets the color of the plot. When not set, the primary theming color is used.
+        Learn more about theming in the :ref:`user guide <theming>`
+    file_path : str, optional
+        If set, saves the plot under the given file path and return *None* instead
+        of returning the figure.
+
+    Examples
+    --------
+    >>> from pyadlml.plots import plot_activity_bar_duration
+    >>> plot_activity_bar_duration(data.df_activities)
+
+    .. image:: ../_static/images/plots/act_bar_dur.png
+       :height: 300px
+       :width: 500 px
+       :scale: 90 %
+       :alt: alternate text
+       :align: center
+
     Returns
     -------
-        Either a figu
+    res : fig or None
+        Either a figure if file_path is not specified or nothing
     """
     assert y_scale in [None, 'log']
-    assert not (df_act is None and df_dur is None)
+    assert not (df_acts is None and df_dur is None)
 
     title = 'Cummulative activity durations'
     xlabel = 'seconds'
@@ -178,8 +239,8 @@ def hist_cum_duration(df_act=None, act_lst=None, df_dur=None, y_scale=None, idle
 
     if df_dur is None:
         if idle:
-            df_act = add_idle(df_act.copy())
-        df = activity_durations(df_act, lst_acts=act_lst, time_unit=freq)
+            df_acts = add_idle(df_acts.copy())
+        df = activity_durations(df_acts, lst_acts=lst_acts, time_unit=freq)
     else:
         df = df_dur
     df = df.sort_values(by=[freq], axis=0)
@@ -208,18 +269,68 @@ def hist_cum_duration(df_act=None, act_lst=None, df_dur=None, y_scale=None, idle
     else:
         return fig
 
-def heatmap_transitions(df_act=None, lst_act=None, df_trans=None, z_scale=None, figsize=None, \
-    idle=False, numbers=True, grid=True, cmap=None, file_path=None):
-    """    """
+def heatmap_transitions(df_acts=None, lst_acts=None, df_trans=None, z_scale="linear",
+                        figsize=None, idle=False, numbers=True, grid=True,
+                        cmap=None, file_path=None):
+    """
+    Parameters
+    ----------
+    df_acts : pd.DataFrame, optional
+        recorded activities from a dataset. Fore more information refer to the
+        :ref:`user guide<activity_dataframe>`.
+    lst_acts : lst of str, optional
+        A list of activities that are included in the statistic. The list can be a
+        subset of the recorded activities or contain activities that are not recorded.
+    df_trans : pd.DataFrame
+        A precomputed transition table. If the *df_trans* parameter is given, parameters
+        *df_acts* and *lst_acts* are ignored. The transition table can be computed
+        in :ref:`stats <stats_acts_trans>`.
+    figsize : (float, float), default: None
+        width, height in inches. If not provided, the figsize is inferred by automatically.
+    z_scale : {"log", "linear"}, default: None
+        The axis scale type to apply.
+    numbers : bool, default: True
+        Whether to display numbers inside the heatmaps fields or not.
+    idle : bool, default: False
+        Determines whether gaps between activities should be assigned
+        the activity *idle* or be ignored.
+    cmap : str or Colormap, optional
+        The Colormap instance or registered colormap name used to map scalar
+        data to colors. This parameter is ignored for RGB(A) data.
+        Defaults 'viridis'.
+    grid : bool, default: True
+        determines whether to display a white grid, seperating the fields or not.
+    file_path : str, optional
+        If set, saves the plot under the given file path and return *None* instead
+        of returning the figure.
+
+    Examples
+    --------
+    >>> from pyadlml.plots import plot_activity_hm_transitions
+    >>> plot_activity_hm_transitions(data.df_activities)
+
+    .. image:: ../_static/images/plots/act_hm_trans.png
+       :height: 300px
+       :width: 500 px
+       :scale: 90 %
+       :alt: alternate text
+       :align: center
+
+
+    Returns
+    -------
+    res : fig or None
+        Either a figure if file_path is not specified or nothing.
+    """
     assert z_scale in [None, 'log'], 'z-scale has to be either of type None or log'
-    assert not (df_act is None and df_trans is None)
+    assert not (df_acts is None and df_trans is None)
 
     title = 'Activity transitions'
     z_label = 'count'
 
     if df_trans is None:
-        df_act = add_idle(df_act) if idle else df_act
-        df = activities_transitions(df_act, lst_acts=lst_act)
+        df_acts = add_idle(df_acts) if idle else df_acts
+        df = activities_transitions(df_acts, lst_acts=lst_acts)
     else:
         df = df_trans
 
@@ -251,32 +362,72 @@ def heatmap_transitions(df_act=None, lst_act=None, df_trans=None, z_scale=None, 
     else:
         return fig
 
-def ridge_line(df_act=None, lst_act=None, act_dist=None, t_range='day', idle=False, \
-        n=1000, ylim_upper=None, color=None, figsize=None, file_path=None):
+def ridge_line(df_acts=None, lst_acts=None, df_act_dist=None, idle=False,
+               n=1000, ylim_upper=None, color=None, figsize=None, file_path=None):
     """
+    Plots the activity density distribution over one day.
+
     Parameters
     ----------
-    ylim_upper: float
-        height that determines how many ridgelines are displayed. Adjust value to fit all 
-        the ridgelines into the plot
-    dist_scale: float
-        the scale of the distributions of a ridgeline. 
+    df_acts : pd.DataFrame, optional
+        recorded activities from a dataset. Fore more information refer to the
+        :ref:`user guide<activity_dataframe>`.
+    lst_acts : lst of str, optional
+        A list of activities that are included in the statistic. The list can be a
+        subset of the recorded activities or contain activities that are not recorded.
+    df_act_dist : pd.DataFrame, optional
+        A precomputed activity density distribution. If the *df_trans* parameter is given, parameters
+        *df_acts* and *lst_acts* are ignored. The transition table can be computed
+        in :ref:`stats <stats_acts_trans>`.
+    n : int, default=1000
+        The number of monte-carlo samples to draw.
+    ylim_upper: float, optional
+        The offset from the top of the plot to the first ridge_line. Set this if
+        the automatically determined value is not satisfying.
+    figsize : (float, float), default: None
+        width, height in inches. If not provided, the figsize is inferred by automatically.
+    color : str, optional
+        sets the color of the plot. When not set, the primary theming color is used.
+        Learn more about theming in the :ref:`user guide <theming>`
+    idle : bool, default: False
+        Determines whether gaps between activities should be assigned
+        the activity *idle* or be ignored.
+    file_path : str, optional
+        If set, saves the plot under the given file path and return *None* instead
+        of returning the figure.
+
+    Examples
+    --------
+    >>> from pyadlml.plots import plot_activity_ridgeline
+    >>> plot_activity_ridgeline(data.df_activities)
+
+    .. image:: ../_static/images/plots/act_ridge_line.png
+       :height: 300px
+       :width: 500 px
+       :scale: 90 %
+       :alt: alternate text
+       :align: center
+
+    Returns
+    -------
+    res : fig or None
+        Either a figure if file_path is not specified or nothing.
     """
-    assert not (df_act is None and act_dist is None)
+    assert not (df_acts is None and df_act_dist is None)
 
     title = 'Activity distribution over one day'
     xlabel = 'day'
     color = (get_primary_color() if color is None else color)
 
 
-    if act_dist is None:
+    if df_act_dist is None:
         if idle:
-            df_act = add_idle(df_act)
-        df = activities_dist(df_act.copy(), lst_acts=lst_act, t_range=t_range, n=n)
+            df_acts = add_idle(df_acts)
+        df = activities_dist(df_acts.copy(), lst_acts=lst_acts, n=n)
         if df.empty:
             raise ValueError("no activity was recorded and no activity list was given.")
     else:
-        df = act_dist
+        df = df_act_dist
 
     def date_2_second(date):
         """ maps time onto seconds of a day 
