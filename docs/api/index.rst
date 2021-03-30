@@ -1,8 +1,6 @@
 API
 ===
 
-TODO here will be a full docu of all features supported by pyadlml. Listed after modules
-
 .. toctree::
     :maxdepth: 3
 
@@ -10,6 +8,8 @@ TODO here will be a full docu of all features supported by pyadlml. Listed after
     stats.rst
     plot.rst
     preprocessing.rst
+    pipeline.rst
+    model_selection.rst
     feature_creation.rst
     misc.rst
 

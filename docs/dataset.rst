@@ -3,29 +3,30 @@
 Datasets
 ========
 
-Here is a list of datasets supported by pyadlml. Make sure to also check out the `notebooks`_.
-The field *activities* and *devices* follow the scheme  ``#nr/recorded number#``.
-
 .. warning::
     Project is under heavy development. Dataset information is wrong or incomplete. I am
     going to update this as soon as possible.
 
-The fetch methods. When you want to keep the dataset pass the parameter
-
+The page displays an exhaustive list of datasets supported by pyadlml.
+The attributes *activities* and *devices* follow the scheme  ``#x/#X``.
+For example ``activities: 7/263`` means the dataset possesses :math:`7` activities with :math:`263`
+recordings. The ``DeviceType`` informs whether the the devices are *boolean*, *numerical* or *categorical*
+Make sure to also check out the `notebooks`_.
 
 Amsterdam
 ~~~~~~~~~
 
 :Authors: T.L.M. van Kasteren; A. K. Noulas; G. Englebienne and B.J.A. Kroese
 :Contact: t.l.m.vanKasteren@uva.nl
-:paper: Tenth International Conference on Ubiquitous Computing 2008 (Ubicomp '08)
-:organization: Universiteit van Amsterdam
-:link: https://sites.google.com/site/tim0306/
-:from: 2008-02-25 19:40:26
-:to: 2008-03-23 19:04:58
-:activities: 7/263
-:devices: 14/2620
-:abstract: todo
+:Paper: Tenth International Conference on Ubiquitous Computing 2008 (Ubicomp '08)
+:Organization: Universiteit van Amsterdam
+:Link: https://sites.google.com/site/tim0306/
+:From: 2008-02-25 19:40:26
+:To: 2008-03-23 19:04:58
+:Activities: 7/263
+:Devices: 14/2620
+:DeviceType: boolean
+:Abstract: todo
 
 To download the dataset execute
 
@@ -37,21 +38,22 @@ To download the dataset execute
     dir(data)
     >>> [..., df_activities, df_devices, ...]
 
-to get to know more about the dataset you can take a look at the `amsterdam notebook`_.
+for more information about the dataset, take a look at the `amsterdam notebook`_.
 
 Casas Aruba
 ~~~~~~~~~~~
 
 :Authors: D. Cook
 :Contact: hande.alemdar@boun.edu.tr
-:paper: WSU CASAS smart home project: D. Cook. Learning setting-generalized activity models for smart spaces. IEEE Intelligent Systems, 2011.
+:Paper: WSU CASAS smart home project: D. Cook. Learning setting-generalized activity models for smart spaces. IEEE Intelligent Systems, 2011.
 :organization: Washington State University
-:link: http://casas.wsu.edu/datasets/aruba.zip
-:from: 2010-11-04 00:03:50
-:to: 2011-06-11 23:58:10
-:activities: 11/6475
-:devices: 31/1589824
-:abstract: todo
+:Link: http://casas.wsu.edu/datasets/aruba.zip
+:From: 2010-11-04 00:03:50
+:To: 2011-06-11 23:58:10
+:Activities: 11/6475
+:Devices: 31/1589824
+:DeviceType: boolean, numerical, categorical
+:Abstract: todo
 
 To download the dataset execute
 
@@ -63,7 +65,7 @@ To download the dataset execute
     dir(data)
     >>> [..., df_activities, df_devices, ...]
 
-to get to know more about the dataset you can take a look at the `aras notebook`_.
+for more information about the dataset, take a look at the `casas aruba notebook`_.
 
 
 Aras
@@ -71,15 +73,16 @@ Aras
 
 :Authors: H. Alemdar, H. Ertan, O.D. Incel, C. Ersoy
 :Contact: hande.alemdar@boun.edu.tr
-:paper: ARAS Human Activity Datasets in Multiple Homes with Multiple Residents, Pervasive Health, Venice, May 2013.
-:organization: Boğaziçi University Department of Computer Engineering
-:link: https://cmpe.boun.edu.tr/aras/
-:from: 2000-01-01 00:00:00
-:to: 2000-01-30 23:54:02
-:activities resident 1: 26/1308
-:activities resident 2: 23/811
-:devices: 20/102233
-:abstract: The data was recorded in home by two subjects, Resident 1 and Resident 2.
+:Paper: ARAS Human Activity Datasets in Multiple Homes with Multiple Residents, Pervasive Health, Venice, May 2013.
+:Organization: Boğaziçi University Department of Computer Engineering
+:Link: https://cmpe.boun.edu.tr/aras/
+:From: 2000-01-01 00:00:00
+:To: 2000-01-30 23:54:02
+:Activities r1: 26/1308
+:Activities r2: 23/811
+:Devices: 20/102233
+:DeviceType: boolean, numerical, categorical
+:Abstract: The data was recorded in one home for two subjects, Resident 1 and Resident 2.
 
 To download the dataset execute
 
@@ -91,25 +94,27 @@ To download the dataset execute
     dir(data)
     >>> [..., df_activities_resident1, df_activities_resident2, df_devices, ...]
 
-to get to know more about the dataset you can take a look at the  `aras notebook`_.
+for more information about the dataset, take a look at the `aras notebook`_.
 
 MitLab
 ~~~~~~
 
 :Authors: Emmanuel Munguia Tapia
 :Contact: emunguia@media.mit.edu
-:paper: E. Munguia Tapia. Activity Recognition in the Home Setting Using Simple and Ubiquitous sensors. S.M Thesis
-:organization: Massachusetts Institute of Technology
-:Resident 1 from: 2003-03-27 06:42:04
-:Resident 1 to: 2003-04-11 22:26:46
-:Resident 1 activities: 22/296
-:Resident 1 devices: 72/5196
-:Resident 2 from: 2003-04-19 02:56:53
-:Resident 2 to: 2003-05-04 22:16:02
-:Resident 2 activities: 24/219
-:Resident 2 devices: 68/3198
-:abstract: The dataset spans two dataset generated by two subjects. You can either by passing the right
-    subject attribute into the ``fetch_mitlab`` function.
+:Paper: E. Munguia Tapia. Activity Recognition in the Home Setting Using Simple and Ubiquitous sensors. S.M Thesis
+:Organization: Massachusetts Institute of Technology
+:R1 from: 2003-03-27 06:42:04
+:R1 to: 2003-04-11 22:26:46
+:R1 activities: 22/296
+:R1 devices: 72/5196
+:R1 DeviceType: boolean
+:R2 from: 2003-04-19 02:56:53
+:R2 to: 2003-05-04 22:16:02
+:R2 activities: 24/219
+:R2 devices: 68/3198
+:R2 DeviceType: boolean
+:Abstract: The dataset consists of two separate datasets generated by two subjects. You can load either
+    by passing the right subject attribute into the ``fetch_mitlab`` function.
 
 To download the dataset execute
 
@@ -124,32 +129,35 @@ To download the dataset execute
     dir(data_2)
     >>> [..., df_activities, df_devices, ...]
 
-for my personal take on the dataset take a look at the `aras notebook`_.
+for more information about the dataset, take a look at the `mitlab subject1 notebook`_
+or `mitlab subject2 notebook`_.
 
 UCI_ADL_Binary
 ~~~~~~~~~~~~~~
 
 :Authors: OrdÃ³Ã±ez, F.J.; de Toledo, P.; Sanchis, A. A
 :Contact: fordonez@inf.uc3m.es
-:publication: Activity Recognition Using Hybrid Generative/Discriminative Models on Home Environments Using Binary Sensors. Sensors 2013, 13, 5460-5477.
-:organization: Carlos III University of Madrid
-:link: https://archive.ics.uci.edu/ml/datasets/Activities+of+Daily+Living+%28ADLs%29+Recognition+Using+Binary+Sensors
-:Ord.A from: 2011-11-28 02:27:59
-:Ord.A to: 2011-12-12 07:22:21
-:Ord.A activities: 9/248
-:Ord.A devices: 12/816
-:Ord.B from: 2012-11-11 21:14:00
-:Ord.B to: 2012-12-03 01:03:59
-:Ord.B activities: 10/493
-:Ord.B devices: 12/4666
-:abstract: This dataset comprises information regarding the ADLs performed by two users on a daily basis in their
+:Publication: Activity Recognition Using Hybrid Generative/Discriminative Models on Home Environments Using Binary Sensors. Sensors 2013, 13, 5460-5477.
+:Organization: Carlos III University of Madrid
+:Link: https://archive.ics.uci.edu/ml/datasets/ Activities+of+Daily+Living+%28 ADLs%29+Recognition+Using+Binary+Sensors
+:OA from: 2011-11-28 02:27:59
+:OA to: 2011-12-12 07:22:21
+:OA activities: 9/248
+:OA devices: 12/816
+:OA DeviceType: boolean
+:OB from: 2012-11-11 21:14:00
+:OB to: 2012-12-03 01:03:59
+:OB activities: 10/493
+:OB devices: 12/4666
+:OB DeviceType: boolean
+:Abstract: This dataset comprises information regarding the ADLs performed by two users on a daily basis in their
     own homes. This dataset is composed by two instances of data, each one corresponding to a different
     user and summing up to 35 days of fully labelled data. Each instance of the dataset is described by
     three text files, namely: description, sensors events (features), activities of the daily living (labels).
     Sensor events were recorded using a wireless sensor network and data were labelled manually.
 
-The dataset has two datasets. You can load either of the datasets by passing either ``OrdonezA`` or ``OrdonezB`` to
-the ``subject`` parameter of the fetch function:
+The dataset consists of two datasets. You can load either dataset by passing ``OrdonezA``
+or ``OrdonezB`` with ``subject`` parameter to the fetch function:
 
 .. code:: python
 
@@ -163,21 +171,23 @@ the ``subject`` parameter of the fetch function:
     dir(data)
     >>> [..., df_activities, df_devices, ...]
 
-for my personal take on the dataset take a look at the `uci adl binary subjectA notebook`_ or the `uci adl binary subjectA notebook`_.
+for more information about the dataset, take a look at `uci adl binary subjectA notebook`_
+or the `uci adl binary subjectA notebook`_.
 
 Tuebingen 2019
 ~~~~~~~~~~~~~~
 
 :Authors: Christian Meier
 :Contact: christian.meier@student.uni-tuebingen.de
-:thesis: Activity Recognition in Smart Home Environments using Hidden Markov Models. B.A. Thesis
-:organization: Eberhardt Karl University Tuebingen
-:from: 2019-05-05 10:35:42
-:to: 2019-07-23 07:21:59
-:activities: 11/313
-:devices: 22/197847
-:short summary: todo
-
+:Thesis: Activity Recognition in Smart Home Environments using Hidden Markov Models. B.A. Thesis
+:Organization: Eberhardt Karl University Tuebingen
+:From: 2019-05-05 10:35:42
+:To: 2019-07-23 07:21:59
+:Activities: 11/313
+:Activity Coverage: 0.8 TODO
+:Devices: 22/197847
+:DeviceType: boolean
+:Short summary: todo
 
 .. code:: python
 
@@ -187,7 +197,7 @@ Tuebingen 2019
     dir(data)
     >>> [..., df_activities, df_devices, ...]
 
-for my personal take on the dataset take a look at the `tuebingen 2019 notebook`_.
+for more information about the dataset, take a look at `tuebingen 2019 notebook`_.
 
 .. _notebooks: https://github.com/tcsvn/pyadlml/blob/master/notebooks/datasets/
 .. _amsterdam notebook: https://github.com/tcsvn/pyadlml/blob/master/notebooks/datasets/amsterdam.ipynb

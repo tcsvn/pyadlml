@@ -186,6 +186,24 @@ Compute the time and the proportion a device was on and off
 
     >>> from pyadlml.stats import device_on_off
 
+        >>> device_on_off(data.df_devs)
+                        device                  td_on                  td_off   frac_on  frac_off
+        0        Cups cupboard 0 days 00:10:13.010000 27 days 18:34:19.990000  0.000255  0.999745
+        1           Dishwasher        0 days 00:55:02        27 days 17:49:31  0.001376  0.998624
+        ...                ...                    ...                     ...        ...      ...
+        13      Washingmachine        0 days 00:08:08        27 days 18:36:25  0.000203  0.999797
+
+    and plot the result
+
+        >>> device_on_off(data.df_devs)
+                        device                  td_on                  td_off   frac_on  frac_off
+        0        Cups cupboard 0 days 00:10:13.010000 27 days 18:34:19.990000  0.000255  0.999745
+        1           Dishwasher        0 days 00:55:02        27 days 17:49:31  0.001376  0.998624
+        ...                ...                    ...                     ...        ...      ...
+        13      Washingmachine        0 days 00:08:08        27 days 18:36:25  0.000203  0.999797
+
+    and plot the result
+
     >>> device_on_off(data.df_devices)
                     device                  td_on                  td_off   frac_on  frac_off
     0        Cups cupboard 0 days 00:10:13.010000 27 days 18:34:19.990000  0.000255  0.999745
@@ -231,6 +249,28 @@ on/off for the same time periods.
 
     >>> from pyadlml.stats import device_duration_corr
 
+        >>> device_duration_corr(data.df_devs)
+        device              Cups cupboard  Dishwasher  ...  Washingmachine
+        device                                         ...
+        Cups cupboard            1.000000    0.997571  ...        0.999083
+        Dishwasher               0.997571    1.000000  ...        0.996842
+        ...
+        Washingmachine           0.999083    0.996842  ...        1.000000
+        [14 rows x 14 columns]
+
+    The visualization with a heatmap can be achieved by
+
+        >>> device_duration_corr(data.df_devs)
+        device              Cups cupboard  Dishwasher  ...  Washingmachine
+        device                                         ...
+        Cups cupboard            1.000000    0.997571  ...        0.999083
+        Dishwasher               0.997571    1.000000  ...        0.996842
+        ...
+        Washingmachine           0.999083    0.996842  ...        1.000000
+        [14 rows x 14 columns]
+
+    The visualization with a heatmap can be achieved by
+
     >>> device_duration_corr(data.df_devices)
     device              Cups cupboard  Dishwasher  ...  Washingmachine
     device                                         ...
@@ -265,6 +305,18 @@ Compute the amount a device switches its state from on to off or the other way a
 
     >>> from pyadlml.stats import device_trigger_count
 
+        >>> device_trigger_count(data.df_devs)
+                        device  trigger_count
+        0        Cups cupboard             98
+        1           Dishwasher             42
+
+
+        >>> device_trigger_count(data.df_devs)
+                        device  trigger_count
+        0        Cups cupboard             98
+        1           Dishwasher             42
+
+
     >>> device_trigger_count(data.df_devices)
                     device  trigger_count
     0        Cups cupboard             98
@@ -291,6 +343,18 @@ Compute the pairwise differences between succeeding device triggers for all devi
 
     >>> from pyadlml.stats import device_time_diff
 
+        >>> device_time_diff(data.df_devs)
+        array([1.63000e+02, 3.30440e+04, 1.00000e+00, ..., 4.00000e+00,
+               1.72412e+05, 1.00000e+00])
+
+    Using the
+
+        >>> device_time_diff(data.df_devs)
+        array([1.63000e+02, 3.30440e+04, 1.00000e+00, ..., 4.00000e+00,
+               1.72412e+05, 1.00000e+00])
+
+    Using the
+
     >>> device_time_diff(data.df_devices)
     array([1.63000e+02, 3.30440e+04, 1.00000e+00, ..., 4.00000e+00,
            1.72412e+05, 1.00000e+00])
@@ -310,6 +374,28 @@ Compute the amount of triggers falling into timeframes spanning one day
 .. code:: python
 
     >>> from pyadlml.stats import device_trigger_one_day
+
+        >>> device_trigger_one_day(data.df_devs, t_res='1h')
+
+        device    Cups cupboard  Dishwasher   ...  Washingmachine
+        time                                  ...
+        00:00:00            0.0         0.0   ...             0.0
+        01:00:00           16.0         0.0   ...             0.0
+        ...
+        23:00:00            6.0         8.0   ...             2.0
+
+    Visualizing this as heatmap can ...
+
+        >>> device_trigger_one_day(data.df_devs, t_res='1h')
+
+        device    Cups cupboard  Dishwasher   ...  Washingmachine
+        time                                  ...
+        00:00:00            0.0         0.0   ...             0.0
+        01:00:00           16.0         0.0   ...             0.0
+        ...
+        23:00:00            6.0         8.0   ...             2.0
+
+    Visualizing this as heatmap can ...
 
     >>> device_trigger_one_day(data.df_devices, t_res='1h')
 
@@ -342,6 +428,20 @@ a way to show temporal relationships between devices
 
     >>> from pyadlml.stats import device_trigger_sliding_window
 
+        >>> device_trigger_sliding_window(data.df_devs)
+                           Cups cupboard Dishwasher  ...  Washingmachine
+        Cups cupboard                332         10  ...               0
+        Dishwasher                    10         90  ...
+        ...                          ...        ...  ...             ...
+        Washingmachine                 0          0  ...              86
+
+        >>> device_trigger_sliding_window(data.df_devs)
+                           Cups cupboard Dishwasher  ...  Washingmachine
+        Cups cupboard                332         10  ...               0
+        Dishwasher                    10         90  ...
+        ...                          ...        ...  ...             ...
+        Washingmachine                 0          0  ...              86
+
     >>> device_trigger_sliding_window(data.df_devices)
                        Cups cupboard Dishwasher  ...  Washingmachine
     Cups cupboard                332         10  ...               0
@@ -371,6 +471,22 @@ The following code shows how to compute triggers happening during different acti
 
     >>> from pyadlml.stats import contingency_triggers
 
+        >>> contingency_triggers(data.df_devs, data.df_activities)
+        activity                     get drink ...             use toilet
+        Hall-Bedroom door Off  0 days 00:01:54 ... 0 days 00:12:24.990000
+        Hall-Bedroom door On   0 days 00:14:48 ... 0 days 03:02:49.984000
+        ...                                ...
+        Washingmachine On      0 days 00:00:00 ...        0 days 00:00:00
+        [28 rows x 7 columns]
+
+        >>> contingency_triggers(data.df_devs, data.df_activities)
+        activity                     get drink ...             use toilet
+        Hall-Bedroom door Off  0 days 00:01:54 ... 0 days 00:12:24.990000
+        Hall-Bedroom door On   0 days 00:14:48 ... 0 days 03:02:49.984000
+        ...                                ...
+        Washingmachine On      0 days 00:00:00 ...        0 days 00:00:00
+        [28 rows x 7 columns]
+
     >>> contingency_triggers(data.df_devices, data.df_activities)
     activity                     get drink ...             use toilet
     Hall-Bedroom door Off  0 days 00:01:54 ... 0 days 00:12:24.990000
@@ -398,6 +514,26 @@ get to know those devices the triggers can be divided into the on and off states
 .. code:: python
 
     >>> from pyadlml.stats import contingency_triggers
+
+        >>> contingency_duration(data.df_devs, data.df_activities)
+        activity                     get drink ...             use toilet
+        Hall-Bedroom door Off  0 days 00:01:54 ... 0 days 00:12:24.990000
+        Hall-Bedroom door On   0 days 00:14:48 ... 0 days 03:02:49.984000
+        ...                                ...
+        Washingmachine On      0 days 00:00:00 ...        0 days 00:00:00
+        [28 rows x 7 columns]
+
+    This leads to the following plot.
+
+        >>> contingency_duration(data.df_devs, data.df_activities)
+        activity                     get drink ...             use toilet
+        Hall-Bedroom door Off  0 days 00:01:54 ... 0 days 00:12:24.990000
+        Hall-Bedroom door On   0 days 00:14:48 ... 0 days 03:02:49.984000
+        ...                                ...
+        Washingmachine On      0 days 00:00:00 ...        0 days 00:00:00
+        [28 rows x 7 columns]
+
+    This leads to the following plot.
 
     >>> contingency_duration(data.df_devices, data.df_activities)
     activity                     get drink ...             use toilet
@@ -428,6 +564,22 @@ shares with an activity.
 .. code:: python
 
     >>> from pyadlml.stats import contingency_duration
+
+        >>> contingency_duration(data.df_devs, data.df_activities)
+        activity                     get drink ...             use toilet
+        Hall-Bedroom door Off  0 days 00:01:54 ... 0 days 00:12:24.990000
+        Hall-Bedroom door On   0 days 00:14:48 ... 0 days 03:02:49.984000
+        ...                                ...
+        Washingmachine On      0 days 00:00:00 ...        0 days 00:00:00
+        [28 rows x 7 columns]
+
+        >>> contingency_duration(data.df_devs, data.df_activities)
+        activity                     get drink ...             use toilet
+        Hall-Bedroom door Off  0 days 00:01:54 ... 0 days 00:12:24.990000
+        Hall-Bedroom door On   0 days 00:14:48 ... 0 days 03:02:49.984000
+        ...                                ...
+        Washingmachine On      0 days 00:00:00 ...        0 days 00:00:00
+        [28 rows x 7 columns]
 
     >>> contingency_duration(data.df_devices, data.df_activities)
     activity                     get drink ...             use toilet

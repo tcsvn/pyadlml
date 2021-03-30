@@ -1,5 +1,5 @@
-Plots
-=====
+pyadlml.plot
+============
 
 Activities
 ~~~~~~~~~~
@@ -34,8 +34,8 @@ Devices
 Activities ~ Devices
 ~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: pyadlml.plot.plot_hm_contingency_duration
-
 .. autofunction:: pyadlml.plot.plot_hm_contingency_trigger
 
 .. autofunction:: pyadlml.plot.plot_hm_contingency_trigger_01
+
+.. autofunction:: pyadlml.plot.plot_hm_contingency_duration

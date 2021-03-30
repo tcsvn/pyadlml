@@ -43,14 +43,14 @@ Getting the data
 
 A dataset is loaded using a function following the schema
 
-.. py:function:: pyadlml.dataset.fetch_datasetname(cache=True, keep_original=True)
+.. py:function:: pyadlml.dataset.fetch_datasetname(cache=True, keep_original=True, retain_corrections=False, args*)
 
    Returns a data object possessing the attributes *df_activities* and *df_devices*
 
 
 
-The data object functions as a container for relevant attributes of the dataset. The attributes can differ
-from dataset to dataset. All datasets and the way to fetch them are listed at :ref:`datasets <Dataset View>`.
+The data object serves as a container for relevant attributes of the dataset. The attributes can differ
+from dataset to dataset. All datasets and how to fetch them are listed at :ref:`datasets <Dataset View>`.
 The example below shows the :ref:`amsterdam <amsterdam>` dataset being loaded
 
 .. code:: python
@@ -75,7 +75,7 @@ The example below shows the :ref:`amsterdam <amsterdam>` dataset being loaded
     1   2008-02-25 20:23:12.000 2008-02-25 20:23:35       get drink
     ..                      ...                 ...             ...
     262 2008-03-21 19:10:36.000 2008-03-23 19:04:58     leave house
-    [263 rows x 3 columns]
+    [2832 rows x 3 columns]
 
 
 .. attention::
@@ -97,7 +97,7 @@ Storage and cache
 
 By default datasets are stored in the folder where python is executed. Many datasets are not
 in the representation given above and have to be transformed beforehand. As the preprocessing takes time to compute,
-it can be reasonable to use the ``cache=True`` option storing and reusing the dataset as binary file after
+it can be reasonable to use the ``cache=True`` option of the ``fetch_dataset`` methods, storing and reusing the dataset as binary file after
 the first load. You can change the folder where the data is stored with
 
 .. code:: python
@@ -105,6 +105,8 @@ the first load. You can change the folder where the data is stored with
     from pyadlml.dataset import set_data_home
 
     set_data_home('path/to/folder')
+
+.. _activity-assistant:
 
 Coming from activity-assistant
 ==============================
@@ -125,17 +127,22 @@ by extracting the ``data_name.zip`` and pointing pyadlml to the folder
 
 Error correction
 ================
-Some datasets are in a desolate state. The ``fetch_datasetname`` method does some data cleaning beforehand.
+Some datasets are in a desolate state. The ``fetch_dataset`` method does some data cleaning beforehand.
 This includes e.g deleting succeeding events reporting the same value. Some corrections deal with errors
 done by researches like having overlapping activity intervals when they were defined as exclusive ect. Pyadlml
 stores altered activity values under ``data.activities_corr_lst`` and omitted device values under ``data.todo``.
 (TODO write more about this subject and how the different error correction strategies are done).
 
 
-        Overlapping activity
-        intervals and their correction are saved in *data.corr_acts_intervals*. Dropped
-        duplicates can be accessed in *data.corr_acts_duplicates* or
+Overlapping activity
+intervals and their correction are saved in *data.corr_acts_intervals*. Dropped
+duplicates can be accessed in *data.corr_acts_duplicates* or
 
-        *data.corr_devs_duplicates*
+*data.corr_devs_duplicates*
 
-.. _activity-assistant:
+.. code:: python
+
+   >>> from pyadlml.dataset import fetch_amsterdam
+   >>> data = fetch_aras(retain_corrections=True)
+   >>> dir(data)
+   [..., correction_activities, ...]

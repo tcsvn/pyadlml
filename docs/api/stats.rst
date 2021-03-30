@@ -1,5 +1,5 @@
-Statistic
-=========
+pyadlml.stats
+=============
 
 Activities
 ~~~~~~~~~~

@@ -1,25 +1,42 @@
-Preprocessing
-=============
+pyadlml.preprocessing
+*********************
 
 .. warning::
     The classes naming will change. The description as of now does not match the behavior.
 
+Encoder
+=======
 
 BinaryEncoder
 ~~~~~~~~~~~~~
 
-.. autoclass:: pyadlml.preprocessing.DiscreteEncoder
+.. autoclass:: pyadlml.preprocessing.BinaryEncoder
+
+LabelEncoder
+~~~~~~~~~~~~~
 
 .. autoclass:: pyadlml.preprocessing.LabelEncoder
 
-ImageEncoder
-~~~~~~~~~~~~
 
-.. autoclass:: pyadlml.preprocessing.ImageEncoder
+Transformer
+===========
 
-.. autoclass:: pyadlml.preprocessing.ImageLabelEncoder
+IdentityTransformer
+~~~~~~~~~~~~~~~~~~~
 
-Evaluation
-~~~~~~~~~~
+.. autoclass:: pyadlml.preprocessing.IdentityTransformer
 
-.. autoclass:: pyadlml.model_selection.LeaveOneDayOut
+DropDuplicates
+~~~~~~~~~~~~~~
+
+.. autoclass:: pyadlml.preprocessing.DropDuplicates
+
+DropTimeIndex
+~~~~~~~~~~~~~
+
+.. autoclass:: pyadlml.preprocessing.DropTimeIndex
+
+CVSubset
+~~~~~~~~
+
+.. autoclass:: pyadlml.preprocessing.CVSubset

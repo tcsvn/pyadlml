@@ -1,11 +1,8 @@
-Feature creation
-^^^^^^^^^^^^^^^^
+pyadlml.feature_creation
+========================
 
-.. warning::
-    The following methods are not functional with this parameterset.
+.. autofunction::  pyadlml.feature_extraction.DayOfWeekExtractor
 
-.. autofunction::  pyadlml.feature_creation.extract_time_bins
+.. autofunction::  pyadlml.feature_extraction.TimeBinExtractor
 
-.. autofunction::  pyadlml.feature_creation.extract_day_of_week
-
-.. autofunction::  pyadlml.feature_creation.extract_time_difference
+.. autofunction::  pyadlml.feature_extraction.TimeDifferenceExtractor
