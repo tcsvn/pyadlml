@@ -13,7 +13,7 @@ from pyadlml.dataset import START_TIME, END_TIME, TIME, VAL, DEVICE
          0  | timestamp | dev_name  |   1
 
     rep2:
-        is used to calculate statistics for devices more easily
+        is used to calculate statistics for binary devices more easily
         and has lowest footprint in storage. Most of the computation 
         is done using this format
            | start_time | end_time   | device    
@@ -286,15 +286,22 @@ def contains_non_binary(df) -> bool:
     return not df[VAL].apply(lambda x: isinstance(x, bool)).all()
 
 
-def correct_devices(df):
+def correct_devices(df: pd.DataFrame) -> pd.DataFrame:
     """
+    Applies correction to devices.
+    1. drops all duplicates
+    2. timestamps that are identical are separated by an offset
+    3. for binary devices redundant reportings of the same value are dropped
+
     Parameters
     ----------
     df : pd.DataFrame
         either in device representation 1 or 2
+
     Returns
     -------
     cor_rep1 : pd.DataFrame
+
     """
     df = df.copy()
     df = df.drop_duplicates()        
@@ -329,10 +336,11 @@ def correct_devices(df):
 
     # join dataframes
     if non_binary_exist:
-        df = df_binary.append(df_non_binary).reset_index(drop=True)
+        df = df_binary.append(df_non_binary)
     else:
         df = df_binary
 
+    df = df.sort_values(by=TIME).reset_index(drop=True)
     return df
 
 
@@ -429,3 +437,149 @@ def correct_on_off_inconsistency(df):
 
     return pd.concat(tmp, ignore_index=True)\
             .sort_values(by=TIME).reset_index(drop=True)
+
+
+def _create_empty_dev_dataframe():
+    df = pd.DataFrame(data=[], columns=[TIME, DEVICE, VAL])
+    df[TIME] = pd.to_datetime(df[TIME])
+    return df
+
+
+
+def get_most_likely_value(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Infers for each device the most likely state
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        A device dataframe
+
+    Returns
+    -------
+    df : pd.DataFrame
+        the result
+    """
+    ML_STATE = 'ml_state'
+    df = df.copy()
+
+    #res = self._create_empty_dev_dataframe()
+    res = pd.DataFrame(data=[], columns=[DEVICE, ML_STATE])
+
+    # get most likely binary states
+    mask_bool = _get_bool_mask(df, VAL)
+    if mask_bool.any():
+        from pyadlml.dataset.stats import device_on_off
+        oos = device_on_off(df[mask_bool])   # get most likely binary state
+        oos[ML_STATE] = (oos['frac_on'] > oos['frac_off'])
+        res_bool = oos[[DEVICE, ML_STATE]]
+
+    # get most likely numerical states
+    # use median for the most likely numerical state
+    mask_num = _get_num_mask(df, VAL)
+    if mask_num.any():
+        tmp = df[mask_num].copy()[[DEVICE, VAL]]
+        tmp[VAL] = pd.to_numeric(tmp[VAL])
+        res_num = tmp.groupby(by=[DEVICE]).median()
+        res_num = res_num.reset_index()
+        res_num.columns = [DEVICE, ML_STATE]
+        #b = tmp.groupby(by=[DEVICE]).mean()
+
+    # get most likely categorical states
+    # - transform to one-hot-encoding
+    # use device_on_off to infer most likely device
+    mask_categ = ~mask_num & ~mask_bool
+    if mask_categ.any():
+        tmp = df[mask_categ]
+        res_cat = most_prominent_categorical_values(tmp)
+
+    df = pd.concat([res_cat, res_num, res_bool], axis=0)
+    return df
+
+
+def most_prominent_categorical_values(df):
+    tmp = df
+    tmp['conc'] = tmp[DEVICE] + ',' + tmp[VAL]
+    dev_list = tmp[DEVICE].unique()
+    tmp = pd.concat([tmp[TIME], pd.get_dummies(tmp['conc'], dtype=int)], axis=1)
+    tmp2 = tmp.copy()
+    for dev in dev_list:
+        dev_col_cats = []
+        for col in tmp.columns:
+            if dev not in col:
+                continue
+            dev_col_cats.append(col)
+
+        for di in dev_col_cats:
+            other = dev_col_cats[:]
+            other.remove(di)
+            for o in other:
+                tmp2[di] = tmp2[di] - tmp[o]
+    tmp2 = tmp2.set_index(TIME)
+    tmp2 = tmp2.where(tmp2 != 0, np.nan)
+    tmp2 = tmp2.ffill(axis=0)
+    tmp2 = tmp2.where(tmp2 != -1, 0)
+    tmp2 = tmp2.reset_index()
+    tmp2['td'] = tmp2[TIME].shift(-1) - tmp2[TIME]
+
+    lst = []
+    for dev in dev_list:
+        dev_col_cats = []
+        for col in tmp.columns:
+            if dev not in col:
+                continue
+            dev_col_cats.append(col)
+        asdf = []
+        max_td = pd.Timedelta('0s')
+        max_cat = None
+        for di in dev_col_cats:
+            abc = tmp2[[di, 'td']].groupby(di).sum().reset_index()
+            td_on = abc.iloc[1,1]
+            if max_td < td_on:
+                max_td = td_on
+                max_cat = di
+            asdf.append(td_on)
+        lst.append([dev, max_cat.split(',')[1]])
+    ML_STATE = 'ml_state'
+    df = pd.DataFrame(data=lst, columns=[DEVICE, ML_STATE])
+    return df
+
+def _get_bool_mask(df, col):
+    """ returns a mask where the columns are booleans"""
+    if df[col].dtype == 'bool':
+        return df[col].na # TODO hack for returning
+    mask = (df[col].astype(str) == 'False') | (df[col].astype(str) == 'True')
+    return mask
+
+def _get_num_mask(df, col):
+    df = df.copy()
+    df[col] = df[col].astype(str)
+    df[col] = df[col].where(df[col] != 'True', 'stub')
+    df[col] = df[col].where(df[col] != 'False', 'stub')
+    num_mask = pd.to_numeric(df[col], errors='coerce').notnull()
+    return num_mask
+
+def _get_bool(df):
+    def func(x):
+        # check if every is one of
+        if x[VAL].dtype == 'bool':
+            return True
+        else:
+            return ((x[VAL].astype(str) == 'False') | (x[VAL].astype(str) == 'True')).all()
+    return df.groupby(by=[DEVICE]).filter(func)
+
+from pandas.api.types import infer_dtype
+
+def inferdtypes(df):
+    """
+    device dataframe
+
+    returns list of tuples with device and corresponding dtype
+    """
+    dev_lst = df[DEVICE].unique()
+    res_lst = []
+    for dev in dev_lst:
+        vals = df[df[DEVICE] == dev][VAL]
+        dtype = infer_dtype(vals)
+        res_lst.append((dev, dtype))
+    return res_lst

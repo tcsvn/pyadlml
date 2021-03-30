@@ -1,12 +1,72 @@
 import pandas as pd
-import numpy as np
-
 from pyadlml.dataset import ACTIVITY, DEVICE, START_TIME, END_TIME
-from pyadlml.dataset.devices import _create_devices
 from pyadlml.dataset.obj import Data
 from pyadlml.dataset.devices import correct_devices
 from pyadlml.dataset.activities import correct_activities, _create_activity_df
+from pyadlml.dataset.io import fetch_handler as _fetch_handler
+import os
 
+MITLAB_URL = 'https://mega.nz/file/MB4BFL6S#8MjAQoS-j0Lje1UFoWUMOCay2FcdpVfla6p9MTe4SQM'
+MITLAB_FILENAME = 'mitlab.zip'
+
+def fetch_mitlab(keep_original=False, cache=True, retain_corrections=False, subject='subject1'):
+    """
+    Fetches the :ref:`mitlab <ds_mitlab>` dataset from the internet. The original dataset or its cached version
+    is stored in the :ref:`data home <storage>` folder.
+
+    Parameters
+    ----------
+    keep_original : bool, default=True
+        Determines whether the original dataset is deleted after downloading
+        or kept on the hard drive.
+    cache : bool, default=True
+        Determines whether the data object should be stored as a binary file for quicker access.
+        For more information how caching is used refer to the :ref:`user guide <storage>`.
+    retain_corrections : bool, default=False
+        When set to *true*, data points that change or drop during preprocessing
+        are listed in respective attributes of the data object. Fore more information
+        about error correction refer to the :ref:`user guide <error_correction>`.
+    subject : str of {'subject1', 'subject2'}
+        determines
+
+    Returns
+    -------
+    data : object
+    """
+    assert subject in ['subject1', 'subject2']
+    dataset_name = 'mitlab'
+
+    def load_mitlab(folder_path):
+        act_path = os.path.join(folder_path, subject, "Activities.csv")
+        dev_path = os.path.join(folder_path, subject, "sensors.csv")
+        data_path = os.path.join(folder_path, subject, "activities_data.csv")
+
+        df_dev_map = _load_device_map(dev_path)
+        df_act_map = _load_activity_map(act_path)
+        df_dev, df_act = _read_data(data_path, df_dev_map, df_act_map)
+
+        df_act, cor_lst = correct_activities(df_act)
+        df_dev = correct_devices(df_dev)
+
+        lst_act = df_act[ACTIVITY].unique()
+        lst_dev = df_dev[DEVICE].unique()
+
+        data = Data(df_act, df_dev, activity_list=lst_act, device_list=lst_dev)
+
+        data.df_dev_map = df_dev_map
+        data.df_act_map = df_act_map
+
+        if retain_corrections:
+            data.correction_activities = cor_lst
+
+        return data
+
+
+
+    data = _fetch_handler(keep_original, cache, dataset_name,
+                        MITLAB_FILENAME, MITLAB_URL,
+                        load_mitlab, data_postfix=subject)
+    return data
 
 
 def _load_device_map(path_to_file):
@@ -134,23 +194,4 @@ def _read_data(path_to_file, df_dev, df_act):
     
     df_activities = df_activities.sort_values(by=START_TIME).reset_index(drop=True)
 
-
     return df_devices, df_activities
-
-
-def load(dev_path, act_path, data_path):
-    df_dev_map = _load_device_map(dev_path)
-    df_act_map = _load_activity_map(act_path)
-    df_dev, df_act = _read_data(data_path, df_dev_map, df_act_map)
-
-    df_act, cor_lst = correct_activities(df_act)
-    df_dev = correct_devices(df_dev)
-
-    lst_act = df_act[ACTIVITY].unique()
-    lst_dev = df_dev[DEVICE].unique()
-
-    data = Data(df_act, df_dev, activity_list=lst_act, device_list=lst_dev)
-    
-    data.df_dev_map = df_dev_map
-    data.df_act_map = df_act_map        
-    return data

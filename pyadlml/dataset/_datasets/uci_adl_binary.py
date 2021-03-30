@@ -2,6 +2,54 @@ import pandas as pd
 from pyadlml.dataset.activities import START_TIME, END_TIME, ACTIVITY, correct_activities
 from pyadlml.dataset.devices import DEVICE, correct_devices
 from pyadlml.dataset.obj import Data
+from pyadlml.dataset.io import fetch_handler as _fetch_handler
+import os
+
+
+UCI_ADL_BINARY_URL = 'https://mega.nz/file/AQIgDQJD#oximAQFjexTKwNP3WYzlPnOGew06YSQ2ef85vvWGN94'
+UCI_ADL_BINARY_FILENAME = 'uci_adl_binary.zip'
+
+
+def fetch_uci_adl_binary(keep_original=True, cache=True, retain_corrections=False, subject='OrdonezA'):
+    """
+
+    Parameters
+    ----------
+    keep_original : bool, default=True
+        Determines whether the original dataset is deleted after downloading
+        or kept on the hard drive.
+    cache : bool
+        Determines whether the data object should be stored as a binary file for quicker access.
+        For more information how caching is used refer to the :ref:`user guide <storage>`.
+    retain_corrections : bool
+        When set to *true* data points that are changed or dropped during preprocessing
+        are listed in the respective attributes of the data object.  Fore more information
+        about the attributes refer to the :ref:`user guide <error_correction>`.
+    subject : str of {'OrdonezA', 'OrdonezB'}, default='OrdonezA'
+        decides which dataset of the two houses is loaded.
+
+    Returns
+    -------
+    data : object
+    """
+    assert subject in ['OrdonezA', 'OrdonezB']
+    dataset_name = 'uci_adl_binary'
+
+    def load_uci_adl_binary(folder_path):
+        sub_dev_file = os.path.join(folder_path, '{}_Sensors.txt'.format(subject))
+        if subject == 'OrdonezB':
+            fix_OrdonezB_ADLS(os.path.join(folder_path, 'OrdonezB_ADLs.txt'))
+            sub_act_file = os.path.join(folder_path, '{}_ADLs_corr.txt'.format(subject))
+        else:
+            sub_act_file = os.path.join(folder_path, '{}_ADLs.txt'.format(subject))
+
+        return load(sub_dev_file, sub_act_file, retain_corrections, subject)
+
+    data = _fetch_handler(keep_original, cache, dataset_name,
+                        UCI_ADL_BINARY_FILENAME, UCI_ADL_BINARY_URL,
+                        load_uci_adl_binary, data_postfix=subject)
+    return data
+
 
 def fix_OrdonezB_ADLS(path_to_file):
     """ fixes inconsistent use of tabs for delimiter in the file
@@ -47,7 +95,7 @@ def _load_devices(dev_path):
     df_dev[END_TIME] = pd.to_datetime(df_dev[END_TIME])
     return df_dev, df_locs
 
-def load(dev_path, act_path, subject):
+def load(dev_path, act_path, retain_corrections, subject):
     """
     """
     assert subject in ['OrdonezA', 'OrdonezB']
@@ -66,7 +114,9 @@ def load(dev_path, act_path, subject):
 
     df_dev = correct_devices(df_dev)
     data = Data(df_act, df_dev, activity_list=lst_act, device_list=lst_dev)
-    data.correction_activities = cor_lst
     data.df_dev_rooms = df_loc
-    
+
+    if retain_corrections:
+        data.correction_activities = cor_lst
+
     return data

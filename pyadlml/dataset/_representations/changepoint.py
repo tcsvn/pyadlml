@@ -1,19 +1,41 @@
 import pandas as pd
 from pyadlml.dataset import TIME, DEVICE, VAL
-from pyadlml.dataset._dataset import label_data
+
+def create_changepoint(df_devs):
+    """
+
+    Parameters
+    ----------
+    df_devs : pd.DataFrame
+        TODO
+
+    Returns
+    -------
+        todo
+    """
+
+    # create binary vectors and set all changepoints to true
+    df = df_devs.copy()
+    df[VAL] = True
+    df = df.pivot(index=TIME, columns=DEVICE, values=VAL)\
+        .fillna(False)\
+        .astype(int)\
+        .reset_index()
+    return df
 
 
-def create_changepoint(df_devices, t_res=None, idle=False):
-    dev = df_devices.copy()
-    cp = _apply_changepoint(df_devices.copy())
-    
-    if t_res is not None:
-        resampler = cp.resample(t_res, kind='timestamp')
-        cp = resampler.apply(_cp_evaluator, dev=dev)
-        
+def resample_changepoint(cp, t_res):
+    """
+
+    """
+    cp = cp.set_index(TIME)
+    resampler = cp.resample(t_res, kind='timestamp')
+    cp = resampler.apply(_cp_evaluator)\
+        .reset_index()
     return cp
 
-def _cp_evaluator(series: pd.Series, dev):
+
+def _cp_evaluator(series: pd.Series):
     """ for each element return 1 if there was a change in the given interval or 0 otherwise
     Parameters
     ----------
@@ -30,26 +52,8 @@ def _cp_evaluator(series: pd.Series, dev):
 
     Returns: 0|1
     """
-    if series.empty:
+
+    if series.empty or series.sum() == 0:
         return 0
     else:
-        if series.sum() == 0:
-            return 0
-        else:
-            return 1
-
-def _apply_changepoint(df):
-    """
-    Parameters
-    ----------
-        df: pd.DataFrame
-        device representation 3
-    """
-    # create binary vectors and set all changepoints to true
-    df = df.pivot(index=TIME, columns=DEVICE, values=VAL)
-    df[(df == False)] = True
-    
-    # fix rest
-    df = df.fillna(False)
-    df = df.astype(int)
-    return df
+        return 1

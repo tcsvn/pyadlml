@@ -1,18 +1,67 @@
-import numpy as np
 import pandas as pd
-
-from pyadlml.dataset.util import fill_nans_ny_inverting_first_occurence
 from pyadlml.dataset.obj import Data
-
-from pyadlml.dataset.activities import correct_activity_overlap,\
-    _is_activity_overlapping
-
 from pyadlml.dataset import  ACTIVITY, VAL, \
     START_TIME, END_TIME, TIME, NAME, DEVICE
-
 from pyadlml.dataset.activities import correct_activities
 from pyadlml.dataset.devices import correct_devices
+from pyadlml.dataset.io import fetch_handler as _fetch_handler
+import os
 
+AMSTERDAM_URL = 'https://mega.nz/file/AYhzDLaS#n-CMzBO_raNAgn2Ep1GNgbhah0bHQzuA48PqO_ODEAg'
+AMSTERDAM_FILENAME = 'amsterdam.zip'
+
+def fetch_amsterdam(keep_original=False, cache=True, retain_corrections=False):
+    """
+    Fetches the amsterdam dataset from the internet. The original dataset or its cached version
+    is stored in the :ref:`data home <storage>` folder.
+
+    Parameters
+    ----------
+    keep_original : bool, default=False
+        Determines whether the original dataset is deleted after downloading
+        or kept on the hard drive.
+    cache : bool, default=True
+        Determines whether the data object should be stored as a binary file for quicker access.
+        For more information how caching is used refer to the :ref:`user guide <storage>`.
+    retain_corrections : bool, default=False
+        When set to *true*, data points that change or drop during preprocessing
+        are listed in respective attributes of the data object. Fore more information
+        about error correction refer to the :ref:`user guide <error_correction>`.
+
+    Examples
+    --------
+    >>> from pyadlml.dataset import fetch_amsterdam
+    >>> data = fetch_amsterdam()
+    >>> dir(data)
+    >>> [..., df_activities, df_devices, ...]
+
+    Returns
+    -------
+    data : object
+    """
+    dataset_name = 'amsterdam'
+
+    def load_amsterdam(folder_path):
+        device_fp = os.path.join(folder_path, "kasterenSenseData.txt")
+        activity_fp = os.path.join(folder_path, "kasterenActData.txt")
+
+        df_act = _load_activities(activity_fp)
+        df_dev = _load_devices(device_fp)
+        df_act, cor_lst = correct_activities(df_act)
+
+        df_dev = correct_devices(df_dev)
+        lst_act = df_act[ACTIVITY].unique()
+        lst_dev = df_dev[DEVICE].unique()
+
+        data = Data(df_act, df_dev, activity_list=lst_act, device_list=lst_dev)
+        if retain_corrections:
+            data.correction_activities = cor_lst
+        return data
+
+    data = _fetch_handler(keep_original, cache, dataset_name,
+                        AMSTERDAM_FILENAME, AMSTERDAM_URL,
+                        load_amsterdam)
+    return data
 
 
 def _load_activities(activity_fp):
@@ -80,19 +129,3 @@ def _load_devices(device_fp):
     sens_data = sens_data.drop(ide, axis=1)
     sens_data = sens_data.sort_values(START_TIME)
     return sens_data
-
-
-def load(device_fp, activity_fp):
-    df_act = _load_activities(activity_fp)
-    df_dev = _load_devices(device_fp)
-    df_act, cor_lst = correct_activities(df_act)
-    
-    df_dev = correct_devices(df_dev)
-    lst_act = df_act[ACTIVITY].unique()
-    lst_dev = df_dev[DEVICE].unique()
-
-    data = Data(df_act, df_dev, activity_list=lst_act, device_list=lst_dev)
-    data.correction_activities = cor_lst
-    
-    return data
-

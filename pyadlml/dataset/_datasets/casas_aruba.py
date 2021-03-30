@@ -9,6 +9,68 @@ from pyadlml.dataset.activities import correct_activity_overlap, \
 
 from pyadlml.dataset.obj import Data
 from pyadlml.dataset import ACTIVITY, VAL, START_TIME, END_TIME, TIME, NAME, DEVICE
+import os
+from pyadlml.dataset.io import fetch_handler as _fetch_handler
+
+
+CASAS_ARUBA_URL = 'https://mega.nz/file/QA5hEToD#V0ypxFsxiwWgVV49OzhsX8RnMNTX8MYSUM2TLL1xX6w'
+CASAS_ARUBA_FILENAME = 'casas_aruba.zip'
+
+
+def fetch_casas_aruba(keep_original=True, cache=True, retain_corrections=False):
+    """
+    Fetches the casas aruba dataset from the internet. The original dataset or its cached version
+    is stored in the :ref:`data home <storage>` folder.
+
+    Parameters
+    ----------
+    keep_original : bool, default=True
+        Determines whether the original dataset is deleted after downloading
+        or kept on the hard drive.
+    cache : bool, default=True
+        Determines whether the data object should be stored as a binary file for quicker access.
+        For more information how caching is used refer to the :ref:`user guide <storage>`.
+    retain_corrections : bool, default=False
+        When set to *true* data points that are changed or dropped during preprocessing
+        are listed in the respective attributes of the data object.  Fore more information
+        about the attributes refer to the :ref:`user guide <error_correction>`.
+
+    Examples
+    --------
+    >>> from pyadlml.dataset import fetch_casas_aruba
+    >>> data = fetch_casas_aruba()
+    >>> dir(data)
+    >>> [..., df_activities, df_devices, ...]
+
+    Returns
+    -------
+    data : object
+    """
+    dataset_name = 'casas_aruba'
+
+    def load_casas_aruba(folder_path):
+        _fix_data(os.path.join(folder_path, "data"))
+
+        data_path = os.path.join(folder_path, 'corrected_data.csv')
+
+        df = _load_df(data_path)
+        df_dev = _get_devices_df(df)
+        df_act = _get_activity_df(df)
+
+        df_dev = correct_devices(df_dev)
+        df_act, cor_lst = correct_activities(df_act)
+
+        lst_act = df_act[ACTIVITY].unique()
+        lst_dev = df_dev[DEVICE].unique()
+
+        data = Data(df_act, df_dev, activity_list=lst_act, device_list=lst_dev)
+        return data
+
+    data = _fetch_handler(keep_original, cache, dataset_name,
+                        CASAS_ARUBA_FILENAME, CASAS_ARUBA_URL,
+                        load_casas_aruba)
+    return data
+
 
 def _fix_data(path):
     """
@@ -20,7 +82,10 @@ def _fix_data(path):
     with open(path, 'r') as f_o, open(data_path_tf, 'w') as f_t:
         i= 1
         for line in f_o.readlines():
-            s = line.split()                            
+            s = line.split()
+            # weird enterhome and leave home devices that appear inconsistently and are omitted
+            if s[2] in ['ENTERHOME', 'LEAVEHOME']:
+                continue
             # there is an error in line 1476694 where M014 is replaced with a 'c'
             if s[2] == 'c':
                 s[2] = 'M014'
@@ -65,41 +130,45 @@ def _load_df(data_path):
 
 def _val_activity_count(df_act):
     # confirm data assumptions from readme
-    assert len(df_act[df_act['activity'] == 'Meal_Preparation']) == 1606
+    assert len(df_act[df_act[ACTIVITY] == 'Meal_Preparation']) == 1606
     # observed 2919 times line below
-    len(df_act[df_act['activity'] == 'Relax'])# == 2910 # does not confirm 
-    assert len(df_act[df_act['activity'] == 'Eating']) == 257
-    assert len(df_act[df_act['activity'] == 'Work'])== 171
-    assert len(df_act[df_act['activity'] == 'Sleeping']) == 401
-    assert len(df_act[df_act['activity'] == 'Wash_Dishes']) == 65
-    assert len(df_act[df_act['activity'] == 'Bed_to_Toilet']) == 157
-    assert len(df_act[df_act['activity'] == 'Enter_Home']) == 431
-    assert len(df_act[df_act['activity'] == 'Leave_Home']) == 431
-    assert len(df_act[df_act['activity'] == 'Housekeeping']) == 33
-    assert len(df_act[df_act['activity'] == 'Respirate']) == 6
+    len(df_act[df_act[ACTIVITY] == 'Relax'])# == 2910 # does not correspond to authors reported values
+    assert len(df_act[df_act[ACTIVITY] == 'Eating']) == 257
+    assert len(df_act[df_act[ACTIVITY] == 'Work'])== 171
+    assert len(df_act[df_act[ACTIVITY] == 'Sleeping']) == 401
+    assert len(df_act[df_act[ACTIVITY] == 'Wash_Dishes']) == 65
+    assert len(df_act[df_act[ACTIVITY] == 'Bed_to_Toilet']) == 157
+    assert len(df_act[df_act[ACTIVITY] == 'Enter_Home']) == 431
+    assert len(df_act[df_act[ACTIVITY] == 'Leave_Home']) == 431
+    assert len(df_act[df_act[ACTIVITY] == 'Housekeeping']) == 33
+    assert len(df_act[df_act[ACTIVITY] == 'Respirate']) == 6
 
 def _get_devices_df(df):
-    df_dev = df[(df['val'] == 'ON') | (df['val'] == 'OFF')]
-    df_dev = df_dev.drop('activity', axis=1)
-    df_dev['val'] = df_dev['val'] == 'ON'
-    df_dev.columns = ['time', 'device', 'val']
-    return df_dev
+    df = df.drop(ACTIVITY, axis=1)
+    bin_mask = (df['val'] == 'ON') | (df['val'] == 'OFF')
 
-def load(data_path):
-    df = _load_df(data_path)
-    df_dev = _get_devices_df(df)
-    df_act = _get_activity_df(df)
-    
-    df_dev = correct_devices(df_dev)
-    df_act, cor_lst = correct_activities(df_act)
+    # preprocess only binary devices to ON-OFF--> False True
+    df_binary = df[bin_mask]
+    df_binary[VAL] = (df_binary[VAL] == 'ON')
+    #tmp = {VAL: (df_binary[VAL] == 'ON')} # TODO suppress warnings
+    #df_binary = df_binary.assign(tmp)
 
+    # preprocess only numeric devices
+    num_mask = pd.to_numeric(df[VAL], errors='coerce').notnull()
+    df_num = df[num_mask]
+    df_num[VAL] = df_num[VAL].astype(float)
+    #df_num = df_num.assign({VAL: df_num[VAL].astype(float)}) # TODO suppress warnings
 
+    # preprocess categorical devices
+    df_cat = df[~num_mask & ~bin_mask]
 
-    lst_act = df_act[ACTIVITY].unique()
-    lst_dev = df_dev[DEVICE].unique()
+    # join datasets
+    df = pd.concat([df_cat, df_binary, df_num], axis=0, ignore_index=True)
+    df.columns = [TIME, DEVICE, VAL]
+    df = df.sort_values(by=TIME).reset_index(drop=True)
 
-    data = Data(df_act, df_dev, activity_list=lst_act, device_list=lst_dev)
-    return data
+    return df
+
 
 def _get_activity_df(df):
     # get all rows containing activities

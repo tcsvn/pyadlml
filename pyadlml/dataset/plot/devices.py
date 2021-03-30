@@ -20,15 +20,15 @@ from pyadlml.util import get_sequential_color, get_secondary_color, get_primary_
 
 def hist_trigger_time_diff(df_devs=None, x=None, n_bins=50, figsize=(10, 6), color=None, file_path=None):
     """
-    plots
+    Plot a histogram of the differences between succeeding device triggers.
 
     Parameters
     ----------
     df_devs : pd.DataFrame, optional
-        recorded devices from a dataset. Fore more information refer to the
+        Recorded devices from a dataset. Fore more information refer to the
         :ref:`user guide<device_dataframe>`.
     x : ndarray, optional
-        array of time deltas used to plot the histogram
+        Array of time deltas used to plot the histogram
     n_bins : int, default=50
         the number of bins for the histogram.
     color : str, optional
@@ -43,7 +43,7 @@ def hist_trigger_time_diff(df_devs=None, x=None, n_bins=50, figsize=(10, 6), col
     Examples
     --------
     >>> from pyadlml.plot import plot_trigger_time_dev
-    >>> plot_trigger_time_dev_todo(data.df_devices)
+    >>> plot_trigger_time_dev_todo(data.df_devs)
 
     .. image:: ../_static/images/plots/dev_hist_trigger_td.png
        :height: 300px
@@ -137,7 +137,7 @@ def boxplot_on_duration(df_devs, lst_devs=None, order='mean', figsize=None, file
     Examples
     --------
     >>> from pyadlml.plots import plot_device_bp_on_duration
-    >>> plot_device_bp_on_duration(data.df_devices)
+    >>> plot_device_bp_on_duration(data.df_devs)
 
     .. image:: ../_static/images/plots/dev_bp_dur.png
        :height: 300px
@@ -229,7 +229,7 @@ def heatmap_trigger_one_day(df_devs=None, lst_devs=None, df_tod=None, t_res='1h'
     Examples
     --------
     >>> from pyadlml.plots import plot_device_hm_time_trigger
-    >>> plot_device_hm_time_trigger(data.df_devices, t_res='1h')
+    >>> plot_device_hm_time_trigger(data.df_devs, t_res='1h')
 
     .. image:: ../_static/images/plots/dev_hm_trigger_one_day.png
        :height: 300px
@@ -322,7 +322,7 @@ def heatmap_trigger_time(df_devs=None, lst_devs=None, df_tcorr=None, t_window='5
     Examples
     --------
     >>> from pyadlml.plots import plot_device_hm_time_trigger
-    >>> plot_device_hm_time_trigger(data.df_devices, t_res='1h')
+    >>> plot_device_hm_time_trigger(data.df_devs, t_res='1h')
 
     .. image:: ../_static/images/plots/dev_hm_trigger_one_day.png
        :height: 300px
@@ -406,8 +406,8 @@ def heatmap_cross_correlation(df_devs=None, lst_devs=None, df_dur_corr=None, fig
 
     Examples
     --------
-    >>> from pyadlml.plots import plot_dev_hm_similarity
-    >>> plot_dev_hm_similarity(data.df_devices)
+    >>> from pyadlml.plot import plot_dev_hm_similarity
+    >>> plot_dev_hm_similarity(data.df_devs)
 
     .. image:: ../_static/images/plots/dev_hm_dur_cor.png
        :height: 400px
@@ -464,7 +464,7 @@ def heatmap_cross_correlation(df_devs=None, lst_devs=None, df_dur_corr=None, fig
         return fig
 
 
-def hist_on_off(df_devs=None, lst_devs=None, df_onoff=None, figsize=None,
+def hist_on_off(df_devs=None, lst_devs=None, df_on_off=None, figsize=None,
                 color=None, color_sec=None, order='frac_on', file_path=None):
     """
     Plot bars the on/off fraction of all devices
@@ -477,7 +477,7 @@ def hist_on_off(df_devs=None, lst_devs=None, df_onoff=None, figsize=None,
     lst_devs : lst of str, optional
         A list of devices that are included in the statistic. The list can be a
         subset of the recorded activities or contain activities that are not recorded.
-    df_onoff : pd.DataFrame
+    df_on_off : pd.DataFrame
         A precomputed correlation table. If the *df_tcorr* parameter is given, parameters
         *df_devs* and *lst_devs* are ignored. The transition table can be computed
         in :ref:`stats <stats_devs_tcorr>`.
@@ -489,7 +489,7 @@ def hist_on_off(df_devs=None, lst_devs=None, df_onoff=None, figsize=None,
     color_sec : str, optional
         sets the secondary color of the plot. When not set, the secondary theming color is used.
         Learn more about theming in the :ref:`user guide <theming>`
-    order : {'frac_on', 'alphabetically', 'room'}, default='frac_on'
+    order : {'frac_on', 'alphabetically', 'area'}, default='frac_on'
         determines the order in which the devices are listed.
     file_path : str, optional
         If set, saves the plot under the given file path and return *None* instead
@@ -497,8 +497,8 @@ def hist_on_off(df_devs=None, lst_devs=None, df_onoff=None, figsize=None,
 
     Examples
     --------
-    >>> from pyadlml.plots import plot_device_on_off
-    >>> plot_device_on_off(data.df_devices)
+    >>> from pyadlml.plot import plot_device_on_off
+    >>> plot_device_on_off(data.df_devs)
 
     .. image:: ../_static/images/plots/dev_on_off.png
        :height: 300px
@@ -512,7 +512,7 @@ def hist_on_off(df_devs=None, lst_devs=None, df_onoff=None, figsize=None,
     res : fig or None
         Either a figure if file_path is not specified or nothing.
     """
-    assert not (df_devs is None and df_onoff is None)
+    assert not (df_devs is None and df_on_off is None)
     assert order in ['frac_on', 'name', 'area']
 
     title = 'Devices fraction on/off'
@@ -524,10 +524,10 @@ def hist_on_off(df_devs=None, lst_devs=None, df_onoff=None, figsize=None,
     color = (get_primary_color() if color is None else color)
     color2 = (get_secondary_color()if color_sec is None else color_sec)
 
-    if df_onoff is None:
+    if df_on_off is None:
         df = devices_on_off_stats(df_devs, lst_devs=lst_devs)
     else:
-        df = df_onoff
+        df = df_on_off
 
     num_dev = len(df)
     figsize = (_num_bars_2_figsize(num_dev) if figsize is None else figsize)
@@ -589,7 +589,7 @@ def hist_on_off(df_devs=None, lst_devs=None, df_onoff=None, figsize=None,
         return fig
 
 def hist_counts(df_devs=None, lst_devs=None, df_tc=None, figsize=None,
-                y_scale=None, color=None, order='count', file_path=None):
+                y_scale='linear', color=None, order='count', file_path=None):
     """
     bar chart displaying how often activities are occurring
 
@@ -612,7 +612,7 @@ def hist_counts(df_devs=None, lst_devs=None, df_tc=None, figsize=None,
     color : str, optional
         sets the primary color of the plot. When not set, the primary theming color is used.
         Learn more about theming in the :ref:`user guide <theming>`
-    order : {'count', 'alphabetically', 'room'}, default='count'
+    order : {'count', 'alphabetically', 'area'}, default='count'
         determines the order in which the devices are listed.
     file_path : str, optional
         If set, saves the plot under the given file path and return *None* instead
@@ -621,7 +621,7 @@ def hist_counts(df_devs=None, lst_devs=None, df_tc=None, figsize=None,
     Examples
     --------
     >>> from pyadlml.plots import plot_device_bar_count
-    >>> plot_device_bar_count(data.df_devices)
+    >>> plot_device_bar_count(data.df_devs)
 
     .. image:: ../_static/images/plots/dev_bar_trigger.png
        :height: 300px
@@ -629,9 +629,6 @@ def hist_counts(df_devs=None, lst_devs=None, df_tc=None, figsize=None,
        :scale: 90 %
        :alt: alternate text
        :align: center
-
-
-
 
     Returns
     -------

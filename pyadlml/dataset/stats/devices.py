@@ -29,7 +29,7 @@ def duration_correlation(df_devs, lst_devs=None):
     Examples
     --------
     >>> from pyadlml.stats import device_duration_corr
-    >>> device_duration_corr(data.df_devices)
+    >>> device_duration_corr(data.df_devs)
     device              Cups cupboard  Dishwasher  ...  Washingmachine
     device                                         ...
     Cups cupboard            1.000000    0.997571  ...        0.999083
@@ -111,7 +111,7 @@ def devices_trigger_count(df_devs, lst_devs=None):
     Examples
     --------
     >>> from pyadlml.stats import device_trigger_count
-    >>> device_trigger_count(data.df_devices)
+    >>> device_trigger_count(data.df_devs)
                     device  trigger_count
     0        Cups cupboard             98
     1           Dishwasher             42
@@ -150,7 +150,7 @@ def trigger_time_diff(df_devs):
     Examples
     --------
     >>> from pyadlml.stats import device_time_diff
-    >>> device_time_diff(data.df_devices)
+    >>> device_time_diff(data.df_devs)
     array([1.63000e+02, 3.30440e+04, 1.00000e+00, ..., 4.00000e+00,
            1.72412e+05, 1.00000e+00])
 
@@ -182,7 +182,7 @@ def devices_td_on(df_devs):
     Examples
     --------
     >>> from pyadlml.stats import device_on_time
-    >>> device_on_time(data.df_devices)
+    >>> device_on_time(data.df_devs)
                       device              td
     0      Hall-Bedroom door 0 days 00:02:43
     1      Hall-Bedroom door 0 days 00:00:01
@@ -222,7 +222,7 @@ def devices_on_off_stats(df_devs, lst_devs=None):
     Examples
     --------
     >>> from pyadlml.stats import device_on_off
-    >>> device_on_off(data.df_devices)
+    >>> device_on_off(data.df_devs)
                     device                  td_on                  td_off   frac_on  frac_off
     0        Cups cupboard 0 days 00:10:13.010000 27 days 18:34:19.990000  0.000255  0.999745
     1           Dishwasher        0 days 00:55:02        27 days 17:49:31  0.001376  0.998624
@@ -291,7 +291,7 @@ def device_tcorr(df_devs, lst_devs=None, t_window='20s'):
     Examples
     --------
     >>> from pyadlml.stats import device_trigger_sliding_window
-    >>> device_trigger_sliding_window(data.df_devices)
+    >>> device_trigger_sliding_window(data.df_devs)
                        Cups cupboard Dishwasher  ...  Washingmachine
     Cups cupboard                332         10  ...               0
     Dishwasher                    10         90  ...
@@ -359,7 +359,7 @@ def device_triggers_one_day(df_devs, lst_devs=None, t_res='1h'):
     Examples
     --------
     >>> from pyadlml.stats import device_trigger_one_day
-    >>> device_trigger_one_day(data.df_devices, t_res='1h')
+    >>> device_trigger_one_day(data.df_devs, t_res='1h')
     device    Cups cupboard  Dishwasher   ...  Washingmachine
     time                                  ...
     00:00:00            0.0         0.0   ...             0.0

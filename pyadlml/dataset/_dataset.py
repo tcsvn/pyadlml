@@ -2,63 +2,68 @@
 this file is to bring datasets into specific representations
 """
 import pandas as pd
-import numpy as np
-from pyadlml.dataset.util import print_df
 import dask.dataframe as dd
 from pyadlml.util import get_parallel, get_npartitions
 from pyadlml.dataset import TIME, ACTIVITY, START_TIME, END_TIME
 
-def label_data(df_devices: pd.DataFrame, df_activities: pd.DataFrame, idle=False):
+def label_data(df: pd.DataFrame, df_acts: pd.DataFrame, idle=False, n_jobs=1, inplace=True):
     """
-    for each row in the dataframe select the corresponding activity from the
-    timestamp append it as column to df_devices
+    Label a dataframe with corresponding activities based on a time-index.
+
     Parameters
     ----------
-    df_devices : pd.DataFrame
-        the only constraint is that the there is a column named time or the index named time
-        an example can be raw format: 
-                                0   ...      13
-        Time                        ...
-        2008-03-20 00:34:38  False  ...    True
-        2008-03-20 00:34:39  False  ...   False
-        ...
-    idle : bool
+    df : pd.DataFrame
+        some data representation that possesses a column 'time' including timestamps.
+    df_acts : pd.DataFrame
+        a datasets activities. TODO
+    idle : bool, optional, default=False
         if true this leads to datapoints not falling into a logged activity to be
         labeled as idle
+    n_jobs : int, optional, default=1
+        the number of jobs that are run in parallel TODO look up sklearn
+    inplace : bool, optional, default=True
+        determines whether a new column is appended to the existing dataframe.
+
+    Examples
+    --------
+    >>> raw = DiscreteEncoder()
+    >>> raw
+    1 time                    0   ...      13
+    2 2008-03-20 00:34:38  False  ...    True
+    3 2008-03-20 00:34:39  False  ...   False
+
+    now include
+    >>> label_data(raw, data.df_activities, idle=True, n_jobs=10)
+    1 time                    0   ...      13 activity
+    2 2008-03-20 00:34:38  False  ...    True idle
+    3 2008-03-20 00:34:39  False  ...   False act1
 
     Returns
     -------
-        dataframe df_devices with appended label column
-        Name                    0   ...      13 activity
-        Time                        ...         
-        2008-03-20 00:34:38  False  ...    True idle
-        2008-03-20 00:34:39  False  ...   False act1
+    df : pd.DataFrame
     """
-    df = df_devices.copy()
+    df = df.copy()
+    df[ACTIVITY] = -1
 
-    # set time as column and not as index
-    if df.index.name == TIME:
-        df[ACTIVITY] = df.index
-        df = df.reset_index()
+    if n_jobs == 1:
+        df[ACTIVITY] = df[TIME].apply(
+                    _map_timestamp2activity,
+                    df_act=df_acts,
+                    idle=idle)
     else:
-        df[ACTIVITY] = df[TIME].copy()
-        df = df.reset_index(drop=True)
+        N = get_npartitions()
+        if n_jobs == -1 or n_jobs > N:
+            n_jobs = N
 
-    if get_parallel():
         #ddf_activities = dd.from_pandas(df_activities, npartitions=get_npartitions())
         # compute with dask in parallel
-        df[ACTIVITY] = dd.from_pandas(df[ACTIVITY], npartitions=get_npartitions()).\
+        df[ACTIVITY] = dd.from_pandas(df[TIME], npartitions=n_jobs).\
                     map_partitions( # apply lambda functions on each partition
                         lambda df: df.apply(
                             _map_timestamp2activity,
-                            df_act=df_activities,
+                            df_act=df_acts,
                             idle=idle)).\
                     compute(scheduler='processes')
-    else:
-        df[ACTIVITY] = df[ACTIVITY].apply(
-                            _map_timestamp2activity,
-                            df_act=df_activities,
-                            idle=idle)
     return df
 
 

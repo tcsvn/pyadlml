@@ -3,6 +3,7 @@ import matplotlib.ticker as ticker
 import numpy as np
 import pandas as pd
 
+from pyadlml.dataset import ACTIVITY
 from  pyadlml.dataset.stats.activities import activities_duration_dist, activity_durations,\
     activities_transitions, activities_count, activity_durations, activities_dist
 from pyadlml.dataset.activities import add_idle 
@@ -12,8 +13,6 @@ from pyadlml.dataset.plot.util import func_formatter_seconds2time_log, ridgeline
     _num_items_2_heatmap_square_figsize, _num_items_2_ridge_figsize,\
     _num_items_2_ridge_ylimit
 from pyadlml.util import get_sequential_color, get_secondary_color, get_primary_color, get_diverging_color
-
-
 
 
 def hist_counts(df_acts=None, lst_acts=None, df_ac=None, y_scale="linear", idle=False,
@@ -46,7 +45,7 @@ def hist_counts(df_acts=None, lst_acts=None, df_ac=None, y_scale="linear", idle=
     Examples
     --------
     >>> from pyadlml.plot import plot_activity_bar_count
-    >>> plot_activity_bar_count(data.df_activities, idle=True);
+    >>> plot_activity_bar_count(data.df_activities, idle=True)
 
     .. image:: ../_static/images/plots/act_bar_cnt.png
        :height: 300px
@@ -61,11 +60,11 @@ def hist_counts(df_acts=None, lst_acts=None, df_ac=None, y_scale="linear", idle=
         Either a figure if file_path is not specified or nothing 
     """
     assert not (df_acts is None and df_ac is None)
-    assert y_scale in [None, 'log']
+    assert y_scale in ['linear', 'log']
 
     title ='Activity occurrences'
     col_label = 'occurrence'
-    xlabel = 'counts'
+    x_label = 'counts'
     color = (get_primary_color() if color is None else color)
         
     # create statistics if the don't exists
@@ -88,7 +87,7 @@ def hist_counts(df_acts=None, lst_acts=None, df_ac=None, y_scale="linear", idle=
     # create plot
     fig, ax = plt.subplots(figsize=figsize)
     plt.title(title)
-    plt.xlabel(xlabel)
+    plt.xlabel(x_label)
     ax.barh(df['activity'], df[col_label], color=color)
     
     if y_scale == 'log':
@@ -97,7 +96,7 @@ def hist_counts(df_acts=None, lst_acts=None, df_ac=None, y_scale="linear", idle=
     # save or return fig
     if file_path is not None:
         savefig(fig, file_path)
-        return 
+        return None
     else:
         return fig
 
@@ -143,7 +142,7 @@ def boxplot_duration(df_acts, lst_acts=None, y_scale=None, idle=False,
     res : fig or None
         Either a figure if file_path is not specified or nothing
     """
-    assert y_scale in [None, 'log']
+    assert y_scale in ['linear', 'log']
     
     title = 'Activity durations'
     xlabel = 'seconds'
@@ -153,7 +152,7 @@ def boxplot_duration(df_acts, lst_acts=None, y_scale=None, idle=False,
 
     df = activities_duration_dist(df_acts, lst_acts=lst_acts)
     # select data for each device
-    activities = df['activity'].unique()
+    activities = df[ACTIVITY].unique()
     df['seconds'] = df['minutes']*60     
 
     num_act = len(activities)
@@ -161,7 +160,7 @@ def boxplot_duration(df_acts, lst_acts=None, y_scale=None, idle=False,
 
     dat = []
     for activity in activities:
-        df_activity = df[df['activity'] == activity]
+        df_activity = df[df[ACTIVITY] == activity]
         #tmp = np.log(df_device['td'].dt.total_seconds())
         dat.append(df_activity['seconds']) 
     
@@ -185,7 +184,7 @@ def boxplot_duration(df_acts, lst_acts=None, y_scale=None, idle=False,
     else:
         return fig
 
-def hist_cum_duration(df_acts=None, lst_acts=None, df_dur=None, y_scale=None, idle=False,
+def hist_cum_duration(df_acts=None, lst_acts=None, df_dur=None, y_scale='linear', idle=False,
                       figsize=None, color=None, file_path=None):
     """
     Plots the cumulative duration for each activity in a bar plot.
@@ -229,7 +228,7 @@ def hist_cum_duration(df_acts=None, lst_acts=None, df_dur=None, y_scale=None, id
     res : fig or None
         Either a figure if file_path is not specified or nothing
     """
-    assert y_scale in [None, 'log']
+    assert y_scale in ['linear', 'log']
     assert not (df_acts is None and df_dur is None)
 
     title = 'Cummulative activity durations'
@@ -252,7 +251,7 @@ def hist_cum_duration(df_acts=None, lst_acts=None, df_dur=None, y_scale=None, id
     fig, ax = plt.subplots(figsize=figsize)
     plt.title(title)
     plt.xlabel(xlabel)
-    ax.barh(df['activity'], df['seconds'], color=color)
+    ax.barh(df[ACTIVITY], df['seconds'], color=color)
     if y_scale == 'log':
         ax.set_xscale('log')
         
@@ -322,7 +321,7 @@ def heatmap_transitions(df_acts=None, lst_acts=None, df_trans=None, z_scale="lin
     res : fig or None
         Either a figure if file_path is not specified or nothing.
     """
-    assert z_scale in [None, 'log'], 'z-scale has to be either of type None or log'
+    assert z_scale in ['linear', 'log'], 'z-scale has to be either of type None or log'
     assert not (df_acts is None and df_trans is None)
 
     title = 'Activity transitions'

@@ -1,17 +1,30 @@
 import pandas as pd
 from pyadlml.dataset import TIME, DEVICE, VAL
-from pyadlml.dataset._representations.changepoint import _apply_changepoint
+from pyadlml.dataset._representations.changepoint import create_changepoint
 from pyadlml.dataset._dataset import label_data
 
-def create_lastfired(df_devices, t_res=None):
-    dev = df_devices.copy()
-    lf = _apply_changepoint(dev)
-    
-    if t_res is not None:
-        resampler = lf.resample(t_res, kind='timestamp')
-        lf = resampler.apply(_lf_evaluator, df=lf.copy())
-        lf = lf.fillna(method='ffill')
 
+def create_lastfired(df_devs):
+    """
+    creates the last fired representation
+    """
+    return create_changepoint(df_devs)
+
+
+def resample_last_fired(lf, t_res):
+    """
+
+    Parameters
+    ----------
+    lf : pd.DataFrame
+        last fired representation
+
+    """
+    lf = lf.set_index(TIME)
+    resampler = lf.resample(t_res, kind='timestamp')
+    lf = resampler.apply(_lf_evaluator, df=lf.copy())
+    lf = lf.fillna(method='ffill')\
+        .reset_index()
     return lf
 
 
@@ -21,17 +34,17 @@ def _lf_evaluator(series: pd.Series, df):
     
     Parameters
     ----------
-        series: pd.Series
-            conatins name of the column the evaluator operates on
-            contains the timestamps for that change in set frame and the value 
-            that the specified column has at set timestamp.
-            
-            is empty if all columns that have no changing entity
-            
-        df: pd.DataFrame
-            contains device representation 3. Is for determining the states of other
-            device/columns for the timestamps
-            
+    series: pd.Series
+        conatins name of the column the evaluator operates on
+        contains the timestamps for that change in that frame and the value
+        that the specified column has at that timestamp.
+
+        is empty if all columns that have no changing entity
+
+    df: pd.DataFrame
+        contains device representation 3. Is for determining the states of other
+        device/columns for the timestamps
+
     Returns: 0|1
     """
     #print('series: ', series, '\n')
@@ -54,7 +67,7 @@ def _lf_evaluator(series: pd.Series, df):
         # if the device changed the state check if it was the 
         # last device to do so in the interval. When true 
         # the timeslice should be 1 for device last fired and 0 otherwise
-        for i in range(len(df_slice)-1,-1,-1):
+        for i in range(len(df_slice)-1, -1, -1):
             
             # check if any device triggered
             if df_slice.iloc[i].values.sum() == 0:

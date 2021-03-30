@@ -49,7 +49,7 @@ def heatmap_contingency_triggers(df_devs=None, df_acts=None, df_con_tab=None, id
     Examples
     --------
     >>> from pyadlml.plot import plot_hm_contingency_trigger
-    >>> plot_hm_contingency_trigger(data.df_devices, data.df_activities)
+    >>> plot_hm_contingency_trigger(data.df_devs, data.df_activities)
 
     .. image:: ../_static/images/plots/cont_hm_trigger.png
        :height: 300px
@@ -118,7 +118,7 @@ def heatmap_contingency_triggers_01(df_devs=None, df_acts=None, df_con_tab_01=No
     Examples
     --------
     >>> from pyadlml.plot import plot_hm_contingency_trigger_01
-    >>> plot_hm_contingency_trigger_01(data.df_devices, data.df_activities)
+    >>> plot_hm_contingency_trigger_01(data.df_devs, data.df_activities)
 
     .. image:: ../_static/images/plots/cont_hm_trigger_01.png
        :height: 300px
@@ -195,7 +195,7 @@ def heatmap_contingency_overlaps(df_devs=None, df_acts=None, df_con_tab=None, fi
     Examples
     --------
     >>> from pyadlml.plot import plot_hm_contingency_duration
-    >>> plot_hm_contingency_duration(data.df_devices, data.df_activities)
+    >>> plot_hm_contingency_duration(data.df_devs, data.df_activities)
 
     .. image:: ../_static/images/plots/cont_hm_duration.png
        :height: 300px

@@ -27,7 +27,7 @@ def contingency_table_triggers_01(df_devs, df_acts, idle=False):
     Examples
     --------
     >>> from pyadlml.stats import contingency_triggers_01
-    >>> contingency_triggers_01(data.df_devices, data.df_activities)
+    >>> contingency_triggers_01(data.df_devs, data.df_activities)
     activity            get drink  go to bed  ... use toilet
     devices                                   ...
     Cups cupboard Off   18          0         ...          0
@@ -90,7 +90,7 @@ def contingency_table_triggers(df_devs, df_acts, idle=False):
     Examples
     --------
     >>> from pyadlml.stats import contingency_triggers
-    >>> contingency_triggers(data.df_devices, data.df_activities)
+    >>> contingency_triggers(data.df_devs, data.df_activities)
     activity            get drink  go to bed  ...  use toilet
     device
     Cups cupboard              36          0  ...           0
@@ -167,7 +167,7 @@ def contingency_intervals(df_devs, df_acts, idle=False):
     Examples
     --------
     >>> from pyadlml.stats import contingency_duration
-    >>> contingency_duration(data.df_devices, data.df_activities)
+    >>> contingency_duration(data.df_devs, data.df_activities)
     activity                     get drink ...             use toilet
     Hall-Bedroom door Off  0 days 00:01:54 ... 0 days 00:12:24.990000
     Hall-Bedroom door On   0 days 00:14:48 ... 0 days 03:02:49.984000
