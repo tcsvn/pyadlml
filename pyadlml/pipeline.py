@@ -8,8 +8,10 @@ estimator, as a chain of transforms and estimators.
 #         Alexandre Gramfort
 #         Lars Buitinck
 # License: BSD
-
+from joblib import Parallel
+from scipy import sparse
 from sklearn.base import clone, TransformerMixin, BaseEstimator
+from sklearn.utils.fixes import delayed
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils import (
     Bunch,
@@ -17,7 +19,9 @@ from sklearn.utils import (
 )
 
 from sklearn.utils.validation import check_memory, _deprecate_positional_args
-from sklearn.pipeline import Pipeline as SklearnPipeline
+from sklearn.pipeline import Pipeline as SklearnPipeline, _fit_one, _transform_one
+import numpy as np
+import pandas as pd
 
 __all__ = ['Pipeline', 'YTransformer', 'XAndYTransformer', 'XOrYTransformer',
            'EvalOnlyWrapper', 'TrainOnlyWrapper']
@@ -44,39 +48,54 @@ class XOrYTransformer():
     """
     a class that inherits from XOrYTransformer signals to the pipeline
     to transform X or y given inputs X or y. The transformation is not
-    applied if either X and y are missing.
+    applied if X and y are missing.
     """
     pass
 
 
+# TODO try _BaseComposition for get and set params
 class Wrapper(object):
     """ this class signals the pipeline to omit this step if the pipeline is running
         in trainmode
     """
 
-    def __init__(self, wrapped):
+    def __init__(self, wr):
         '''
         Wrapper constructor.
         @param obj: object to wrap
         '''
 
         # wrap the object
-        self._wrapped = wrapped
+        self.wr = wr
 
         # copy and link every attribute into the wrapper
-        for attr in self._wrapped.__dict__:
-            self._add_property(attr, self._wrapped)
+        #for attr in self.sub_estimator.__dict__:
+        #    self._add_property(attr, self.sub_estimator)
 
         # link all callable methods
-        # for attr in dir(self._wrapped):
-        #     if not attr.startswith('__') and callable(getattr(self._wrapped, attr)):
-        #         exec('self.%s = wrapped.%s' % (attr, attr))
+        for attr in dir(self.wr):
+            try:
+                if not attr.startswith('__') and callable(getattr(self.wr, attr))\
+                        and attr not in ['get_params', 'set_params']:
+                    exec('self.%s = wr.%s' % (attr, attr))
+            except AttributeError:
+                pass
 
         # create new child class for TrainAndEvalOnlyWrapper that inherits from the both
         # this is done because an isinstance than can detect both
-        new_class_name = self.__class__.__name__ + self._wrapped.__class__.__name__
-        child_class = type(new_class_name, (self.__class__, self._wrapped.__class__), {})
+        new_class_name = self.__class__.__name__ + self.wr.__class__.__name__
+        child_class = type(new_class_name, (self.__class__, self.wr.__class__), {})
         self.__class__ = child_class
+
+        # replace the init method
+        #attr_lst = list(self.sub_estimator.__dict__.keys())
+        #attr_str = ''
+        #for attr in attr_lst[:-1]:
+        #    attr_str += str(attr) + ', '
+        #attr_str += attr_lst[-1]
+        #meth = 'lambda {}:  self.sub_estimator.__init__({})'.format(attr_str, attr_str)
+        #exec('self.__init__ = {}'.format(meth))
+
 
     def _add_property(self, attr_name, wrapped):
         value = getattr(wrapped, attr_name)
@@ -93,20 +112,35 @@ class Wrapper(object):
         # add corresponding local variable
         setattr(self, '_' + attr_name, value)
 
+    def set_params(self, **parameters):
+        for parameter, value in parameters.items():
+            setattr(self, parameter, value)
+        return self
 
-class TrainAndEvalOnlyWrapper(Wrapper):
-    def __init__(self, wrapped):
-        Wrapper.__init__(self, wrapped)
+    def get_params(self, deep=True):
+        """ returns the parameters of the wrapped object instead of the own"""
+        out = dict()
+        key = 'wr'
+        out[key] = self.wr
+        if deep and hasattr(self.wr, 'get_params'):
+            deep_items = self.wr.get_params().items()
+            out.update((key + '__' + k, val) for k, val in deep_items)
+        return out
+
+
+class TrainOrEvalOnlyWrapper(Wrapper):
+    def __init__(self, wr):
+        Wrapper.__init__(self, wr)
 
 
 class TrainOnlyWrapper(Wrapper):
-    def __init__(self, wrapped):
-        Wrapper.__init__(self, wrapped)
+    def __init__(self, wr):
+        Wrapper.__init__(self, wr)
 
 
 class EvalOnlyWrapper(Wrapper):
-    def __init__(self, wrapped):
-        Wrapper.__init__(self, wrapped)
+    def __init__(self, wr):
+        Wrapper.__init__(self, wr)
 
 
 class Pipeline(SklearnPipeline):
@@ -323,7 +357,7 @@ class Pipeline(SklearnPipeline):
         """
         trainvote = not self.is_in_train_mode() and isinstance(transformer, TrainOnlyWrapper)
         evalvote = not self.is_in_eval_mode() and isinstance(transformer, EvalOnlyWrapper)
-        trainandevalvote = self.is_in_prod_mode() and isinstance(transformer, TrainAndEvalOnlyWrapper)
+        trainandevalvote = self.is_in_prod_mode() and isinstance(transformer, TrainOrEvalOnlyWrapper)
         return trainvote or evalvote or trainandevalvote
 
     def fit(self, X, y=None, **fit_params):
@@ -629,3 +663,192 @@ def _fit_transform_one(transformer,
         return res, transformer
     else:
         return res * weight, transformer
+
+from sklearn.pipeline import FeatureUnion as SklearnFeatureUnion
+
+class FeatureUnion(SklearnFeatureUnion):
+    """Concatenates results of multiple transformer objects.
+
+    This estimator applies a list of transformer objects in parallel to the
+    input data, then concatenates the results. This is useful to combine
+    several feature extraction mechanisms into a single transformer.
+
+    Parameters of the transformers may be set using its name and the parameter
+    name separated by a '__'. A transformer may be replaced entirely by
+    setting the parameter with its name to another transformer,
+    or removed by setting to 'drop'.
+
+    Read more in the :ref:`User Guide <feature_union>`.
+
+    .. versionadded:: 0.13
+
+    Parameters
+    ----------
+    transformer_list : list of (string, transformer) tuples
+        List of transformer objects to be applied to the data. The first
+        half of each tuple is the name of the transformer. The tranformer can
+        be 'drop' for it to be ignored.
+
+        .. versionchanged:: 0.22
+           Deprecated `None` as a transformer in favor of 'drop'.
+
+    n_jobs : int, default=None
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+        .. versionchanged:: v0.20
+           `n_jobs` default changed from 1 to None
+
+    transformer_weights : dict, default=None
+        Multiplicative weights for features per transformer.
+        Keys are transformer names, values the weights.
+        Raises ValueError if key not present in ``transformer_list``.
+
+    verbose : bool, default=False
+        If True, the time elapsed while fitting each transformer will be
+        printed as it is completed.
+
+    See Also
+    --------
+    make_union : Convenience function for simplified feature union
+        construction.
+
+    Examples
+    --------
+    >>> from sklearn.pipeline import FeatureUnion
+    >>> from sklearn.decomposition import PCA, TruncatedSVD
+    >>> union = FeatureUnion([("pca", PCA(n_components=1)),
+    ...                       ("svd", TruncatedSVD(n_components=2))])
+    >>> X = [[0., 1., 3], [2., 2., 5]]
+    >>> union.fit_transform(X)
+    array([[ 1.5       ,  3.0...,  0.8...],
+           [-1.5       ,  5.7..., -0.4...]])
+    """
+
+    @_deprecate_positional_args
+    def __init__(self, transformer_list, *, n_jobs=None,
+                 transformer_weights=None, verbose=False, skip_attr_list=[]):
+
+        self.skip_attr_list = []
+        # althouth skip attribute is passesd into the constructor, generate a new one
+        for trans_tuple in transformer_list:
+            name = 'skip_' + trans_tuple[0]
+            setattr(self, name, False)
+            self.skip_attr_list.append(name)
+
+        super(FeatureUnion, self).__init__(transformer_list, n_jobs=n_jobs,
+            transformer_weights=transformer_weights, verbose=verbose)
+
+        # the dynamically create attributes have to be passed to the class when it is cloned
+        # in cross validation. THis is a Hack that creates a New class with an appropriate init
+        # methods
+        # replace the init method with ones where the skip_step parameters are present
+        attr_str = "self, transformer_list, *, n_jobs=None, transformer_weights=None, verbose=False, skip_attr_list=[], "
+        attr_assignment_str = ""
+        for i, attr in enumerate(self.skip_attr_list):
+            attr_str += str(attr) + '=False'
+            attr_assignment_str+= 'setattr(self, "' + str(attr) + '", ' + str(attr) + '), '
+            attr_str += ", "
+            if i == len(self.skip_attr_list)-1:
+                attr_str = attr_str[:-2]
+        meth_str  = 'lambda {}: (setattr(self, "skip_attr_list", skip_attr_list), ' \
+                    '{}'\
+                    'super(FeatureUnion, self).__init__(transformer_list, n_jobs=n_jobs, ' \
+                    'transformer_weights=transformer_weights, verbose=verbose),' \
+                    'None)[-1]'.format(attr_str, attr_assignment_str)
+        exec('self.new_init = {}'.format(meth_str))
+        #new_init = lambda a: a
+        print(self.new_init)
+        new_class_name = self.__class__.__name__ + 'ABC'
+        child_class = type(new_class_name, (self.__class__, ), {'__init__': self.new_init})
+        self.__class__ = child_class
+
+    def _custom_hstack(self, Xs):
+        """ concatenate dataframes if all branches are dataframes and it is possible
+        """
+        try:
+            if False in [isinstance(x, pd.DataFrame) for x in Xs]:
+                raise
+            return pd.concat(Xs, axis=1)
+        except:
+            return self._custom_hstack(Xs)
+
+
+    def _filter_skips(self, Xs):
+        """ removes concatenated items if the transformer is marked to be skipped
+        """
+        lst = list(Xs)
+        for i, attr in enumerate(self.skip_attr_list):
+            if getattr(self, attr):
+                del(lst[i])
+        return tuple(lst)
+
+
+    def set_params(self, **kwargs):
+        # todo set the skip attributes
+        super().set_params(**kwargs)
+
+    def get_params(self, deep=True):
+        params = super().get_params(deep=deep)
+        for attr in self.skip_attr_list:
+            params[attr] = getattr(self, attr)
+        params['skip_attr_list'] = self.skip_attr_list
+        return params
+
+    def fit_transform(self, X, y=None, **fit_params):
+        """Fit all transformers, transform the data and concatenate results.
+
+        Parameters
+        ----------
+        X : iterable or array-like, depending on transformers
+            Input data to be transformed.
+
+        y : array-like of shape (n_samples, n_outputs), default=None
+            Targets for supervised learning.
+
+        Returns
+        -------
+        X_t : array-like or sparse matrix of \
+                shape (n_samples, sum_n_components)
+            hstack of results of transformers. sum_n_components is the
+            sum of n_components (output dimension) over transformers.
+        """
+
+
+        results = self._parallel_func(X, y, fit_params, _fit_transform_one)
+        if not results:
+            # All transformers are None
+            return np.zeros((X.shape[0], 0))
+
+        Xs, transformers = zip(*results)
+        self._update_transformer_list(transformers)
+
+        Xs = self._filter_skips(Xs)
+        return self._custom_hstack(Xs)
+
+    def transform(self, X):
+        """Transform X separately by each transformer, concatenate results.
+
+        Parameters
+        ----------
+        X : iterable or array-like, depending on transformers
+            Input data to be transformed.
+
+        Returns
+        -------
+        X_t : array-like or sparse matrix of \
+                shape (n_samples, sum_n_components)
+            hstack of results of transformers. sum_n_components is the
+            sum of n_components (output dimension) over transformers.
+        """
+        Xs = Parallel(n_jobs=self.n_jobs)(
+            delayed(_transform_one)(trans, X, None, weight)
+            for name, trans, weight in self._iter())
+        if not Xs:
+            # All transformers are None
+            return np.zeros((X.shape[0], 0))
+
+        Xs = self._filter_skips(Xs)
+        return self._custom_hstack(Xs)

@@ -12,21 +12,21 @@ import pandas as pd
 from joblib import Parallel, delayed, logger
 from itertools import product
 from scipy.stats.mstats_basic import rankdata
-from sklearn.base import MetaEstimatorMixin, BaseEstimator, is_classifier, clone
+from sklearn.base import MetaEstimatorMixin, BaseEstimator, is_classifier, clone, _is_pairwise
 from sklearn.exceptions import NotFittedError, FitFailedWarning
 from sklearn.metrics import check_scoring
 from sklearn.metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from sklearn.model_selection import check_cv
 from sklearn.model_selection._search import _check_param_grid, ParameterGrid, _normalize_score_results
 from sklearn.model_selection._validation import _aggregate_score_dicts, _score
-from sklearn.utils import _deprecate_positional_args, _message_with_time
+from sklearn.utils import _deprecate_positional_args, _message_with_time, _safe_indexing
 from sklearn.utils.fixes import MaskedArray
-from sklearn.utils.metaestimators import if_delegate_has_method, _safe_split
+from sklearn.utils.metaestimators import if_delegate_has_method# ,_safe_split
 from sklearn.utils.validation import check_is_fitted, indexable, _check_fit_params, _num_samples
 
 from pyadlml.dataset import TIME, START_TIME, END_TIME
-from pyadlml.preprocessing import TrainSubset, TestSubset
-
+from pyadlml.pipeline import EvalOnlyWrapper, TrainOnlyWrapper, Pipeline
+from pyadlml.preprocessing import TrainSubset, TestSubset, CVSubset
 
 def train_test_split(df_devs, df_acts, split='leave_one_day_out', return_day=False):
     """
@@ -110,33 +110,95 @@ def _split_acts(df_acts, rnd_day):
     idxs_train = df_acts[mask_train].index.values
     return idxs_train, idxs_test
 
-from sklearn.model_selection import TimeSeriesSplit as SklearnTSSplit
+from sklearn.model_selection import TimeSeriesSplit as SklearnTSSplit, KFold as SklearnKFold
+
+class KFold(SklearnKFold):
+    """
+    the same class as sklearn KFold but ignores the y labels when split is called
+    """
+    def split(self, X, y=None, groups=None):
+        return list(SklearnKFold.split(self, X, None, groups))
 
 class TimeSeriesSplit(SklearnTSSplit):
-    def __init__(self, return_timestamp=False, epsilon='5ms', **kwargs):
+    """
+    Parameters
+    ----------
+    n_splits : int, default=5
+        number of splits. Must be at least 2.
+    max_train_size : int, default=None
+        Maximum size for a single training set.
+    test_size : int, default=None
+        Used to limit the size of the test set. Defaults to n_samples // (n_splits + 1), which is the maximum allowed value with gap=0.
+    gap : int, default=0
+        Number of samples to exclude from the end of each train set before the test set.
+    return_timestamps : bool, default=False
+        When true timestamp intervals are returned rather than indicies. This is
+        useful whenever data is upscaled or downscaled as the indicies in the testset c
+        can not be known beforehand.
+    epsilon : str, default='5ms'
+        the offset that is used to pad before the first and after the last interval for
+        the timestamps. Has only an effect if *return_timestamps* is set to *true*
+    time_based_split : bool, default=False
+        If set, the splits are made based on the time rather than on the datapoints. This
+        allows for rescaling of the data and applying the split afterwards.
+    window_type : str one of [sliding_window, expanding_window], default='expanding_window'
+        uses either TODO approach or  TODO
+        https://eng.uber.com/forecasting-introduction/
+    Examples
+    --------
+    >>> import os
+
+    """
+
+    def __init__(self, return_timestamp=False, epsilon='5ms', time_based_split=False, window_type='expanding_window', **kwargs):
         SklearnTSSplit.__init__(self, **kwargs)
         self.return_timestamp = return_timestamp
         self.eps = pd.Timedelta(epsilon)
+        self.time_based_split = time_based_split
+        self.window_type = window_type
 
     def split(self, X, y=None, groups=None):
-        ts_generator = list(SklearnTSSplit.split(self, X, y, groups))
-        if not self.return_timestamp:
-            return ts_generator
+        if not self.time_based_split:
+            ts_generator = list(SklearnTSSplit.split(self, X, y, groups))
+            if not self.return_timestamp:
+                return ts_generator
+            else:
+                lst = []
+                for (train_idx, val_idx) in ts_generator:
+                    val_st = X.iloc[val_idx[0]][TIME] - self.eps
+                    val_et = X.iloc[val_idx[-1]][TIME] + self.eps
+                    train_st = X.iloc[train_idx[0]][TIME] - self.eps
+                    train_et = X.iloc[train_idx[-1]][TIME] + self.eps
+                    lst.append(
+                        ((train_st, train_et), (val_st, val_et))
+                    )
+                return lst
         else:
+            # create time_range from first device to last device
+            start = X[TIME].iloc[0]
+            end = X[TIME].iloc[-1]
+            rng = end - start  # pd.Timedelta
+            test_size = rng / (self.n_splits + 1)
+
+            train_end = end - test_size * self.n_splits
             lst = []
-            for (train_idx, val_idx) in ts_generator:
-                val_st = X.iloc[val_idx[0]][TIME] - self.eps
-                val_et = X.iloc[val_idx[-1]][TIME] + self.eps
-                train_st = X.iloc[train_idx[0]][TIME] - self.eps
-                train_et = X.iloc[train_idx[-1]][TIME] + self.eps
-                lst.append(
-                    ((train_st, train_et), (val_st, val_et))
-                )
+            for i in range(0, self.n_splits):
+                train_st = start - self.eps
+                train_et = train_end
+                val_st = train_end
+                val_et = val_st + test_size + self.eps
+                train_end += test_size
+
+                if self.return_timestamp:
+                    lst.append(((train_st, train_et), (val_st, val_et)))
+                else:
+                    train_idx = X[(train_st < X[TIME]) & (X[TIME] < train_et)].index.values
+                    test_idx = X[(val_st < X[TIME]) & (X[TIME] < val_et)].index.values
+                    lst.append((train_idx, test_idx))
             return lst
 
-
-class LeaveNDayOut():
-    """ LeaveOneDayOut cross-validator
+class LeaveKDayOutSplit():
+    """ LeaveKDayOut cross-validator
     
     Provides train/test indices to split data in train/test sets. Split
     dataset into one day out folds.
@@ -145,19 +207,30 @@ class LeaveNDayOut():
 
     Parameters
     ----------
-    n_days : int, default=1
-        Number of days a to include should contain
+    k : int, default=1
+        The number of days to use for the test set.
+    n_splits : int, default=1
+        The number of splits. All splits are exclusive, meaning there will not be more t TODO
+    return_timestamps : bool, default=False
+        When true timestamp intervals are returned rather than indicies. This is
+        useful whenever data is upscaled or downscaled as the indicies in the testset c
+        can not be known beforehand.
+    epsilon : str, default='5ms'
+        the offset that is used to pad before the first and after the last interval for
+        the timestamps. Has only an effect if *return_timestamps* is set to *true*
+    scale_by_time : bool, default=False
+        If set, the splits are made based on the time rather than on the datapoints. This
+        allows for rescaling of the data and applying the split afterwards.
 
     Examples
     --------
     >>> import os
-
-
-
-
     """
-    def __init__(self, n_days=1):
-        self.n_splits = n_days
+    def __init__(self, k=1, n_splits=1, return_timestamps=False, epsilon='5ms'):
+        self.n_splits = n_splits
+        self.k = k
+        self.return_timestamp = return_timestamps
+        self.eps = pd.Timedelta(epsilon)
 
     def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
@@ -209,8 +282,8 @@ class LeaveNDayOut():
             res.append((train_days, test_days))
         return res
 
-from sklearn.model_selection._search import BaseSearchCV as SklearnBaseSearchCV
 
+from sklearn.model_selection._search import BaseSearchCV as SklearnBaseSearchCV
 class BaseSearchCV(SklearnBaseSearchCV):
     """Abstract base class for hyper parameter search with cross-validation.
     """
@@ -447,22 +520,40 @@ class BaseSearchCV(SklearnBaseSearchCV):
                             **fit_and_score_kwargs))
                     out = parallel(lst)
                 else:
-                    out = parallel(delayed(_fit_and_score)(clone(base_estimator),
-                                                           X, y,
-                                                           train=train, test=test,
-                                                           parameters=parameters,
-                                                           split_progress=(
-                                                               split_idx,
-                                                               n_splits),
-                                                           candidate_progress=(
-                                                               cand_idx,
-                                                               n_candidates),
-                                                           **fit_and_score_kwargs)
-                                   for (cand_idx, parameters),
-                                       (split_idx, (train, test)) in product(
-                                       enumerate(candidate_params),
-                                       enumerate(cv.split(X, y, groups)))
-                                   )
+                    can = enumerate(candidate_params)
+                    spl = enumerate(cv.split(X, y, groups))
+                    lst = []
+                    for (cand_idx, parameters), (split_idx, (train, test)) in product(can, spl):
+                        lst.append(delayed(_fit_and_score)(
+                            clone(base_estimator),
+                            X, y,
+                            train=train, test=test,
+                            parameters=parameters,
+                            split_progress=(
+                               split_idx,
+                               n_splits),
+                            candidate_progress=(
+                               cand_idx,
+                               n_candidates),
+                            online_train_val_split=False,
+                            **fit_and_score_kwargs))
+                    out = parallel(lst)
+#                    out = parallel(delayed(_fit_and_score)(clone(base_estimator),
+#                                                           X, y,
+#                                                           train=train, test=test,
+#                                                           parameters=parameters,
+#                                                           split_progress=(
+#                                                               split_idx,
+#                                                               n_splits),
+#                                                           candidate_progress=(
+#                                                               cand_idx,
+#                                                               n_candidates),
+#                                                           **fit_and_score_kwargs)
+#                                   for (cand_idx, parameters),
+#                                       (split_idx, (train, test)) in product(
+#                                       enumerate(candidate_params),
+#                                       enumerate(cv.split(X, y, groups)))
+#                                   )
 
                 if len(out) < 1:
                     raise ValueError('No fits were performed. '
@@ -531,20 +622,18 @@ class BaseSearchCV(SklearnBaseSearchCV):
             # of the params are estimators as well.
             self.best_estimator_ = clone(clone(base_estimator).set_params(
                 **self.best_params_))
-            for estim in self.best_estimator_:
-                if isinstance(estim, TrainSubset):
-                    tmp = X['time'].iloc[0]
-                    tmp2 = X['time'].iloc[-1]
-                    estim.date_range = [[tmp, tmp2]]
-                    break
+
             refit_start_time = time.time()
-            self.best_estimator_.train()
+            if isinstance(self.best_estimator_, Pipeline):
+                self.best_estimator_.train()
+                # todo set train intervall to whole dataset
             if y is not None:
                 self.best_estimator_.fit(X, y, **fit_params)
             else:
                 self.best_estimator_.fit(X, **fit_params)
 
-            self.best_estimator_.eval()
+            if isinstance(self.best_estimator_, Pipeline):
+                self.best_estimator_.prod()
             refit_end_time = time.time()
             self.refit_time_ = refit_end_time - refit_start_time
 
@@ -712,6 +801,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             if isinstance(estim, TestSubset):
                 estim.date_range = [test]
                 set_test_estim = True
+            if isinstance(estim, CVSubset) and isinstance(estim, EvalOnlyWrapper):
+                estim.set_range(test)
+                set_test_estim = True
+            if isinstance(estim, CVSubset) and isinstance(estim, TrainOnlyWrapper):
+                estim.set_range(train)
+                set_train_estim = True
 
         if not set_train_estim or not set_test_estim:
             raise ValueError("when specifying online learning a KeepTrain and KeepTest have to be in the pipeline")
@@ -751,6 +846,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                           (error_score, format_exc()),
                           FitFailedWarning)
         result["fit_failed"] = True
+        y_sample_len = len(test)
     else:
         result["fit_failed"] = False
 
@@ -843,3 +939,75 @@ def _insert_error_scores(results, error_score):
             results[i]["test_scores"] = formatted_error.copy()
             if "train_scores" in results[i]:
                 results[i]["train_scores"] = formatted_error.copy()
+
+
+def _safe_split(estimator, X, y, indices, train_indices=None):
+    """Create subset of dataset and properly handle kernels.
+
+    Slice X, y according to indices for cross-validation, but take care of
+    precomputed kernel-matrices or pairwise affinities / distances.
+
+    If ``estimator._pairwise is True``, X needs to be square and
+    we slice rows and columns. If ``train_indices`` is not None,
+    we slice rows using ``indices`` (assumed the test set) and columns
+    using ``train_indices``, indicating the training set.
+
+    .. deprecated:: 0.24
+
+        The _pairwise attribute is deprecated in 0.24. From 1.1
+        (renaming of 0.26) and onward, this function will check for the
+        pairwise estimator tag.
+
+    Labels y will always be indexed only along the first axis.
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator to determine whether we should slice only rows or rows and
+        columns.
+
+    X : array-like, sparse matrix or iterable
+        Data to be indexed. If ``estimator._pairwise is True``,
+        this needs to be a square array-like or sparse matrix.
+
+    y : array-like, sparse matrix or iterable
+        Targets to be indexed.
+
+    indices : array of int
+        Rows to select from X and y.
+        If ``estimator._pairwise is True`` and ``train_indices is None``
+        then ``indices`` will also be used to slice columns.
+
+    train_indices : array of int or None, default=None
+        If ``estimator._pairwise is True`` and ``train_indices is not None``,
+        then ``train_indices`` will be use to slice the columns of X.
+
+    Returns
+    -------
+    X_subset : array-like, sparse matrix or list
+        Indexed data.
+
+    y_subset : array-like, sparse matrix or list
+        Indexed targets.
+
+    """
+    if _is_pairwise(estimator):
+        if not hasattr(X, "shape"):
+            raise ValueError("Precomputed kernels or affinity matrices have "
+                             "to be passed as arrays or sparse matrices.")
+        # X is a precomputed square kernel matrix
+        if X.shape[0] != X.shape[1]:
+            raise ValueError("X should be a square kernel matrix")
+        if train_indices is None:
+            X_subset = X[np.ix_(indices, indices)]
+        else:
+            X_subset = X[np.ix_(indices, train_indices)]
+    else:
+        X_subset = _safe_indexing(X, indices)
+
+    if y is not None:
+        y_subset = _safe_indexing(y, indices)
+    else:
+        y_subset = None
+
+    return X_subset, y_subset

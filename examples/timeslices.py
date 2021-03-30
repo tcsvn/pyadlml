@@ -43,43 +43,44 @@ X_train, X_test, y_train, y_test = train_test_split(
 """
 Example: Cross Validation
 """
-ts = TimeSeriesSplit(n_splits=5)
-scores = []
-# cross validation on train set
-for train_int, val_int in ts.split(X_train):
-    steps = [
-        ('enc', BinaryEncoder(encode='raw')),
-        ('lbl', TrainOrEvalOnlyWrapper(LabelEncoder(idle=True))),
-        ('drop_val', TrainOnlyWrapper(CVSubset(train_int))),
-        ('drop_train', EvalOnlyWrapper(CVSubset(val_int))),
-        ('drop_time_idx', DropTimeIndex()),
-        ('classifier', RandomForestClassifier(random_state=42))
-    ]
 
-    pipe = Pipeline(steps).train()
-    pipe.fit(X_train, y_train)
-
-    # evaluate
-    pipe = pipe.eval()
-    scores.append(pipe.score(X_train, y_train))
-
-print('scores of the pipeline: {}'.format(str(scores)))
-print('mean score: {:.3f}'.format(np.array(scores).mean()))
+ts = TimeSeriesSplit(n_splits=5, time_based_split=True, return_timestamp=True)
+#scores = []
+## cross validation on train set
+#for train_int, val_int in ts.split(X_train):
+#    steps = [
+#        ('enc', BinaryEncoder(encode='raw', t_res='2min')),
+#        ('lbl', TrainOrEvalOnlyWrapper(LabelEncoder(idle=True))),
+#        ('drop_val', TrainOnlyWrapper(CVSubset(train_int, time_based=True))),
+#        ('drop_train', EvalOnlyWrapper(CVSubset(val_int, time_based=True))),
+#        ('drop_time_idx', DropTimeIndex()),
+#        ('classifier', RandomForestClassifier(random_state=42))
+#    ]
+#
+#    pipe = Pipeline(steps).train()
+#    pipe.fit(X_train, y_train)
+#
+#    # evaluate
+#    pipe = pipe.eval()
+#    scores.append(pipe.score(X_train, y_train))
+#
+#print('train scores of the pipeline: {}'.format(str(scores)))
+#print('train mean score: {:.3f}'.format(np.array(scores).mean()))
 
 """
 Simple Example Gridsearch
 """
 from pyadlml.model_selection import GridSearchCV
-
+#
 param_grid = {
-    'encode_devices__encode': ['changepoint', 'raw', 'lastfired'],
+    'encode_devices__t_res': ['30s', '2min', '15min']
 }
 
 steps = [
-    ('encode_devices', BinaryEncoder()),
+    ('encode_devices', BinaryEncoder(encode='raw')),
     ('fit_labels', TrainOrEvalOnlyWrapper(LabelEncoder(idle=True))),
-    ('select_train_set', TrainOnlyWrapper(CVSubset())),
-    ('select_val_set', EvalOnlyWrapper(CVSubset())),
+    ('select_train_set', TrainOnlyWrapper(CVSubset(time_based=True))),
+    ('select_val_set', EvalOnlyWrapper(CVSubset(time_based=True))),
     ('drop_time_idx', DropTimeIndex()),
     ('classifier', RandomForestClassifier(random_state=42))
 ]

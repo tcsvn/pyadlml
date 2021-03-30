@@ -1,3 +1,5 @@
+from sklearn.utils.metaestimators import _safe_split
+
 from pyadlml.dataset._representations.raw import create_raw, resample_raw
 from pyadlml.dataset._representations.changepoint import create_changepoint, resample_changepoint
 from pyadlml.dataset._representations.lastfired import create_lastfired, resample_last_fired
@@ -16,11 +18,47 @@ ENC_LF = 'lastfired'
 ENC_CP = 'changepoint'
 REPS = [ENC_RAW, ENC_LF, ENC_CP]
 
-
 from pyadlml.pipeline import XOrYTransformer, XAndYTransformer, YTransformer
+from sklearn.base import BaseEstimator
+from pyadlml.dataset.devices import get_most_likely_value
+
+class IdentityTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        pass
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        return X
 
 
-class DropTimeIndex(BaseEstimator, TransformerMixin, XOrYTransformer):
+class DropDuplicates(TransformerMixin, XOrYTransformer):
+    def __init__(self):
+        XOrYTransformer.__init__(self)
+        BaseEstimator.__init__(self)
+
+    def fit(self, X, y=None):
+        return self
+
+    def fit_transform(self, X, y=None, **fit_params):
+        assert isinstance(X, pd.DataFrame)
+        if y is not None:
+            tmp = X.copy()
+            tmp['y'] = y
+            tmp = tmp.drop_duplicates()
+            y = tmp['y']
+            X = tmp.drop('y', axis=1)
+        else:
+            X = X.drop_duplicates()
+            # returns no dataframe for X
+        return X, y
+
+    def transform(self, A):
+        assert A is not None and isinstance(A, pd.DataFrame)
+        return A.drop_duplicates()
+
+class DropTimeIndex(TransformerMixin, XOrYTransformer):
     def __init__(self):
         XOrYTransformer.__init__(self)
 
@@ -41,28 +79,47 @@ class DropTimeIndex(BaseEstimator, TransformerMixin, XOrYTransformer):
         assert A is not None
         return A.loc[:, A.columns != TIME]
 
-class DataFrame2NdArray(BaseEstimator, TransformerMixin, XOrYTransformer):
-    def __init__(self):
-        XOrYTransformer.__init__(self)
+class CVSubset(TransformerMixin, XOrYTransformer):
+    def __init__(self, data_range=[], y=False, time_based=False):
+        self.time_based = time_based
+        self.data_range = data_range
+        XAndYTransformer.__init__(self)
 
-    def fit(self, X=None, y=None):
+    def set_range(self, data_range):
+        self.data_range = data_range
+
+    def fit(self, X, y=None):
         return self
 
-    def fit_transform(self, X, y=None, **fit_params):
-        """
-        drops columns that are not time dependent
-        """
-        if X is not None:
-            X = X.values
-        if y is not None:
-            y = y.values
-        return X, y
+    def transform(self, X, y=None):
+        if self.time_based:
+            x_mask = _create_mask(X, self.data_range)
+            return X[x_mask]
+        else:
+            X_train, _ = _safe_split(None, X, None, self.data_range)
+            return X_train
 
-    def transform(self, X):
-        raise ValueError
+
+    def fit_transform(self, X, y=None):
+        # TODO make checks if the data_range is set correctly
+        if self.time_based:
+            x_mask = _create_mask(X, self.data_range)
+            if y is not None:
+                assert len(X) == len(y)
+                y_mask = _create_mask(y, self.data_range)
+                return X[x_mask], y[y_mask]
+            else:
+                return X[x_mask]
+        else:
+            if y is not None:
+                X, y = _safe_split(None, X, y, self.data_range)
+                return X, y
+            else:
+                X, y = _safe_split(None, X, y, self.data_range)
+                return X
 
 class TestSubset(TransformerMixin, XOrYTransformer):
-    def __init__(self, date_range=[], y=False):
+    def __init__(self, date_range=[], y=False, time_based=True):
         assert isinstance(date_range, list)
         self.date_range = date_range
         XAndYTransformer.__init__(self)
@@ -107,6 +164,8 @@ class TrainSubset(TransformerMixin, XOrYTransformer):
 
 def _create_mask(X, date_range):
     x_mask = (X[TIME] == 'false_init')
+    if isinstance(date_range, tuple):
+        date_range = [date_range]
     for time_pair in date_range:
         x_mask = x_mask | ((time_pair[0] < X[TIME]) & (X[TIME] < time_pair[1]))
     return x_mask
@@ -176,17 +235,6 @@ class BinaryEncoder(BaseEstimator, TransformerMixin):
     t_res : str, optional, default=None
         The timeslices resolution for discretizing the event stream. If
         set to None the event stream is not discretized.
-    sample_strategy : {'ffill', 'on_time'}, optional, default='ffill'
-        Strategy used to assign statevectors to timeslices if
-        multiple events fall into the same timeslice.
-        ffill
-            A timeslice assumes the last known value of the device
-        on_time
-            A timeslice is assigned the most prominent state of the device
-            within the timeslice
-        random
-            A timeslice is assigned a random state of the device
-        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -194,8 +242,6 @@ class BinaryEncoder(BaseEstimator, TransformerMixin):
         The binary representation for the data.
     t_res : str or None
         Determines the timeslice size.
-    sample_strategy : str or None
-        The sample strategy.
     data : pd.DataFrame or None
         The fitted data.
 
@@ -205,16 +251,22 @@ class BinaryEncoder(BaseEstimator, TransformerMixin):
     >>> enc = BinaryEncoder(encode='raw')
     >>> raw = enc.fit_transform(data.df_devices)
     >>> len(raw)
-    10000
     """
 
-    def __init__(self, encode=ENC_RAW, t_res=None, sample_strategy='ffill'):
-        assert encode in REPS
+    def __init__(self, encode=ENC_RAW, t_res=None):
         self.encode = encode
-        self.data = None
-        self.t_res=t_res
-        self.sample_strategy=sample_strategy
+        self.data_ = None
+        self.t_res = t_res
 
+    @classmethod
+    def _is_valid_encoding(cls, encoding):
+        from itertools import chain, permutations
+        def helper(iterable):
+            s = list(iterable)
+            return chain.from_iterable(permutations(s, r) for r in range(len(s)+1))
+        # generate all possible valid combinations
+        valid_combos = ['+'.join(combo) for combo in helper(REPS)]
+        return encoding in valid_combos
 
     def fit(self, df_devs, y=None):
         """
@@ -233,32 +285,70 @@ class BinaryEncoder(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        self.data = self._transform(df_devs)
+        assert BinaryEncoder._is_valid_encoding(self.encode)
+
+        # create hashmap off all input features with mean for numerical
+        # and most common value for binary or categorical features
+        self.dev_most_likely_values_ = get_most_likely_value(df_devs)
+        self.classes_ = self.dev_most_likely_values_[DEVICE].values
         return self
 
+    def transform(self, df_devs=None ,y=None):
+        """
+        Discretize the data.
 
-    def _transform(self, df_devs):
-        if self.encode == ENC_RAW:
-            data = create_raw(df_devs)
-            if self.t_res is not None:
-                data = resample_raw(data,
-                                     self.t_res,
-                                     df_devs,
-                                     sample_strat=self.sample_strategy)
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Data to be discretized.
 
-        elif self.encode == ENC_CP:
-            data = create_changepoint(df_devs)
-            if self.t_res is not None:
-                data = resample_changepoint(data, self.t_res)
+        Returns
+        -------
+        Xt : {ndarray, sparse matrix}, dtype={np.float32, np.float64}
+            Data in the binned space. Will be a sparse matrix if
+            `self.encode='onehot'` and ndarray otherwise.
+        """
+        PRAEFIX_LF = 'lf_'
+        PRAEFIX_CP = 'cp_'
 
-        elif self.encode == ENC_LF:
-            data = create_lastfired(df_devs)
-            if self.t_res is not None:
-                data = resample_last_fired(data, self.t_res)
-        else:
-            raise ValueError
 
-        data = data.reset_index(drop=False)
+        df_lst = []
+        iters = self.encode.split('+')
+        for enc in iters:
+            if enc == ENC_RAW:
+                data = create_raw(df_devs)
+                if self.t_res is not None:
+                    data = resample_raw(
+                        data,
+                        df_dev=df_devs,
+                        t_res=self.t_res,
+                        most_likely_values=self.dev_most_likely_values_
+                    )
+
+            elif enc == ENC_CP:
+                data = create_changepoint(df_devs)
+                if self.t_res is not None:
+                    data = resample_changepoint(data, self.t_res)
+
+                # add prefix to make column names unique
+                if len(iters) > 1:
+                    data.columns = [TIME] + list(map(PRAEFIX_CP.__add__, data.columns[1:]))
+
+            elif enc == ENC_LF:
+                data = create_lastfired(df_devs)
+                if self.t_res is not None:
+                    data = resample_last_fired(data, self.t_res)
+
+                # add prefix to make column names unique
+                if len(iters) > 1:
+                    data.columns = [TIME] + list(map(PRAEFIX_LF.__add__, data.columns[1:]))
+
+            else:
+                raise ValueError
+            data = data.set_index(TIME)
+            df_lst.append(data)
+
+        data = pd.concat(df_lst, axis=1).reset_index()
         return data
 
 
@@ -275,71 +365,33 @@ class BinaryEncoder(BaseEstimator, TransformerMixin):
             :class:`~sklearn.pipeline.Pipeline`.
         """
         self.fit(df_devs)
-        return self.data
-
-    def inverse_transform(self, raw):
-        """
-        Transform discretized data back to original feature space.
-        Note that this function does not regenerate the original data
-        due to discretization rounding.
-
-        Parameters
-        ----------
-        Xt : array-like of shape (n_samples, n_features)
-            Transformed data in the binned space.
-
-        Returns
-        -------
-        Xinv : ndarray, dtype={np.float32, np.float64}
-            Data in the original feature space.
-        """
-        raise NotImplementedError
-
-    def transform(self, df_devs=None):
-        """
-        Discretize the data.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            Data to be discretized.
-
-        Returns
-        -------
-        Xt : {ndarray, sparse matrix}, dtype={np.float32, np.float64}
-            Data in the binned space. Will be a sparse matrix if
-            `self.encode='onehot'` and ndarray otherwise.
-        """
-        return self._transform(df_devs)
+        return self.transform(df_devs)
 
 
-class LabelEncoder(TransformerMixin, YTransformer):
+class LabelEncoder(BaseEstimator, TransformerMixin, YTransformer):
     """
-        wrapper around labelencoder to handle time series data
+    wrapper around labelencoder to handle time series data
+
+    Attributes
+    ----------
+    idle : bool, default=False
+            todo
     """
     def __init__(self, idle=False):
         """
-        Parameters
-        ----------
-        idle : bool, default=False
-            todo
-
         Returns
         -------
         self
         """
-        self.df_acts = None
         self.idle = idle
-        self._lbl_enc = preprocessing.LabelEncoder()
 
-
-    def fit(self, df_acts):
+    def fit(self, X):
         """
         Fit label encoder.
 
         Parameters
         ----------
-        df_acts : pd.DataFrame
+        X : pd.DataFrame
             recorded activities from a dataset. Fore more information refer to the
             :ref:`user guide<activity_dataframe>`.
 
@@ -347,8 +399,9 @@ class LabelEncoder(TransformerMixin, YTransformer):
         -------
         self : returns an instance of self
         """
-        self.df_acts = df_acts
-        self._lbl_enc.fit(self.df_acts[ACTIVITY].values)
+        self.lbl_enc = preprocessing.LabelEncoder()
+        self.df_acts_ = X
+        self.lbl_enc.fit(self.df_acts_[ACTIVITY].values)
         return self
 
 
@@ -366,9 +419,9 @@ class LabelEncoder(TransformerMixin, YTransformer):
         ------
         df : pd.DataFrame
         """
-        self.df_acts = df_acts
-        df = label_data(X, self.df_acts, self.idle)
-        encoded_labels = self._lbl_enc.fit_transform(df[ACTIVITY].values)
+        self.fit(df_acts)
+        df = label_data(X, self.df_acts_, self.idle)
+        encoded_labels = self.lbl_enc.fit_transform(df[ACTIVITY].values)
         return pd.DataFrame(data={TIME: df[TIME].values, ACTIVITY: encoded_labels})
 
     def inverse_transform(self, x, retain_index=False):
@@ -414,13 +467,13 @@ class LabelEncoder(TransformerMixin, YTransformer):
         #    encoded_labels = self._lbl_enc.fit_transform(df[ACTIVITY].values)
         #    return pd.DataFrame(index=df[TIME], data=encoded_labels, columns=[ACTIVITY])
         if isinstance(X, pd.DataFrame) and TIME in X.columns:
-            df = label_data(X, self.df_acts, self.idle)
-            encoded_labels = self._lbl_enc.transform(df[ACTIVITY].values)
+            df = label_data(X, self.df_acts_, self.idle)
+            encoded_labels = self.lbl_enc.transform(df[ACTIVITY].values)
             return pd.DataFrame(data={TIME: df[TIME].values, ACTIVITY: encoded_labels})
 
         # return only the labels for a nd array 
         elif isinstance(X, np.ndarray):
-            return self._lbl_enc.transform(X)
+            return self.lbl_enc.transform(X)
 
         else:
             raise ValueError
