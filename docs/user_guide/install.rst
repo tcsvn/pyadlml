@@ -1,8 +1,7 @@
 Installation
 ************
 
-The setup is pretty straight forward and easy.
-At the command line type
+The setup is pretty straight forward. At the command line type
 
 ``pip install pyadlml``
 

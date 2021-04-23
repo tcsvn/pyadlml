@@ -12,7 +12,7 @@
    viewBox="0 0 300 100"
    version="1.1"
    id="svg16"
-   inkscape:version="1.0.2 (e86c870879, 2021-01-15)"
+   inkscape:version="1.0.2 (e86c870879, 2021-01-15, custom)"
    sodipodi:docname="pipeline.svg">
   <defs
      id="defs10" />
@@ -24,10 +24,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.0614164"
-     inkscape:cx="555.45068"
-     inkscape:cy="38.374354"
+     inkscape:cx="511.77331"
+     inkscape:cy="179.74376"
      inkscape:document-units="px"
-     inkscape:current-layer="layer4"
+     inkscape:current-layer="layer1"
      inkscape:document-rotation="0"
      showgrid="false"
      units="mm"
@@ -47,7 +47,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -56,6 +56,20 @@
      inkscape:groupmode="layer"
      id="layer1">
     <rect
+       style="fill:#cccccc;stroke-width:0.271076"
+       id="rect20-6"
+       width="22.796373"
+       height="25.883642"
+       x="20.386827"
+       y="33.21077" />
+    <rect
+       style="fill:#cccccc;stroke-width:0.271076"
+       id="rect20-0"
+       width="22.796373"
+       height="25.883642"
+       x="28.821012"
+       y="29.506344" />
+    <rect
        style="fill:#808080;stroke-width:0.229077"
        id="rect18"
        width="127.27805"
@@ -63,68 +77,233 @@
        x="85.491287"
        y="34.348721" />
     <rect
-       style="fill:#cccccc;stroke-width:0.264583"
+       style="fill:#cccccc;stroke-width:0.271076"
        id="rect20"
        width="22.796373"
-       height="24.658461"
-       x="12.43464"
-       y="34.400928" />
+       height="25.883642"
+       x="13.539765"
+       y="37.979759" />
     <rect
-       style="fill:#1a1a1a;stroke-width:0.159155"
-       id="rect29"
-       width="14.953306"
-       height="0.9165327"
-       x="16.772749"
-       y="40.623783" />
-    <rect
-       style="fill:#1a1a1a;stroke-width:0.159155"
-       id="rect29-3"
-       width="14.953306"
-       height="0.9165327"
-       x="16.772749"
-       y="43.77084" />
-    <rect
-       style="fill:#1a1a1a;stroke-width:0.159155"
-       id="rect29-6"
-       width="14.953306"
-       height="0.9165327"
-       x="16.772749"
-       y="46.917896" />
-    <rect
-       style="fill:#1a1a1a;stroke-width:0.159155"
-       id="rect29-7"
-       width="14.953306"
-       height="0.9165327"
-       x="16.772749"
-       y="50.064949" />
-    <rect
-       style="fill:#1a1a1a;stroke-width:0.159155"
-       id="rect29-5"
-       width="14.953306"
-       height="0.9165327"
-       x="16.772749"
-       y="53.212009" />
-    <rect
-       style="fill:#1a1a1a;stroke-width:0.159155"
+       style="fill:#1a1a1a;stroke-width:0.141912"
        id="rect29-35"
-       width="14.953306"
+       width="11.888646"
        height="0.9165327"
-       x="16.772749"
-       y="56.359062" />
+       x="22.393288"
+       y="61.181377" />
     <rect
-       style="fill:#808080;stroke-width:0.264583"
+       style="fill:#808080;stroke-width:0.232651"
        id="rect87"
-       width="11.809829"
+       width="9.1312304"
        height="43.780949"
-       x="74.095062"
-       y="27.103149" />
+       x="76.577606"
+       y="27.140501" />
     <rect
-       style="fill:#808080;stroke-width:0.264583"
+       style="fill:#808080;stroke-width:0.222266"
        id="rect87-6"
-       width="11.809829"
+       width="8.3342667"
        height="43.780949"
        x="212.38771"
        y="27.103149" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.0930025"
+       id="rect29-35-3"
+       width="5.1060328"
+       height="0.9165327"
+       x="15.698571"
+       y="61.163155" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.0930025"
+       id="rect29-35-3-6"
+       width="5.1060328"
+       height="0.9165327"
+       x="15.698571"
+       y="58.410725" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.0930025"
+       id="rect29-35-3-7"
+       width="5.1060328"
+       height="0.9165327"
+       x="15.698571"
+       y="55.658306" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.0930025"
+       id="rect29-35-3-5"
+       width="5.1060328"
+       height="0.9165327"
+       x="15.698571"
+       y="52.905876" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.0930025"
+       id="rect29-35-3-3"
+       width="5.1060328"
+       height="0.9165327"
+       x="15.698571"
+       y="50.153446" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.0930025"
+       id="rect29-35-3-56"
+       width="5.1060328"
+       height="0.9165327"
+       x="15.698571"
+       y="47.40102" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.0930025"
+       id="rect29-35-3-2"
+       width="5.1060328"
+       height="0.9165327"
+       x="15.698571"
+       y="44.648594" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.141912"
+       id="rect29-35-9"
+       width="11.888646"
+       height="0.9165327"
+       x="22.393288"
+       y="58.428947" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.141912"
+       id="rect29-35-1"
+       width="11.888646"
+       height="0.9165327"
+       x="22.393288"
+       y="52.924095" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.141912"
+       id="rect29-35-2"
+       width="11.888646"
+       height="0.9165327"
+       x="22.393288"
+       y="47.419247" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.141912"
+       id="rect29-35-7"
+       width="11.888646"
+       height="0.9165327"
+       x="22.393288"
+       y="44.666817" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.141912"
+       id="rect29-35-0"
+       width="11.888646"
+       height="0.9165327"
+       x="22.393288"
+       y="50.171669" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.141912"
+       id="rect29-35-93"
+       width="11.888646"
+       height="0.9165327"
+       x="22.393288"
+       y="55.676525" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.52778px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="15.464635"
+       y="42.322052"
+       id="text3479"><tspan
+         sodipodi:role="line"
+         id="tspan3477"
+         x="15.464635"
+         y="42.322052"
+         style="font-size:3.52778px;stroke-width:0.264583">df_devices</tspan></text>
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.086026"
+       id="rect29-35-6"
+       width="4.3687167"
+       height="0.9165327"
+       x="36.146072"
+       y="55.419899" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.086026"
+       id="rect29-35-9-2"
+       width="4.3687167"
+       height="0.9165327"
+       x="36.146072"
+       y="52.667469" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.086026"
+       id="rect29-35-1-6"
+       width="4.3687167"
+       height="0.9165327"
+       x="36.146072"
+       y="47.162617" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.086026"
+       id="rect29-35-2-1"
+       width="4.3687167"
+       height="0.9165327"
+       x="36.146072"
+       y="41.657768" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.086026"
+       id="rect29-35-7-8"
+       width="4.3687167"
+       height="0.9165327"
+       x="36.146072"
+       y="38.905338" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.086026"
+       id="rect29-35-0-7"
+       width="4.3687167"
+       height="0.9165327"
+       x="36.146072"
+       y="44.410191" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.086026"
+       id="rect29-35-93-9"
+       width="4.3687167"
+       height="0.9165327"
+       x="36.146072"
+       y="49.915047" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.112943"
+       id="rect29-35-20"
+       width="7.5302491"
+       height="0.9165327"
+       x="42.899231"
+       y="52.660389" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.112943"
+       id="rect29-35-9-23"
+       width="7.5302491"
+       height="0.9165327"
+       x="42.899231"
+       y="49.907959" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.112943"
+       id="rect29-35-1-7"
+       width="7.5302491"
+       height="0.9165327"
+       x="42.899231"
+       y="44.403107" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.112943"
+       id="rect29-35-2-5"
+       width="7.5302491"
+       height="0.9165327"
+       x="42.899231"
+       y="38.898258" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.112943"
+       id="rect29-35-7-9"
+       width="7.5302491"
+       height="0.9165327"
+       x="42.899231"
+       y="36.145828" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.112943"
+       id="rect29-35-0-2"
+       width="7.5302491"
+       height="0.9165327"
+       x="42.899231"
+       y="41.650681" />
+    <rect
+       style="fill:#1a1a1a;stroke-width:0.112943"
+       id="rect29-35-93-2"
+       width="7.5302491"
+       height="0.9165327"
+       x="42.899231"
+       y="47.155537" />
   </g>
   <g
      inkscape:groupmode="layer"
@@ -210,27 +389,27 @@
          y="75.801949"
          style="font-size:6.35px;stroke-width:0.264583">0.3</tspan></text>
     <rect
-       style="fill:#999999;stroke-width:0.330227"
+       style="fill:#999999;stroke-width:0.330129"
        id="rect350"
-       width="126.67596"
+       width="126.60083"
        height="7.9542351"
        x="85.773735"
        y="35.430859" />
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:12.7px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-       x="87.484909"
-       y="52.70533"
+       x="85.65126"
+       y="52.8353"
        id="text337"><tspan
          sodipodi:role="line"
          id="tspan335"
-         x="87.484909"
-         y="52.70533"
+         x="85.65126"
+         y="52.8353"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.7px;font-family:'SauceCodePro Nerd Font';-inkscape-font-specification:'SauceCodePro Nerd Font';fill:#ffffff;stroke-width:0.264583">Pipeline</tspan></text>
     <rect
-       style="opacity:0.996;fill:#cccccc;stroke-width:0.167924"
+       style="opacity:0.996;fill:#cccccc;stroke-width:0.167826"
        id="rect350-7"
-       width="126.67596"
+       width="126.52849"
        height="2.0568295"
        x="85.825478"
        y="37.572342" />
@@ -241,18 +420,18 @@
      inkscape:label="Layer 3"
      style="opacity:0.429717">
     <rect
-       style="opacity:0.996;fill:#000000;stroke-width:0.430592"
+       style="opacity:0.996;fill:#000000;stroke-width:0.293163"
        id="rect370"
-       width="3.5521715"
+       width="1.6465671"
        height="29.372993"
        x="85.81781"
        y="34.287701" />
     <rect
-       style="opacity:0.996;fill:#000000;stroke-width:0.338724"
+       style="opacity:0.996;fill:#000000;stroke-width:0.293434"
        id="rect370-2"
-       width="2.1981332"
+       width="1.6496129"
        height="29.372993"
-       x="210.20694"
+       x="210.75546"
        y="34.380718" />
   </g>
   <g
@@ -261,7 +440,7 @@
      inkscape:label="Layer 4">
     <g
        id="g368"
-       transform="matrix(0.90315354,0,0,1,13.25396,1.3468469)"
+       transform="matrix(0.89217168,0,0,1,15.041086,1.3468469)"
        style="opacity:0.996">
       <rect
          style="fill:#ffffff;stroke-width:0.217935"

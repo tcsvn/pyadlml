@@ -27,51 +27,6 @@ Other useful references are
 - Paperlist: https://github.com/tcsvn/pyadlml/todo
 
 
-Modules
-=======
-
-.. raw:: html
-
-   <div class="row">
-       <div class="col-sm-4 col-sm-offset-1">
-          <a class="reference internal" href="modules/robust.html">
-             <h2>pyadlml.dataset</h2>
-          </a>
-          <p>
-            Provides easy access to datasets that can be used as benchmarks.
-          </p>
-       </div>
-       <div class="col-sm-4 col-sm-offset-1">
-          <a class="reference internal" href="api/.html">
-             <h2>pyadlml.preprocessing</h2>
-          </a>
-          <p>
-            Some tools for preprocessing, such as discrete time encoder and
-            tools for feature generation.
-          </p>
-       </div>
-   </div>
-   <div class="row">
-       <div class="col-sm-4 col-sm-offset-1">
-          <a class="reference internal" href="modules/robust.html">
-             <h2>pyadlml.plot</h2>
-          </a>
-          <p>
-            Numerous visualizations for activities, devices and their interaction.
-          </p>
-       </div>
-       <div class="col-sm-4 col-sm-offset-1">
-          <a class="reference internal" href="modules/survival.html">
-             <h2>pyadlml.models</h2>
-          </a>
-          <p>
-            Wrapper around common models to provide a seamless start for
-            newcomers.
-          </p>
-       </div>
-   </div>
-
-
 Documentation
 =============
 

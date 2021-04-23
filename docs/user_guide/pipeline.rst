@@ -1,9 +1,12 @@
 Pipelines
 =========
 
-One objective of Pyadlml is a way to define production ready models for activity-assistant.
-This requires a standardized way to take a *device* dataframe, transform and pass it to a model that
-generates probabilities corresponding to activities.
+One objective of Pyadlml is to define production ready models for activity-assistant.
+This requires a standardized way to take a *device* dataframe in, apply some transformations
+and finally pass the result to a model that generates probabilities for activities. Even if there
+is no case using activity-assistant, a pipeline enables a clean machine learning workflow that is
+reproducible, consistent and works particularly well with cross-validation and grid-search.
+
 
 .. image:: ../_static/images/pipeline.svg
    :height: 200px
@@ -13,16 +16,13 @@ generates probabilities corresponding to activities.
    :align: center
 
 
-With the introduction of pipelines, sklearn offers
-a neat way to achieve this goal. However sklearn's pipeline functionality falls short in certain important aspects.
-There is no way to transform y-labels inside a pipeline step, which is required by pyadlml as an event stream is
-transformed, upsampled before activity labels are assigned to observations. Furthermore sklearns pipeline does not allow
-for steps to be conditionally executed during training, testing or in production. As e.g labels should not
-be transformed in production sklearns pipeline poses a problem. Therefore Pyadlml defines a new pipeline on top of
-sklearns pipeline with full backwards compatibility. Even if there is no need for using a pipeline in conjunction
-with activity-assistant the capabilities enable a clean machine learning workflow that is reproducible,
-consistent and works particularly well with cross validation and grid search.
-
+With the introduction of pipelines, scikit-learn offers a neat way to achieve this goal. However sklearn
+pipeline's functionality falls short in certain important aspects.
+There is no way to transform y-labels inside a pipeline step. This is required by pyadlml as an event stream is
+transformed, maybe upsampled before the *LabelEncoder* assigns activities to observations. Furthermore
+sklearn pipeline's do not allow for steps to be conditionally executed during training, testing or in production.
+If a pipeline step drops duplicates for i.i.d data this should only occur during training and not during evaluation
+or in production. To tackle these issues pyadlml extends sci-kit learn's pipeline with full backwards compatibility.
 A pipeline can be initialized and used for fitting and transforming data just as in sklearn:
 
 .. code:: python
@@ -32,15 +32,16 @@ A pipeline can be initialized and used for fitting and transforming data just as
     steps = [ ... some steps ...]   # some data steps with a classifier as last step
     pipe = Pipeline(steps)          # initialize the pipeline
     pipe.fit(X, y)                  # fit the pipeline to data. X is transformed through every step until the last
-    Xprime = pipe[-1:].transform(X) # easy way to look at only the transform data without applying the classifier
     y_pred = pipe.predict(X)        # make y-label predictions based on data X
+    Xprime = pipe[-1:].transform(X) # easy way to transform only the data without applying the classifier
     # ...
 
 Pipeline modes and wrapper
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There are three different modes that a pipeline can be in. The *training*, *evaluation* and *production* mode.
-To set a pipeline in one of the three modes call a method *train*, *eval* or *prod*
+There are three different modes a pipeline can be in, the *training*, *evaluation* and *production* mode.
+To set a pipeline to one of the three modes call the respective method ``train()``, ``eval()`` or ``prod()``. The
+default mode of a pipeline is the *training* mode
 
 .. code:: python
 
@@ -52,16 +53,27 @@ To set a pipeline in one of the three modes call a method *train*, *eval* or *pr
     # do eval stuff ...
 
     pipe.prod()
+    # do production stuff ...
 
-To execute steps conditioned on the three modes, the pipeline is made sensitive to the wrapper classes
-*TrainOnlyWrapper*, *EvalOnlyWrapper* and *TrainOrEvalOnlyWrapper*. Encapsulate a step, that should
-only be executed in a certain mode by passing the Transformer into the constructor of the wrapper.
-Note that you can still call methods such as *transform*, *predict* through the wrapper. The following example
-defines a pipeline where the LabelEncoder is only executed when the pipeline is in train or in evaluation mode
-and duplicates for x are only dropped during the training mode and not in evaluation or production mode.
+To execute steps conditionally on the three modes, the pipeline is made sensitive to the wrapper classes
+``TrainOnlyWrapper``, ``EvalOnlyWrapper`` and ``TrainOrEvalOnlyWrapper``. Encapsulate the step, that should
+only be executed in a certain mode by passing the steps transformer/estimator to the wrappers constructor.
+Note that the transformers/estimators methods such as ``transform`` or ``predict`` can still be called through
+the wrapper. The following example defines a pipeline where the LabelEncoder is only executed when the pipeline is in train or in evaluation mode.
+Duplicates for x are only dropped during the training mode and not in evaluation or production mode.
 
 .. code:: python
 
+    from pyadlml.pipeline import Pipeline, TrainOnlyWrapper, TrainOrEvalOnlyWrapper
+    from pyadlml.preprocessing import DropTimeIndex, DropDuplicates
+    from pyadlml.model_selection import train_test_split
+    from pyadlml.datasets import fetch_amsterdam
+
+    # fetch data and split into training and testing
+    data = fetch_amsterdam()
+    X_test, y_test, X_train, y_train = train_test_split(data.df_devices, data.df_activities)
+
+    # define pipeline steps
     steps = [
         ('enc', BinaryEncoder(encode='raw')),
         ('lbl', TrainOrEvalOnlyWrapper(LabelEncoder(idle=True))),
@@ -72,23 +84,33 @@ and duplicates for x are only dropped during the training mode and not in evalua
 
     pipe = Pipeline(steps).train()      # create pipeline and set the pipeline into training mode
     pipe.fit(X_train, y_train)          # fit the pipeline to the training data
-
     pipe = pipe.eval()                  # set pipeline into eval mode
     score = pipe.score(X_test, y_test)  # score pipeline on the test set
     print('score of the single  pipeline: {:.3f}'.format(score))
 
+
 .. note::
 
-    When setting parameters as when performing cross validation or grid search this has to be done as follows:
+    For grid-search it is necessary to set parameters for the estimators/transformers encapsulated by a wrapper.
+    Normally parameters are accessed by the step's name followed by two underscores and the transformers
+    parameter name (e.g ``lbl__idle``). As of now setting a wrapped estimators parameters  can only be achieved by including
+    a ``__w__`` in between the step's name and the estimators parameter. The following example illustrates
+    this for setting the ``idle`` parameter within a ``TrainOrEvalOnlyWrapper``.
 
     .. code::
 
+        # traditional way to access steps estimators parameter
+        steps = [ ..., ('lbl', LabelEncoder(idle=True)), ...]
+        param_dict = {
+            'lbl__idle' : [True, False]
+        }
+
+        # access a wrapped objects parameter
         steps = [ ..., ('lbl', TrainOrEvalOnlyWrapper(LabelEncoder(idle=True))), ...]
         param_dict = {
             'lbl__w__idle' : [True, False]
         }
-
-        pipe = Pipeline(steps).train().fit(X_train, y_train)
+        cvs = CVGridsearch(..., param_dict=param_dict)
 
 
 
