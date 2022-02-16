@@ -1,358 +1,199 @@
 import plotly.figure_factory as ff
 import plotly.express as px
+import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from plotly.colors import n_colors
 from datetime import timedelta
 
 import numpy as np
-from pyadlml.dataset.stats.devices import devices_on_off_stats, \
-    devices_trigger_count, devices_dist, devices_trigger_time_diff, \
-    device_tcorr, device_triggers_one_day
 
+from pyadlml.dataset import DEVICE, TIME, VAL
+from pyadlml.dataset.plotly.activities import _set_compact_title, _scale_xaxis
+from pyadlml.dataset.stats.devices import event_count, event_cross_correlogram, events_one_day, \
+                                          inter_event_intervals
+from pyadlml.dataset.util import check_scale, activity_order_by, device_order_by
+from pyadlml.dataset.stats.devices import state_times
+from plotly.graph_objects import Figure
 
-def ridge_line(df_act, t_range='day', n=1000):
+@check_scale
+def bar_count(df_dev, scale='linear', height=350, order='count') -> Figure:
+    """ Plots the activities durations against each other
     """
-    https://plotly.com/python/violin/
+    title ='Event count'
+    col_label = 'event_count'
+    xlabel = 'log count' if scale == 'log' else 'count'
 
-    for one day plot the activity distribution over the day
-    - sample uniform from each interval   
-    """
-    df = activities_dist(df_act.copy(), t_range, n)
-
-  
-
-    colors = n_colors('rgb(5, 200, 200)', 'rgb(200, 10, 10)', len(df.columns), colortype='rgb')
-    data = df.values.T
-
-    fig = go.Figure()
-    i = 0
-    for data_line, color in zip(data, colors):
-        fig.add_trace(go.Violin(x=data_line, line_color=color, name=df.columns[i]))
-        i += 1
-
-    fig.update_traces(orientation='h', side='positive', width=3, points=False)
-    fig.update_layout(xaxis_showgrid=False, xaxis_zeroline=False)
-    return fig
-
-def hist_counts(df_dev, scale_y='both'):
-    """
-    plots the trigger count of each device 
-    """
-    df = devices_trigger_count(df_dev.copy())
+    df = event_count(df_dev.copy())
     df.reset_index(level=0, inplace=True)
 
-    title = 'Count of on/off activations per Device'
-    col_label = 'trigger count'
-    col_device = 'device'
-    df.columns = ['device', col_label]
+    dev_order = device_order_by(df_dev, rule=order)
 
-    df = df.sort_values(by=col_label, axis=0, ascending=True)
-    if scale_y == 'log':
-        col_label_log = 'log '+ col_label
-        df[col_label_log] = np.log(df[col_label])
-        labels={col_label: col_label_log}
-        return px.bar(df, x=col_label_log, y=col_device, \
-                title=title, \
-                labels=labels, orientation='h', height=450)
 
-    elif scale_y == 'norm':
-        labels={col_label: col_label}    
-        return px.bar(df, x=col_label, y=col_device, \
-                title=title, \
-                labels=labels, orientation='h', height=450)
+    fig = px.bar(df, y=DEVICE,
+                 category_orders={DEVICE: dev_order},
+                 x=col_label,
+                 orientation='h')
 
-    elif scale_y == 'both':
-        col_label_log = 'log '+col_label
-        df[col_label_log] = np.log(df[col_label])
-        labels={col_label: col_label_log}
-        fig = go.Figure()
+    _set_compact_title(fig, title)
 
-        #fig = px.bar(df, x=col_label, y=col_device, \
-        #        title=title, \
-        #        labels=labels, orientation='h', height=450)
+    fig.update_layout(margin=dict(l=0, r=0, b=0, t=30, pad=0), height=height)
+    fig.update_yaxes(title=None)
+    fig.update_xaxes(title=xlabel)
+    if scale == 'log':
+        fig.update_xaxes(type='log')
 
-        # Add Traces
-        fig.add_trace(go.Bar(x=df[col_label], y=df[col_device], \
-                                orientation='h', name='count'))
-        fig.add_trace(go.Bar(x=df[col_label_log], y=df[col_device], \
-                                orientation='h', name='log count', \
-                                visible=False))
+    return fig
 
-        # Add dropdown
-        fig.update_layout(
-            updatemenus=[
-                dict(
-                    buttons=list([
-                        dict(
-                            label = "no scaling", method = "update",
-                            args = [{"visible": [True, False]},
-                                {"title": title, "xaxis_title": 'asdf'}]),
-                        dict(
-                            label = "log scaled", method = "update", 
-                            args = [{"visible": [False, True]},
-                                {"title": title, "xaxis_title": 'asdf'}])
-                    ]),
-                    active=0,
-                    direction="up",
-                    showactive=True,
-                    x=1.0,
-                    xanchor="right",
-                    y=-0.2,
-                    yanchor="bottom"
-                ),
-            ]
-        )
-        fig.update_layout(
-            title=title,
-            xaxis_title="trigger count",
-        )
-
-        return fig
-    else: 
-        raise ValueError
-
-def hist_trigger_time_diff(df_dev):
+@check_scale
+def device_iei(df_devs, scale='linear', height=350, n_bins=20, per_device=False, order='alphabetical') -> Figure:
     """
         plots
     """
-    df = devices_trigger_time_diff(df_dev.copy())
-    fig = go.Figure()
-    trace = go.Histogram(x=np.log(df['row_duration'].dt.total_seconds()/60),
-                        nbinsx=200,
-                      )
-    fig.add_trace(trace)
-    return fig
+    title ='Inter-event-interval'
+    col_label = 'event_count'
+    xlabel = 'log seconds' if scale == 'log' else 'seconds'
+    color = 'device' if per_device else None
 
-def hist_trigger_time_diff_separate(df_dev):
-    """
-    """
-    df = devices_trigger_time_diff(df_dev.copy())
-    df = df[['device','time_diff2']]
+    # Get array of seconds
+    df = df_devs.copy().sort_values(by=[TIME])
+    df['ds'] = df[TIME].diff().shift(-1) / pd.Timedelta(seconds=1)
+    if scale == 'log':
+        df['ds'] = df['ds'].apply(np.log)
 
-    dev_list = df.device.unique()
-    num_cols = 2
-    num_rows = int(np.ceil(len(dev_list)/2))
-    fig = make_subplots(rows=num_rows, cols=num_cols)
+    fig = px.histogram(df, x='ds', color=color, nbins=n_bins)
 
-    for i, device in enumerate(dev_list):
-        dev_df = df[df.device  == device].dropna()['time_diff2']
-        k = i%num_cols + 1
-        j = int(i/num_cols) + 1
-        fig.append_trace(
-            go.Histogram(x=np.log(dev_df.dt.total_seconds()/60), 
-            nbinsx=100, 
-            name=device
-            ), j,k
-        )
-    return fig
+    # TODO refactor, get better second labeling
+    hist, bin_edges = np.histogram(df['ds'].values[:-1], bins=n_bins)
+    # when n_bins is event than bin_edges is n_bins + 1, therefore
+    # TODO critical, make expresseion that fits for general nbins
+    mask = (np.tile([0, 1], n_bins//2 + 1)[:-int(n_bins % 2 == 0)] == 1)
 
-def hist_on_over_time(df_dev):
-    """
-        expectes device type 2
-    """
-    df = devices_dist(df_dev.copy(), t_range='day', n=1000)
+    right_bins = bin_edges[mask]
+    left_bins = bin_edges[~mask]
+    size = right_bins[0] - left_bins[0]
+    fig.update_traces(xbins=dict(start=left_bins, size=size))
+    #fig.update_traces(xbins_end=right_bins, xbins_start=left_bins, xbins_size=n_bins)
 
-    fig = go.Figure()
-    # for every device add histogram to plot
-    for col in df.columns:
-        fig.add_trace(go.Histogram(x=df[col], nbinsx=50, name=col))
+    _set_compact_title(fig, title)
+    fig.update_layout(margin=dict(l=0, r=0, b=0, t=30, pad=0), height=height)
+    fig.update_yaxes(title=None)
+    fig.update_xaxes(title=xlabel)
 
-    # Overlay both histograms
-    fig.update_layout(barmode='overlay')
-
-    # Reduce opacity to see both histograms
-    fig.update_traces(opacity=0.75)
-    return fig
-
-
-def heatmap_trigger_one_day(df_dev, t_res='1h'):
-    """
-    computes the heatmap for one day where all the device triggers are showed
-    """
-    if type(t_res) == str:
-        df = device_triggers_one_day(df_dev.copy(), t_res)
-
-        #plot stuff
-        fig = go.Figure(data=go.Heatmap(
-                z=df.T.values,
-                x=df.index,
-                y=df.columns,
-                colorscale='Viridis'))
-
-        fig.update_layout(
-            title='Triggers one day',
-            xaxis_nticks=24)
-        return fig
-    else:
-        # Create figure
-        fig = go.Figure()
-
-        # create for each timeframe the data
-        # Add traces, one for each slider step
-        for t_val in t_res:
-            df = device_triggers_one_day(df_dev.copy(), t_val)
-            fig.add_trace(
-                go.Heatmap(
-                        z=df.T.values,
-                        x=df.index,
-                        y=df.columns,
-                        colorscale='Viridis'))
-
-        # Make 0th trace visible
-        fig.data[0].visible = True
-
-        # Create and add slider
-        steps = []
+    # Update the hovertemplate to include the name and custom data
+    # and device name
+    if per_device:
         for i in range(len(fig.data)):
-            step = dict(
-                label=t_res[i],
-                method="restyle",
-                args=[{"visible": [False] * len(fig.data)},
-                    {"title": "Slider switched to step: " + str(i)}],  # layout attribute
-            )
-            step["args"][0]["visible"][i] = True  # Toggle i'th trace to "visible"
-            steps.append(step)
-
-        sliders = [dict(
-            active=0,
-            currentvalue={'visible':False},
-            pad={"t": 70},
-            steps=steps
-        )]
-
-        fig.update_xaxes(patch=dict(nticks=24))
-
-        fig.update_layout(
-            title='Triggers one day',
-            sliders=sliders
-        )
-        return fig
-
-def heatmap_time_diff(df_dev, t_windows):
-    x_label = 'Devices'
-    y_label = x_label
-    color = 'trigger count'
-    name = 'Device triggers'
-
-    # get the list of cross tabulations per t_window
-    lst = device_tcorr(df_dev, t_windows)
-
-    if len(t_windows) == 1:
-        # make a single plot
-        df = lst[0]
-        fig = go.Figure(data=go.Heatmap(
-        name=name,
-        #labels=dict(x=x_label, y=y_label, color=color),
-        z=df,
-        x=df.columns,
-        y=df.index,
-        hoverongaps = False))
-        return fig
-    else:
-        # make multiple subplots
-        num_cols = 2
-        num_rows = int(np.ceil(len(lst)/2))
-        print('nr: ', num_rows)
-        fig = make_subplots(rows=num_rows, cols=num_cols)
-
-        for i, device in enumerate(lst):
-            df = lst[i]
-            col = i%num_cols + 1
-            row = int(i/num_cols) + 1
-            fig.append_trace(
-                go.Heatmap(
-                name=name,
-                #labels=dict(x=x_label, y=y_label, color=color),
-                z=df,
-                x=df.columns,
-                y=df.index,
-                hoverongaps = False
-                ),col,row
-            )
-        return fig
+            fig.data[i].customdata = [fig.data[i].legendgroup]*len(fig.data[i].x)
+        fig.update_traces(hovertemplate='device=%{customdata}<br>ds=%{x}<br>count=%{y}<extra></extra>')
+    return fig
 
 
-def hist_on_off(df_dev):
+def fraction(df_dev, height=350, order='alphabetical') -> Figure:
     """
         plots the fraction a device is on vs off over the whole time
     """
-    title='Devices fraction on/off'
+    title = 'Fraction'
+    xlabel = 'fraction'
+    from pyadlml.dataset.stats.devices import state_fractions
 
-    df = devices_on_off_stats(df_dev)
-    df = df.sort_values(by='frac_on', axis=0)
+    dev_order = device_order_by(df_dev, rule=order)
 
-    y = df.index
+    # TODO, include td as custom data
 
-    fig = go.Figure()
-    fig.add_trace(go.Bar(
-        y=y,
-        x=df['frac_on'],
-        name='on',
-        orientation='h',
-        marker=dict(
-            color='rgba(1, 144, 105, 0.8)',
-        )
-    ))
-    fig.add_trace(go.Bar(
-        y=y,
-        x=df['frac_off'],
-        name='off',
-        orientation='h',
-        marker=dict(
-            color='rgba(58, 71, 80, 0.8)',
-        )
-    ))
+    # Returns 'device', 'value', 'td', 'frac'
+    df = state_fractions(df_dev)
+    devs = df_dev[DEVICE].unique()
+    df[VAL] = df[VAL].map({True: 'on', False: 'off'})
 
-    fig.update_layout(barmode='stack', title=title)
+    fig = px.bar(df, y=DEVICE, x='frac', orientation='h', color=VAL,
+                 category_orders={DEVICE: dev_order},
+    )
+
+    _set_compact_title(fig, title)
+    fig.update_layout(barmode='stack', margin=dict(l=0, r=0, b=0, t=30, pad=0),
+                      height=height)
+    fig.update_yaxes(title=None, visible=False, showticklabels=False)
+    fig.update_xaxes(title=xlabel)
+
     return fig
 
-def hist_trigger_time_diff(df_dev):
-    """
-        plots
-    """
-    n_bins = 100
-    title='Time difference between device triggers'
-    log_sec_col = 'total_log_secs'
-    sec_col = 'total_secs'
-    df = devices_trigger_time_diff(df_dev.copy())
-    
-    # convert timedelta to total minutes
-    df[sec_col] = df['row_duration']/timedelta(seconds=1)
-    df[log_sec_col] = np.log(df[sec_col])
-    X = np.log(df[sec_col]).values[:-1]
 
-    #return df
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
-    
-    #hover_data = {'sec: ', np.random.random(len(df))}
-    hover_template = "count: %{y:}<br>bin: %{x:} </br><extra></extra>"
-    fig.add_trace(go.Histogram(x=df[log_sec_col].values[:-1],
-                        name='# device triggers',
-                        nbinsx=n_bins,
-                        hovertemplate=hover_template,),
-                        secondary_y=False
-                        )
-    
-    hist, bin_edges = np.histogram(df[log_sec_col].values[:-1], n_bins)
-    mask = (np.array([0,1]*int((n_bins/2))+[0]) == 1) # select every scnd element
-    left_bins = np.asarray([0]+list(bin_edges[mask]))
-    
-    hist, bin_edges = np.histogram(X, n_bins)
-    left_bins = bin_edges[:-1]
-    cum_percentage = hist.cumsum()/hist.sum()
-    
-    fig.update_layout(
-            title=title,
-            xaxis_title="log min",
-            bargap=0.1,
-        )
-    fig.add_trace(go.Scatter(x=left_bins, 
-                            y=cum_percentage, 
-                            name="percentage left"),
-                    secondary_y=True)
+def event_density(df_dev, dt='1h', height=350, show_colorbar=True, order='alphabetical'):
+    """
+    Computes the heatmap for one day where all the device triggers are showed
+    """
+    title = 'Event density'
+    df = events_one_day(df_dev.copy(), dt)
+    time = df['time'].copy()
+    df = df.drop(columns='time')
+    dev_order = device_order_by(df_dev, rule=order)
+    df = df[dev_order]
 
-    # Set y-axes titles
-    fig.update_yaxes(title_text="count", secondary_y=False)
-    fig.update_yaxes(title_text="%", secondary_y=True)
+    n = len(df)
+    devs = df.columns
+    dates = pd.Timestamp('01.01.2000 00:00:00') + np.arange(1, n+1) * pd.Timedelta(dt) \
+            - pd.Timedelta(dt)/2    # move tick from centered box half dt to left
+
+    fig = px.imshow(df.T.values, color_continuous_scale='Viridis',
+                    y=devs,
+                    x=dates,
+                    )
+    # Create Hoverdata time intervals
+    cd = np.tile(dates, (len(df.columns), 1))
+    cd = np.array([cd-pd.Timedelta(dt)/2, cd+pd.Timedelta(dt)/2])
+    fig['data'][0]['customdata'] = np.moveaxis(cd, 0, -1)
+
+
+    fig.update_layout(title=title, xaxis_nticks=24, xaxis_tickangle=-45,)
+    fig.update_xaxes(tickformat="%H:%M")
+    fig.update_layout(margin=dict(l=0, r=0, b=0, t=30, pad=0), height=height)
+    _set_compact_title(fig, title)
+
+    if not show_colorbar:
+        fig.update_layout(coloraxis_showscale=False)
+        fig.update(layout_coloraxis_showscale=False)
+        fig.update_coloraxes(showscale=False)
+
+    fig.data[0].hovertemplate = 'Time: %{customdata[0]|%H:%M:%S}-%{customdata[1]|%H:%M:%S}<br>Device: %{y}<br>Count: %{z}<extra></extra>'
+
+    return fig
+
+
+
+def boxplot_state(df_devs, scale='linear', height=350, binary_state='on',
+                  order='alphabetical') -> Figure:
+    """ Plot a boxplot of activity durations (mean) max min
+    """
+    title = 'State distribution'
+    xlabel = 'log seconds' if scale == 'log' else 'seconds'
+
+    df = state_times(df_devs, binary_state=binary_state, categorical=True)
+    df['seconds'] = df['td']/pd.Timedelta('1s')
+
+    dev_order = device_order_by(df, rule=order)
+
+    # Add column for hover display of datapoints later
+    #df[START_TIME] = df_act[START_TIME].dt.strftime('%c')
+    #df[END_TIME] = df_act[END_TIME].dt.strftime('%c')
+    df['td'] = df['td'].apply(str)
+
+    fig = px.box(df, y=DEVICE, x='seconds', orientation='h',
+                 labels=dict(seconds=xlabel),
+                 category_orders={DEVICE: dev_order},
+                 notched=False, points='all',
+                 hover_data=['td', 'time']
+    )
+
+    _set_compact_title(fig, title)
+    if scale == 'log':
+        r_min = np.floor(np.log10(df['seconds'].min()))
+        r_max = np.ceil(np.log10(df['seconds'].max()))
+        fig.update_xaxes(type="log", range=[r_min, r_max])  # log range: 10^r_min=1, 10^r_max=100000
+
+
+    fig.update_yaxes(title=None, visible=False, showticklabels=False)
+    fig.update_layout(margin=dict(l=0, r=0, b=0, t=30, pad=0), height=height)
+    fig.data[0].hovertemplate = 'Device=%{y}<br>Seconds=%{x}<br>Td=%{customdata[0]}<br>Start time=%{customdata[1]}<extra></extra>'
+
     return fig
