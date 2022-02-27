@@ -88,16 +88,36 @@ def _build_choice_devices(df_devs):
                         )
 
 
-def _build_range_slider(df_acts, df_devs, start_time, end_time):
+def _build_range_slider(df_acts, df_devs, start_time, end_time, set_end_time):
     def create_mark(ts, format):
         return {'label': _np_dt_strftime(ts, format), 'style': {"transform": "rotate(45deg)"}}
 
     marks = {0: create_mark(start_time, '%Y.%m.%d'),
              1: create_mark(end_time, '%Y.%m.%d')}
-    for day in pd.date_range(start_time, end_time, freq='D')[1:-1]:
+    #marks[0]['style']['margin'] = '10px 0 0 0'      # top right bottom left
+    #marks[1]['style']['margin'] = '10px 15px 0 0'    # top right bottom left
+
+
+    # Determine the marker frequency
+    diff = end_time - start_time
+    if diff < pd.Timedelta('8W'):       # 2 Month -> daily frequency
+        # Dataset Amsterdam, Mitlab_1/2W, Mitlab_2/2W, Aras/4W, UCIA/2W
+        # UCIA/3W
+        rng = pd.date_range(start_time, end_time, freq='D')[1:-1]
+    elif diff < pd.Timedelta('16W'):    # 4 Months
+        # Dataset Tuebingen2019
+        rng = pd.date_range(start_time, end_time, freq='3D')[1:-1]
+    elif diff < pd.Timedelta('32W'):    # 8 Months
+        # Dataset Casas Aruba
+        rng = pd.date_range(start_time, end_time, freq='W')[1:-1]
+    else:
+        rng = pd.date_range(start_time, end_time, freq='2W')[1:-1]
+
+    for day in rng:
         marks[timestamp_to_num(day, start_time, end_time)] = create_mark(day, '%m.%d')
+    set_end_time = timestamp_to_num(set_end_time, start_time, end_time)
     return dcc.RangeSlider(id='range-slider', min=0, max=1, step=0.001,
-                           value=[0, 1], marks=marks)
+                           value=[0, set_end_time], marks=marks)
 
 
 def _build_plot_header(h_id, title, op_id):
@@ -116,7 +136,7 @@ def _build_options_btn(op_id):
                                     children=dbc.Button('options', style={'marginTop': '-18px'},
                                                         id=op_id, color='link', size='sm')))
 
-def acts_vs_devs_layout(df_acts, df_devs, initialize=False):
+def acts_vs_devs_layout(df_acts, df_devs, initialize=False, plot_height=False):
     """
 
     """
@@ -125,7 +145,8 @@ def acts_vs_devs_layout(df_acts, df_devs, initialize=False):
     if initialize:
         fig_dummy = Figure()
     else:
-        fig_adec = activities_devices_event_contingency(df_acts, df_devs)
+        fig_adec = contingency_events(df_acts, df_devs, height=plot_height)
+
     layout_acts_vs_devs = dbc.Container([
         dcc.Store('avd_activity-order'),
         dcc.Store('avd_device-order'),
@@ -197,11 +218,13 @@ def _buttons_to_use(*use):
             res.append(b)
     return res
 
-def acts_n_devs_layout(df_acts, df_devs, start_time, end_time):
+def acts_n_devs_layout(df_acts, df_devs, start_time, end_time, set_end_time, plot_height=350):
+    fig_and = activities_and_devices(df_acts, df_devs, st=start_time, et=set_end_time,
+                                     height=plot_height)
     return dbc.Row(children=[
                    html.Div(children=[
                             dcc.Graph(id='graph-acts_n_devs',
-                                      figure=activities_vs_devices(df_acts, df_devs),
+                                      figure=fig_and,
                                       config=dict(displayModeBar=True,
                                                   modeBarButtonsToRemove=_buttons_to_use(
                                                       'zoom2d', 'zoomIn2d', 'zoomOut2d',
@@ -226,7 +249,7 @@ def acts_n_devs_layout(df_acts, df_devs, start_time, end_time):
             dbc.Collapse(id='clps-acts-n-devs',
                 children=[
                     html.H6('Time: '),
-                    html.Div(children=[_build_range_slider(df_acts, df_devs, start_time, end_time)]),
+                    html.Div(children=[_build_range_slider(df_acts, df_devs, start_time, end_time, set_end_time)]),
                     html.H6('Activities: ', style={'marginTop': '20px'}),
                     dbc.Row(style={'padding': '10px'},
                             children=[
@@ -243,7 +266,7 @@ def acts_n_devs_layout(df_acts, df_devs, start_time, end_time):
                                             width=10,
                                         )
                                         ],
-                                    ),],
+                                    )],
                                         width=10,
                                 ),
                                 ]
@@ -338,14 +361,22 @@ def device_layout_graph_bottom(fig, type='density'):
             ]
 
 
-def devices_layout(df_devs, initialize=False):
+def devices_layout(df_devs, initialize=False, plot_height=350):
+    fig_bar_count = dev_bar_count(df_devs, height=plot_height)
+    fig_bp_state = boxplot_state(df_devs, height=plot_height)
+    fig_ev_density = event_density(df_dev=df_devs, show_colorbar=False,
+                                   height=plot_height
+                                   )
+    fig_iei = dev_iei(df_devs, height=plot_height)
+    fig_fraction = dev_fraction(df_devs, height=plot_height)
+
     layout_devices = dbc.Container([
         dcc.Store('devs_density-data'),
         dcc.Store('devs_order'),
         dbc.Row([
             dbc.Col(width=6, children=[
                         dbc.Row(dcc.Graph(id='devs_graph-bar',
-                                          figure=dev_bar_count(df_devs),
+                                          figure=fig_bar_count,
                                           config=dict(displaylogo=False,
                                                 displayModeBar=True,
                                                 modeBarButtonsToRemove=_buttons_to_use('resetScale2d'),
@@ -372,7 +403,7 @@ def devices_layout(df_devs, initialize=False):
             ]),
             dbc.Col(width=6, children=[
                         dbc.Row(dcc.Graph(id='devs_graph-boxplot',
-                                          figure=boxplot_state(df_devs),
+                                          figure=fig_bp_state,
                                           config=dict(displaylogo=False,
                                                 displayModeBar=True,
                                                 modeBarButtonsToRemove=_buttons_to_use(
@@ -412,7 +443,7 @@ def devices_layout(df_devs, initialize=False):
                             label_style={'font-size': '12px', 'padding': '5px'},
                             children=[
                                 dcc.Graph( id='devs_graph-density',
-                                figure=event_density(df_dev=df_devs, show_colorbar=False),
+                                figure=fig_ev_density,
                                           config=dict(displaylogo=False,
                                                 displayModeBar=True,
                                                 modeBarButtonsToRemove=[]
@@ -425,7 +456,7 @@ def devices_layout(df_devs, initialize=False):
                                                 'padding-bottom': '2rem',
                                                 },
                                          children=_option_grid(
-                                             labels=['Resolution' ],
+                                             labels=['Resolution', 'Scale'],
                                              lwidth=3, rwidth=9,
                                              values=[
                                                 dcc.Slider(id='devs_dens-slider', min=0, max=10, step=None, value=5,
@@ -440,7 +471,11 @@ def devices_layout(df_devs, initialize=False):
                                                                9: {'label': DEV_DENS_SLIDER[9], 'style': {"transform": "rotate(45deg)"}},
                                                                10: {'label': DEV_DENS_SLIDER[10], 'style': {"transform": "rotate(45deg)"}},
                                                            }
-                                                )
+                                                ),
+                                                 _build_row_radio_button(
+                                                      rd_id='devs_dens-scale',
+                                                      options=['linear', 'log'],
+                                                      value='linear'),
                                             ]
                                         )
                             )
@@ -450,7 +485,7 @@ def devices_layout(df_devs, initialize=False):
                             label_style={'font-size': '12px', 'padding': '5px'},
                             children=[
                                 dcc.Graph( id='devs_graph-iei',
-                                    figure=dev_iei(df_devs),
+                                    figure=fig_iei,
                                               config=dict(displaylogo=False,
                                                     displayModeBar=True,
                                                     modeBarButtonsToRemove=_buttons_to_use(
@@ -486,7 +521,7 @@ def devices_layout(df_devs, initialize=False):
                     children=[
                         dbc.Row(style={'marginTop': '29px'},
                             children=dcc.Graph(id='devs_graph-fraction',
-                                          figure=dev_fraction(df_devs),
+                                          figure=fig_fraction,
                                           config=dict(displaylogo=False,
                                                 displayModeBar=True,
                                                 modeBarButtonsToRemove=_buttons_to_use(
@@ -519,14 +554,26 @@ def _option_grid(labels, values,lwidth=2, rwidth=10):
         ]))
     return dbc.Col(children=root_child_lst)
 
-def activities_layout(df_acts):
+def activities_layout(df_acts, plot_height=350):
+
+    if not df_acts.empty:
+        fig_bar_count = act_bar_count(df_acts, height=plot_height)
+        fig_density = act_density(df_acts, height=plot_height)
+        fig_transition = act_heatmap_transitions(df_acts, height=plot_height)
+        fig_duration = act_boxplot_duration(df_acts, height=plot_height)
+    else:
+        fig_bar_count = Figure()
+        fig_density = Figure()
+        fig_transition = Figure()
+        fig_duration = Figure()
+
     layout_activities = dbc.Container([
         dcc.Store('acts_density-data'),
         dbc.Row([
             dbc.Col(width=6,
                     children=[
                         dbc.Row(dcc.Graph(id='graph-bar',
-                                          figure=act_bar_count(df_acts),
+                                          figure=fig_bar_count,
                                           config=dict(displaylogo=False,
                                                 displayModeBar=True,
                                                 modeBarButtonsToRemove=_buttons_to_use(
@@ -550,7 +597,7 @@ def activities_layout(df_acts):
                                             _build_row_radio_button(
                                                 rd_id='acts_bar-scale',
                                                 options=['linear', 'log'],
-                                                value='log'),
+                                                value='linear'),
                                             _build_row_radio_button(
                                                 rd_id='acts_sort',
                                                 options=['alphabetical', 'value', 'area'],
@@ -568,7 +615,7 @@ def activities_layout(df_acts):
             dbc.Col(width=6,
                     children=[
                         dbc.Row(dcc.Graph(id='graph-boxplot',
-                                  figure=act_boxplot_duration(df_acts),
+                                  figure=fig_duration,
                                   config=dict(displayModeBar=True,
                                               modeBarButtonsToRemove=_buttons_to_use(
                                                 'zoom2d', 'pan2d', 'zoomIn2d', 'zoomOut2d',
@@ -602,7 +649,7 @@ def activities_layout(df_acts):
             dbc.Col(width=6,
                     children=[
                         dbc.Row(dcc.Graph(id='graph-density',
-                                  figure=act_density(df_acts),
+                                  figure=fig_density,
                                   config=dict(
                                         modeBarButtonsToRemove=_buttons_to_use(
                                             'resetScale2d'
@@ -616,7 +663,7 @@ def activities_layout(df_acts):
             dbc.Col(width=6,
                     children=[
                         dbc.Row(dcc.Graph(id='graph-transition',
-                                  figure=act_heatmap_transitions(df_acts),
+                                  figure=fig_transition,
                                   config=dict(displayModeBar=True,
                                               displaylogo=False,
                                               modeBarButtonsToRemove=_buttons_to_use(

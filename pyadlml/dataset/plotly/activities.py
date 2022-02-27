@@ -1,7 +1,7 @@
 import functools
 
 import plotly.figure_factory as ff
-from .util import _style_colorbar
+from .util import _style_colorbar, STRFTIME_DATE
 import plotly.express as px
 import pandas as pd
 import numpy as np
@@ -19,7 +19,7 @@ from pyadlml.dataset.util import get_sorted_index, check_scale, check_order, act
 
 
 def density(df_act: pd.DataFrame = None, df_density: pd.DataFrame = None,
-            dt=None, n=1000, height=350, order='alphabetical', show_meanline=True) -> None:
+            dt=None, n=1000, height=350, order='alphabetical', show_meanline=True) -> plotly.graph_objects.Figure:
     """
     https://plotly.com/python/violin/
 
@@ -96,15 +96,14 @@ def _set_compact_title(fig: plotly.graph_objects.Figure, title: str) -> None:
 def boxplot_duration(df_act, scale='linear', height=350, order='alphabetical') -> plotly.graph_objects.Figure:
     """ Plot a boxplot of activity durations (mean) max min
     """
-    title = 'Duration distribution'
+    title = 'Duration'
 
     df = activities_duration_dist(df_act)
-
     act_order = activity_order_by(df, rule=order)
 
     # Add column for hover display of datapoints later
-    df[START_TIME] = df_act[START_TIME].dt.strftime('%c')
-    df[END_TIME] = df_act[END_TIME].dt.strftime('%c')
+    df[START_TIME] = df_act[START_TIME]
+    df[END_TIME] = df_act[END_TIME]
     df['total_time'] = df['total_time'].apply(str)
 
     fig = px.box(df, y="activity", x='minutes', orientation='h',
@@ -117,7 +116,10 @@ def boxplot_duration(df_act, scale='linear', height=350, order='alphabetical') -
 
     fig.update_yaxes(title=None, visible=False, showticklabels=False)
     fig.update_layout(margin=dict(l=0, r=0, b=0, t=30, pad=0), height=height)
-    fig.data[0].hovertemplate = 'Minutes=%{x}=%{customdata[2]}<br>Activity=%{y}<br>Start_time=%{customdata[0]}<br>End_time=%{customdata[1]}<extra></extra>'
+    hover_template = 'Minutes=%{x}=%{customdata[2]}<br>Activity=%{y}<br>'\
+                     + 'Start_time=%{customdata[0]|' + STRFTIME_DATE + '}<br>'\
+                     + 'End_time=%{customdata[1]|' + STRFTIME_DATE + '}<extra></extra>'
+    fig.data[0].hovertemplate = hover_template
     return fig
 
 
@@ -127,7 +129,7 @@ def bar_cum(df_act, scale='linear', height=350, order='alphabetical', no_title=F
     """ Plots the cumulated activities durations in a histogram for each activity
     """
 
-    title = 'Cumulative Activities'
+    title = 'Duration'
     x_label = 'minutes' if scale == 'linear' else 'log minutes'
     df = activity_duration(df_act.copy())
     df = df.loc[get_sorted_index(df, order), :]
@@ -207,6 +209,11 @@ def heatmap_transitions(df_act, scale='linear', height=350, order='alphabetical'
         hovertemplate='"%{x}" then "%{y}" %{z} times<extra></extra>',
         colorscale='Viridis',
         hoverongaps=False))
+
+    if scale == 'log':
+        fig.data[0].hovertemplate = '"%{x}" then "%{y}" %{customdata} times<extra></extra>'
+        cd = np.array([df.values.T])
+        fig['data'][0]['customdata'] = np.moveaxis(cd, 0, -1)
 
     _set_compact_title(fig, title)
 

@@ -4,6 +4,8 @@ import dash.html as html
 import pandas as pd
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
+from pyadlml.dataset.plotly.devices import event_density
+from pyadlml.dataset.plotly.layout import DEV_DENS_SLIDER
 
 from pyadlml.dataset._core._dataset import label_data
 from pyadlml.dataset._core.activities import _create_activity_df
@@ -19,20 +21,59 @@ from pyadlml.dataset.plotly.layout import acts_vs_devs_layout, devices_layout, \
     activities_layout, acts_n_devs_layout, device_layout_graph_bottom
 from pyadlml.dataset.util import select_timespan, timestamp_to_num, num_to_timestamp
 
+from dask.delayed import delayed
 
+def dashboard(app, name, df_acts, df_devs, start_time, end_time):
 
+    # Since performance rendering issues arise with numbers greater than 40000
+    # device datapoints make a preselection
+    max_points = 40000
+    if len(df_devs) > max_points:
+        set_et = df_devs.iat[max_points, df_devs.columns.get_loc(TIME)]
+        curr_df_devs, curr_df_acts = select_timespan(
+            df_activities=df_acts, df_devices=df_devs, start_time=start_time,
+            end_time=set_et, clip_activities=True
+        )
+    else:
+        curr_df_devs = df_devs
+        curr_df_acts = df_acts
+        set_et = end_time
 
-def dashboard(app, df_acts, df_devs, start_time, end_time):
+    nr_devs = len(df_devs[DEVICE].unique())
+    nr_acts = len(df_acts[ACTIVITY].unique())
+    print('acts: ', nr_acts)
+    print('devs: ', nr_devs)
+
+    # Determine the plot height and fontsize for activity plots
+    if nr_acts < 20:
+        plot_height_acts = 350
+    elif nr_acts < 25:
+        plot_height_acts = 450
+    else:
+        plot_height_acts = 350
+
+    if nr_devs < 20:
+        plot_height_devs = 350
+    elif nr_devs < 30:
+        plot_height_devs = 400
+    elif nr_devs < 50:
+        plot_height_devs = 500
+    elif nr_devs < 70:
+        plot_height_devs = 700
+    else:
+        plot_height_devs = 800
 
     # Get Layout
-    layout_activities = activities_layout(df_acts)
-    layout_devices = devices_layout(df_devs, True)
-    layout_acts_vs_devs = acts_vs_devs_layout(df_acts, df_devs, True)
+    layout_activities = activities_layout(curr_df_acts, plot_height_acts)
+    layout_devices = devices_layout(curr_df_devs, True, plot_height_devs)
+    layout_acts_vs_devs = acts_vs_devs_layout(curr_df_acts, curr_df_devs,
+                                              True, plot_height_acts)
 
     layout = dbc.Container(
         children=[
-            html.H1(children='Dashboard: Amsterdam'),
-            acts_n_devs_layout(df_acts, df_devs, start_time, end_time),
+            html.H1(children=f'Dashboard: {name}'),
+            acts_n_devs_layout(df_acts, df_devs, start_time, end_time,
+                               set_et, plot_height_devs+50),
             html.Br(),
         html.Div([
             dbc.Tabs(
@@ -46,9 +87,9 @@ def dashboard(app, df_acts, df_devs, start_time, end_time):
         ),
         # Store intermediate values of hard to compute values
         # dcc.Store(id='current-df-acts'),
-    ], style={'width': 900, 'margin': 'auto'})
-
-    return layout
+    ], style={'width': 1000, 'margin': 'auto'})
+    create_callbacks(app, df_acts, df_devs, start_time, end_time, plot_height_acts, plot_height_devs)
+    app.layout = layout
 
 def _sel_avd_event_click(avd_event_select, curr_df_acts, curr_df_devs):
     """Select devices and activities from click data of the event contingency table"""
@@ -70,6 +111,7 @@ def _sel_avd_event_click(avd_event_select, curr_df_acts, curr_df_devs):
     sel_activities = sel_activities.drop_duplicates()
     return sel_devices, sel_activities
 
+
 def _sel_point_to_activities(selection):
     """ Gets the selected activities from the boxplot or violin-plot and
         asdf
@@ -83,6 +125,33 @@ def _sel_point_to_activities(selection):
     df_usa[START_TIME] = pd.to_datetime(df_usa[START_TIME])
     df_usa[END_TIME] = pd.to_datetime(df_usa[END_TIME])
     return df_usa
+
+def _sel_act_bar(selection, df_acts):
+    """ Retrieve the activity from a click on an activity bar in a
+        bar plot e.g count, cummulative and filter the activity dataframe
+
+    """
+    dev = selection['points'][0]['y']
+    return df_acts[df_acts[ACTIVITY] == dev]
+
+
+def _sel_dev_bar(selection, df_devs):
+    """ Retrieve the device from a click on the device bar the event count
+        graphand filter the device dataframe
+
+    """
+    dev = selection['points'][0]['y']
+    return df_devs[df_devs[DEVICE] == dev]
+
+def _sel_dev_fraction(selection, df_devs):
+    """ Retrieve the device from a click on the device bar the event count
+        graphand filter the device dataframe
+
+    """
+    dev = selection['points'][0]['y']
+    cat = selection['points'][0]['customdata'][1]
+    mask = (df_devs[DEVICE] == dev) & (df_devs[VAL] == cat)
+    return df_devs[mask].copy()
 
 def _sel_dev_bp_selection(dev_boxplot_select, df_devs):
     """ Gets point data from the state boxplot and creates
@@ -126,6 +195,7 @@ def _sel_dev_iei(dev_iei_select, df_devs, scale, fig):
 
     return df_res
 
+
 def _sel_dev_density(selection, df_devs, dt):
 
     from pyadlml.dataset.plotly.layout import DEV_DENS_SLIDER
@@ -167,7 +237,6 @@ def _sel_act_trans_sel(act_trans_select, df_acts):
             .sort_values(by=START_TIME)\
             .reset_index(drop=True)
     return df4
-
 
 
 def _initialize_toggle_callbacks(app):
@@ -252,7 +321,7 @@ def _initialize_toggle_callbacks(app):
         return bool(n) ^ bool(is_open)
 
 
-def create_callbacks(app, df_acts, df_devs, start_time, end_time):
+def create_callbacks(app, df_acts, df_devs, start_time, end_time, plt_height_acts, plt_height_devs):
 
     def gen_trigger(id, val):
         return html.Div(id=id, style=dict(display="none"), **{"data-value": val})
@@ -291,8 +360,13 @@ def create_callbacks(app, df_acts, df_devs, start_time, end_time):
         # Selected activities
         Input('graph-boxplot', 'selectedData'),
         Input('graph-transition', 'clickData'),
+        Input('graph-bar', 'clickData'),
+
+        # Selected devices
+        Input('devs_graph-bar', 'clickData'),
         Input('devs_graph-boxplot', 'selectedData'),
         Input('devs_graph-iei', 'selectedData'),
+        Input('devs_graph-fraction', 'clickData'),
         State('devs_iei-scale', 'value'),
         State('devs_graph-iei', 'figure'),
         Input('devs_graph-density', 'clickData'),
@@ -309,8 +383,11 @@ def create_callbacks(app, df_acts, df_devs, start_time, end_time):
                            act_curr_sel_store, dev_curr_sel_store,
                            act_boxplot_select,
                            act_trans_select,
+                           act_bar_select,
+                           dev_bar_select,
                            dev_boxplot_select,
                            dev_iei_select,
+                           dev_fraction_select,
                            dev_iei_scale,
                            dev_iei_fig,
                            dev_density_select,
@@ -343,21 +420,28 @@ def create_callbacks(app, df_acts, df_devs, start_time, end_time):
 
         origin_act_trans_selection = _is_trigger(ctx, 'graph-transition')
         origin_act_bp_selection = _is_trigger(ctx, 'graph-boxplot')
+        origin_act_bar_selection = _is_trigger(ctx, 'graph-bar')
         origin_and_event_selection = _is_trigger(ctx, 'avd_graph-event-contingency')
         origin_dev_bp_selection = _is_trigger(ctx, 'devs_graph-boxplot')
         origin_dev_iei_selection = _is_trigger(ctx, 'devs_graph-iei')
         origin_dev_density_selection = _is_trigger(ctx, 'devs_graph-density')
+        origin_dev_bar_selection = _is_trigger(ctx, 'devs_graph-bar')
+        origin_dev_fraction_selection = _is_trigger(ctx, 'devs_graph-fraction')
 
         data_selection_changed = _is_trigger(ctx, 'range-slider') or _is_trigger(ctx, 'select-devices') \
                                  or _is_trigger(ctx, 'select-activities')
 
         user_sel_activities = origin_act_trans_selection \
                               or origin_act_bp_selection \
-                              or origin_and_event_selection
+                              or origin_and_event_selection \
+                              or origin_act_bar_selection
         user_sel_devices = origin_and_event_selection \
                            or origin_dev_bp_selection \
                            or origin_dev_iei_selection \
-                           or origin_dev_density_selection
+                           or origin_dev_density_selection \
+                           or origin_dev_bar_selection \
+                           or origin_dev_fraction_selection
+
         reset_selection = _is_trigger(ctx, 'and_reset_sel') or data_selection_changed
 
         # Create start- and end-timestamps from range slider
@@ -392,7 +476,25 @@ def create_callbacks(app, df_acts, df_devs, start_time, end_time):
             df_act_curr_sel = _sel_point_to_activities(act_boxplot_select)
             act_curr_sel = 'graph-boxplot'
 
+        if (_is_trigger(ctx, 'graph-bar') or act_curr_sel == 'graph-bar')\
+            and not reset_selection:
+            df_act_curr_sel = _sel_act_bar(act_bar_select, df_acts=curr_df_acts)
+            act_curr_sel = 'graph-bar'
+
         #if update_devices:
+
+        if (_is_trigger(ctx, 'devs_graph-bar') or dev_curr_sel == 'devs_graph-bar')\
+            and not reset_selection:
+            df_dev_curr_sel = _sel_dev_bar(dev_bar_select, df_devs=curr_df_devs)
+            dev_curr_sel = 'devs_graph-bar'
+            devs_usel_state = False
+
+        if (_is_trigger(ctx, 'devs_graph-fraction') or dev_curr_sel == 'devs_graph-fraction')\
+            and not reset_selection:
+            df_dev_curr_sel = _sel_dev_fraction(dev_fraction_select, df_devs=curr_df_devs)
+            dev_curr_sel = 'devs_graph-fraction'
+            devs_usel_state = True
+
         if (_is_trigger(ctx, 'devs_graph-boxplot') or dev_curr_sel == 'devs_graph-boxplot')\
             and not reset_selection:
             df_dev_curr_sel = _sel_dev_bp_selection(dev_boxplot_select, curr_df_devs)
@@ -427,11 +529,11 @@ def create_callbacks(app, df_acts, df_devs, start_time, end_time):
             dev_curr_sel = ''
 
         states = (dev_type_trigger == 'state')
-        fig_and = activities_vs_devices(df_acts1, df_devs1, st=st, et=et,
-                                        states=states, act_order=act_order, dev_order=dev_order,
-                                        df_acts_usel=df_act_curr_sel, df_devs_usel=df_dev_curr_sel,
-                                        devs_usel_state=devs_usel_state
-                                        )
+        fig_and = activities_and_devices(df_acts1, df_devs1, st=st, et=et,
+                                         states=states, act_order=act_order, dev_order=dev_order,
+                                         df_acts_usel=df_act_curr_sel, df_devs_usel=df_dev_curr_sel,
+                                         devs_usel_state=devs_usel_state, height=plt_height_devs+50
+                                         )
 
         # Determine reset selection button values
         if user_sel_activities or user_sel_devices:
@@ -509,11 +611,12 @@ def create_callbacks(app, df_acts, df_devs, start_time, end_time):
         Input('devs_bp-scale', 'value'),
         Input('devs_bp-binary-state', 'value'),
         Input('devs_dens-slider', 'value'),
+        Input('devs_dens-scale', 'value'),
 
     )
     def update_dev_tab(dev_trigger, fig_iei, fig_dens, fig_left, fig_frac, fig_bp, dev_order, rng, sel_devices,
                        active_tab, bar_scale, bar_order, iei_scale, iei_per_dev,
-                       bp_scale, bp_binary_state, dens_slider
+                       bp_scale, bp_binary_state, dens_slider, dens_scale
                        ):
         ctx = dash.callback_context
         if _get_trigger_value(ctx) is None or active_tab != 'tab-devs':
@@ -539,8 +642,10 @@ def create_callbacks(app, df_acts, df_devs, start_time, end_time):
         is_trigger_bp_state = _is_trigger(ctx, 'devs_bp-binary-state')
         is_trigger_iei_per_device = _is_trigger(ctx, 'devs_iei-per-device')
         is_trigger_iei_scale = _is_trigger(ctx, 'devs_iei-scale')
+        is_trigger_dens_scale = _is_trigger(ctx, 'devs_dens-scale')
         is_trigger_dens_slider = _is_trigger(ctx, 'devs_dens-slider')
-        is_trigger_dev_update = _is_trigger(ctx, 'dev-trigger')
+        is_trigger_sel_dev = _is_trigger(ctx, 'select-devices')
+        is_trigger_dev_update = _is_trigger(ctx, 'dev-trigger') or is_trigger_sel_dev
         order_update = _is_trigger(ctx, 'devs_bar-order')
         new_data_signal = (is_trigger_dev_update and dev_trigger == 'new_data')
 
@@ -555,31 +660,45 @@ def create_callbacks(app, df_acts, df_devs, start_time, end_time):
                     or new_data_signal
         update_frac = order_update or new_data_signal
         update_density = is_trigger_dens_slider or order_update \
-                    or new_data_signal
+                    or new_data_signal or is_trigger_dens_scale
 
-        if order_update or dev_order is None:
+        if order_update or dev_order is None or is_trigger_dev_update or is_trigger_sel_dev:
             dev_order = device_order_by(curr_df_devs, rule=bar_order)
 
-        if update_frac:
-            fig_frac = dev_fraction(curr_df_devs, order=dev_order)
 
-        if update_bar:
-            fig_left = bar_count(curr_df_devs, scale=bar_scale, order=dev_order)
 
-        if update_bp:
-            fig_bp = boxplot_state(curr_df_devs, scale=bp_scale, order=dev_order,
-                                   binary_state=bp_binary_state)
-        if update_density :
-            from pyadlml.dataset.plotly.devices import event_density
-            from pyadlml.dataset.plotly.layout import DEV_DENS_SLIDER
-            dt = DEV_DENS_SLIDER[dens_slider]
-            fig_dens = event_density(curr_df_devs, dt=dt, show_colorbar=False,
-                                    order=dev_order)
-        if update_iei:
-            fig_iei = dev_iei(curr_df_devs, scale=iei_scale, per_device=iei_per_dev)
+        def f_update_frac(fig_frac, cd_dev, order, uf):
+            return dev_fraction(cd_dev, order=order, height=plt_height_devs) if uf else fig_frac
+        def f_update_bar(ub, fig_left, cdev, scale, order):
+            return bar_count(cdev, scale=scale, order=order, height=plt_height_devs) if ub else fig_left
+        def f_update_bp(u_bp, fig_bp, cd_dev, order, scale, binary_state):
+            if u_bp:
+                return boxplot_state(cd_dev, scale=scale, order=order,
+                                     binary_state=binary_state, height=plt_height_devs)
+            else:
+                return fig_bp
+        def f_update_density(ud, fig_dens, cd_dev, dens_slider, scale, order):
+            if ud:
+                return event_density(cd_dev, dt=DEV_DENS_SLIDER[dens_slider], show_colorbar=False,
+                                     scale=scale, order=order, height=plt_height_devs)
+            else:
+                return fig_dens
+        def f_update_iei(u_iei, fig_iei, cd_dev, scale, per_dev):
+            return dev_iei(cd_dev, scale=scale, per_device=per_dev, height=plt_height_devs) if u_iei else fig_iei
 
-        return fig_iei, fig_dens, fig_left, fig_frac, fig_bp, \
-               json.dumps(list(dev_order))
+        import dask
+        figs = [
+            dask.delayed(f_update_iei)(update_iei, fig_iei, curr_df_devs, iei_scale, iei_per_dev),
+            dask.delayed(f_update_density)(update_density, fig_dens, curr_df_devs,
+                                           dens_slider, dens_scale, dev_order),
+            dask.delayed(f_update_bar)(update_bar, fig_left, curr_df_devs, bar_scale, dev_order),
+            dask.delayed(f_update_frac)(fig_frac, curr_df_devs, dev_order, update_frac),
+            dask.delayed(f_update_bp)(update_bp, fig_bp, curr_df_devs, dev_order, bp_scale,
+                                      bp_binary_state),
+        ]
+        figs = dask.compute(figs)[0]
+
+        return figs[0], figs[1], figs[2], figs[3], figs[4], json.dumps(list(dev_order))
 
 
     @app.callback(
@@ -588,10 +707,8 @@ def create_callbacks(app, df_acts, df_devs, start_time, end_time):
          Output('graph-density', 'figure'),
          Output('graph-transition', 'figure'),
          Output('acts_activity-order', 'data'),
-         Output('acts_density-data', 'data'),
+         Output('acts_density-data', 'data')
         ],
-
-
         Input('tabs', 'active_tab'),
         Input("act-trigger", 'children'),
         Input('range-slider', 'value'),
@@ -678,9 +795,11 @@ def create_callbacks(app, df_acts, df_devs, start_time, end_time):
         # Update activity bars
         if bar_update:
             if drop_bar == 'count':
-                fig_bar = bar_count(curr_df_acts, order=act_order, scale=scale_bar)
+                fig_bar = bar_count(curr_df_acts, order=act_order, scale=scale_bar,
+                                    height=plt_height_acts)
             else:
-                fig_bar = bar_cum(curr_df_acts, order=act_order, scale=scale_bar)
+                fig_bar = bar_cum(curr_df_acts, order=act_order, scale=scale_bar,
+                                  height=plt_height_acts)
 
         # Update log for boxplot
         if bp_update:
@@ -688,16 +807,18 @@ def create_callbacks(app, df_acts, df_devs, start_time, end_time):
             #    fig_bp = violin_duration(curr_df_acts, order=act_order, scale=scale_boxplot)
             #else:
             #    fig_bp = boxplot_duration(curr_df_acts, order=act_order, scale=scale_boxplot)
-            fig_bp = boxplot_duration(curr_df_acts, order=act_order, scale=scale_boxplot)
+            fig_bp = boxplot_duration(curr_df_acts, order=act_order, scale=scale_boxplot,
+                                      height=plt_height_acts)
 
         # Only update the act_density matrix if it is
         if data_update or act_density is None:
             act_density = activities_dist(curr_df_acts.copy(), n=1000, dt=None)
         if order_update or data_update:
-            fig_dens = density(df_density=act_density, order=act_order)
+            fig_dens = density(df_density=act_density, order=act_order, height=plt_height_acts)
 
         if trans_update:
-            fig_trans = heatmap_transitions(curr_df_acts, order=act_order, scale=scale_trans)
+            fig_trans = heatmap_transitions(curr_df_acts, order=act_order, scale=scale_trans,
+                                            height=plt_height_acts)
 
         return fig_bar, fig_bp, fig_dens, fig_trans, json.dumps(list(act_order)), act_density.to_json()
 
@@ -782,7 +903,8 @@ def create_callbacks(app, df_acts, df_devs, start_time, end_time):
         # If data has changed the contingency tables have to be recomputed
         if is_data_update or df_con_states is None or df_con_events is None:
             # Recompute state contingency
-            df_con_states = contingency_table_states(curr_df_devs, curr_df_acts)
+            df_con_states = contingency_table_states(curr_df_devs, curr_df_acts,
+                                                     distributed=True)
             df_con_events = contingency_table_events(curr_df_devs, curr_df_acts)
             update_data = True
         else:
@@ -796,11 +918,11 @@ def create_callbacks(app, df_acts, df_devs, start_time, end_time):
             raise PreventUpdate
 
         # Create figures
-        fig_adec = activities_devices_event_contingency(
+        fig_adec = contingency_events(
                     con_tab=df_con_events, scale=event_scale,
                     act_order=act_order, dev_order=dev_order
         )
-        fig_adsc = activities_devices_state_contingency(
+        fig_adsc = contingency_states(
                     df_devs=curr_df_devs,   # for event order
                     con_tab=df_con_states, scale=state_scale,
                     act_order=act_order, dev_order=dev_order

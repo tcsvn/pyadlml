@@ -10,6 +10,7 @@ import numpy as np
 
 from pyadlml.dataset import DEVICE, TIME, VAL
 from pyadlml.dataset.plotly.activities import _set_compact_title, _scale_xaxis
+from pyadlml.dataset.plotly.util import STRFTIME_HOUR, STRFTIME_DATE
 from pyadlml.dataset.stats.devices import event_count, event_cross_correlogram, events_one_day, \
                                           inter_event_intervals
 from pyadlml.dataset.util import check_scale, activity_order_by, device_order_by
@@ -93,7 +94,7 @@ def fraction(df_dev, height=350, order='alphabetical') -> Figure:
     """
         plots the fraction a device is on vs off over the whole time
     """
-    title = 'Fraction'
+    title = 'State fraction'
     xlabel = 'fraction'
     from pyadlml.dataset.stats.devices import state_fractions
 
@@ -103,12 +104,33 @@ def fraction(df_dev, height=350, order='alphabetical') -> Figure:
 
     # Returns 'device', 'value', 'td', 'frac'
     df = state_fractions(df_dev)
-    devs = df_dev[DEVICE].unique()
-    df[VAL] = df[VAL].map({True: 'on', False: 'off'})
+    def fm1(x):
+        if x in ['on', 'off']:
+            return x == 'on'
+        else:
+            return x
+    def f(x):
+        if isinstance(x, bool):
+            return 'on' if x else 'off'
+        else:
+            return x
+    df[VAL] = df[VAL].apply(f)
 
     fig = px.bar(df, y=DEVICE, x='frac', orientation='h', color=VAL,
-                 category_orders={DEVICE: dev_order},
+                 category_orders={DEVICE: dev_order}
     )
+
+    # Set hovertemplate and custom data
+    for i in range(len(fig.data)):
+        val = fig.data[i].legendgroup
+        mask = df[DEVICE].isin(fig.data[i].y) & (df[VAL] == val)
+        cd = np.array([df.loc[mask, 'td'].astype(str),
+                       [fm1(val)]*len(fig.data[i].x)
+        ])
+        fig.data[i].customdata = np.moveaxis(cd, 0, 1)
+        hover_template = 'Device=%{y}<br>Value=' + val + '<br>Fraction=%{x}<br>' + \
+                         'Total=%{customdata[0]}<extra></extra>'
+        fig.data[i].hovertemplate = hover_template
 
     _set_compact_title(fig, title)
     fig.update_layout(barmode='stack', margin=dict(l=0, r=0, b=0, t=30, pad=0),
@@ -119,7 +141,7 @@ def fraction(df_dev, height=350, order='alphabetical') -> Figure:
     return fig
 
 
-def event_density(df_dev, dt='1h', height=350, show_colorbar=True, order='alphabetical'):
+def event_density(df_dev, dt='1h', height=350, scale='linear', show_colorbar=True, order='alphabetical'):
     """
     Computes the heatmap for one day where all the device triggers are showed
     """
@@ -129,13 +151,17 @@ def event_density(df_dev, dt='1h', height=350, show_colorbar=True, order='alphab
     df = df.drop(columns='time')
     dev_order = device_order_by(df_dev, rule=order)
     df = df[dev_order]
+    vals = df.T.values
 
     n = len(df)
     devs = df.columns
     dates = pd.Timestamp('01.01.2000 00:00:00') + np.arange(1, n+1) * pd.Timedelta(dt) \
             - pd.Timedelta(dt)/2    # move tick from centered box half dt to left
 
-    fig = px.imshow(df.T.values, color_continuous_scale='Viridis',
+    if scale == 'log':
+        vals = np.log(vals)
+
+    fig = px.imshow(vals, color_continuous_scale='Viridis',
                     y=devs,
                     x=dates,
                     )
@@ -155,7 +181,9 @@ def event_density(df_dev, dt='1h', height=350, show_colorbar=True, order='alphab
         fig.update(layout_coloraxis_showscale=False)
         fig.update_coloraxes(showscale=False)
 
-    fig.data[0].hovertemplate = 'Time: %{customdata[0]|%H:%M:%S}-%{customdata[1]|%H:%M:%S}<br>Device: %{y}<br>Count: %{z}<extra></extra>'
+    fig.data[0].hovertemplate = 'Time: %{customdata[0]|' + STRFTIME_HOUR + '}' \
+                                + '-%{customdata[1]|' + STRFTIME_HOUR + '}<br>' \
+                                + 'Device: %{y}<br>Count: %{z}<extra></extra>'
 
     return fig
 
@@ -171,17 +199,20 @@ def boxplot_state(df_devs, scale='linear', height=350, binary_state='on',
     df = state_times(df_devs, binary_state=binary_state, categorical=True)
     df['seconds'] = df['td']/pd.Timedelta('1s')
 
-    dev_order = device_order_by(df, rule=order)
+    dev_order = device_order_by(df_devs, rule=order)
 
     # Add column for hover display of datapoints later
     #df[START_TIME] = df_act[START_TIME].dt.strftime('%c')
     #df[END_TIME] = df_act[END_TIME].dt.strftime('%c')
     df['td'] = df['td'].apply(str)
 
+    # TODO refactor, find way to render boxplot points with webgl
+    points = 'all' if len(df) < 30000 else 'outliers'
+
     fig = px.box(df, y=DEVICE, x='seconds', orientation='h',
                  labels=dict(seconds=xlabel),
                  category_orders={DEVICE: dev_order},
-                 notched=False, points='all',
+                 notched=False, points=points,
                  hover_data=['td', 'time']
     )
 
@@ -194,6 +225,7 @@ def boxplot_state(df_devs, scale='linear', height=350, binary_state='on',
 
     fig.update_yaxes(title=None, visible=False, showticklabels=False)
     fig.update_layout(margin=dict(l=0, r=0, b=0, t=30, pad=0), height=height)
-    fig.data[0].hovertemplate = 'Device=%{y}<br>Seconds=%{x}<br>Td=%{customdata[0]}<br>Start time=%{customdata[1]}<extra></extra>'
+    fig.data[0].hovertemplate = 'Device=%{y}<br>Seconds=%{x}<br>Td=%{customdata[0]}<br>' +\
+                                'Start time=%{customdata[1]|' + STRFTIME_DATE + '}<extra></extra>'
 
     return fig
