@@ -8,9 +8,8 @@ from datetime import timedelta
 
 import numpy as np
 
-from pyadlml.dataset import DEVICE, TIME, VAL
+from pyadlml.constants import DEVICE, TIME, VALUE, STRFTIME_HOUR, STRFTIME_DATE, PRIMARY_COLOR, SECONDARY_COLOR
 from pyadlml.dataset.plotly.activities import _set_compact_title, _scale_xaxis
-from pyadlml.dataset.plotly.util import STRFTIME_HOUR, STRFTIME_DATE
 from pyadlml.dataset.stats.devices import event_count, event_cross_correlogram, events_one_day, \
                                           inter_event_intervals
 from pyadlml.dataset.util import check_scale, activity_order_by, device_order_by
@@ -33,6 +32,7 @@ def bar_count(df_dev, scale='linear', height=350, order='count') -> Figure:
 
     fig = px.bar(df, y=DEVICE,
                  category_orders={DEVICE: dev_order},
+                 color_discrete_sequence=[PRIMARY_COLOR],
                  x=col_label,
                  orientation='h')
 
@@ -62,7 +62,10 @@ def device_iei(df_devs, scale='linear', height=350, n_bins=20, per_device=False,
     if scale == 'log':
         df['ds'] = df['ds'].apply(np.log)
 
-    fig = px.histogram(df, x='ds', color=color, nbins=n_bins)
+    cds = [PRIMARY_COLOR] if not per_device else None
+
+    fig = px.histogram(df, x='ds', color=color, nbins=n_bins,
+                       color_discrete_sequence=cds)
 
     # TODO refactor, get better second labeling
     hist, bin_edges = np.histogram(df['ds'].values[:-1], bins=n_bins)
@@ -114,16 +117,17 @@ def fraction(df_dev, height=350, order='alphabetical') -> Figure:
             return 'on' if x else 'off'
         else:
             return x
-    df[VAL] = df[VAL].apply(f)
+    df[VALUE] = df[VALUE].apply(f)
 
-    fig = px.bar(df, y=DEVICE, x='frac', orientation='h', color=VAL,
+    fig = px.bar(df, y=DEVICE, x='frac', orientation='h', color=VALUE,
+                 color_discrete_sequence=[PRIMARY_COLOR, SECONDARY_COLOR],
                  category_orders={DEVICE: dev_order}
-    )
+                 )
 
     # Set hovertemplate and custom data
     for i in range(len(fig.data)):
         val = fig.data[i].legendgroup
-        mask = df[DEVICE].isin(fig.data[i].y) & (df[VAL] == val)
+        mask = df[DEVICE].isin(fig.data[i].y) & (df[VALUE] == val)
         cd = np.array([df.loc[mask, 'td'].astype(str),
                        [fm1(val)]*len(fig.data[i].x)
         ])
@@ -212,6 +216,7 @@ def boxplot_state(df_devs, scale='linear', height=350, binary_state='on',
     fig = px.box(df, y=DEVICE, x='seconds', orientation='h',
                  labels=dict(seconds=xlabel),
                  category_orders={DEVICE: dev_order},
+                 color_discrete_sequence=[PRIMARY_COLOR],
                  notched=False, points=points,
                  hover_data=['td', 'time']
     )

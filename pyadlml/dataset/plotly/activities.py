@@ -1,7 +1,6 @@
 import functools
-
 import plotly.figure_factory as ff
-from .util import _style_colorbar, STRFTIME_DATE
+from .util import _style_colorbar
 import plotly.express as px
 import pandas as pd
 import numpy as np
@@ -11,7 +10,8 @@ import plotly.graph_objects as go
 from plotly.colors import n_colors
 from plotly.subplots import make_subplots
 
-from pyadlml.dataset import START_TIME, ACTIVITY, TIME, END_TIME
+from pyadlml.constants import START_TIME, ACTIVITY, TIME, END_TIME, STRFTIME_DATE, PRIMARY_COLOR, \
+                              SECONDARY_COLOR
 from pyadlml.dataset.stats.activities import activities_duration_dist, \
     activities_count, activity_duration, activities_dist, \
     activities_transitions
@@ -36,7 +36,8 @@ def density(df_act: pd.DataFrame = None, df_density: pd.DataFrame = None,
 
     acts = np.flip(activity_order_by(df, rule=order))
 
-    colors = n_colors('rgb(5, 200, 200)', 'rgb(200, 10, 10)', len(acts), colortype='rgb')
+    #colors = n_colors('rgb(5, 200, 200)', 'rgb(200, 10, 10)', len(acts), colortype='rgb')
+    colors = [PRIMARY_COLOR]*len(acts)
     fig = go.Figure()
 
     for activity, color in zip(acts, colors):
@@ -46,7 +47,7 @@ def density(df_act: pd.DataFrame = None, df_density: pd.DataFrame = None,
                                 hoverinfo='skip'))
 
     # Set custom x-axis labels
-    fig.update_xaxes(tickformat="%H:%M", nticks=24, tickangle=-45,
+    fig.update_xaxes(tickformat="%H:%M", tickangle=-45,     # nticks=24,
                      title_text='Time', range=[
                         data_line.iloc[0].floor('D'),
                         data_line.iloc[0].ceil('D')
@@ -108,6 +109,7 @@ def boxplot_duration(df_act, scale='linear', height=350, order='alphabetical') -
 
     fig = px.box(df, y="activity", x='minutes', orientation='h',
                  category_orders={'activity': act_order},
+                 color_discrete_sequence=[PRIMARY_COLOR],
                  notched=False, points='all',
                  hover_data=[START_TIME, END_TIME, 'minutes', 'total_time'])
 
@@ -145,6 +147,7 @@ def bar_cum(df_act, scale='linear', height=350, order='alphabetical', no_title=F
                          customdata=df['td'],
                          hovertemplate="%{y} with %{customdata}<extra></extra>",
                          y=df[ACTIVITY],
+                         marker={'color': PRIMARY_COLOR},
                          orientation='h',
                          name='duration'))
 
@@ -173,6 +176,7 @@ def bar_count(df_act, scale='linear', height=350, no_title=False, order='count')
 
     fig = px.bar(df, y='activity',
                  category_orders={'activity': act_order},
+                 color_discrete_sequence=[PRIMARY_COLOR],
                  x='occurrence',
                  orientation='h')
 

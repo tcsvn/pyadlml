@@ -1,6 +1,6 @@
 import math
 from collections import OrderedDict
-from .util import _style_colorbar, _dyn_y_label_size, STRFTIME_DATE
+from .util import ActivityDict, _style_colorbar, _dyn_y_label_size
 import plotly
 import pandas as pd
 import numpy as np
@@ -8,19 +8,25 @@ import numpy as np
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 from plotly.express import IdentityMap
-from plotly.express._core import apply_default_cascade, build_dataframe, process_dataframe_hierarchy, infer_config, \
-    get_orderings, get_label, make_trace_kwargs, get_decorated_label, init_figure, make_trendline_spec, configure_axes, \
-    configure_animation_controls, process_dataframe_timeline, one_group
-from plotly.subplots import _subplot_type_for_trace_type, _set_trace_grid_reference
+from plotly.express._core import apply_default_cascade, infer_config, \
+    get_label, make_trace_kwargs, get_decorated_label, init_figure, make_trendline_spec, configure_axes, \
+    configure_animation_controls, process_dataframe_timeline, one_group, \
+    get_groups_and_orders
+
+#from plotly.subplots import _subplot_type_for_trace_type, _set_trace_grid_reference
 from plotly.validators.choropleth import ColorscaleValidator
-from pyadlml.dataset import DEVICE, TIME, ACTIVITY, START_TIME, END_TIME, VAL, NUM, BOOL, CAT
+from pyadlml.constants import DEVICE, TIME, ACTIVITY, START_TIME, END_TIME, VALUE, NUM, BOOL, \
+    CAT, STRFTIME_DATE
 import plotly.express as px
 
 from pyadlml.dataset._core.devices import device_events_to_states
-from pyadlml.dataset.matplotlib.util import format_device_labels
+from pyadlml.dataset.plotly.util import format_device_labels
 from pyadlml.dataset.plotly.activities import _set_compact_title
 from pyadlml.dataset.stats.acts_and_devs import contingency_table_states, contingency_table_events
 from pyadlml.dataset.util import select_timespan, df_difference, activity_order_by, device_order_by, infer_dtypes
+
+
+__all__ = ['activities_and_devices', 'contingency_states', 'contingency_events']
 
 
 def _plot_device_states_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs_usel: pd.DataFrame,
@@ -49,13 +55,13 @@ def _plot_device_states_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs
         df_devs_usel = df_devs_usel.rename(columns={TIME: START_TIME})
         if END_TIME not in df_devs_usel.columns:
             tmp = df_devs.copy()
-            comp_df = tmp[[START_TIME, DEVICE, VAL]]\
+            comp_df = tmp[[START_TIME, DEVICE, VALUE]]\
                       .merge(df_devs_usel, indicator=True, how='left')
             mask = (comp_df['_merge'] == 'both')
             tmp2 = tmp[mask]
             df_devs_usel = tmp2
         df_devs_usel = _endtime_to_offset(df_devs_usel, replace=False)
-        df_devs_usel[VAL] = df_devs_usel[VAL].map({True: 'on', False: 'off'})
+        df_devs_usel[VALUE] = df_devs_usel[VALUE].map({True: 'on', False: 'off'})
 
 
     df_devs = _endtime_to_offset(df_devs, replace=False)
@@ -68,9 +74,9 @@ def _plot_device_states_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs
         df = df_devs[df_devs[DEVICE] == dev].copy()
 
         if dev in dtypes[BOOL]:
-            df[VAL] = df[VAL].map({True: 'on', False: 'off'})
-            df_on = df[df[VAL] == 'on']
-            df_off = df[df[VAL] == 'off']
+            df[VALUE] = df[VALUE].map({True: 'on', False: 'off'})
+            df_on = df[df[VALUE] == 'on']
+            df_off = df[df[VALUE] == 'off']
 
             if df_devs_usel is not None:
                 mark_selected[dev] = {}
@@ -83,13 +89,18 @@ def _plot_device_states_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs
 
             COL_TRUE = 'teal'
             COL_FALSE = 'lightgray'
-            hover_template = '%{y}<br>Start_time=%{base|' + STRFTIME_DATE + '}<br>' + \
-                             'End_time=%{customdata[1]|' + STRFTIME_DATE + '}<br>' + \
-                             'Duration=%{customdata[0]}<br><extra></extra>'
+            hover_template = '%{y}<br>' + \
+                             'Start_time: %{base|' + STRFTIME_DATE + '}<br>' + \
+                             'End_time: %{customdata[1]|' + STRFTIME_DATE + '}<br>' + \
+                             'Duration: %{customdata[0]}<br>' + \
+                             'State: %{customdata[2]}<extra></extra>'
 
             def create_trace(df, state):
                 df['diff'] = (df[END_TIME] - df[START_TIME]).astype(str)
                 cd = df[['diff', END_TIME]].values
+                # Add state information to custom_data
+                vals = np.expand_dims(np.full(cd.shape[0], (state == 'on')), axis=1)
+                cd = np.hstack([cd, vals])
                 marker_color = COL_TRUE if state == 'on' else COL_FALSE
                 return go.Bar(name=state,
                               base=df[START_TIME],
@@ -113,7 +124,7 @@ def _plot_device_states_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs
 
             first_bool = False
         elif dev in dtypes[CAT]:
-            categories = df.loc[df[DEVICE] == dev, VAL].unique()
+            categories = df.loc[df[DEVICE] == dev, VALUE].unique()
             for cat in categories:
                 #values = df.loc[(df[VAL] == cat), [col_bar_start, col_bar_len]].values.tolist()
                 #ax.broken_barh(values, (i-0.25, 0.5), facecolors=tab(j), label=dev + ' - ' + cat)
@@ -121,7 +132,7 @@ def _plot_device_states_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs
             raise NotImplementedError
 
         elif dev in dtypes[NUM]:
-            values = pd.to_numeric(df[VAL])
+            values = pd.to_numeric(df[VALUE])
             values = (values-values.min())/(values.max() - values.min())*0.5
             values = values + i - 0.25
             #ax.plot(df['num_st'], values, color=color_num, linestyle='--', marker='o')
@@ -161,10 +172,7 @@ def _plot_device_events_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs
 
     """
     # Enable webgl rendering
-    if len(df_devs) > 15000:
-        scatter = go.Scattergl
-    else:
-        scatter = go.Scatter
+    scatter = go.Scattergl if len(df_devs) > 15000 else go.Scatter
     EVENT_COLOR = 'Black'
     hover_template = '%{y}<br>%{x|' + STRFTIME_DATE + '}<br>Event: %{customdata} <extra></extra>'
 
@@ -174,7 +182,7 @@ def _plot_device_events_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs
     fig.update_yaxes(categoryorder='array', categoryarray=np.flip(dev_order))
     fig.add_trace(scatter(
         mode='markers', y=df_devs[DEVICE], x=df_devs[TIME],
-        customdata=df_devs[VAL],
+        customdata=df_devs[VALUE],
         hovertemplate=hover_template,
         showlegend=False, marker=marker))
 
@@ -188,7 +196,7 @@ def _plot_device_events_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs
 
     # Create user_selection for each trace
     if df_devs_usel is not None:
-        df_devs_usel = df_devs_usel[[TIME, DEVICE, VAL]]
+        df_devs_usel = df_devs_usel[[TIME, DEVICE, VALUE]]
         # Get the indices in the trace where
         comp_df = df_devs.copy().merge(df_devs_usel, indicator=True, how='left')
         mark_selected = np.where((comp_df['_merge'] == 'both').values)[0]
@@ -201,11 +209,18 @@ def _plot_device_events_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs
     return fig
 
 
-def _determine_start_and_end(df_acts, df_devs, st, et):
+def _determine_start_and_end(df_acts: dict, df_devs: pd.DataFrame, st: pd.Timestamp, et: pd.Timestamp):
     """ Determine the start and endpoint with regard to optional given parameters
     """
-    data_st = min(df_devs[TIME].iloc[0], df_acts[START_TIME].iloc[0]) - pd.Timedelta('1ms')
-    data_et = max(df_devs[TIME].iloc[-1], df_acts[END_TIME].iloc[-1]) + pd.Timedelta('1ms')
+    if isinstance(df_acts, pd.DataFrame):
+        act_st = df_acts[START_TIME].iloc[0]
+        act_et = df_acts[END_TIME].iloc[-1]
+    elif isinstance(df_acts, ActivityDict):
+        act_st = df_acts.min_starttime()
+        act_et = df_acts.max_endtime()
+
+    data_st = min(df_devs[TIME].iloc[0], act_st) - pd.Timedelta('1ms')
+    data_et = max(df_devs[TIME].iloc[-1], act_et) + pd.Timedelta('1ms')
     if st is None:
         draw_start_line = False
         st = data_st
@@ -223,37 +238,73 @@ def _determine_start_and_end(df_acts, df_devs, st, et):
     return st, et, draw_start_line, draw_end_line
 
 
+
+def ActDictLoop(func):
+    def func_wrapper(*args, **kwargs):
+        if isinstance(df_acts_sel, pd.DataFrame):
+            df_acts_sel = ActivityDict(dict(tmp=df_acts_sel))
+        if isinstance(df_acts, pd.DataFrame):
+            df_acts = ActivityDict(dict(tmp=df_acts))
+            
+    return 
+
 def act_difference(df_acts_sel, df_acts, st, et):
     """ Get outside activities with enveloping activities correctly clipped
+
+    Parameters
+    ----------
+    df_acts_sel : pd.DataFrame or ActivityDict or List
+        asdf
+    df_acts : pd.DataFrame or ActivityDict or List
+    st : str
+    et : str
+
+    Returns
+    -------
+
     """
-    df_acts_outside = df_difference(df_acts_sel, df_acts)\
-                      .sort_values(by=START_TIME)\
-                      .reset_index(drop=True)
+    acts_inst = type(df_acts)
+    dct_acts = ActivityDict.wrap(df_acts)
+    dct_acts_sel = ActivityDict.wrap(df_acts_sel)
+    dct_acts_outside = ActivityDict()
 
-    # ao contains both the cut up and the non-cut activities, adjust the start activity
-    if not df_acts_outside.empty:
-        df_acts_outside[ACTIVITY] = 'not selected'
+    # Check if all keys are equal
+    assert set(dct_acts_sel.keys()) == set(dct_acts.keys())
 
-        # Both the old time and the new start_time are in df_acts_outside
-        # Get entry of outside corresponding to start_time
-        act_st_split_et = df_acts_outside[df_acts_outside[START_TIME] == st]
-        if not act_st_split_et.empty:
-            idxs_acts_st_split = df_acts_outside[(df_acts_outside[END_TIME] == act_st_split_et.iat[0, 1])].index
-            df_acts_outside.iat[idxs_acts_st_split[0], 1] = st - pd.Timedelta('1ms')
-            df_acts_outside = df_acts_outside.drop(index=idxs_acts_st_split[1])
+    for key in dct_acts.keys():
+        df_acts = dct_acts[key]
+        df_acts_sel = dct_acts_sel[key]
 
-            df_acts_outside = df_acts_outside.reset_index(drop=True)
+        df_acts_outside = df_difference(df_acts_sel, df_acts)\
+                        .sort_values(by=START_TIME)\
+                        .reset_index(drop=True)
+
+        # ao contains both the cut up and the non-cut activities, adjust the start activity
+        if not df_acts_outside.empty:
+            df_acts_outside[ACTIVITY] = 'not selected'
+
+            # Both the old time and the new start_time are in df_acts_outside
+            # Get entry of outside corresponding to start_time
+            act_st_split_et = df_acts_outside[df_acts_outside[START_TIME] == st]
+            if not act_st_split_et.empty:
+                idxs_acts_st_split = df_acts_outside[(df_acts_outside[END_TIME] == act_st_split_et.iat[0, 1])].index
+                df_acts_outside.iat[idxs_acts_st_split[0], 1] = st - pd.Timedelta('1ms')
+                df_acts_outside = df_acts_outside.drop(index=idxs_acts_st_split[1])
+
+                df_acts_outside = df_acts_outside.reset_index(drop=True)
 
 
-        act_st_split_st = df_acts_outside[df_acts_outside[END_TIME] == et]
-        if not act_st_split_st.empty:
-            idxs_acts_et_split = df_acts_outside[(df_acts_outside[START_TIME] == act_st_split_st.iat[0, 0])].index
-            df_acts_outside.iat[idxs_acts_et_split[1], 0] = et - pd.Timedelta('1ms')
-            df_acts_outside = df_acts_outside.drop(index=idxs_acts_et_split[0])
+            act_st_split_st = df_acts_outside[df_acts_outside[END_TIME] == et]
+            if not act_st_split_st.empty:
+                idxs_acts_et_split = df_acts_outside[(df_acts_outside[START_TIME] == act_st_split_st.iat[0, 0])].index
+                df_acts_outside.iat[idxs_acts_et_split[1], 0] = et - pd.Timedelta('1ms')
+                df_acts_outside = df_acts_outside.drop(index=idxs_acts_et_split[0])
 
-            df_acts_outside = df_acts_outside.reset_index(drop=True)
+                df_acts_outside = df_acts_outside.reset_index(drop=True)
 
-    return df_acts_outside
+        dct_acts_outside[key] = df_acts_outside
+
+    return dct_acts_outside.unwrap(inst_type=acts_inst)
 
 
 def _plot_selected_activity_marker(fig, df):
@@ -261,9 +312,6 @@ def _plot_selected_activity_marker(fig, df):
     """
     df = df[[START_TIME, END_TIME, ACTIVITY]].copy()
     cd = df.values
-    print(cd.shape)
-    #cd = np.expand_dims(cd, axis=2)
-    print(cd.shape)
     diff = df[END_TIME] - df[START_TIME]
     df['mid_point'] = df[START_TIME] + diff/2
     y_label = 'Selected Activity mark'
@@ -288,8 +336,8 @@ def _plot_selected_activity_marker(fig, df):
 
 
 def _plot_selected_device_marker(fig, df, df_devs, states=False):
-    df = df[[TIME, DEVICE, VAL]].copy()
-    df_devs = df_devs[[TIME, DEVICE, VAL]].copy()\
+    df = df[[TIME, DEVICE, VALUE]].copy()
+    df_devs = df_devs[[TIME, DEVICE, VALUE]].copy()\
         .sort_values(by=TIME)\
         .reset_index(drop=True)
 
@@ -308,18 +356,27 @@ def _plot_selected_device_marker(fig, df, df_devs, states=False):
             vals = df_tmp[df_tmp[TIME].isin(times)]
             df.at[mask, END_TIME] = vals
 
+        df[START_TIME] = df[TIME]
         df[TIME] = df[TIME] + (df[END_TIME] - df[TIME])/2
-
+        custom_data = df[[DEVICE, START_TIME, END_TIME]].values
+        hover_template = 'Device: %{customdata[0]}<br>' + \
+                         'Start_time: %{customdata[1]|' + STRFTIME_DATE + '}<br>' + \
+                         'End_time: %{customdata[2]|' + STRFTIME_DATE + '}<br>' + \
+                         '<extra></extra>'
+    else:
+        custom_data = df[DEVICE]
+        hover_template = 'Device: %{customdata}<br>Time: %{x}<extra></extra>'
     marker = dict(size=5, symbol=5, line=dict(color='Red', width=1))
     fig.add_trace(go.Scatter(
         mode='markers', y=df['y'], x=df[TIME],
-        customdata=df[DEVICE],
+        customdata=custom_data,
         marker=marker,
-        hovertemplate='Device: %{customdata}<br>Time: %{x}<extra></extra>',
+        hovertemplate=hover_template,
         showlegend=False))
     y_axis_order = [y_label, *list(fig.layout.yaxis.categoryarray)]
     fig.update_yaxes(categoryarray=y_axis_order)
     return fig
+
 
 
 def activities_and_devices(df_acts, df_devs, states=False, st=None, et=None,
@@ -327,6 +384,12 @@ def activities_and_devices(df_acts, df_devs, states=False, st=None, et=None,
                            df_acts_usel=None, df_devs_usel=None, devs_usel_state=None,
                            height=350
                            ):
+    """
+
+    Parameters
+    ----------
+    df_acts : pd.Dataframe or List of dataframes or dict of  
+    """
 
     # Determines if device markers indicate the event or a states midpoint
     if states:
@@ -335,18 +398,26 @@ def activities_and_devices(df_acts, df_devs, states=False, st=None, et=None,
         devs_usel_state = False
     assert isinstance(devs_usel_state, bool), 'devs_usel_state has to be set with either a boolean or None'
 
-    # Copy data
-    df_acts = df_acts.copy().reset_index(drop=True)
+    dct_acts = ActivityDict.wrap(df_acts)
+    if df_acts_usel is not None:
+        dct_acts_usel = ActivityDict.wrap(df_acts_usel)
+    else:
+        dct_acts_usel = None
+
+
+
+    for k, df in dct_acts.items():
+        dct_acts[k] = df.copy() 
     df_devs = df_devs.copy()
 
     # Determine the start and endpoint with regard to optional given parameters
-    st, et, draw_start_line, draw_end_line = _determine_start_and_end(df_acts, df_devs, st, et)
+    st, et, draw_start_line, draw_end_line = _determine_start_and_end(dct_acts, df_devs, st, et)
 
     # Select the active displayed parts
-    df_devs_sel, df_acts_sel = select_timespan(df_devs, df_acts, st, et, clip_activities=True)
+    df_devs_sel, dct_acts_sel = select_timespan(df_devs, dct_acts, st, et, clip_activities=True)
 
     # Get the y-axis and label order
-    act_order = activity_order_by(df_acts_sel, rule=act_order)
+    act_order = activity_order_by(dct_acts_sel.concat(), rule=act_order)
     dev_order = device_order_by(df_devs_sel, rule=dev_order)
 
 
@@ -357,7 +428,7 @@ def activities_and_devices(df_acts, df_devs, states=False, st=None, et=None,
 
     # Reconstruct outside parts
     df_devs_outside = df_difference(df_devs_sel, df_devs)
-    df_acts_outside = act_difference(df_acts_sel, df_acts, st, et)
+    dct_acts_outside = act_difference(dct_acts_sel, dct_acts, st, et)
 
     title = 'Activities and device events'
     fig = go.Figure()
@@ -365,31 +436,25 @@ def activities_and_devices(df_acts, df_devs, states=False, st=None, et=None,
         fig = _plot_device_states_into_fig(fig, df_devs_sel, df_devs_usel,
                                            df_devs_outside, dev_order, st, et)
     else:
-        fig = _plot_device_events_into_fig(fig, df_devs_sel, df_devs_usel, df_devs_outside, dev_order, marker_height)
+        fig = _plot_device_events_into_fig(fig, df_devs_sel, df_devs_usel, df_devs_outside, 
+                                           dev_order, marker_height)
 
-    fig = _plot_activities_into_fig(fig, df_acts_sel, df_acts_usel, df_acts_outside, act_order)
+    for key in dct_acts.keys():
+        usel = dct_acts_usel[key] if df_acts_usel is not None else None
+        fig = _plot_activities_into_fig(fig, dct_acts_sel[key], usel, 
+                                        dct_acts_outside[key], act_order,
+                                        y_label=f'Acts: {key}'
+                                        )
 
     # Plot markers into trace
     if df_acts_usel is not None:
-        fig = _plot_selected_activity_marker(fig, df_acts_usel)
+        for key in dct_acts.keys():
+            usel = dct_acts_usel[key]
+            fig = _plot_selected_activity_marker(fig, usel)
 
     if df_devs_usel is not None:
         fig = _plot_selected_device_marker(fig, df_devs_usel, df_devs, devs_usel_state)
 
-
-    for act in df_acts[ACTIVITY].unique():
-        hover_template = '<b>' + act + '</b><br>'\
-                       + 'Start time: %{base|' + STRFTIME_DATE + '}<br>' \
-                       + 'End time %{x| ' + STRFTIME_DATE + '}' \
-                       + '<br>Duration %{customdata}<extra></extra>'
-        fig.update_traces(hovertemplate=hover_template,
-                          selector=dict(type='bar', name=act))
-
-    # Turn opacity low for the not selected activity
-    def func(trace):
-        if trace.name == 'not selected':
-            trace.update(marker_opacity=0.2)
-    fig.for_each_trace(func)
 
 
     if draw_start_line:
@@ -431,19 +496,19 @@ def _plot_activities_into_fig(fig, df_acts: pd.DataFrame, df_acts_usel: pd.DataF
     mask_unselected : pd.Series
         A mask that indicates the datapoints whichs opacity should be lowered.
     """
+    def _helper_1(df):
+        df = df.sort_values(by=START_TIME).reset_index(drop=True)
+        df['y_label'] = y_label
+        df = df[['y_label', START_TIME, END_TIME, ACTIVITY]]
+        df['dur'] = (df[END_TIME] - df[START_TIME]).astype(str)
+        return df
 
-    df_acts['y_label'] = y_label
-    df_acts = df_acts[['y_label', START_TIME, END_TIME, ACTIVITY]]
-    df_acts['dur'] = (df_acts[END_TIME] - df_acts[START_TIME]).astype(str)
 
-    df_acts_outside['y_label'] = y_label
-    df_acts_outside = df_acts_outside[['y_label', START_TIME, END_TIME, ACTIVITY]]
-    df_acts_outside['dur'] = (df_acts_outside[END_TIME] - df_acts_outside[START_TIME]).astype(str)
+    df_acts = _helper_1(df_acts)
+    df_acts_outside = _helper_1(df_acts_outside)
 
     if df_acts_usel is not None:
-        df_acts_usel['y_label'] = y_label
-        df_acts_usel = df_acts_usel[['y_label', START_TIME, END_TIME, ACTIVITY]]
-        df_acts_usel['dur'] = (df_acts_usel[END_TIME] - df_acts_usel[START_TIME]).astype(str)
+        df_acts_usel = _helper_1(df_acts_usel)
         df_acts_usel = _endtime_to_offset(df_acts_usel)
 
     args = dict(data_frame=df_acts,
@@ -471,13 +536,13 @@ def _plot_activities_into_fig(fig, df_acts: pd.DataFrame, df_acts_usel: pd.DataF
     trace_specs, grouped_mappings, sizeref, _ = infer_config(
         args, go.Bar, trace_patch, layout_patch
     )
-    trace_spec = trace_specs[0]
 
     grouper = [x.grouper or one_group for x in grouped_mappings] or [one_group]
     grouped = args["data_frame"].groupby(grouper, sort=False)
 
-    # Grouped is already ordered
-    orders, sorted_group_names = get_orderings(args, grouper, grouped)
+    # Grouped is already ordered TODO debug
+    _, orders = get_groups_and_orders(args, grouper)
+    #orders, sorted_group_names = get_orderings(args, grouper, grouped)
 
     # Assign colors to the groups
     for val in act_order:
@@ -487,9 +552,12 @@ def _plot_activities_into_fig(fig, df_acts: pd.DataFrame, df_acts_usel: pd.DataF
 
 
     trace_lst = []
-    for group_name in act_order:
-        df_sel_act = grouped.get_group(group_name)
-        act_name = group_name
+    for act_name in act_order:
+        if not (df_acts[ACTIVITY] == act_name).any():
+            continue
+
+        # Get dataframe with of only activity
+        df_sel_act = grouped.get_group(act_name)
 
         # Create the trace
         trace = go.Bar(name=act_name)
@@ -501,15 +569,18 @@ def _plot_activities_into_fig(fig, df_acts: pd.DataFrame, df_acts_usel: pd.DataF
         trace._subplot_col = 1
 
         m = grouped_mappings[0]
-        trace_color = m.val_map[group_name]
+        trace_color = m.val_map[act_name]
         m.updater(trace, trace_color)
-        ht = 'activity=' + act_name + '<br>start_time=%{base}<br>end_time=%{x}<br>y_label=%{y}<extra></extra'
+        hover_template = '<b>' + act_name + '</b><br>'\
+                         + 'Start_time: %{base|' + STRFTIME_DATE + '}<br>' \
+                         + 'End_time: %{x| ' + STRFTIME_DATE + '}' \
+                         + '<br>Duration: %{customdata}<extra></extra>'
         trace.update(dict(textposition='auto', orientation='h',
                           base=df_sel_act[START_TIME],
                           x=df_sel_act[END_TIME],
                           y=df_sel_act['y_label'],
                           customdata=df_sel_act['dur'],
-                          hovertemplate=ht
+                          hovertemplate=hover_template
         ))
 
         trace_lst.append(trace)
@@ -524,29 +595,28 @@ def _plot_activities_into_fig(fig, df_acts: pd.DataFrame, df_acts_usel: pd.DataF
             trace.update(selectedpoints=mark_selected, selected=selected, unselected=unselected)
 
     if not df_acts_outside.empty:
-        df_sel_act = df_acts_outside
         # Convert to bar
-
-        df_sel_act = _endtime_to_offset(df_sel_act)
         act_name = 'not selected'
+        df_sel_act = _endtime_to_offset(df_acts_outside)
 
         # Create the trace
-        trace = go.Bar(name=act_name, hoverinfo='skip', marker=dict(color='rgba(58, 71, 80, 0.6)'))
-        trace.update(legendgroup=act_name, showlegend=False, alignmentgroup=True, offsetgroup=act_name)
+        trace = go.Bar(name=act_name,
+                       base=df_sel_act[START_TIME],
+                       hoverinfo='skip',
+                       marker=dict(color='rgba(58, 71, 80, 0.6)', opacity=0.2),
+                       x=df_sel_act[END_TIME],
+                       y=df_sel_act['y_label'],
+                       customdata=df_sel_act['dur'],
+                       textposition='auto',
+                       orientation='h',
+                       legendgroup=act_name,
+                       showlegend=False,
+                       alignmentgroup=True,
+                       offsetgroup=act_name,
+        )
         trace._subplot_row = 1
         trace._subplot_col = 1
-
-        trace.update(dict(textposition='auto', orientation='h',
-                          base=df_sel_act[START_TIME],
-                          x=df_sel_act[END_TIME],
-                          y=df_sel_act['y_label'],
-                          customdata=df_sel_act['dur'],
-        ))
-
-        trace.update(marker_opacity=0.2)
         trace_lst.append(trace)
-
-
 
     fig = make_subplots(
         rows=1,

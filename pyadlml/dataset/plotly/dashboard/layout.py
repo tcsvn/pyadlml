@@ -14,7 +14,9 @@ from pyadlml.dataset.plotly.acts_and_devs import *
 from dash.dependencies import *
 from plotly.graph_objects import Figure
 
-from pyadlml.dataset import fetch_amsterdam, set_data_home, TIME, START_TIME, END_TIME, ACTIVITY
+from pyadlml.dataset import fetch_amsterdam, set_data_home
+from pyadlml.constants import TIME, START_TIME, END_TIME, ACTIVITY, DEVICE
+from pyadlml.dataset.plotly.util import ActivityDict
 from pyadlml.dataset.util import select_timespan, timestamp_to_num, num_to_timestamp
 
 DEV_DENS_SLIDER = {
@@ -62,10 +64,10 @@ def _build_sort_radio_buttons(id):
 def _build_checklist(df_acts):
     def create_option(name):
         return {'label': name, 'value': name}
-
-    acts = df_acts[ACTIVITY].unique()
+    df_acts =  ActivityDict.wrap(df_acts)
+    acts = df_acts.get_activity_union()
     options = [create_option(a) for a in acts]
-    options = [create_option('idle'), *options]
+    options = [create_option('other'), *options]
     return dcc.Dropdown(id='select-activities',
                         multi=True,
                         options=options,
@@ -157,6 +159,7 @@ def acts_vs_devs_layout(df_acts, df_devs, initialize=False, plot_height=False):
         html.Div(id="avd-update", style=dict(display="none")),
         dbc.Row([
             dcc.Graph(id='avd_graph-event-contingency',
+                      style=dict(height='100%',width='100%'),
                       figure=fig_dummy,
                       config=dict(displaylogo=False, displayModeBar=True,
                                   responsive=False,
@@ -165,8 +168,8 @@ def acts_vs_devs_layout(df_acts, df_devs, initialize=False, plot_height=False):
             ),
             _build_options_btn('clps-avd-event-button'),
             dbc.Collapse(id='clps-avd-event',
-                        style={'padding-left': '2rem',
-                                'padding-bottom': '2rem',
+                        style={'paddingLeft': '2rem',
+                                'paddingBottom': '2rem',
                     },
                 children=_option_grid(
                      labels=['Scale:', 'Activity order: ', 'Device order'],
@@ -187,13 +190,14 @@ def acts_vs_devs_layout(df_acts, df_devs, initialize=False, plot_height=False):
             ]),
             dbc.Spinner(html.Div(id='loading-output')),
             dcc.Graph(id='avd_graph-state-contingency',
+                      style=dict(height='100%',width='100%'),
                       figure=fig_dummy,
                       config=dict(displaylogo=False, displayModeBar=True)
             ),
             _build_options_btn('clps-avd-state-button'),
             dbc.Collapse(id='clps-avd-state',
-             style={'padding-left': '2rem',
-                    'padding-bottom': '2rem',
+             style={'paddingLeft': '2rem',
+                    'paddingBottom': '2rem',
                     },
             children=_option_grid(
                  labels=['Scale:', 'Activity order: ', 'Device order'],
@@ -219,11 +223,26 @@ def _buttons_to_use(*use):
     return res
 
 def acts_n_devs_layout(df_acts, df_devs, start_time, end_time, set_end_time, plot_height=350):
-    fig_and = activities_and_devices(df_acts, df_devs, st=start_time, et=set_end_time,
-                                     height=plot_height)
-    return dbc.Row(children=[
-                   html.Div(children=[
+    """
+    TODO
+
+    """
+    if df_acts is None or df_devs is None:
+        fig_and = Figure()
+        time_slider = dcc.RangeSlider(id='range-slider', min=0, max=1, step=0.001, value=[0, 1])
+        checklist_act = dcc.Dropdown(id='select-activities', multi=True, options=[], value=[], clearable=False)
+        choice_device = dcc.Dropdown(id='select-devices', options=[], multi=True, value=[], clearable=False)
+    else:
+        fig_and = activities_and_devices(df_acts, df_devs, st=start_time, et=set_end_time, height=plot_height)
+        time_slider = _build_range_slider(None, None, start_time, end_time, set_end_time)
+        checklist_act = _build_checklist(df_acts)
+        choice_device = _build_choice_devices(df_devs)
+
+    return html.Div(children=[
+
+                   dbc.Row(dbc.Col(
                             dcc.Graph(id='graph-acts_n_devs',
+                                      style=dict(height='100%',width='100%'),
                                       figure=fig_and,
                                       config=dict(displayModeBar=True,
                                                   modeBarButtonsToRemove=_buttons_to_use(
@@ -234,22 +253,24 @@ def acts_n_devs_layout(df_acts, df_devs, start_time, end_time, set_end_time, plo
                                                   edits=dict(legendPosition=True),
                                                   showAxisDragHandles=True,
                                                   displaylogo=False))
-                   ]),
+                   )),
             dbc.Row(justify='end', children=dbc.Col(width=5,
-                            children=dbc.ButtonGroup([
+                            children=[dbc.ButtonGroup([
                                 dbc.Button('reset selection', id='and_reset_sel', disabled=True, color='link', size='sm'),
                                 dbc.Button('options',
                                    id='clps-acts-n-devs-button',
                                    color='link',
                                    size='sm',
-                                   n_clicks=0)
-            ]))),
+                                   n_clicks=0),
+                                dcc.Clipboard(id='and_clipboard', style={'fontsize': 10}),
+                            ]),
+                            ])),
             dcc.Store(id='and_act-order'),
             dcc.Store(id='and_dev-order'),
             dbc.Collapse(id='clps-acts-n-devs',
                 children=[
                     html.H6('Time: '),
-                    html.Div(children=[_build_range_slider(df_acts, df_devs, start_time, end_time, set_end_time)]),
+                    html.Div(children=[time_slider]),
                     html.H6('Activities: ', style={'marginTop': '20px'}),
                     dbc.Row(style={'padding': '10px'},
                             children=[
@@ -271,7 +292,7 @@ def acts_n_devs_layout(df_acts, df_devs, start_time, end_time, set_end_time, plo
                                 ),
                                 ]
                             ),
-                            dbc.Row(children=[_build_checklist(df_acts), ]),
+                            dbc.Row(children=[checklist_act]),
                     ]),
                     html.H6('Devices', style={'marginTop': '20px'}),
                     dbc.Row(style={'padding': '10px'},
@@ -300,7 +321,7 @@ def acts_n_devs_layout(df_acts, df_devs, start_time, end_time, set_end_time, plo
                                             )
                                         ])
                                 ]),
-                                dbc.Row(_build_choice_devices(df_devs)),
+                                dbc.Row(choice_device),
                     ]),
             ]),
     ])
@@ -312,7 +333,8 @@ def device_layout_graph_bottom(fig, type='density'):
                 value='log'),
             daq.BooleanSwitch(
                 id='devs_iei-per-device',
-                on=False
+                on=False,
+                persisted_props=[]
             )]
     options_iei = [
         dbc.Collapse(id='clps-dev-iei'),
@@ -333,6 +355,7 @@ def device_layout_graph_bottom(fig, type='density'):
         raise ValueError
 
     return [dbc.Row(dcc.Graph(figure=fig,
+                              style=dict(height='100%',width='100%'),
                               config=dict(displaylogo=False,
                                     displayModeBar=True,
                                     modeBarButtonsToRemove=mode_bar_buttons
@@ -340,9 +363,9 @@ def device_layout_graph_bottom(fig, type='density'):
                         )),
                         _build_options_btn('clps-dev-iei-button'),
                         dbc.Collapse(id='clps-dev-iei',
-                                     style={'padding-left': '2rem',
-                                            'padding-right': '2rem',
-                                            'padding-bottom': '2rem',
+                                     style={'paddingLeft': '2rem',
+                                            'paddingRight': '2rem',
+                                            'paddingBottom': '2rem',
                                             },
                                     children=_option_grid(
                                          labels=['Plot', *labels],
@@ -362,21 +385,35 @@ def device_layout_graph_bottom(fig, type='density'):
 
 
 def devices_layout(df_devs, initialize=False, plot_height=350):
-    fig_bar_count = dev_bar_count(df_devs, height=plot_height)
-    fig_bp_state = boxplot_state(df_devs, height=plot_height)
-    fig_ev_density = event_density(df_dev=df_devs, show_colorbar=False,
-                                   height=plot_height
-                                   )
-    fig_iei = dev_iei(df_devs, height=plot_height)
-    fig_fraction = dev_fraction(df_devs, height=plot_height)
+
+    if df_devs is not None and not df_devs.empty:
+        fig_bar_count = dev_bar_count(df_devs, height=plot_height)
+        fig_bp_state = boxplot_state(df_devs, height=plot_height)
+        fig_ev_density = event_density(df_dev=df_devs, show_colorbar=False,
+                                    height=plot_height
+                                    )
+        fig_iei = dev_iei(df_devs, height=plot_height)
+        fig_fraction = dev_fraction(df_devs, height=plot_height)
+    else:
+        fig_bar_count = Figure()
+        fig_bp_state = Figure()
+        fig_ev_density = Figure()
+        fig_iei = Figure()
+        fig_fraction = Figure()
+
+
+
 
     layout_devices = dbc.Container([
         dcc.Store('devs_density-data'),
         dcc.Store('devs_order'),
+        html.Div(children='', id=f"dev-curr-sel", style=dict(display="none")),
+        dcc.Store(id=f'dev-curr-sel-store'),
         dbc.Row([
             dbc.Col(width=6, children=[
                         dbc.Row(dcc.Graph(id='devs_graph-bar',
                                           figure=fig_bar_count,
+                                          style=dict(height='100%',width='100%'),
                                           config=dict(displaylogo=False,
                                                 displayModeBar=True,
                                                 modeBarButtonsToRemove=_buttons_to_use('resetScale2d'),
@@ -384,9 +421,9 @@ def devices_layout(df_devs, initialize=False, plot_height=350):
                         )),
                         _build_options_btn('clps-dev-bar-button'),
                         dbc.Collapse(id='clps-dev-bar',
-                                     style={'padding-left': '2rem',
-                                            'padding-right': '2rem',
-                                            'padding-bottom': '2rem',
+                                     style={'paddingLeft': '2rem',
+                                            'paddingRight': '2rem',
+                                            'paddingBottom': '2rem',
                                             },
                                     children=_option_grid(
                                          labels=['Plot:', 'Scale:', 'Order: '],
@@ -403,6 +440,7 @@ def devices_layout(df_devs, initialize=False, plot_height=350):
             ]),
             dbc.Col(width=6, children=[
                         dbc.Row(dcc.Graph(id='devs_graph-boxplot',
+                                          style=dict(height='100%',width='100%'),
                                           figure=fig_bp_state,
                                           config=dict(displaylogo=False,
                                                 displayModeBar=True,
@@ -414,9 +452,9 @@ def devices_layout(df_devs, initialize=False, plot_height=350):
                         )),
                         _build_options_btn('clps-dev-bp-button'),
                         dbc.Collapse(id='clps-dev-bp',
-                                     style={'padding-left': '2rem',
-                                            'padding-right': '2rem',
-                                            'padding-bottom': '2rem',
+                                     style={'paddingLeft': '2rem',
+                                            'paddingRight': '2rem',
+                                            'paddingBottom': '2rem',
                                             },
                                     children=_option_grid(
                                          labels=['Plot:', 'Binary state:', ],
@@ -440,10 +478,11 @@ def devices_layout(df_devs, initialize=False, plot_height=350):
                         children=[
 
                     dbc.Tab(label='D', tab_id='devs_tab-density',
-                            label_style={'font-size': '12px', 'padding': '5px'},
+                            label_style={'fontSize': '12px', 'padding': '5px'},
                             children=[
-                                dcc.Graph( id='devs_graph-density',
-                                figure=fig_ev_density,
+                                dcc.Graph(id='devs_graph-density',
+                                          figure=fig_ev_density,
+                                          style=dict(height='100%',width='100%'),
                                           config=dict(displaylogo=False,
                                                 displayModeBar=True,
                                                 modeBarButtonsToRemove=[]
@@ -451,9 +490,9 @@ def devices_layout(df_devs, initialize=False, plot_height=350):
                                 ),
                                 _build_options_btn('clps-dev-density-button'),
                                 dbc.Collapse(id='clps-dev-density',
-                                         style={'padding-left': '2rem',
-                                                'padding-right': '2rem',
-                                                'padding-bottom': '2rem',
+                                         style={'paddingLeft': '2rem',
+                                                'paddingRight': '2rem',
+                                                'paddingBottom': '2rem',
                                                 },
                                          children=_option_grid(
                                              labels=['Resolution', 'Scale'],
@@ -482,22 +521,23 @@ def devices_layout(df_devs, initialize=False, plot_height=350):
 
                         ]),
                         dbc.Tab(label='IEI', tab_id='devs_tab-iei',
-                            label_style={'font-size': '12px', 'padding': '5px'},
+                            label_style={'fontSize': '12px', 'padding': '5px'},
                             children=[
-                                dcc.Graph( id='devs_graph-iei',
-                                    figure=fig_iei,
-                                              config=dict(displaylogo=False,
-                                                    displayModeBar=True,
-                                                    modeBarButtonsToRemove=_buttons_to_use(
+                                dcc.Graph(id='devs_graph-iei',
+                                          figure=fig_iei,
+                                          style=dict(height='100%',width='100%'),
+                                          config=dict(displaylogo=False,
+                                                displayModeBar=True,
+                                                modeBarButtonsToRemove=_buttons_to_use(
                                                         'zoom2d', 'pan2d',  'lasso2d', 'resetScale2d'
                                                 ),
-                                              )
+                                          )
                                 ),
                                 _build_options_btn('clps-dev-iei-button'),
                                 dbc.Collapse(id='clps-dev-iei',
-                                         style={'padding-left': '2rem',
-                                                'padding-right': '2rem',
-                                                'padding-bottom': '2rem',
+                                         style={'paddingLeft': '2rem',
+                                                'paddingRight': '2rem',
+                                                'paddingBottom': '2rem',
                                                 },
                                         children=_option_grid(
                                              labels=['Scale:', 'Per device:'],
@@ -509,7 +549,8 @@ def devices_layout(df_devs, initialize=False, plot_height=350):
                                                       value='linear'),
                                                   daq.BooleanSwitch(
                                                       id='devs_iei-per-device',
-                                                      on=False
+                                                      on=False,
+                                                      persisted_props=[]
                                                 )]
                                         )
                             )
@@ -521,6 +562,7 @@ def devices_layout(df_devs, initialize=False, plot_height=350):
                     children=[
                         dbc.Row(style={'marginTop': '29px'},
                             children=dcc.Graph(id='devs_graph-fraction',
+                                          style=dict(height='100%',width='100%'),
                                           figure=fig_fraction,
                                           config=dict(displaylogo=False,
                                                 displayModeBar=True,
@@ -554,12 +596,15 @@ def _option_grid(labels, values,lwidth=2, rwidth=10):
         ]))
     return dbc.Col(children=root_child_lst)
 
-def activities_layout(df_acts, plot_height=350):
+def activities_layout(df_acts, act_id=0, plot_height=350):
 
-    if not df_acts.empty:
+    if df_acts is not None and not df_acts.empty:
         fig_bar_count = act_bar_count(df_acts, height=plot_height)
         fig_density = act_density(df_acts, height=plot_height)
-        fig_transition = act_heatmap_transitions(df_acts, height=plot_height)
+        try:
+            fig_transition = act_heatmap_transitions(df_acts, height=plot_height)
+        except:
+            fig_transition = Figure()
         fig_duration = act_boxplot_duration(df_acts, height=plot_height)
     else:
         fig_bar_count = Figure()
@@ -568,11 +613,12 @@ def activities_layout(df_acts, plot_height=350):
         fig_duration = Figure()
 
     layout_activities = dbc.Container([
-        dcc.Store('acts_density-data'),
+        dcc.Store(f'acts_density-data-{act_id}'),
         dbc.Row([
             dbc.Col(width=6,
                     children=[
-                        dbc.Row(dcc.Graph(id='graph-bar',
+                        dbc.Row(dcc.Graph(id=f'acts_graph-bar-{act_id}',
+                                          style=dict(height='100%',width='100%'),
                                           figure=fig_bar_count,
                                           config=dict(displaylogo=False,
                                                 displayModeBar=True,
@@ -581,40 +627,39 @@ def activities_layout(df_acts, plot_height=350):
                                               ),
                                             )
                         )),
-                        _build_options_btn('clps-act-bar-button'),
-                        dbc.Collapse(id='clps-act-bar',
-                                     style={'padding-left': '2rem',
-                                            'padding-right': '2rem',
-                                            'padding-bottom': '2rem',
+                        _build_options_btn(f'clps-act-bar-button-{act_id}'),
+                        dbc.Collapse(id=f'clps-act-bar-{act_id}',
+                                     style={'paddingLeft': '2rem',
+                                            'paddingRight': '2rem',
+                                            'paddingBottom': '2rem',
                                             },
                                     children=_option_grid(
                                          labels=['Plot:', 'Scale:', 'Order: '],
                                          values=[
-                                            dcc.Dropdown(id='acts_bar-drop', value='count', options=[
+                                            dcc.Dropdown(id=f'acts_bar-drop-{act_id}', value='count', options=[
                                                   {'label': 'Count', 'value': 'count'},
                                                   {'label': 'Cumulative', 'value': 'cum'}]
                                             ),
                                             _build_row_radio_button(
-                                                rd_id='acts_bar-scale',
+                                                rd_id=f'acts_bar-scale-{act_id}',
                                                 options=['linear', 'log'],
                                                 value='linear'),
                                             _build_row_radio_button(
-                                                rd_id='acts_sort',
+                                                rd_id=f'acts_sort-{act_id}',
                                                 options=['alphabetical', 'value', 'area'],
                                                 value='value'),
                         ]))
             ]),
-            html.Div(children='', id="act-curr-sel", style=dict(display="none")),
-            html.Div(children='', id="dev-curr-sel", style=dict(display="none")),
-            dcc.Store(id='act-curr-sel-store'),
-            dcc.Store(id='dev-curr-sel-store'),
-            html.Div(id="act-trigger", style=dict(display="none"), **{
+            html.Div(children='', id=f"act-curr-sel-{act_id}", style=dict(display="none")),
+            dcc.Store(id=f'act-curr-sel-store-{act_id}'),
+            html.Div(id=f"act-trigger-{act_id}", style=dict(display="none"), **{
               "data-value-2": "false"
             }),
-            dcc.Store(id='acts_activity-order'),
+            dcc.Store(id=f'acts_activity-order-{act_id}'),
             dbc.Col(width=6,
                     children=[
-                        dbc.Row(dcc.Graph(id='graph-boxplot',
+                        dbc.Row(dcc.Graph(id=f'acts_graph-boxplot-{act_id}',
+                                  style=dict(height='100%',width='100%'),
                                   figure=fig_duration,
                                   config=dict(displayModeBar=True,
                                               modeBarButtonsToRemove=_buttons_to_use(
@@ -624,21 +669,21 @@ def activities_layout(df_acts, plot_height=350):
                                               responsive=False,
                                               displaylogo=False)
                         )),
-                        _build_options_btn('clps-act-boxplot-button'),
-                        dbc.Collapse(id='clps-act-boxplot',
-                                    style={'padding-left': '2rem',
-                                            'padding-right': '2rem',
-                                            'padding-bottom': '2rem',
+                        _build_options_btn(f'clps-act-boxplot-button-{act_id}'),
+                        dbc.Collapse(id=f'clps-act-boxplot-{act_id}',
+                                    style={'paddingLeft': '2rem',
+                                            'paddingRight': '2rem',
+                                            'paddingBottom': '2rem',
                                             },
                                      children=_option_grid(
                                          labels=['Plot:', 'Scale:'],
                                          values=[
-                                            dcc.Dropdown(id='acts_bp-drop', value='bp', options=[
+                                            dcc.Dropdown(id=f'acts_bp-drop-{act_id}', value='bp', options=[
                                                                               {'label': 'boxplot', 'value': 'bp'},
                                                                               {'label': 'voilin', 'value': 'vp'}]
                                             ),
                                             _build_row_radio_button(
-                                                rd_id='acts_bp-scale',
+                                                rd_id=f'acts_bp-scale-{act_id}',
                                                 options=['linear', 'log'],
                                                 value='linear'),
                                          ])
@@ -648,7 +693,8 @@ def activities_layout(df_acts, plot_height=350):
         dbc.Row([
             dbc.Col(width=6,
                     children=[
-                        dbc.Row(dcc.Graph(id='graph-density',
+                        dbc.Row(dcc.Graph(id=f'acts_graph-density-{act_id}',
+                                  style=dict(height='100%',width='100%'),
                                   figure=fig_density,
                                   config=dict(
                                         modeBarButtonsToRemove=_buttons_to_use(
@@ -662,7 +708,8 @@ def activities_layout(df_acts, plot_height=350):
             ]),
             dbc.Col(width=6,
                     children=[
-                        dbc.Row(dcc.Graph(id='graph-transition',
+                        dbc.Row(dcc.Graph(id=f'acts_graph-transition-{act_id}',
+                                  style=dict(height='100%',width='100%'),
                                   figure=fig_transition,
                                   config=dict(displayModeBar=True,
                                               displaylogo=False,
@@ -671,24 +718,24 @@ def activities_layout(df_acts, plot_height=350):
                                                 ),
                                   )),
                         ),
-                        _build_options_btn('clps-act-transition-button'),
-                        dbc.Collapse(id='clps-act-transition',
-                                    style={'padding-left': '2rem',
-                                            'padding-right': '2rem',
-                                            'padding-bottom': '2rem',
+                        _build_options_btn(f'clps-act-transition-button-{act_id}'),
+                        dbc.Collapse(id=f'clps-act-transition-{act_id}',
+                                    style={'paddingLeft': '2rem',
+                                            'paddingRight': '2rem',
+                                            'paddingBottom': '2rem',
                                             },
                                      children=_option_grid(
                                          labels=['Scale:'],
                                          values=[
                                             _build_row_radio_button(
-                                                rd_id='acts_trans-scale',
+                                                rd_id=f'acts_trans-scale-{act_id}',
                                                 options=['linear', 'log'],
                                                 value='linear'),
                                          ]),
                         )
             ]),
         ]),
-        dcc.Store(id='activity-order'),
+        dcc.Store(id=f'activity-order-{act_id}'),
     ])
     return layout_activities
 
