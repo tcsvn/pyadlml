@@ -1,23 +1,53 @@
-import pandas as pd
-
-from pyadlml.dataset.util import fill_nans_ny_inverting_first_occurence
-from pyadlml.dataset.devices import correct_devices
-from pyadlml.dataset.activities import correct_activities
-                                        
-from pyadlml.dataset.activities import correct_activity_overlap, \
-    _is_activity_overlapping \
-
-from pyadlml.dataset.obj import Data
-from pyadlml.dataset import ACTIVITY, VAL, START_TIME, END_TIME, TIME, NAME, DEVICE
 import os
-from pyadlml.dataset.io import fetch_handler as _fetch_handler
-
+import pandas as pd
+from pyadlml.constants import ACTIVITY, VALUE, START_TIME, END_TIME, TIME, NAME, DEVICE
+from pyadlml.dataset.io.downloader import MegaDownloader
+from pyadlml.dataset.io.remote import DataFetcher
 
 CASAS_ARUBA_URL = 'https://mega.nz/file/QA5hEToD#V0ypxFsxiwWgVV49OzhsX8RnMNTX8MYSUM2TLL1xX6w'
 CASAS_ARUBA_FILENAME = 'casas_aruba.zip'
 
 
-def fetch_casas_aruba(keep_original=True, cache=True, retain_corrections=False):
+class CasasArubaFetcher(DataFetcher):
+    def __init__(self, *args, **kwargs):
+
+        downloader = MegaDownloader(
+            url=CASAS_ARUBA_URL,
+            fn=CASAS_ARUBA_FILENAME,
+            url_cleaned=None,
+            fn_cleaned=None,
+        )
+
+        super().__init__(
+            dataset_name='casas_aruba',
+            downloader=downloader,
+            correct_activities=True,
+            correct_devices=True
+        )
+
+    def load_data(self, folder_path):
+
+        _fix_data(os.path.join(folder_path, "data"))
+        data_path = os.path.join(folder_path, 'corrected_data.csv')
+
+        df = _load_df(data_path)\
+            .drop_duplicates()
+        df_dev = _get_devices_df(df)
+        df_act = _get_activity_df(df)
+
+        lst_act = df_act[ACTIVITY].unique()
+        lst_dev = df_dev[DEVICE].unique()
+
+        return dict(
+            activities=df_act,
+            devices=df_dev,
+            activity_list=lst_act,
+            device_list=lst_dev
+        )
+
+
+def fetch_casas_aruba(keep_original=True, cache=True, retain_corrections=False,
+                      folder_path=None):
     """
     Fetches the casas aruba dataset from the internet. The original dataset or its cached version
     is stored in the :ref:`data home <storage>` folder.
@@ -46,30 +76,11 @@ def fetch_casas_aruba(keep_original=True, cache=True, retain_corrections=False):
     -------
     data : object
     """
-    dataset_name = 'casas_aruba'
+    return CasasArubaFetcher()(keep_original=keep_original, cache=cache, #load_cleaned=load_cleaned,
+                              retain_corrections=retain_corrections, folder_path=folder_path
+    )
 
-    def load_casas_aruba(folder_path):
-        _fix_data(os.path.join(folder_path, "data"))
 
-        data_path = os.path.join(folder_path, 'corrected_data.csv')
-
-        df = _load_df(data_path)
-        df_dev = _get_devices_df(df)
-        df_act = _get_activity_df(df)
-
-        df_dev = correct_devices(df_dev)
-        df_act, cor_lst = correct_activities(df_act)
-
-        lst_act = df_act[ACTIVITY].unique()
-        lst_dev = df_dev[DEVICE].unique()
-
-        data = Data(df_act, df_dev, activity_list=lst_act, device_list=lst_dev)
-        return data
-
-    data = _fetch_handler(keep_original, cache, dataset_name,
-                        CASAS_ARUBA_FILENAME, CASAS_ARUBA_URL,
-                        load_casas_aruba)
-    return data
 
 
 def _fix_data(path):
@@ -117,14 +128,14 @@ def _fix_data(path):
 
 def _load_df(data_path):
     df = pd.read_csv(data_path,
-                    sep=",",
-                    #parse_dates=True,
-                    infer_datetime_format=True,
-                    na_values=True,
-                    names=[START_TIME, 'id', VAL, ACTIVITY],
-                    engine='python' #to ignore warning for fallback to python engine because skipfooter
-                    #dtyp
-                    )
+                     sep=",",
+                     #parse_dates=True,
+                     infer_datetime_format=True,
+                     na_values=True,
+                     names=[START_TIME, 'id', VALUE, ACTIVITY],
+                     engine='python'  #to ignore warning for fallback to python engine because skipfooter
+                     #dtyp
+                     )
     df[START_TIME] = pd.to_datetime(df[START_TIME])
     return df
 
@@ -145,26 +156,23 @@ def _val_activity_count(df_act):
 
 def _get_devices_df(df):
     df = df.drop(ACTIVITY, axis=1)
-    bin_mask = (df['val'] == 'ON') | (df['val'] == 'OFF')
+    bin_mask = (df[VALUE] == 'ON') | (df[VALUE] == 'OFF')
 
     # preprocess only binary devices to ON-OFF--> False True
     df_binary = df[bin_mask]
-    df_binary[VAL] = (df_binary[VAL] == 'ON')
-    #tmp = {VAL: (df_binary[VAL] == 'ON')} # TODO suppress warnings
-    #df_binary = df_binary.assign(tmp)
+    df_binary[VALUE] = (df_binary[VALUE] == 'ON')
 
     # preprocess only numeric devices
-    num_mask = pd.to_numeric(df[VAL], errors='coerce').notnull()
+    num_mask = pd.to_numeric(df[VALUE], errors='coerce').notnull()
     df_num = df[num_mask]
-    df_num[VAL] = df_num[VAL].astype(float)
-    #df_num = df_num.assign({VAL: df_num[VAL].astype(float)}) # TODO suppress warnings
+    df_num[VALUE] = df_num[VALUE].astype(float)
 
     # preprocess categorical devices
     df_cat = df[~num_mask & ~bin_mask]
 
     # join datasets
     df = pd.concat([df_cat, df_binary, df_num], axis=0, ignore_index=True)
-    df.columns = [TIME, DEVICE, VAL]
+    df.columns = [TIME, DEVICE, VALUE]
     df = df.sort_values(by=TIME).reset_index(drop=True)
 
     return df

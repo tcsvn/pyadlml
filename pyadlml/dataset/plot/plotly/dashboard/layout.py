@@ -138,36 +138,36 @@ def _build_options_btn(op_id):
                                     children=dbc.Button('options', style={'marginTop': '-18px'},
                                                         id=op_id, color='link', size='sm')))
 
-def acts_vs_devs_layout(df_acts, df_devs, initialize=False, plot_height=False):
+def acts_vs_devs_layout(df_acts, act_id, df_devs, plot_height=False):
     """
 
+
+    Note
+    ----
+    Since the contingency table calculation may take very long the layout is initalized 
+    with placeholders and the real figures are computed later on demand
     """
-    # If the layout is initalized the space is filled with placeholder figures
-    # to reduce first loading time
-    if initialize:
-        fig_dummy = Figure()
-    else:
-        fig_adec = contingency_events(df_acts, df_devs, height=plot_height)
+
+
 
     layout_acts_vs_devs = dbc.Container([
-        dcc.Store('avd_activity-order'),
-        dcc.Store('avd_device-order'),
-        dcc.Store('avd_state-contingency'),
-        dcc.Store('avd_event-contingency'),
-        html.Div(id="avd-trigger", style=dict(display="none")),
-        html.Div(id="dev-trigger", style=dict(display="none")),
-        html.Div(id="avd-update", style=dict(display="none")),
+        dcc.Store(f'avd_activity-order-{act_id}'),
+        dcc.Store(f'avd_device-order-{act_id}'),
+        dcc.Store(f'avd_state-contingency-{act_id}'),
+        dcc.Store(f'avd_event-contingency-{act_id}'),
+        html.Div(id=f"avd-trigger-{act_id}", style=dict(display="none")),
+        html.Div(id=f"avd-update-{act_id}", style=dict(display="none")),
         dbc.Row([
-            dcc.Graph(id='avd_graph-event-contingency',
+            dcc.Graph(id=f'avd_graph-event-contingency-{act_id}',
                       style=dict(height='100%',width='100%'),
-                      figure=fig_dummy,
+                      figure=Figure(),
                       config=dict(displaylogo=False, displayModeBar=True,
                                   responsive=False,
                                   modeBarButtonsToRemove=_buttons_to_use('resetScale2d'),
                      ),
             ),
-            _build_options_btn('clps-avd-event-button'),
-            dbc.Collapse(id='clps-avd-event',
+            _build_options_btn(f'clps-avd-event-button-{act_id}'),
+            dbc.Collapse(id=f'clps-avd-event-{act_id}',
                         style={'paddingLeft': '2rem',
                                 'paddingBottom': '2rem',
                     },
@@ -175,27 +175,27 @@ def acts_vs_devs_layout(df_acts, df_devs, initialize=False, plot_height=False):
                      labels=['Scale:', 'Activity order: ', 'Device order'],
                      values=[
                         _build_row_radio_button(
-                            rd_id='avd_event-scale',
+                            rd_id=f'avd_event-scale-{act_id}',
                             options=['linear', 'log'],
                             value='log'),
                         _build_row_radio_button(
-                            rd_id='avd_act-order-trigger',
+                            rd_id=f'avd_act-order-trigger-{act_id}',
                             options=['alphabetical', 'duration', 'count', 'area'],
                             value='alphabetical'),
                         _build_row_radio_button(
-                            rd_id='avd_dev-order-trigger',
+                            rd_id=f'avd_dev-order-trigger-{act_id}',
                             options=['alphabetical', 'count', 'area'],
                             value='alphabetical'),
                 ])),
             ]),
-            dbc.Spinner(html.Div(id='loading-output')),
-            dcc.Graph(id='avd_graph-state-contingency',
+            dbc.Spinner(html.Div(id=f'loading-output-{act_id}')),
+            dcc.Graph(id=f'avd_graph-state-contingency-{act_id}',
                       style=dict(height='100%',width='100%'),
-                      figure=fig_dummy,
+                      figure=Figure(),
                       config=dict(displaylogo=False, displayModeBar=True)
             ),
-            _build_options_btn('clps-avd-state-button'),
-            dbc.Collapse(id='clps-avd-state',
+            _build_options_btn(f'clps-avd-state-button-{act_id}'),
+            dbc.Collapse(id=f'clps-avd-state-{act_id}',
              style={'paddingLeft': '2rem',
                     'paddingBottom': '2rem',
                     },
@@ -203,7 +203,7 @@ def acts_vs_devs_layout(df_acts, df_devs, initialize=False, plot_height=False):
                  labels=['Scale:', 'Activity order: ', 'Device order'],
                  values=[
                     _build_row_radio_button(
-                        rd_id='avd_state-scale',
+                        rd_id=f'avd_state-scale-{act_id}',
                         options=['linear', 'log'],
                         value='log'),
             ])),
@@ -407,6 +407,7 @@ def devices_layout(df_devs, initialize=False, plot_height=350):
     layout_devices = dbc.Container([
         dcc.Store('devs_density-data'),
         dcc.Store('devs_order'),
+        html.Div(id="dev-trigger", style=dict(display="none")),
         html.Div(children='', id=f"dev-curr-sel", style=dict(display="none")),
         dcc.Store(id=f'dev-curr-sel-store'),
         dbc.Row([

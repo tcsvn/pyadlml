@@ -1,32 +1,31 @@
 import numpy as np
 import pandas as pd
-import dask
-from pyadlml.dataset import START_TIME, END_TIME, TIME, VAL, DEVICE
+
+from pyadlml.constants import START_TIME, END_TIME, TIME, VALUE, DEVICE, BOOL, NUM, CAT
+from pyadlml.dataset.util import df_difference, infer_dtypes
 
 CORRECTION_TS = 'correction_ts'
 CORRECTION_ONOFF_INCONS = 'correction_on_off_inconsistency'
 
 """
     df_devices:
-        also referred to as rep1
-        a lot of data is found in this format.
+        Standard representation for device dataframes.
         Exc: 
            | time      | device    | state
         ------------------------------------
          0  | timestamp | dev_name  |   1
 
-    rep2:
-        is used to calculate statistics for binary devices more easily
-        and has lowest footprint in storage. Most of the computation 
-        is done using this format
-           | start_time | end_time   | device    
-        ----------------------------------------
-         0 | timestamp   | timestamp | dev_name  
+    Representation 2:
+        is used to calculate statistics for binary devices more easily. 
+        Some computation is easier using this format
+           | start_time | end_time   | device    | state
+        --------------------------------------------------
+         0 | timestamp   | timestamp | dev_name  | state_0
  
  """
 
 
-def _create_devices(dev_list, index=None):
+def _create_devices(dev_list: list, index=None):
     """
     creates an empty device dataframe
     """
@@ -36,7 +35,7 @@ def _create_devices(dev_list, index=None):
         return pd.DataFrame(columns=dev_list)
 
 
-def _check_devices_sequ_order(df):
+def _check_devices_sequ_order(df: pd.DataFrame):
     """
     iterate pairwise through each select device an check if the 
     sequential order in time is inconsistent
@@ -46,161 +45,199 @@ def _check_devices_sequ_order(df):
     df : pd.DataFrame
         device representation 1  with columns [start_time, end_time, devices]
     """
-    dev_list = df['device'].unique()
+    dev_list = df[DEVICE].unique()
     no_errors = True
     for dev in dev_list:
-        df_d = df[df['device'] == dev]
+        df_d = df[df[DEVICE] == dev]
         for i in range(1, len(df_d)):
-            st_j = df_d.iloc[i-1].start_time
-            et_j = df_d.iloc[i-1].end_time
+            st_j = df_d.iloc[i - 1].start_time
+            et_j = df_d.iloc[i - 1].end_time
             st_i = df_d.iloc[i].start_time
             # et_i = df_d.iloc[i].end_time
             # if the sequential order is violated return false
             if not (st_j < et_j) or not (et_j < st_i):
-                print('~'*50)
+                print('~' * 50)
                 if st_j >= et_j:
-                    #raise ValueError('{}; st: {} >= et: {} |\n {} '.format(i-1, st_j, et_j, df_d.iloc[i-1]))
-                    print('{}; st: {} >= et: {} |\n {} '.format(i-1, st_j, et_j, df_d.iloc[i-1]))
+                    # raise ValueError('{}; st: {} >= et: {} |\n {} '.format(i-1, st_j, et_j, df_d.iloc[i-1]))
+                    print('{}; st: {} >= et: {} |\n {} '.format(i - 1, st_j, et_j, df_d.iloc[i - 1]))
                 if et_j >= st_i:
-                    #raise ValueError('{},{}; et: {} >= st: {} |\n{}\n\n{}'.format(i-1,i, et_j, st_i, df_d.iloc[i-1], df_d.iloc[i]))
-                    print('{},{}; et: {} >= st: {} |\n{}\n\n{}'.format(i-1,i, et_j, st_i, df_d.iloc[i-1], df_d.iloc[i]))
+                    # raise ValueError('{},{}; et: {} >= st: {} |\n{}\n\n{}'.format(i-1,i, et_j, st_i, df_d.iloc[i-1], df_d.iloc[i]))
+                    print('{},{}; et: {} >= st: {} |\n{}\n\n{}'.format(i - 1, i, et_j, st_i, df_d.iloc[i - 1],
+                                                                       df_d.iloc[i]))
                 no_errors = False
     return no_errors
 
 
-
-def _is_dev_rep2(df):
+def _is_dev_rep2(df: pd.DataFrame):
     """
     """
     if not START_TIME in df.columns or not END_TIME in df.columns \
-    or not DEVICE in df.columns or len(df.columns) != 3:
+            or not DEVICE in df.columns or len(df.columns) != 3:
         return False
     return True
 
-def _is_dev_rep1(df):
-    """
-    """
-    if DEVICE in df.columns and VAL in df.columns \
-    and TIME in df.columns and len(df.columns) == 3:
-        return True
-    return False
 
-def device_rep1_2_rep2(df_rep1, drop=False):
-    """ transforms a device representation 1 into 2
+def is_device_df(df: pd.DataFrame):
+    """ Checks if a dataframe is a valid device dataframe.
+    """
+    return DEVICE in df.columns \
+           and VALUE in df.columns \
+           and TIME in df.columns \
+           and len(df.columns) == 3
+
+
+def device_events_to_states(df_rep1: pd.DataFrame, extrapolate_states=False, st=None, et=None):
+    """ Transforms device dataframe from an event representation into a state representation,
+        where a row a devices state with start and end time.
+
     Parameters
     ----------
     df_rep1 : pd.DataFrame
         rep1: col (time, device, val)
         example row: [2008-02-25 00:20:14, Freezer, False]
-    drop : Boolean
-        Indicates whether rows that have no starting/end timestamp should be dropped or the
-        missing counterpart should be added with the first/last timestamp
+    extrapolate_states : Boolean, default=False
+        Whether boolean devices should add extra states for the first occurring events
+    st : pd.Timestamp, str or default=None
+        The start time from which to
+    et : pd.Timestamp, str or default=None
+        The start time from which to
+
     Returns
     -------
     df : pd.DataFrame
-        rep: columns are (start time, end_time, device)
-        example row: [2008-02-25 00:20:14, 2008-02-25 00:22:14, Freezer]         
+        rep: columns are (start time, end_time, device, state)
+        example row: [2008-02-25 00:20:14, 2008-02-25 00:22:14, Freezer, True]
     or 
     df, lst
     """
-    df = df_rep1.copy().reset_index(drop=True)
-    df = df.sort_values(TIME)
-    df.loc[:,'ones'] = 1
-    
-    rows_changed = 0
-    syn_acts = []
-    if drop:
-        to_delete_idx = []
-        for dev in df['device'].unique():
-            df_dev = df[df['device'] == dev]
-            first_row = df_dev.iloc[0].copy()
-            last_row = df_dev.iloc[len(df_dev)-1].copy()
-            if not first_row['val']:
-                to_delete_idx.append(first_row.name)
-            if last_row['val']:
-                to_delete_idx.append(last_row.name)
-        df = df.drop(to_delete_idx)
-        rows_changed = -len(to_delete_idx)
-    else:
-        # add values to things that are false
-        first_timestamp = df['time'].iloc[0]
-        last_timestamp = df['time'].iloc[len(df)-1]
-        eps = pd.Timedelta('1ns')
-        for dev in df['device'].unique():
-            df_dev = df[df['device'] == dev]
-            first_row = df_dev.iloc[0].copy()
-            last_row = df_dev.iloc[len(df_dev)-1].copy()
-            if not first_row['val']:
-                first_row['val'] = True
-                first_row['time'] = first_timestamp + eps
-                syn_acts.append(first_row)
-                df = df.append(first_row, ignore_index=True)
-            if last_row['val']:
-                last_row['val'] = False
-                last_row['time'] = last_timestamp - eps
-                syn_acts.append(last_row)
-                df = df.append(last_row, ignore_index=True)
-            eps += pd.Timedelta('1ns')
-        rows_changed = len(syn_acts)
-            
-    df = df.reset_index(drop=True).sort_values(TIME)
-    
-    # seperate the 0to1 and 1to0 device changes
-    df.loc[:,VAL] = df[VAL].astype(bool)
-    df_start = df[df[VAL]] 
-    df_end = df[~df[VAL]]    
-    df_end = df_end.rename(columns={TIME: END_TIME})
-    df_start = df_start.rename(columns={TIME: START_TIME})
+    epsilon = '1ns'
 
-    # ordered in time to index them and make a correspondence
-    df_end.loc[:,'pairs'] = df_end.groupby([DEVICE])['ones'].apply(lambda x: x.cumsum())
-    df_start.loc[:,'pairs'] = df_start.groupby([DEVICE])['ones'].apply(lambda x: x.cumsum())        
-        
-    
-    df = pd.merge(df_start, df_end, on=['pairs', DEVICE])
-    df = df.sort_values(START_TIME)
-    
-    # sanity checks        
-    diff = int((len(df_rep1)+rows_changed)/2) - len(df)
-    assert diff == 0, 'input {} - {} == {} result. Somewhere two following events of the \
-        #        same device had the same starting point and end point'.format(int(len(df_rep1)/2), len(df), diff)
-    
-    if drop:
-        return df[[START_TIME, END_TIME, DEVICE]]
-    else:
-        return df[[START_TIME, END_TIME, DEVICE]], syn_acts
+    df = df_rep1.copy() \
+        .reset_index(drop=True) \
+        .sort_values(TIME)
 
-def device_rep2_2_rep1(df_rep2):
+    dtypes = infer_dtypes(df)
+
+    if st is None:
+        first_timestamp = df[TIME].iloc[0]
+    else:
+        first_timestamp = pd.Timestamp(st)
+    if et is None:
+        last_timestamp = df[TIME].iloc[-1]
+    else:
+        last_timestamp = pd.Timestamp(et)
+
+    if extrapolate_states:
+        # create additional rows in order to compensate for the state duration of the first event
+        # to the selected event for boolean devices
+        eps = pd.Timedelta(epsilon)
+        for dev in dtypes[BOOL]:
+            df_dev = df[df[DEVICE] == dev]
+            first_row = df_dev.iloc[0].copy()
+            if first_row[TIME] != first_timestamp and first_row[TIME] - first_timestamp > pd.Timedelta('1s'):
+                first_row[VALUE] = not first_row[VALUE]
+                first_row[TIME] = first_timestamp + eps
+                df = pd.concat([df, first_row])
+            eps += pd.Timedelta(epsilon)
+
+    df = df.sort_values(TIME).reset_index(drop=True)
+
+    lst_cat_or_bool = dtypes[CAT] + dtypes[BOOL]
+    res = pd.DataFrame(columns=[START_TIME, END_TIME, DEVICE, VALUE])
+
+    if lst_cat_or_bool:
+        df_cat_bool = df[df[DEVICE].isin(lst_cat_or_bool)].copy()
+        df_cat_bool = df_cat_bool.rename(columns={TIME: START_TIME})
+        df_cat_bool[END_TIME] = pd.NaT
+        for dev in lst_cat_or_bool:
+            mask = (df_cat_bool[DEVICE] == dev)
+            df_cat_bool.loc[mask, END_TIME] = df_cat_bool.loc[mask, START_TIME].shift(-1)
+        if extrapolate_states:
+            df_cat_bool = df_cat_bool.fillna(last_timestamp)
+        else:
+            df_cat_bool = df_cat_bool.dropna()
+        res = pd.concat([res, df_cat_bool])
+
+    if dtypes[NUM]:
+        df_num = df[df[DEVICE].isin(dtypes[NUM])].copy()
+        df_num = df_num.rename(columns={TIME: START_TIME})
+        df_num[END_TIME] = df_num[START_TIME].copy()
+        res = res.append(df_num)
+
+    res[START_TIME] = pd.to_datetime(res[START_TIME])
+    res[END_TIME] = pd.to_datetime(res[END_TIME])
+
+    return res
+
+
+def device_boolean_on_states_to_events(df_devs_states: pd.DataFrame):
     """
     Parameters
     ----------
-    df_rep2 : pd.DataFrame
-        rep2: columns (start time, end_time, device)
+    df_devs_states : pd.DataFrame
+        A table with the columns (start time, end_time, device)
+        All states are assumed to be 'on'/True
 
     Returns
     -------
-    df : (pd.DataFrame)
-        rep1: columns are (time, value, device)
+    df_devs : (pd.DataFrame)
+        rep1: columns are (time, device, val)
         example row: [2008-02-25 00:20:14, Freezer, False]
     """
-    # copy devices to new dfs 
+    # copy devices to new dfs
     # one with all values but start time and other way around
-    df_start = df_rep2.copy().loc[:, df_rep2.columns != END_TIME]
-    df_end = df_rep2.copy().loc[:, df_rep2.columns != START_TIME]
+    df_start = df_devs_states.copy().drop(columns=END_TIME)
+    df_end = df_devs_states.copy().drop(columns=START_TIME)
 
-    # set values at the end time to zero because this is the time a device turns off
-    df_start[VAL] = True
-    df_end[VAL] = False
+    # Set values at the end time to zero because this is the time a device turns off
+    df_start[VALUE] = True
+    df_end[VALUE] = False
 
-    # rename column 'End Time' and 'Start Time' to 'Time'
+    # Rename column 'End Time' and 'Start Time' to 'Time'
     df_start.rename(columns={START_TIME: TIME}, inplace=True)
     df_end.rename(columns={END_TIME: TIME}, inplace=True)
 
-    df = pd.concat([df_end, df_start]).sort_values(TIME)
-    df = df.reset_index(drop=True)
+    df = pd.concat([df_end, df_start]).sort_values(TIME) \
+        .reset_index(drop=True)
     return df
 
-def correct_device_rep1_ts_duplicates(df):
+
+def device_states_to_events(df_devs_states: pd.DataFrame):
+    """
+    Parameters
+    ----------
+    df_devs_states : pd.DataFrame
+        A table with the columns (start time, end_time, device, val).
+
+    Returns
+    -------
+    df_devs : (pd.DataFrame)
+        The table columns are (time, device, val)
+
+    Example
+    -------
+    >>> device_states_to_events(df_devs_states)
+        time,               device,   value
+        2008-02-25 00:20:14, Freezer, False
+    """
+
+    # copy devices to new dfs
+    # one with all values but start time and other way around
+    # tmp = df_devs_states.copy().rename(columns={START_TIME: TIME})
+    # res = []
+    # if dtypes[BOOL]:
+    #    mask_bool_true = df_devs_states[DEVICE].isin(dtypes[BOOL]) \
+    #                    & (df_devs_states[VAL] == True)
+    #    df = df_devs_states.loc[mask_bool_true, [START_TIME, END_TIME, VAL]]
+    #    df_devs_boolean = device_boolean_on_states_to_events(df.copy())
+    #    res.append(df_devs_boolean)
+    df = df_devs_states.copy()
+    df.rename(columns={START_TIME: TIME}, inplace=True)
+    df.drop(columns=END_TIME, inplace=True)
+    return df
+
+
+def correct_device_ts_duplicates(df: pd.DataFrame):
     """
     remove devices that went on and off at the same time. And add a microsecond
     to devices that trigger on the same time
@@ -210,41 +247,41 @@ def correct_device_rep1_ts_duplicates(df):
         Devices in representation 1; columns [time, device, value]
     """
     eps = pd.Timedelta('10ms')
-    
+
     try:
         df[TIME]
     except KeyError:
         df = df.reset_index()
-        
+
     # remove device if it went on and off at the same time    
-    dup_mask = df.duplicated(subset=[TIME, DEVICE], keep=False)    
+    dup_mask = df.duplicated(subset=[TIME, DEVICE], keep=False)
     df = df[~dup_mask]
-    
+
     df = df.reset_index(drop=True)
-    
-    
+
     dup_mask = df.duplicated(subset=[TIME], keep=False)
-    duplicates = df[dup_mask]    
+    duplicates = df[dup_mask]
     uniques = df[~dup_mask]
-    
+
     # for every pair of duplicates add a millisecond on the second one
     duplicates = duplicates.reset_index(drop=True)
     sp = duplicates[TIME] + eps
-    mask_p = (duplicates.index % 2 == 0) 
-    
+    mask_p = (duplicates.index % 2 == 0)
+
     duplicates[TIME] = duplicates[TIME].where(mask_p, sp)
-    
+
     # concatenate and sort the dataframe 
     uniques = uniques.set_index(TIME)
     duplicates = duplicates.set_index(TIME)
     df = pd.concat([duplicates, uniques], sort=True)
-    
+
     # set the time as index again
     df = df.sort_values(TIME).reset_index(drop=False)
-    
+
     return df
-    
-def _has_timestamp_duplicates(df):
+
+
+def _has_timestamp_duplicates(df: pd.DataFrame):
     """ check whether there are duplicates in timestamp present
     Parameters
     ----------
@@ -260,7 +297,7 @@ def _has_timestamp_duplicates(df):
     return dup_mask.sum() > 0
 
 
-def split_devices_binary(df):
+def split_devices_binary(df: pd.DataFrame):
     """ separate binary devices and non-binary devices
     Parameters
     ----------
@@ -271,11 +308,11 @@ def split_devices_binary(df):
     df_binary, df_non_binary : pd.DataFrames
         Dataframe with binary devices and dataframe without binary devices
     """
-    mask_binary = df[VAL].apply(lambda x: isinstance(x, bool))
+    mask_binary = df[VALUE].apply(lambda x: isinstance(x, bool))
     return df[mask_binary], df[~mask_binary]
 
 
-def contains_non_binary(df) -> bool:
+def contains_non_binary(df: pd.DataFrame) -> bool:
     """ determines whether the the dataframes values contain non-boolean values
     These can be continuous values of categorical.
     Parameters
@@ -286,20 +323,7 @@ def contains_non_binary(df) -> bool:
     -------
     boolean
     """
-    return not df[VAL].apply(lambda x: isinstance(x, bool)).all()
-
-def df_difference(df1: pd.DataFrame, df2: pd.DataFrame, which=None):
-    """Find rows which are different between two DataFrames."""
-    comparison_df = df1.merge(
-        df2,
-        indicator=True,
-        how='outer'
-    )
-    if which is None:
-        diff_df = comparison_df[comparison_df['_merge'] != 'both']
-    else:
-        diff_df = comparison_df[comparison_df['_merge'] == which]
-    return diff_df[[TIME, DEVICE, VAL]]
+    return not df[VALUE].apply(lambda x: isinstance(x, bool)).all()
 
 
 def correct_devices(df: pd.DataFrame, retain_correction=False) -> pd.DataFrame:
@@ -329,23 +353,17 @@ def correct_devices(df: pd.DataFrame, retain_correction=False) -> pd.DataFrame:
         corrections = None
 
     df = df.copy()
-    df = df.drop_duplicates()        
+    df = df.drop_duplicates()
 
     if df.empty:
         return df
-    
-    # bring in correct representation
-    if _is_dev_rep2(df):
-        df = device_rep2_2_rep1(df)
-    elif not _is_dev_rep1(df):
-        raise ValueError('Devices representation is not known')
 
     df = df.sort_values(by=TIME).reset_index(drop=True)
 
     df_cor = df.copy()
     # correct timestamp duplicates
     while _has_timestamp_duplicates(df_cor):
-        df_cor = correct_device_rep1_ts_duplicates(df_cor)
+        df_cor = correct_device_ts_duplicates(df_cor)
     assert not _has_timestamp_duplicates(df_cor)
 
     if retain_correction:
@@ -367,7 +385,7 @@ def correct_devices(df: pd.DataFrame, retain_correction=False) -> pd.DataFrame:
 
     # join dataframes
     if non_binary_exist:
-        df = df_binary.append(df_non_binary)
+        df = pd.concat([df_binary, df_non_binary], axis=0, ignore_index=True)
     else:
         df = df_binary
 
@@ -379,7 +397,7 @@ def correct_devices(df: pd.DataFrame, retain_correction=False) -> pd.DataFrame:
     return df, corrections
 
 
-def on_off_consistent_func(df, dev):
+def on_off_consistent_func(df: pd.DataFrame, dev: list):
     """ compute for each device if it is on/off consistent
     Parameters
     ----------
@@ -394,17 +412,17 @@ def on_off_consistent_func(df, dev):
         second is
     """
     df_dev = df[df[DEVICE] == dev].sort_values(by=TIME).reset_index(drop=True)
-    first_val = df_dev[VAL].iloc[0]
+    first_val = df_dev[VALUE].iloc[0]
     if first_val:
         mask = np.zeros((len(df_dev)), dtype=bool)
         mask[::2] = True
     else:
         mask = np.ones((len(df_dev)), dtype=bool)
         mask[::2] = False
-    return [not (df_dev[VAL] ^ mask).sum() > 0, df_dev[[TIME, DEVICE, VAL]]]
+    return [not (df_dev[VALUE] ^ mask).sum() > 0, df_dev[[TIME, DEVICE, VALUE]]]
 
 
-def is_on_off_consistent(df):
+def is_on_off_consistent(df: pd.DataFrame):
     """ devices can only go on after they are off and vice versa. check if this is true
         for every device.
     Parameters
@@ -414,18 +432,19 @@ def is_on_off_consistent(df):
         The dataframe must not include timestamp duplicates! When it does they can be arbitrarily reordered
         when sorting for time thus destroying the consistency.
     """
+
+    import dask
+    from dask import delayed
     lazy_results = []
     for dev in df[DEVICE].unique():
         res = dask.delayed(on_off_consistent_func)(df.copy(), dev)
         lazy_results.append(res)
 
-    results = np.array(list(dask.compute(*lazy_results)))
-    return results[:,0].all()
+    results = np.array(list(dask.compute(*lazy_results)), dtype=object)
+    return results[:, 0].all()
 
 
-
-from dask import delayed
-def correct_on_off_inconsistency(df):
+def correct_on_off_inconsistency(df: pd.DataFrame):
     """ 
     has multiple strategies for solving the patterns:
     e.g if the preceeding value is on and the same value is occuring now delete now
@@ -439,7 +458,9 @@ def correct_on_off_inconsistency(df):
     df : pd.DataFrame
         device representation 3
     """
-    
+    from dask import delayed
+    import dask
+
     def correct_part(df_dev):
         """ get index of rows where the previous on/off value was the same and delete row
         Parameters
@@ -447,19 +468,19 @@ def correct_on_off_inconsistency(df):
         df_dev : pd.DataFrame
             subset of the big dataframe consisting only of events for a fixed device
         """
-        df_dev['same_prec'] = ~(df_dev[VAL].shift(1) ^ df_dev[VAL])
-        df_dev.loc[0, 'same_prec'] = False # correct shift artefact
+        df_dev['same_prec'] = ~(df_dev[VALUE].shift(1) ^ df_dev[VALUE])
+        df_dev.loc[0, 'same_prec'] = False  # correct shift artefact
         indices = list(df_dev[df_dev['same_prec']].index)
         df_dev = df_dev.drop(indices, axis=0)
-        return df_dev[[TIME, DEVICE, VAL]]
-                    
+        return df_dev[[TIME, DEVICE, VALUE]]
+
     df = df.copy()
     # create list of tuples e.g [(True, df_dev1), (False, df_dev2), ...]
     dev_list = df[DEVICE].unique()
     dev_df_list = []
     for devs in dev_list:
         dev_df_list.append(delayed(on_off_consistent_func)(df, devs))
-    results = np.array(list(dask.compute(*dev_df_list)))
+    results = np.array(list(dask.compute(*dev_df_list)), dtype=object)
 
     # filter inconsistent devices
     incons = results[np.where(np.logical_not(results[:, 0]))[0], :][:, 1]
@@ -471,87 +492,19 @@ def correct_on_off_inconsistency(df):
     corr_devs = [df[DEVICE].iloc[0] for df in corr_dfs]
     tmp = [df[~df[DEVICE].isin(corr_devs)], *corr_dfs]
 
-    return pd.concat(tmp, ignore_index=True)\
-            .sort_values(by=TIME).reset_index(drop=True)
+    return pd.concat(tmp, ignore_index=True) \
+        .sort_values(by=TIME).reset_index(drop=True)
 
 
 def _create_empty_dev_dataframe():
-    df = pd.DataFrame(data=[], columns=[TIME, DEVICE, VAL])
+    df = pd.DataFrame(data=[], columns=[TIME, DEVICE, VALUE])
     df[TIME] = pd.to_datetime(df[TIME])
     return df
 
 
-
-def get_most_likely_value(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Infers for each device the most likely state
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        A device dataframe
-
-    Returns
-    -------
-    df : pd.DataFrame
-        the result
-    """
-    ML_STATE = 'ml_state'
-    df = df.copy()
-
-    #res = self._create_empty_dev_dataframe()
-    res = pd.DataFrame(data=[], columns=[DEVICE, ML_STATE])
-
-    # get most likely binary states
-    mask_bool = _get_bool_mask(df, VAL)
-    has_bools = mask_bool.any()
-    if has_bools:
-        from pyadlml.dataset.stats import device_on_off
-        oos = device_on_off(df[mask_bool])   # get most likely binary state
-        oos[ML_STATE] = (oos['frac_on'] > oos['frac_off'])
-        res_bool = oos[[DEVICE, ML_STATE]]
-
-    # get most likely numerical states
-    # use median for the most likely numerical state
-    mask_num = _get_num_mask(df, VAL)
-    has_nums = mask_num.any()
-    if has_nums:
-        tmp = df[mask_num].copy()[[DEVICE, VAL]]
-        tmp[VAL] = pd.to_numeric(tmp[VAL])
-        res_num = tmp.groupby(by=[DEVICE]).median()
-        res_num = res_num.reset_index()
-        res_num.columns = [DEVICE, ML_STATE]
-        #b = tmp.groupby(by=[DEVICE]).mean()
-
-    # get most likely categorical states
-    # - transform to one-hot-encoding
-    # use device_on_off to infer most likely device
-    mask_categ = ~mask_num & ~mask_bool
-    has_cats = mask_categ.any()
-    if has_cats:
-        tmp = df[mask_categ]
-        res_cat = most_prominent_categorical_values(tmp)
-
-    if has_nums and has_cats and has_nums:
-        df = pd.concat([res_cat, res_num, res_bool], axis=0)
-    elif has_nums and has_bools:
-        df = pd.concat([res_num, res_bool], axis=0)
-    elif has_cats and has_nums:
-        df = pd.concat([res_cat, res_num], axis=0)
-    elif has_cats and has_bools:
-        df = pd.concat([res_cat, res_bool], axis=0)
-    elif has_cats:
-        df = res_cat
-    elif has_nums:
-        df = res_num
-    else:
-        df = res_bool
-    return df
-
-
-def most_prominent_categorical_values(df):
+def most_prominent_categorical_values(df: pd.DataFrame):
     tmp = df
-    tmp['conc'] = tmp[DEVICE] + ',' + tmp[VAL]
+    tmp['conc'] = tmp[DEVICE] + ',' + tmp[VALUE]
     dev_list = tmp[DEVICE].unique()
     tmp = pd.concat([tmp[TIME], pd.get_dummies(tmp['conc'], dtype=int)], axis=1)
     tmp2 = tmp.copy()
@@ -586,7 +539,7 @@ def most_prominent_categorical_values(df):
         max_cat = None
         for di in dev_col_cats:
             abc = tmp2[[di, 'td']].groupby(di).sum().reset_index()
-            td_on = abc.iloc[1,1]
+            td_on = abc.iloc[1, 1]
             if max_td < td_on:
                 max_td = td_on
                 max_cat = di
@@ -597,10 +550,11 @@ def most_prominent_categorical_values(df):
     return df
 
 
-def _get_bool_mask(df, col):
+def _get_bool_mask(df: pd.DataFrame, col: list):
     """ returns a mask where the columns are booleans"""
     if df[col].dtype == 'bool':
-        return df[col].na # TODO hack for returning
+        # return df[col].na # TODO hack for returning
+        return (df[col] == True) | (df[col] == False)
     mask = (df[col].astype(str) == 'False') | (df[col].astype(str) == 'True')
     return mask
 
@@ -617,24 +571,298 @@ def _get_num_mask(df, col):
 def _get_bool(df):
     def func(x):
         # check if every is one of
-        if x[VAL].dtype == 'bool':
+        if x[VALUE].dtype == 'bool':
             return True
         else:
-            return ((x[VAL].astype(str) == 'False') | (x[VAL].astype(str) == 'True')).all()
+            return ((x[VALUE].astype(str) == 'False') | (x[VALUE].astype(str) == 'True')).all()
+
     return df.groupby(by=[DEVICE]).filter(func)
 
 
-from pandas.api.types import infer_dtype
-def inferdtypes(df):
+def create_device_info_dict(df_dev: pd.DataFrame) -> dict:
     """
-    device dataframe
+    Infers for each device the most likely state
 
-    returns list of tuples with device and corresponding dtype
+    Parameters
+    ----------
+    df_dev : pd.DataFrame
+        A device dataframe
+    dtypes: pd.DataFrame
+        a dataframe containing every device and its corresponding datattype
+
+    Returns
+    -------
+    df : pd.DataFrame
+        the result
     """
-    dev_lst = df[DEVICE].unique()
-    res_lst = []
-    for dev in dev_lst:
-        vals = df[df[DEVICE] == dev][VAL]
-        dtype = infer_dtype(vals)
-        res_lst.append((dev, dtype))
-    return res_lst
+    ML_STATE = 'ml_state'
+    DTYPE = 'dtype'
+    df_dev = df_dev.copy()
+
+    # extract devices of differing dtypes
+    dtypes = infer_dtypes(df_dev)
+
+    res = {}
+    for key in dtypes.keys():
+        for dev in dtypes[key]:
+            res[dev] = {}
+            res[dev][DTYPE] = key
+
+    # get most likely binary states
+    if dtypes[BOOL]:
+        from pyadlml.dataset.stats.devices import state_fractions
+        dsf = state_fractions(df_dev[df_dev[DEVICE].isin(dtypes[BOOL])].copy())
+        for dev in dtypes[BOOL]:
+            true_has_more = dsf.loc[(dsf[DEVICE] == dev) & (dsf[VALUE] == True), 'frac'].values[0] \
+                            > dsf.loc[(dsf[DEVICE] == dev) & (dsf[VALUE] == False), 'frac'].values[0]
+            res[dev][ML_STATE] = true_has_more
+
+    # get most likely numerical states
+    # use median for the most likely numerical state
+    if dtypes[NUM]:
+        df_num = df_dev.loc[df_dev[DEVICE].isin(dtypes[NUM]), [DEVICE, VALUE]].copy()
+        df_num[VALUE] = pd.to_numeric(df_num[VALUE])
+        res_num = df_num.groupby(by=[DEVICE]).median()
+        for dev in dtypes[NUM]:
+            res[dev][ML_STATE] = res_num.at[dev, VALUE]
+
+    # get most likely categorical states
+    if dtypes[CAT]:
+        df_cat = df_dev[df_dev[DEVICE].isin(dtypes[CAT])].copy()
+        res_cat = most_prominent_categorical_values(df_cat)
+        res_cat.set_index(DEVICE, inplace=True)
+        for dev in dtypes[CAT]:
+            res[dev][ML_STATE] = res_cat.at[dev, ML_STATE]
+
+    return res
+
+
+def device_remove_state(df_devs, state, td, eps='0.2s'):
+    """ Remove the events corresponding to a device that is a certain time
+        in the specified state.
+
+    Parameters
+    ----------
+    df_devs : pd.DataFrame
+    state : bool
+    td : str
+    eps : str, default='0.2s'
+
+    Returns
+    ------
+    pd.DataFrame
+        The table with the specified events missing
+    """
+    eps = pd.Timedelta(eps)
+    td = pd.Timedelta(td)
+
+    # Note that due to extrapolate_states the very last events
+    # for each device are disregarded
+    df = device_events_to_states(df_devs.copy(), extrapolate_states=False)
+
+    # Mark states that fall match the criterion
+    df['diff'] = df[END_TIME] - df[START_TIME]
+    df['target'] = (td - eps < df['diff']) & (df['diff'] < td + eps) \
+                   & (df[VALUE] == state)
+
+    # Remove states
+    df = df[df['target'] == False]
+
+    df = device_states_to_events(df[[START_TIME, END_TIME, DEVICE, VALUE]])
+    df = correct_on_off_inconsistency(df)
+
+    # Since the transformation above lost the last device events
+    # those events are readded
+    idx_last_occ = [df_devs[df_devs[DEVICE] == d].iloc[-1].name
+                    for d in df_devs[DEVICE].unique()]
+    last_occ = df_devs.iloc[idx_last_occ, :]
+    df = pd.concat([df, last_occ]) \
+        .sort_values(by=TIME) \
+        .reset_index(drop=True)
+
+    return df
+
+
+def _generate_signal(signal, dt='250ms'):
+    # Convert strings to timedelta
+    dt = pd.Timedelta(dt)
+    max_len = pd.Timedelta('0s')
+    for i in range(len(signal)):
+        signal[i] = (signal[i][0], pd.Timedelta(signal[i][1]))
+        max_len += signal[i][1]
+
+    nr_bins = np.floor(max_len / dt).astype(int)
+    discretized_sig = np.zeros(nr_bins)
+    current_step = 0
+    for i in range(len(signal)):
+        state = signal[i][0]
+        steps = np.floor((signal[i][1] / max_len) * nr_bins).astype(int)
+        discretized_sig[current_step:current_step + steps] = 1 if state else -1
+        current_step += steps
+
+    return discretized_sig
+
+
+def device_remove_state_matching_signal(df_devs: pd.DataFrame,
+                                        #signal: list[tuple[bool, str], ... ],
+                                        signal: list,
+                                        state_indicator: int,
+                                        eps_state: str = '0.2s', eps_corr: float = 0.1) -> pd.DataFrame:
+    """
+    Removes states from a device dataframe that match a signal.
+
+    Parameters
+    ----------
+    df_devs : pd.DataFrame
+        A device dataframe
+    state_indicator : int
+        A number from 0 to length of signal -1 that indicates the state that is going
+        to be removed when the signal matches
+    eps_state : str, default='0.2s'
+        The tolerance a target state may deviate from the given duration in the signal.
+    eps_corr : float, default=0.1
+        Determines the allowed deviation for the maximium correlation to the correlation of a perfect
+        matching signal in percent.
+
+    Example
+    -------
+    >>> from pyadlml.dataset import fetch_amsterdam
+    >>> from pyadlml.dataset.devices import device_remove_state_matching_signal
+    >>> data = fetch_amsterdam()
+    >>> df = data.df_devices.copy()
+    >>> sig_original = [ \
+            (True, '5s'), \
+            (False, '4s'), \
+            (True, '1s'), \
+            (False, '5s') \
+        ] \
+    >>> df = device_remove_state_matching_signal(df, sig_original, eps_corr=2)
+    """
+
+    from scipy import signal as sc_signal
+    df = df_devs.copy()
+    sig_original = signal
+    td = pd.Timedelta(sig_original[state_indicator][1])
+    state = sig_original[state_indicator][0]
+    eps_state = pd.Timedelta(eps_state)
+
+    # Create perfect correlation yielding a proper threshold
+    win = _generate_signal(sig_original, dt='250ms')
+    perfect_corr = sc_signal.correlate(win, win, mode='full')
+    perfect_corr_max = perfect_corr.max()
+
+    # Compute the number of counts that the signal may deviate
+    # but still counts as a match
+    # For example if a window is 72 units long and the maximum
+    # correlation would also be 72 for a signal with the same length. Therefore
+    # the eps_corr count would be 14 if the signal is allowed to differ 20%
+    eps_corr = int(len(win)*eps_corr)
+
+    # Create a timelength to append to
+    tmp1 = [pd.Timedelta(s[1]) for s in sig_original]
+    max_sig = sum(tmp1, pd.Timedelta('0s'))
+    states_to_past = [pd.Timedelta(sig_original[s][1]) for s in range(0, state_indicator)]
+    dt_states_to_past = sum(states_to_past, pd.Timedelta('0s'))
+    states_to_future = [pd.Timedelta(sig_original[s][1]) for s in range(state_indicator+1, len(sig_original))]
+    dt_states_to_future = sum(states_to_future, pd.Timedelta('0s'))
+
+    df = df.copy().reset_index(drop=True)
+    df['to_convert'] = False
+    df['diff'] = pd.Timedelta('0ns')
+    df['target'] = False
+
+    for dev in df[DEVICE].unique():
+        dev_mask = (df[DEVICE] == dev)
+        max_idx = df.loc[dev_mask].index[-1]
+        df.loc[dev_mask, 'diff'] = df.loc[dev_mask, TIME].shift(-1) - df.loc[dev_mask, TIME]
+        df.loc[dev_mask, 'target'] = (td - eps_state < df.loc[dev_mask, 'diff']) \
+                                     & (df.loc[dev_mask, 'diff'] < td + eps_state) \
+                                     & (df.loc[dev_mask, VALUE] == state)
+        df.at[max_idx, 'diff'] = max_sig
+
+    for dev in df[DEVICE].unique():
+        dev_mask = (df[DEVICE] == dev)
+        hits = df[(df['target'] == True) & dev_mask].index.to_list()
+        df_dev = df[dev_mask].copy().reset_index()
+        for j, h in enumerate(hits):
+            idx = [h]
+            get_df_idx = lambda i: df_dev.at[i, 'index']
+
+            # Retrieve index of preceeding and succeeding event of the same device
+            dev_idx = df_dev[(df_dev['index'] == h)].index[0]
+            if dev_idx == 0:
+                first = dt_states_to_past
+            else:
+                dev_lower = dev_idx - 1
+                dt_tmp = dt_states_to_past
+                dt_prev_tmp = dt_tmp - df_dev.at[dev_lower, 'diff']
+                while dt_prev_tmp > pd.Timedelta('0s') and dev_lower >= 0:
+                    dt_tmp -= df_dev.at[dev_lower, 'diff']
+                    idx.insert(0, get_df_idx(dev_lower))
+                    dev_lower -= 1
+                    dt_prev_tmp -= df_dev.at[dev_lower, 'diff']
+                first = dt_tmp
+            if dev_idx == len(df_dev) - 1:
+                last = dt_states_to_future
+            else:
+                dev_upper = dev_idx + 1
+                dt_tmp = dt_states_to_future
+                dt_next_tmp = dt_tmp - df_dev.at[dev_upper, 'diff']
+                while dt_next_tmp > pd.Timedelta('0s') and dev_upper < len(df_dev) - 1:
+                    dt_tmp -= df_dev.at[dev_upper, 'diff']
+                    idx.append(get_df_idx(dev_upper))
+                    dev_upper += 1
+                    dt_next_tmp -= df_dev.at[dev_upper, 'diff']
+                last = dt_tmp
+
+
+            # Aasdf
+            tmp = df.loc[idx, [VALUE, 'diff']].values
+            tmp = np.insert(tmp, 0, [[not tmp[0, 0], first]], axis=0)
+            tmp = np.append(tmp, [[not tmp[-1, 0], last]], axis=0)
+            signal = _generate_signal(tmp, dt='250ms')
+
+            #print('-'*10,f'\ndev {dev}: idx: {idx}')
+            #print(f'{len(win)} vs {len(signal)}')
+            corr = sc_signal.correlate(signal, win, mode='full')
+            #print(f'max corr: {corr.max()}')
+            #print('perfect corr max: ', perfect_corr_max)
+            #if True:
+            #    import matplotlib.pyplot as plt
+            #    tmp_corr = []
+            #    if True:
+            #    #for t in range(1, len(signal)):
+            #        #s1 = signal[:t]
+            #        #s2 = win[-t:]
+            #        #tmp_corr.append((s1*s2).sum())
+            #        #fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(6, 10))
+            #        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(6, 10))
+            #        ax1.plot(np.arange(len(win)), win)
+            #        ax1.scatter(np.arange(len(win)), win)
+            #        ax2.plot(np.arange(len(signal)), signal)
+            #        ax2.scatter(np.arange(len(signal)), signal)
+
+            #        ax3.plot(np.arange(len(corr)), corr, label='signal vs. window')
+            #        ax3.plot(np.arange(len(perfect_corr)), perfect_corr, label='win vs. win')
+            #        ax3.legend()
+
+            #        #ax4.plot(np.arange(len(tmp_corr)), tmp_corr, label='corr')
+            #        #ax4.plot(np.arange(len(s2)), s2, label='s2')
+            #        #ax4.plot(np.arange(len(signal)), signal, alpha=0.1, label='full s1')
+            #        #ax4.plot(np.arange(len(s1)), s1, label='s1')
+            #        #ax4.legend()
+            #        plt.savefig('tmp.png')
+            #        plt.clf()
+            #    ax3
+
+            is_match = perfect_corr_max - corr.max() < eps_corr
+            if is_match:
+                df.at[h, 'to_convert'] = True
+            #if not is_match:
+            #   is_match
+            #print(f'match: {is_match}')
+
+    df = df[df['to_convert'] == False].copy()
+    df = df[[TIME, DEVICE, VALUE]]
+    res = correct_on_off_inconsistency(df)
+    return res

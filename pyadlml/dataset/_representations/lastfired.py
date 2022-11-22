@@ -1,7 +1,7 @@
 import pandas as pd
-from pyadlml.dataset import TIME, DEVICE, VAL
+from pyadlml.constants import TIME, DEVICE, VALUE
 from pyadlml.dataset._representations.changepoint import create_changepoint
-from pyadlml.dataset._dataset import label_data
+from pyadlml.dataset._core.acts_and_devs import label_data
 
 
 def create_lastfired(df_devs):
@@ -28,20 +28,20 @@ def resample_last_fired(lf, t_res):
     return lf
 
 
-def _lf_evaluator(series: pd.Series, df):
+def _lf_evaluator(series: pd.Series, df:pd.DataFrame) -> int:
     """
-    is called columnwise for each element of the 
+    Is called column-wise for each element of the
     
     Parameters
     ----------
-    series: pd.Series
+    series : pd.Series
         conatins name of the column the evaluator operates on
         contains the timestamps for that change in that frame and the value
         that the specified column has at that timestamp.
 
         is empty if all columns that have no changing entity
 
-    df: pd.DataFrame
+    df : pd.DataFrame
         contains device representation 3. Is for determining the states of other
         device/columns for the timestamps
 

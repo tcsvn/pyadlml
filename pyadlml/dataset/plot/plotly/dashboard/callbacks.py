@@ -3,11 +3,13 @@ from dash.dependencies import Output, Input, State
 import dash
 from dash.exceptions import PreventUpdate
 import pandas as pd
-from pyadlml.constants import ACTIVITY, END_TIME, START_TIME
+from pyadlml.constants import ACTIVITY, DEVICE, END_TIME, START_TIME
 from pyadlml.dataset.plotly.activities import bar_count, bar_cum, boxplot_duration, density, heatmap_transitions
+from pyadlml.dataset.plotly.acts_and_devs import contingency_events, contingency_states
 from pyadlml.dataset.stats.activities import activities_dist
+from pyadlml.dataset.stats.acts_and_devs import contingency_table_events, contingency_table_states
 
-from pyadlml.dataset.util import activity_order_by, num_to_timestamp, select_timespan
+from pyadlml.dataset.util import activity_order_by, device_order_by, num_to_timestamp, select_timespan
 
 def bind_toggle_collapse(name):
     def toggle_collapse(n, is_open):
@@ -36,6 +38,20 @@ def _initialize_activity_toggle_cbs(app, act_id):
         [Input(f"clps-act-bar-button-{act_id}", "n_clicks")],
         [State(f"clps-act-bar-{act_id}", "is_open")],
     )(bind_toggle_collapse(f'toggle_collapse_act_bar_{act_id}'))
+
+
+    app.callback(
+        Output(f"clps-avd-state-{act_id}", "is_open"),
+        [Input(f"clps-avd-state-button-{act_id}", "n_clicks")],
+        [State(f"clps-avd-state-{act_id}", "is_open")],
+    )(bind_toggle_collapse(f'toggle_collapse_avd_state_{act_id}'))
+
+    app.callback(
+        Output(f"clps-avd-event-{act_id}", "is_open"),
+        [Input(f"clps-avd-event-button-{act_id}", "n_clicks")],
+        [State(f"clps-avd-event-{act_id}", "is_open")],
+    )(bind_toggle_collapse(f'toggle_collapse_avd_event_{act_id}'))
+
 
 
 def _create_activity_tab_callback(app, act_id, df_acts, start_time, end_time, plt_height_acts):
@@ -167,3 +183,130 @@ def _create_activity_tab_callback(app, act_id, df_acts, start_time, end_time, pl
                                             height=plt_height_acts)
 
         return fig_bar, fig_bp, fig_dens, fig_trans, json.dumps(list(act_order)), act_density.to_json()
+
+
+
+def _create_acts_vs_devs_tab_callback(app, act_id, df_acts, df_devs, start_time, end_time):
+
+
+    @app.callback(
+        output=[
+            Output(f'avd_graph-event-contingency-{act_id}', 'figure'),
+            Output(f'avd_graph-state-contingency-{act_id}', 'figure'),
+            Output(f'loading-output-{act_id}', 'children'),
+            Output(f'avd-update-{act_id}', 'children'),
+            Output(f'avd_state-contingency-{act_id}', 'data'),
+            Output(f'avd_event-contingency-{act_id}', 'data'),
+            Output(f'avd_activity-order-{act_id}', 'data'),
+            Output(f'avd_device-order-{act_id}', 'data'),
+        ],
+        inputs=[
+            Input('tabs', 'active_tab'),
+            Input(f'avd-trigger-{act_id}', 'children'),
+            Input(f'avd-update-{act_id}', 'children'),
+            Input(f'avd_state-scale-{act_id}', 'value'),
+            Input(f'avd_event-scale-{act_id}', 'value'),
+            Input(f'avd_act-order-trigger-{act_id}', 'value'),
+            Input(f'avd_dev-order-trigger-{act_id}', 'value'),
+        ],
+        state=[
+            State('range-slider', 'value'),
+            State('select-activities', 'value'),
+            State('select-devices', 'value'),
+            State(f'avd_state-contingency-{act_id}', 'data'),
+            State(f'avd_event-contingency-{act_id}', 'data'),
+            State(f'avd_activity-order-{act_id}', 'data'),
+            State(f'avd_device-order-{act_id}', 'data'),
+        ]
+    )
+    def update_acts_vs_devs_tab(active_tab, trigger, update,  state_scale,  event_scale,
+                                 act_order_trigger, dev_order_trigger,
+                                rng, sel_activities, sel_devices,
+                                state_cont, event_cont, act_order, dev_order,
+                                
+        ):
+
+        from pyadlml.dataset.plotly.dashboard.dashboard import _get_trigger_value, _is_trigger
+        ctx = dash.callback_context
+
+        if _get_trigger_value(ctx) is None or active_tab != f'tab-acts_vs_devs-{act_id}':
+            raise PreventUpdate
+
+        try:
+            df_con_states = pd.read_json(state_cont)
+            df_con_states = df_con_states.astype('timedelta64[ns]')
+            df_con_events = pd.read_json(event_cont)
+        except ValueError:
+            df_con_states = None
+            df_con_events = None
+        except BaseException as err:
+            print(f"Unexpected {err=}, {type(err)=}")
+            raise
+
+        try:
+            act_order = json.loads(act_order)
+            dev_order = json.loads(dev_order)
+        except TypeError:
+            act_order = None
+            dev_order = None
+
+
+        # Filter selected timeframe, activities and devices
+        st = num_to_timestamp(rng[0], start_time=start_time, end_time=end_time)
+        et = num_to_timestamp(rng[1], start_time=start_time, end_time=end_time)
+        curr_df_devs, curr_df_acts = select_timespan(df_acts=df_acts, df_devs=df_devs,
+                                                     start_time=st, end_time=et, clip_activities=True)
+        curr_df_acts = curr_df_acts[curr_df_acts[ACTIVITY].isin(sel_activities)]
+        curr_df_devs = curr_df_devs[curr_df_devs[DEVICE].isin(sel_devices)]
+        # TODO refactor, where is the y_label column coming from
+        curr_df_acts = curr_df_acts[[START_TIME, END_TIME, ACTIVITY]]
+
+        # If the activity-order is changed or the bar plot is changed
+        # and would change the order
+        is_data_update = _is_trigger(ctx, 'new_data')
+        is_trigger_act_order = _is_trigger(ctx, f'avd_act-order-trigger-{act_id}')
+        is_trigger_dev_order = _is_trigger(ctx, f'avd_dev-order-trigger-{act_id}')
+        order_update = is_trigger_act_order or is_trigger_dev_order\
+                       or act_order is None or dev_order is None
+
+        if order_update:
+            act_order = activity_order_by(curr_df_acts, act_order_trigger)
+            dev_order = device_order_by(curr_df_devs, dev_order_trigger)
+
+
+        # If data has changed the contingency tables have to be recomputed
+        if is_data_update or df_con_states is None or df_con_events is None:
+            # Recompute state contingency
+            df_con_states = contingency_table_states(curr_df_devs, curr_df_acts,
+                                                     n_jobs=4)
+            df_con_events = contingency_table_events(curr_df_devs, curr_df_acts)
+            update_data = True
+        else:
+            update_data = False
+
+        if active_tab != f'tab-acts_vs_devs-{act_id}' and is_data_update:
+            return dash.no_update, dash.no_update, dash.no_update, 'updated', \
+                   df_con_states.to_json(), df_con_events.to_json(), \
+                   json.dumps(list(act_order)), json.dumps(list(dev_order))
+        elif active_tab != f'tab-acts_vs_devs-{act_id}':
+            raise PreventUpdate
+
+        # Create figures
+        fig_adec = contingency_events(
+                    con_tab=df_con_events, scale=event_scale,
+                    act_order=act_order, dev_order=dev_order
+        )
+        fig_adsc = contingency_states(
+                    df_devs=curr_df_devs,   # for event order
+                    con_tab=df_con_states, scale=state_scale,
+                    act_order=act_order, dev_order=dev_order
+        )
+
+        if update_data:
+            state_dump, event_dump = df_con_states.to_json(date_unit="ns"), df_con_events.to_json()
+        else:
+            state_dump, event_dump = dash.no_update, dash.no_update
+
+        return fig_adec, fig_adsc, None, 'needs update', state_dump, event_dump, \
+               json.dumps(list(act_order)), json.dumps(list(dev_order))
+

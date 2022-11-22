@@ -1,21 +1,71 @@
 import pandas as pd
-from pyadlml.dataset import ACTIVITY, DEVICE, START_TIME, END_TIME
-from pyadlml.dataset.obj import Data
-from pyadlml.dataset.devices import correct_devices
-from pyadlml.dataset.activities import correct_activities, _create_activity_df
-from pyadlml.dataset.io import fetch_handler as _fetch_handler
-import os
+from pathlib import Path
+from pyadlml.constants import ACTIVITY, DEVICE, START_TIME, END_TIME
+from pyadlml.dataset._core.activities import create_empty_activity_df
+from pyadlml.dataset._core.devices import device_boolean_on_states_to_events
+from pyadlml.dataset.io.downloader import MegaDownloader
+from pyadlml.dataset.io.remote import DataFetcher
 
 MITLAB_URL = 'https://mega.nz/file/MB4BFL6S#8MjAQoS-j0Lje1UFoWUMOCay2FcdpVfla6p9MTe4SQM'
 MITLAB_FILENAME = 'mitlab.zip'
+SUB1 = 'subject1'
+SUB2 = 'subject2'
 
-def fetch_mitlab(keep_original=False, cache=True, retain_corrections=False, subject='subject1'):
+__all__ = ['fetch_mitlab']
+
+class MitLabFetcher(DataFetcher):
+    def __init__(self, *args, **kwargs):
+
+        downloader = MegaDownloader(
+            url=MITLAB_URL,
+            fn=MITLAB_FILENAME,
+            url_cleaned=None,
+            fn_cleaned=None,
+        )
+
+        super().__init__(
+            dataset_name='mitlab',
+            downloader=downloader,
+            correct_activities=True,
+            correct_devices=True
+        )
+
+
+    def load_data(self, folder_path, ident):
+
+        assert ident in [SUB1, SUB2]
+
+        act_path = Path(folder_path).joinpath(ident, "Activities.csv")
+        dev_path = Path(folder_path).joinpath(ident, "sensors.csv")
+        data_path = Path(folder_path).joinpath(ident, "activities_data.csv")
+
+        df_dev_map = _load_device_map(dev_path)
+        df_act_map = _load_activity_map(act_path)
+        df_dev, df_act = _read_data(data_path, df_dev_map, df_act_map)
+        df_dev = device_boolean_on_states_to_events(df_dev)
+
+        lst_act = df_act[ACTIVITY].unique()
+        lst_dev = df_dev[DEVICE].unique()
+
+        return dict(
+            activities=df_act,
+            devices=df_dev,
+            activity_list=lst_act,
+            device_list=lst_dev
+        )
+
+
+
+def fetch_mitlab(subject='subject1', keep_original=False, cache=True,
+                 retain_corrections=False, folder_path=None) -> dict:
     """
     Fetches the :ref:`mitlab <ds_mitlab>` dataset from the internet. The original dataset or its cached version
     is stored in the :ref:`data home <storage>` folder.
 
     Parameters
     ----------
+    subject : str of {'subject1', 'subject2'}
+        Identifies which dataset is loaded.
     keep_original : bool, default=True
         Determines whether the original dataset is deleted after downloading
         or kept on the hard drive.
@@ -26,47 +76,17 @@ def fetch_mitlab(keep_original=False, cache=True, retain_corrections=False, subj
         When set to *true*, data points that change or drop during preprocessing
         are listed in respective attributes of the data object. Fore more information
         about error correction refer to the :ref:`user guide <error_correction>`.
-    subject : str of {'subject1', 'subject2'}
-        determines
 
     Returns
     -------
-    data : object
+    dict
     """
-    assert subject in ['subject1', 'subject2']
-    dataset_name = 'mitlab'
-
-    def load_mitlab(folder_path):
-        act_path = os.path.join(folder_path, subject, "Activities.csv")
-        dev_path = os.path.join(folder_path, subject, "sensors.csv")
-        data_path = os.path.join(folder_path, subject, "activities_data.csv")
-
-        df_dev_map = _load_device_map(dev_path)
-        df_act_map = _load_activity_map(act_path)
-        df_dev, df_act = _read_data(data_path, df_dev_map, df_act_map)
-
-        df_act, cor_lst = correct_activities(df_act)
-        df_dev = correct_devices(df_dev)
-
-        lst_act = df_act[ACTIVITY].unique()
-        lst_dev = df_dev[DEVICE].unique()
-
-        data = Data(df_act, df_dev, activity_list=lst_act, device_list=lst_dev)
-
-        data.df_dev_map = df_dev_map
-        data.df_act_map = df_act_map
-
-        if retain_corrections:
-            data.correction_activities = cor_lst
-
-        return data
+    return MitLabFetcher()(keep_original=keep_original, cache=cache, #load_cleaned=load_cleaned,
+                           retain_corrections=retain_corrections, folder_path=folder_path, 
+                           ident=subject
+    )
 
 
-
-    data = _fetch_handler(keep_original, cache, dataset_name,
-                        MITLAB_FILENAME, MITLAB_URL,
-                        load_mitlab, data_postfix=subject)
-    return data
 
 
 def _load_device_map(path_to_file):
@@ -74,9 +94,9 @@ def _load_device_map(path_to_file):
     df_subx_dev.columns = ['id', 'room', 'device']
 
     df_subx_dev['device'] = df_subx_dev['id'].astype(str) + ' - ' \
-                    + df_subx_dev['room'] + ' ' + df_subx_dev['device']
+                            + df_subx_dev['room'] + ' ' + df_subx_dev['device']
     df_subx_dev = df_subx_dev.drop(columns='room')
-    df_subx_dev =  df_subx_dev.set_index('id')
+    df_subx_dev = df_subx_dev.set_index('id')
     return df_subx_dev
 
 
@@ -109,7 +129,7 @@ def _read_data(path_to_file, df_dev, df_act):
     """
     # create empy dataframes for devices and activities
     df_devices = pd.DataFrame(columns=[START_TIME, END_TIME, DEVICE])
-    df_activities = _create_activity_df()
+    df_activities = create_empty_activity_df()
 
     act_list = df_act['Subcategory'].values
     
@@ -134,7 +154,8 @@ def _read_data(path_to_file, df_dev, df_act):
                            'start_time':pd.Timestamp(date +'T'+s[2]), 
                            'end_time':pd.Timestamp(date +'T'+s[3])
                           }
-                df_activities = df_activities.append(new_row, ignore_index=True)
+                df_activities = pd.concat([df_activities, pd.Series(data=new_row).to_frame().T],\
+                                           ignore_index=True, axis=0)
                 continue      
                 
             # check if the line represents a device
@@ -179,7 +200,8 @@ def _read_data(path_to_file, df_dev, df_act):
                                START_TIME:pd.Timestamp(date +'T' + ts_start),
                                END_TIME:pd.Timestamp(date +'T' + ts_end)
                               }
-                    df_devices = df_devices.append(new_row, ignore_index=True)                
+                    df_devices = pd.concat([df_devices, pd.Series(data=new_row).to_frame().T],\
+                                           ignore_index=True, axis=0)
                 i = 0
                 read_in_device = False
                 
@@ -190,7 +212,6 @@ def _read_data(path_to_file, df_dev, df_act):
     df_devices[DEVICE] = df_devices[DEVICE].map(df_dev.to_dict()[DEVICE])
     df_devices = df_devices.sort_values(by=START_TIME)
     df_devices = df_devices.drop_duplicates().reset_index(drop=True)
-    
     
     df_activities = df_activities.sort_values(by=START_TIME).reset_index(drop=True)
 

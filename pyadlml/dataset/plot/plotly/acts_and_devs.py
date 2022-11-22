@@ -1,5 +1,6 @@
 import math
 from collections import OrderedDict
+import plotly.express as px
 from .util import ActivityDict, _style_colorbar, _dyn_y_label_size
 import plotly
 import pandas as pd
@@ -28,6 +29,16 @@ from pyadlml.dataset.util import select_timespan, df_difference, activity_order_
 
 __all__ = ['activities_and_devices', 'contingency_states', 'contingency_events']
 
+def _dynamic_and_height(nr_subj, nr_devs):
+    # Additional rows for sel. marker
+    m = (350 - 380)/(10 - 12)
+    b = 0
+    possible_rows = nr_subj + nr_devs + (nr_subj + 1)    
+    height = int(m*possible_rows + b)
+    print(f'height: {height} = {m}*{possible_rows} + {b}')
+    return min(height, 1000)
+
+
 
 def _plot_device_states_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs_usel: pd.DataFrame,
                                  df_devs_outside: pd.DataFrame, dev_order: list, st=None, et=None) -> go.Figure:
@@ -40,6 +51,10 @@ def _plot_device_states_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs
 
     """
     EVENT_COLOR = 'Black'
+    COL_ON = 'teal'
+    COL_OFF = 'lightgray'
+    ON = 'on'
+    OFF = 'off'
     #marker = dict(size=5, symbol=42, line=dict(color=EVENT_COLOR, width=1))
 
     df_devs = df_devs.copy()\
@@ -61,22 +76,121 @@ def _plot_device_states_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs
             tmp2 = tmp[mask]
             df_devs_usel = tmp2
         df_devs_usel = _endtime_to_offset(df_devs_usel, replace=False)
-        df_devs_usel[VALUE] = df_devs_usel[VALUE].map({True: 'on', False: 'off'})
 
+        mask_bool = df_devs_usel[DEVICE].isin(dtypes[BOOL])
+        df_devs_usel[mask_bool, VALUE] = df_devs_usel.loc[mask_bool, VALUE].map({True: ON, False: OFF})
 
+    # Create offset and color
     df_devs = _endtime_to_offset(df_devs, replace=False)
+    mask_bool = df_devs[DEVICE].isin(dtypes[BOOL])
+    df_devs.loc[mask_bool, VALUE] = df_devs.loc[mask_bool, VALUE].map({True: ON, False: OFF})
 
     # A mapping from device to data index
-    data_dict = {}
+    #data_dict = {}
     j = 0
-    first_bool = True
+    #first_bool = True
+    set_legendgroup_title = 'States'
+
+    #def create_trace_boolean(df, state):
+    #    nonlocal set_legendgroup_title
+
+    #    df['diff'] = (df[END_TIME] - df[START_TIME]).astype(str)
+    #    cd = df[['diff', END_TIME]].values
+    #    # Add state information to custom_data
+    #    vals = np.expand_dims(np.full(cd.shape[0], state), axis=1)
+    #    cd = np.hstack([cd, vals])
+    #    marker_color = COL_ON if state == ON else COL_OFF
+
+    #    trace = go.Bar(name=state,
+    #                    base=df[START_TIME],
+    #                    meta=dev,
+    #                    x=df['offset'],
+    #                    y=df[DEVICE],
+    #                    legendgrouptitle_text=set_legendgroup_title,
+    #                    marker_color=marker_color,
+    #                    customdata=cd,
+    #                    legendgroup=state,
+    #                    orientation='h',
+    #                    width=0.3,
+    #                    textposition='auto',
+    #                    showlegend=first_bool,
+    #                    hovertemplate=hover_template,
+    #    )
+    #    # The very first time create the states for the categorical legend group titles
+    #    set_legendgroup_title = None 
+    #    return trace
+
+    def create_traces_categorical(df):
+        """ df [TIME, DEVICE, VALUE] of only one device
+        """
+        nonlocal set_legendgroup_title
+        nonlocal cat_idx
+        nonlocal hover_template
+
+        device_name = df[DEVICE].unique()[0]
+        df = df.copy()\
+               .sort_values(by=START_TIME)\
+               .reset_index(drop=True)
+        df[VALUE] = df[VALUE].astype(str)
+        df['diff'] = (df[END_TIME] - df[START_TIME]).astype(str)
+
+
+
+        categories = df[VALUE].unique()
+        trace_lst = []
+        for cat in categories:
+
+            if cat not in _legend_current_items(fig):
+                showlegend = True
+                if cat not in cat_col_map.keys():
+                    cat_col_map[cat] = cat_colors[cat_idx]
+                    cat_idx +=1
+            else:
+                showlegend = False
+            marker_color = cat_col_map[cat]
+            mask_cat = (df[VALUE] == cat)
+
+            cd = df.loc[mask_cat, [DEVICE, 'diff', END_TIME]].values
+            vals = np.expand_dims(np.full(cd.shape[0], cat), axis=1)
+            cd = np.hstack([cd, vals])
+
+            trace = go.Bar(name=cat,
+                           meta=dev,
+                           base=df.loc[mask_cat, START_TIME],
+                           x=df.loc[mask_cat, 'offset'],
+                           y=df.loc[mask_cat, DEVICE],
+                           legendgrouptitle_text=set_legendgroup_title,
+                           marker_color=marker_color,
+                           legendgroup=cat,
+                           customdata=cd,
+                           orientation='h',
+                           width=0.3,
+                           textposition='auto',
+                           showlegend=showlegend,
+                           hovertemplate=hover_template,
+            )
+            trace_lst.append(trace)
+            set_legendgroup_title = None
+
+        return trace_lst
+
+
+    cat_colors = px.colors.qualitative.Pastel1 \
+               + px.colors.qualitative.Pastel2
+    cat_col_map = {ON:COL_ON, OFF:COL_OFF}
+    cat_idx = 0
+    hover_template = '%{customdata[0]}<br>' + \
+                        'Start_time: %{base|' + STRFTIME_DATE + '}<br>' + \
+                        'End_time: %{customdata[2]|' + STRFTIME_DATE + '}<br>' + \
+                        'Duration: %{customdata[1]}<br>' + \
+                        'State: %{customdata[3]}<extra></extra>'
+
     for i, dev in enumerate(devs):
         df = df_devs[df_devs[DEVICE] == dev].copy()
 
         if dev in dtypes[BOOL]:
-            df[VALUE] = df[VALUE].map({True: 'on', False: 'off'})
-            df_on = df[df[VALUE] == 'on']
-            df_off = df[df[VALUE] == 'off']
+            df_on = df[df[VALUE] == ON]
+            df_off = df[df[VALUE] == OFF]
 
             if df_devs_usel is not None:
                 mark_selected[dev] = {}
@@ -84,79 +198,116 @@ def _plot_device_states_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs
                 tmp = np.where((comp_df['_merge'] == 'both').values)[0]
                 comp_df2 = df_off.copy().merge(df_devs_usel, indicator=True, how='left')
                 tmp2 = np.where((comp_df2['_merge'] == 'both').values)[0]
-                mark_selected[dev]['on'] = tmp
-                mark_selected[dev]['off'] = tmp2
+                mark_selected[dev][ON] = tmp
+                mark_selected[dev][OFF] = tmp2
 
-            COL_TRUE = 'teal'
-            COL_FALSE = 'lightgray'
-            hover_template = '%{y}<br>' + \
-                             'Start_time: %{base|' + STRFTIME_DATE + '}<br>' + \
-                             'End_time: %{customdata[1]|' + STRFTIME_DATE + '}<br>' + \
-                             'Duration: %{customdata[0]}<br>' + \
-                             'State: %{customdata[2]}<extra></extra>'
+            traces = create_traces_categorical(df)
+            fig.add_traces(traces)
+            #trace_on = create_trace_boolean(df_on, ON)
+            #trace_off = create_trace_boolean(df_off, OFF)
+            #data_dict[dev] = [len(fig.data), len(fig.data)+1]
+            #fig.add_traces([trace_on, trace_off])
 
-            def create_trace(df, state):
-                df['diff'] = (df[END_TIME] - df[START_TIME]).astype(str)
-                cd = df[['diff', END_TIME]].values
-                # Add state information to custom_data
-                vals = np.expand_dims(np.full(cd.shape[0], (state == 'on')), axis=1)
-                cd = np.hstack([cd, vals])
-                marker_color = COL_TRUE if state == 'on' else COL_FALSE
-                return go.Bar(name=state,
-                              base=df[START_TIME],
-                              meta=dev,
-                              x=df['offset'],
-                              y=df[DEVICE],
-                              marker_color=marker_color,
-                              customdata=cd,
-                              legendgroup=state,
-                              orientation='h',
-                              width=0.3,
-                              textposition='auto',
-                              showlegend=first_bool,
-                              hovertemplate=hover_template,
-                )
-
-            trace_off = create_trace(df_off, 'off')
-            trace_on = create_trace(df_on, 'on')
-            data_dict[dev] = [len(fig.data), len(fig.data)+1]
-            fig.add_traces([trace_on, trace_off])
-
-            first_bool = False
+            #first_bool = False
         elif dev in dtypes[CAT]:
-            categories = df.loc[df[DEVICE] == dev, VALUE].unique()
-            for cat in categories:
-                #values = df.loc[(df[VAL] == cat), [col_bar_start, col_bar_len]].values.tolist()
-                #ax.broken_barh(values, (i-0.25, 0.5), facecolors=tab(j), label=dev + ' - ' + cat)
-                j += 1
-            raise NotImplementedError
+            traces = create_traces_categorical(df)
+            fig.add_traces(traces)
+            j += 1
 
-        elif dev in dtypes[NUM]:
+        #elif dev in dtypes[NUM]:
+        elif False:
             values = pd.to_numeric(df[VALUE])
-            values = (values-values.min())/(values.max() - values.min())*0.5
-            values = values + i - 0.25
-            #ax.plot(df['num_st'], values, color=color_num, linestyle='--', marker='o')
-            raise NotImplementedError
+            # [min, max] scaling -> [0, 1]
+            values_norm = (values-values.min())/(values.max()-values.min())
+            #values_norm = values_norm + i - 0.25
+            print(values_norm)
+            trace = go.Scatter(
+                name=dev,
+                meta=dev,
+                mode='lines',
+                x=df[START_TIME],
+                y=values_norm,
+            )
+            trace._subplot_row = 1
+            trace._subplot_col = 1
+            
+
+            fig = make_subplots(
+                #rows=1,
+                #cols=1,
+                row_heights=[1.0],
+                horizontal_spacing=0.02,
+                vertical_spacing=0.03,
+                shared_xaxes='all',
+                shared_yaxes='all',
+                column_widths=[1.0],
+                specs=[[{"type":"xy", "secondary_y": True}]], 
+                figure=fig,
+            )
+            #fig = make_subplots(
+
+            #    shared_xaxes='all',
+            #    shared_yaxes='all',
+            #    start_cell="bottom-left",
+            #    horizontal_spacing=0.02,
+            #    vertical_spacing=0.03,
+            #    subplot_titles=[],
+            #    column_widths=[1.0],
+            #    row_heights=[1.0],
+            #    specs=[[{'type': 'xy'}]],
+            #    figure=fig)
+            #trace.update({'xaxis': 'x', 'yaxis': 'y'})
+            fig.add_trace(go.Bar(
+                            name=dev,
+                            base=df[START_TIME],
+                            x=df['offset'],
+                            y=df[DEVICE],
+                            orientation='h'
+            ))
+            fig.add_trace(trace, secondary_y=True)
+            fig.update_yaxes(range=[0, len(devs)], secondary_y=True) 
+
 
         # Create user_selection for each trace
         if df_devs_usel is not None:
-            if dev in dtypes[BOOL]:
-                fig.update_traces(selector=dict(meta=dev, name='off'),
-                           selectedpoints=mark_selected[dev]['off'],
-                           selected={'marker': {'opacity': 1.0, 'color': COL_FALSE}},
-                           unselected={'marker': {'opacity': 0.3, 'color': COL_FALSE}})
-                fig.update_traces(selector=dict(meta=dev, name='on'),
-                           selectedpoints=mark_selected[dev]['on'],
-                           selected={'marker': {'opacity': 1.0, 'color': COL_TRUE}},
-                           unselected={'marker': {'opacity': 0.3, 'color': COL_TRUE}})
+            if dev in (dtypes[BOOL] + dtypes[CAT]): 
+                for cat in df[VALUE].unique():
+                    fig.update_traces(selector=dict(meta=dev, name=cat),
+                            selectedpoints=mark_selected[dev][cat],
+                            selected={'marker': {'opacity': 1.0, 'color': cat_col_map[cat]}},
+                            unselected={'marker': {'opacity': 0.3, 'color': cat_col_map[cat]}})
+                # TODO not for, flag for deletion 
+                #fig.update_traces(selector=dict(meta=dev, name=OFF),
+                #           selectedpoints=mark_selected[dev][OFF],
+                #           selected={'marker': {'opacity': 1.0, 'color': COL_OFF}},
+                #           unselected={'marker': {'opacity': 0.3, 'color': COL_OFF}})
+                #fig.update_traces(selector=dict(meta=dev, name=ON),
+                #           selectedpoints=mark_selected[dev][ON],
+                #           selected={'marker': {'opacity': 1.0, 'color': COL_ON}},
+                #           unselected={'marker': {'opacity': 0.3, 'color': COL_ON}})
             else:
                 raise NotImplementedError
 
 
     fig.update_layout(yaxis_type='category')
     fig.update_yaxes(categoryorder='array', categoryarray=np.flip(dev_order))
-
     return fig
+
+def _abbreviate_long_names(arr: np.ndarray) -> np.ndarray:
+    THRESHOLD = 10
+    def func(x):
+        if len(x) > THRESHOLD:
+            # REmove preafix i.e. binary_sensor.blablbla
+            x = "".join([s for s in x.split('.')[0]])
+        if len(x) > THRESHOLD:
+            x = "".join([s[:3] for s in x.split('_')])
+        if len(x) > THRESHOLD:
+            x = x[:THRESHOLD]
+        else:
+            return x
+    vf = np.vectorize(func)
+    arr = vf(arr) 
+    return arr
 
 
 def _plot_device_events_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs_usel: pd.DataFrame,
@@ -174,7 +325,7 @@ def _plot_device_events_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs
     # Enable webgl rendering
     scatter = go.Scattergl if len(df_devs) > 15000 else go.Scatter
     EVENT_COLOR = 'Black'
-    hover_template = '%{y}<br>%{x|' + STRFTIME_DATE + '}<br>Event: %{customdata} <extra></extra>'
+    hover_template = '%{customdata[1]}<br>%{x|' + STRFTIME_DATE + '}<br>Event: %{customdata[0]} <extra></extra>'
 
 
     marker = dict(size=marker_height, symbol=42, line=dict(color=EVENT_COLOR, width=1))
@@ -182,7 +333,7 @@ def _plot_device_events_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs
     fig.update_yaxes(categoryorder='array', categoryarray=np.flip(dev_order))
     fig.add_trace(scatter(
         mode='markers', y=df_devs[DEVICE], x=df_devs[TIME],
-        customdata=df_devs[VALUE],
+        customdata=df_devs[[VALUE, DEVICE]].values,
         hovertemplate=hover_template,
         showlegend=False, marker=marker))
 
@@ -307,14 +458,14 @@ def act_difference(df_acts_sel, df_acts, st, et):
     return dct_acts_outside.unwrap(inst_type=acts_inst)
 
 
-def _plot_selected_activity_marker(fig, df):
+def _plot_selected_activity_marker(fig, df, label='Selected Activity mark'):
     """ Plot markers at the midpoint of selected activities
     """
     df = df[[START_TIME, END_TIME, ACTIVITY]].copy()
     cd = df.values
     diff = df[END_TIME] - df[START_TIME]
     df['mid_point'] = df[START_TIME] + diff/2
-    y_label = 'Selected Activity mark'
+    y_label = label
     df['y'] = y_label
 
     marker = dict(size=5, symbol=5, line=dict(color='Red', width=1))
@@ -335,13 +486,13 @@ def _plot_selected_activity_marker(fig, df):
     return fig
 
 
-def _plot_selected_device_marker(fig, df, df_devs, states=False):
+def _plot_selected_device_marker(fig, df, df_devs, states=False, label='Sel devices'):
     df = df[[TIME, DEVICE, VALUE]].copy()
     df_devs = df_devs[[TIME, DEVICE, VALUE]].copy()\
         .sort_values(by=TIME)\
         .reset_index(drop=True)
 
-    y_label = 'Selected Device mark'
+    y_label = label
     df['y'] = y_label
 
     if states:
@@ -423,6 +574,8 @@ def activities_and_devices(df_acts, df_devs, states=False, st=None, et=None,
 
     # determinte visual properties
     nr_devs = len(dev_order)
+    nr_subjs = len(dct_acts)
+    height = _dynamic_and_height(nr_devs, nr_subjs)
     marker_height = 3 if nr_devs > 15 else 5
     y_label_size = _dyn_y_label_size(height, nr_devs)
 
@@ -432,6 +585,21 @@ def activities_and_devices(df_acts, df_devs, states=False, st=None, et=None,
 
     title = 'Activities and device events'
     fig = go.Figure()
+
+    for key in reversed(list(dct_acts.keys())):
+        if df_acts_usel is not None:
+            try:
+                usel = dct_acts_usel[key]
+            except: 
+                usel = None
+        else:
+            usel = None
+        fig = _plot_activities_into_fig(fig, dct_acts_sel[key], usel, 
+                                        dct_acts_outside[key], act_order,
+                                        y_label=f'Acts: {key}'
+                                        )
+
+
     if states:
         fig = _plot_device_states_into_fig(fig, df_devs_sel, df_devs_usel,
                                            df_devs_outside, dev_order, st, et)
@@ -439,18 +607,12 @@ def activities_and_devices(df_acts, df_devs, states=False, st=None, et=None,
         fig = _plot_device_events_into_fig(fig, df_devs_sel, df_devs_usel, df_devs_outside, 
                                            dev_order, marker_height)
 
-    for key in dct_acts.keys():
-        usel = dct_acts_usel[key] if df_acts_usel is not None else None
-        fig = _plot_activities_into_fig(fig, dct_acts_sel[key], usel, 
-                                        dct_acts_outside[key], act_order,
-                                        y_label=f'Acts: {key}'
-                                        )
+
 
     # Plot markers into trace
-    if df_acts_usel is not None:
-        for key in dct_acts.keys():
-            usel = dct_acts_usel[key]
-            fig = _plot_selected_activity_marker(fig, usel)
+    if dct_acts_usel is not None:
+        for key, usel in dct_acts_usel.items():
+            fig = _plot_selected_activity_marker(fig, usel, label=f'Sel Act: {key}')
 
     if df_devs_usel is not None:
         fig = _plot_selected_device_marker(fig, df_devs_usel, df_devs, devs_usel_state)
@@ -467,7 +629,6 @@ def activities_and_devices(df_acts, df_devs, states=False, st=None, et=None,
                      ticklabeloverflow='allow'
                      )
     fig.update_layout(margin=dict(l=0, r=0, b=0, t=30, pad=0), height=height)
-
     return fig
 
 
@@ -551,6 +712,7 @@ def _plot_activities_into_fig(fig, df_acts: pd.DataFrame, df_acts_usel: pd.DataF
             m.val_map[val] = m.sequence[len(m.val_map) % len(m.sequence)]
 
 
+    set_legendgrouptitle = 'Activities'
     trace_lst = []
     for act_name in act_order:
         if not (df_acts[ACTIVITY] == act_name).any():
@@ -560,10 +722,16 @@ def _plot_activities_into_fig(fig, df_acts: pd.DataFrame, df_acts_usel: pd.DataF
         df_sel_act = grouped.get_group(act_name)
 
         # Create the trace
+        # TODO showlegend
+        showlegend = act_name not in _legend_current_items(fig)
         trace = go.Bar(name=act_name)
-        trace.update(legendgroup=act_name, showlegend=True,
-                     alignmentgroup=True, offsetgroup=act_name)
 
+        trace.update(legendgroup=act_name, 
+                     showlegend=showlegend,
+                     legendgrouptitle_text=set_legendgrouptitle,
+                     alignmentgroup=True, 
+                     offsetgroup=act_name)
+        set_legendgrouptitle = None
         # Init subplot row/col
         trace._subplot_row = 1
         trace._subplot_col = 1
@@ -640,8 +808,7 @@ def _plot_activities_into_fig(fig, df_acts: pd.DataFrame, df_acts_usel: pd.DataF
     # Add traces, layout and frames to figure
     fig.add_traces(trace_lst)
     fig.update_layout({'barmode': 'overlay',
-                       'legend': {'tracegroupgap': 0,
-                                  'title_text': ACTIVITY}
+                       'legend': {'tracegroupgap': 0}
                        })
     configure_axes(args, go.Bar, fig, orders)
 
@@ -649,7 +816,7 @@ def _plot_activities_into_fig(fig, df_acts: pd.DataFrame, df_acts_usel: pd.DataF
 
 
 def contingency_events(df_acts=None, df_devs=None, con_tab=None, scale='linear', height=350,
-                       act_order='alphabetical', dev_order='alphabetical', distributed=False
+                       act_order='alphabetical', dev_order='alphabetical', n_jobs=1,
                        ) -> plotly.graph_objects.Figure:
     """
     """
@@ -660,7 +827,7 @@ def contingency_events(df_acts=None, df_devs=None, con_tab=None, scale='linear',
     if con_tab is not None:
         df_con = con_tab.copy()    # :pd.DataFrame
     else:
-        df_con = contingency_table_events(df_devs, df_acts)
+        df_con = contingency_table_events(df_devs, df_acts, n_jobs=n_jobs)
 
     df_con = df_con.set_index('device')
 
@@ -694,7 +861,7 @@ def contingency_events(df_acts=None, df_devs=None, con_tab=None, scale='linear',
 
 
 def contingency_states(df_acts=None, df_devs=None, con_tab=None, scale='linear', height=350,
-                       act_order='alphabetical', dev_order='alphabetical', distributed=False
+                       act_order='alphabetical', dev_order='alphabetical', n_jobs=1
                        ) -> plotly.graph_objects.Figure:
     """
     """
@@ -704,8 +871,9 @@ def contingency_states(df_acts=None, df_devs=None, con_tab=None, scale='linear',
     # get the list of cross tabulations per t_window
     if con_tab is not None:
         df_con = con_tab.copy()    # :pd.DataFrame
+        df_con.index.name = DEVICE
     else:
-        df_con = contingency_table_states(df_devs, df_acts, distributed=distributed)
+        df_con = contingency_table_states(df_devs, df_acts, n_jobs=n_jobs)
 
     # Determine device and activity labels order
     act_order = activity_order_by(df_acts, rule=act_order)
@@ -762,3 +930,10 @@ def contingency_states(df_acts=None, df_devs=None, con_tab=None, scale='linear',
     _style_colorbar(fig, cbarlabel)
 
     return fig
+
+def _legend_current_items(fig):
+    legend_current_items = [] 
+    for trace in fig.data:
+        if isinstance(trace, go.Bar):
+            legend_current_items.append(trace.legendgroup)
+    return legend_current_items

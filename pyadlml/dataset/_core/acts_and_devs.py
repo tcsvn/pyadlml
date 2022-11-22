@@ -2,17 +2,16 @@
 this file is to bring datasets into specific representations
 """
 import pandas as pd
-import dask.dataframe as dd
 from pyadlml.util import get_parallel, get_npartitions
-from pyadlml.dataset import TIME, ACTIVITY, START_TIME, END_TIME
+from pyadlml.constants import TIME, ACTIVITY, START_TIME, END_TIME
 
-def label_data(df: pd.DataFrame, df_acts: pd.DataFrame, idle=False, n_jobs=1, inplace=True):
+def label_data(df_devs: pd.DataFrame, df_acts: pd.DataFrame, idle=False, n_jobs=1, inplace=True):
     """
     Label a dataframe with corresponding activities based on a time-index.
 
     Parameters
     ----------
-    df : pd.DataFrame
+    df_devs : pd.DataFrame
         some data representation that possesses a column 'time' including timestamps.
     df_acts : pd.DataFrame
         a datasets activities. TODO
@@ -42,11 +41,11 @@ def label_data(df: pd.DataFrame, df_acts: pd.DataFrame, idle=False, n_jobs=1, in
     -------
     df : pd.DataFrame
     """
-    df = df.copy()
-    df[ACTIVITY] = -1
+    df_devs = df_devs.copy()
+    df_devs[ACTIVITY] = -1
 
     if n_jobs == 1:
-        df[ACTIVITY] = df[TIME].apply(
+        df_devs[ACTIVITY] = df_devs[TIME].apply(
                     _map_timestamp2activity,
                     df_act=df_acts,
                     idle=idle)
@@ -55,31 +54,38 @@ def label_data(df: pd.DataFrame, df_acts: pd.DataFrame, idle=False, n_jobs=1, in
         if n_jobs == -1 or n_jobs > N:
             n_jobs = N
 
+        import dask.dataframe as dd
         #ddf_activities = dd.from_pandas(df_activities, npartitions=get_npartitions())
         # compute with dask in parallel
-        df[ACTIVITY] = dd.from_pandas(df[TIME], npartitions=n_jobs).\
+        df_devs[ACTIVITY] = dd.from_pandas(df_devs[TIME], npartitions=n_jobs).\
                     map_partitions( # apply lambda functions on each partition
                         lambda df: df.apply(
                             _map_timestamp2activity,
                             df_act=df_acts,
                             idle=idle)).\
                     compute(scheduler='processes')
-    return df
+    return df_devs
 
 
 
 def _map_timestamp2activity(timestamp, df_act, idle):
-    """ given a timestamp map the timestamp to an activity in df_act
-    :param time:
-        timestamp
-        2008-02-26 00:39:25
-    :param df_act: 
+    """ Map the given timestamp map to an activity in df_act
 
-    :return:
+    Parameters
+    ----------
+    timestamp : pd.Timestamp
+        E.g timestamp 2008-02-26 00:39:25
+    df_act : pd.DataFrame
+        An activity dataframe
+    idle : boolean
+        Whether to map gaps to NAT or idle
+
+    Returns
+    -------
         label of the activity
     """
 
-    # select activity intervalls that the timestamp falls into
+    # select activity intervals that the timestamp falls into
     mask = (df_act[START_TIME] <= timestamp) & (timestamp <= df_act[END_TIME])
     matches = df_act[mask]
     match_amount = len(matches.index)
@@ -91,7 +97,7 @@ def _map_timestamp2activity(timestamp, df_act, idle):
         return pd.NaT
 
     # 2. case single row matches
-    elif match_amount  == 1:
+    elif match_amount == 1:
         return matches.activity.values[0]
     
     # 3. case multiple rows

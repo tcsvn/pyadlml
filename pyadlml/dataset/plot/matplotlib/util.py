@@ -1,15 +1,16 @@
 import functools
 import numpy as np
+import matplotlib.pyplot as plt
+from pathlib import Path
 from matplotlib.dates import AutoDateLocator
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-import matplotlib.pyplot as plt
 import matplotlib
 from scipy.stats.kde import gaussian_kde
 from sklearn.preprocessing import minmax_scale
 import copy
 from matplotlib.colors import LogNorm
 import pandas as pd
-from pyadlml.dataset import TIME, END_TIME, START_TIME, DEVICE, VAL, BOOL, CAT
+from pyadlml.constants import TIME, END_TIME, START_TIME, DEVICE, VALUE, BOOL, CAT
 from pyadlml.dataset.util import unitsfromdaystart
 from pyadlml.util import get_sequential_color, get_diverging_color
 import matplotlib.ticker as ticker
@@ -353,12 +354,12 @@ def ridgeline(data, overlap=0, fill=True, labels=None, n_points=150, dist_scale=
 def savefig(fig, file_path):
     """ saves figure to folder and if folder doesn't exist create one
     """
-    import matplotlib.pyplot as plt
-    import os
-    folder_path = file_path.rsplit('/', 1)[0]
-    if not os.path.isdir(folder_path):
-        os.makedirs(folder_path)
-    plt.savefig(file_path)
+
+    fp = Path(file_path).resolve()
+    folder = fp.parent
+    if not folder.is_dir():
+        folder.mkdir(parents=True, exist_ok=True)
+    plt.savefig(fp)
 
 
 """ --------------------------------------------------------------------------
@@ -821,16 +822,16 @@ def create_todo(df_devs: pd.DataFrame, devs, color_dev_on: str, color_dev_off: s
         if not df_devs_binary.empty:
             if dev in df_devs_binary:
                 # create on-off color coding for each device
-                dev_df[VAL].replace(True, color_dev_on, inplace=True)
-                dev_df[VAL].replace(False, color_dev_off, inplace=True)
-                dev_colors.append(dev_df[VAL].values)
+                dev_df[VALUE].replace(True, color_dev_on, inplace=True)
+                dev_df[VALUE].replace(False, color_dev_off, inplace=True)
+                dev_colors.append(dev_df[VALUE].values)
             else:
                 dev_colors.append(['grey'])
         else:
             # create on-off color coding for each device
-            dev_df[VAL].replace(True, color_dev_on, inplace=True)
-            dev_df[VAL].replace(False, color_dev_off, inplace=True)
-            dev_colors.append(dev_df[VAL].values)
+            dev_df[VALUE].replace(True, color_dev_on, inplace=True)
+            dev_df[VALUE].replace(False, color_dev_off, inplace=True)
+            dev_colors.append(dev_df[VALUE].values)
     return data_lst, dev_colors
 
 
@@ -1160,95 +1161,7 @@ def _only_dev(word):
     return word.split(':')[0]
 
 
-def format_device_labels(labels: list, dtypes: dict, sort='alphabetical',
-                         boolean_state=False, categorical_state=False, custom_rule=None):
-    """ Sorts devices after a given rule. Format the devices labels and produces
-    an ordering to sort values given the labels.
 
-    Parameters
-    ----------
-    labels : nd array
-        List of labels, where boolean devices have the format [dev_bool_x:on, dev_bool_x:off'] and
-        categorical devices where format [dev_cat:subcat1, ..., dev_cat:sub_cat3]
-    dtypes : dict
-        The dtypes of the devices
-    sort : str of {'alphabetical', 'areas', 'custom'}, default='alphabetical'
-        The criteria with which the devices are sorted.
-    boolean_state : bool, default=False
-        Indicates whether the boolean devices are split into
-
-    custom_rule : func, default=None
-
-
-    Returns
-    -------
-    lst : list
-        Result list of correctly formatted device names
-    new_order : list
-        The indices that have to be reordered
-    """
-    assert sort in ['alphabetical', 'areas', 'custom']
-    DELIM = ':'
-    ON = ':on'
-    OFF = ':off'
-    if isinstance(labels, list):
-        labels = np.array(labels, dtype='object')
-
-    def format_dev_and_state(word):
-        return ''.join(' - ' if c == DELIM else c for c in word)
-
-    def only_state(word):
-        return word.split(DELIM)[1]
-
-    def only_dev(word):
-        return word.split(DELIM)[0]
-
-    # presort devices
-    devices = np.concatenate(list(dtypes.values()))
-    if sort == 'alphabetical' and custom_rule is None:
-        devices = np.sort(devices)
-    elif sort == 'areas' and custom_rule is None:
-        raise NotImplementedError
-    elif sort == 'custom' and custom_rule is not None:
-        devices = custom_rule(devices)
-
-    # rename devices
-    new_labels = np.zeros((len(labels)), dtype=object)
-    new_order = np.zeros((len(labels)), dtype=np.int32)
-
-    dev_idx = 0
-    i = 0
-    while i < len(new_labels):
-        dev = devices[dev_idx]
-        dev_idx += 1
-        if boolean_state and dev in dtypes[BOOL]:
-            idx_on = np.where(labels == (dev + ON))[0][0]
-            idx_off = np.where(labels == (dev + OFF))[0][0]
-
-            new_labels[i] = format_dev_and_state(labels[idx_off])
-            new_labels[i+1] = only_state(labels[idx_on])
-            new_order[i] = idx_off
-            new_order[i+1] = idx_on
-            i += 2
-        elif categorical_state and dev in dtypes[CAT]:
-            mask = [lbl.split(DELIM)[0] == dev for lbl in labels]
-            idxs = np.where(mask)[0]
-            cats = labels[mask]
-            cats_new_order = np.argsort(cats)
-            for j in range(len(cats)):
-                if j == 0:
-                    new_labels[i] = format_dev_and_state(cats[cats_new_order[j]])
-                else:
-                    new_labels[i] = "- " + only_state(cats[cats_new_order[j]])
-                new_order[i] = idxs[cats_new_order[j]]
-                i += 1
-        else:
-            idx = np.where(labels == dev)[0]
-            new_labels[i] = dev
-            new_order[i] = idx
-            i += 1
-
-    return new_labels, new_order
 
 def plot_grid(fig, ax, start_time, end_time):
     """ In a plot that spans a time. Plot depending on the date range a grid.

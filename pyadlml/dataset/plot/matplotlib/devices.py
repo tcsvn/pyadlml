@@ -5,27 +5,29 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 
 from pyadlml.stats import device_state_fractions
-from pyadlml.dataset import DEVICE, TIME, VAL, BOOL, CAT, START_TIME, END_TIME, NUM
+from pyadlml.constants import DEVICE, TIME, VALUE, BOOL, CAT, START_TIME, END_TIME, NUM
 from pyadlml.dataset.stats.devices import state_cross_correlation as stat_scc, \
     inter_event_intervals as stat_iei, event_cross_correlogram as stat_event_cc, events_one_day, \
     event_count as stats_event_count, event_cross_correlogram2
 
-from pyadlml.dataset.plot.util import heatmap_square, func_formatter_seconds2time, \
+from .util import heatmap_square, func_formatter_seconds2time, \
     heatmap, annotate_heatmap, savefig, _num_bars_2_figsize, save_fig, \
     _num_items_2_heatmap_square_figsize, _num_boxes_2_figsize, \
     _num_items_2_heatmap_one_day_figsize, _num_items_2_heatmap_square_figsize_ver2, LOG, xaxis_format_one_day, \
     sort_devices, add_top_axis_time_format, map_time_to_numeric, plot_cc, create_todo, xaxis_format_time, \
-    dev_raster_data_gen, xaxis_format_time2, format_device_labels, get_qualitative_cmap, plot_grid
+    dev_raster_data_gen, xaxis_format_time2, get_qualitative_cmap, plot_grid
 
-from pyadlml.dataset._core.devices import _is_dev_rep2, device_rep1_2_rep2, split_devices_binary, contains_non_binary
+from pyadlml.dataset.plotly.util import format_device_labels
+from pyadlml.dataset._core.devices import _is_dev_rep2, device_events_to_states, split_devices_binary, contains_non_binary
 from pyadlml.dataset.stats.util import comp_tds_sums, comp_tds_sums_mean, comp_tds_sums_median
-from pyadlml.dataset.util import select_timespan, infer_dtypes
+from pyadlml.dataset.util import select_timespan, infer_dtypes, str_to_timestamp, device_order_by
 from pyadlml.util import get_sequential_color, get_secondary_color, get_primary_color, get_diverging_color
 
 
 @save_fig
-def inter_event_intervals(df_devices=None, inter_event_intervals=None, nr_merged_events_at=[], n_bins=50,
-                          figsize=(10, 6), color=None, file_path=None):
+def inter_event_intervals(df_devices=None, inter_event_intervals=None, scale='log',
+                          nr_merged_events_at=[], n_bins=50, figsize=(10, 6),
+                          color=None, file_path=None):
     """
     Plot a histogram of the differences between succeeding device triggers.
 
@@ -76,8 +78,8 @@ def inter_event_intervals(df_devices=None, inter_event_intervals=None, nr_merged
     ylabel='count'
     xlabel_top = 'time'
     ax1label = '$\Delta t$ count'
-    ax3label= 'imputed events'
-    xlabel = 'log seconds'
+    ax3label = 'imputed events'
+    xlabel = 'log seconds' if scale == 'log' else 'seconds'
     color = (get_primary_color() if color is None else color)
     color2 = get_secondary_color()
 
@@ -104,7 +106,8 @@ def inter_event_intervals(df_devices=None, inter_event_intervals=None, nr_merged
 
     # plots
     fig, ax = plt.subplots(figsize=figsize)
-    plt.xscale(LOG)
+    if scale == 'log':
+        plt.xscale(LOG)
     ax.hist(X, bins=bins, label=ax1label, color=color)
     ax.set_ylabel(ylabel)
     ax.set_xlabel(xlabel)
@@ -116,7 +119,7 @@ def inter_event_intervals(df_devices=None, inter_event_intervals=None, nr_merged
         ax2.set_ylabel('%')
         ax2.set_xscale(LOG)
         ax2.plot(imp_frac_x, imp_frac_y, label=ax3label, color=color2, marker='.')
-        ax2.set_ylim([0,1])
+        ax2.set_ylim([0, 1])
 
     add_top_axis_time_format(ax)
 
@@ -134,7 +137,8 @@ def inter_event_intervals(df_devices=None, inter_event_intervals=None, nr_merged
 
 
 @save_fig
-def state_boxplot(df_devs, lst_devs=None, binary_state='on', categories=False, order='mean', figsize=None, file_path=None):
+def state_boxplot(df_devs, binary_state='on', categories=False, order='mean',
+                  scale='log', figsize=None, file_path=None):
     """
     generates a boxplot for all devices.
 
@@ -143,11 +147,8 @@ def state_boxplot(df_devs, lst_devs=None, binary_state='on', categories=False, o
     df_devs : pd.DataFrame, optional
         recorded devices from a dataset. Fore more information refer to the
         :ref:`user guide<device_dataframe>`.
-    lst_devs : lst of str, optional
-        A list of devices that are included in the statistic. The list can be a
-        subset of the recorded activities or contain activities that are not recorded.
-    figsize : (float, float), default: None
-        width, height in inches. If not provided, the figsize is inferred by automatically.
+    figsize : (int, int), default=None
+        Width, height in inches. If not provided, the figsize is inferred automatically.
     binary_state : str one of {"on", "off"}, default='on'
         Determines which of the state is choosen for a boxplot for binary devices
     categories : bool, default=False
@@ -163,8 +164,8 @@ def state_boxplot(df_devs, lst_devs=None, binary_state='on', categories=False, o
     >>> from pyadlml.dataset import fetch_amsterdam
     >>> data = fetch_amsterdam()
 
-    >>> from pyadlml.plot import plot_device_states_boxplot
-    >>> plot_device_states_boxplot(data.df_devices)
+    >>> from pyadlml.plot import plot_device_boxplot
+    >>> plot_device_boxplot(data.df_devices)
 
     .. image:: ../_static/images/plots/dev_bp_dur.png
        :height: 300px
@@ -194,19 +195,10 @@ def state_boxplot(df_devs, lst_devs=None, binary_state='on', categories=False, o
     for i, device in enumerate(devices):
         dat[i] = df.loc[df[DEVICE] == device, 'td'].dt.seconds.to_numpy()
 
-    if lst_devs is not None:
-        raise NotImplementedError
-        #nan_devs = list(set(lst_devs).difference(set(list(devices))))
-        #nan_devs.sort(reverse=True)
-        #for dev in nan_devs:
-        #    dat.append([])
-        #devices = devices + nan_devs
-
 
     new_devices, new_order = format_device_labels(devices, infer_dtypes(df_devs), categorical_state=True)
     devices = np.flip(new_devices) # boxplots plot in reverse order
     dat = dat[np.flip(new_order)]
-
 
     # plotting
     fig, ax = plt.subplots(figsize=figsize)
@@ -223,7 +215,7 @@ def state_boxplot(df_devs, lst_devs=None, binary_state='on', categories=False, o
 
 
 @save_fig
-def event_density_one_day(df_devices=None, lst_devs=None, df_tod=None, dt='1h',
+def event_density_one_day(df_devices=None, df_tod=None, dt='1h',
                           figsize=None, cmap=None, file_path=None):
     """
     Plots the heatmap for one day where all the device triggers are shown
@@ -233,9 +225,6 @@ def event_density_one_day(df_devices=None, lst_devs=None, df_tod=None, dt='1h',
     df_devices : pd.DataFrame, optional
         recorded devices from a dataset. Fore more information refer to the
         :ref:`user guide<device_dataframe>`.
-    lst_devs : lst of str, optional
-        A list of devices that are included in the statistic. The list can be a
-        subset of the recorded activities or contain activities that are not recorded.
     df_tod : pd.DataFrame
         A precomputed transition table. If the *df_trans* parameter is given, parameters
         *df_acts* and *lst_acts* are ignored. The transition table can be computed
@@ -275,7 +264,7 @@ def event_density_one_day(df_devices=None, lst_devs=None, df_tod=None, dt='1h',
     cbarlabel = 'counts'
 
     if df_tod is None:
-        df = events_one_day(df_devices.copy(), lst_devs=lst_devs, dt=dt)
+        df = events_one_day(df_devices.copy(), dt=dt)
     else:
         df = df_tod
 
@@ -342,7 +331,7 @@ def event_correlogram(df_devs=None, lst_devs=None, df_tcorr=None, t_window='5s',
 
     Examples
     --------
-    >>> from pyadlml.plots import state
+    >>> from pyadlml.plot import plot_device_event_correlogram
     >>> plot_device_event_correlogram(data.df_devices, dt='1h')
 
     .. image:: ../_static/images/plots/dev_hm_trigger_one_day.png
@@ -397,8 +386,8 @@ def event_correlogram(df_devs=None, lst_devs=None, df_tcorr=None, t_window='5s',
 
 
 @save_fig
-def state_cross_correlation(df_devs=None, lst_devs=None, df_dur_corr=None, figsize=None,
-                            numbers=None, file_path=None):
+def state_similarity(df_devs=None, df_state_sim=None, figsize=None, order='alphabetical',
+                     numbers=None, file_path=None):
     """
     Plots the cross correlation between the device signals
 
@@ -407,10 +396,7 @@ def state_cross_correlation(df_devs=None, lst_devs=None, df_dur_corr=None, figsi
     df_devs : pd.DataFrame, optional
         recorded devices from a dataset. Fore more information refer to the
         :ref:`user guide<device_dataframe>`.
-    lst_devs : lst of str, optional
-        A list of devices that are included in the statistic. The list can be a
-        subset of the recorded activities or contain activities that are not recorded.
-    df_tcorr : pd.DataFrame
+    df_state_sim : pd.DataFrame
         A precomputed correlation table. If the *df_tcorr* parameter is given, parameters
         *df_devs* and *lst_devs* are ignored. The transition table can be computed
         in :ref:`stats <stats_devs_tcorr>`.
@@ -424,8 +410,8 @@ def state_cross_correlation(df_devs=None, lst_devs=None, df_dur_corr=None, figsi
 
     Examples
     --------
-    >>> from pyadlml.plot import plot_dev_hm_similarity
-    >>> plot_dev_hm_similarity(data.df_devs)
+    >>> from pyadlml.plot import plot_device_state_similarity
+    >>> plot_device_state_similarity(data.df_devs)
 
     .. image:: ../_static/images/plots/dev_hm_dur_cor.png
        :height: 400px
@@ -435,23 +421,21 @@ def state_cross_correlation(df_devs=None, lst_devs=None, df_dur_corr=None, figsi
        :align: center
 
 
-
-
     Returns
     -------
     res : fig or None
         Either a figure if file_path is not specified or nothing.
     """
-    assert not (df_devs is None and df_dur_corr is None)
+    assert not (df_devs is None and df_state_sim is None)
 
-    title = 'Devices cross-correlation'
+    title = 'State similarity'
     cmap = 'RdBu'
     cbarlabel = 'similarity'
     
-    if df_dur_corr is None:
-        ct = stat_scc(df_devs, lst_devs=lst_devs)
+    if df_state_sim is None:
+        ct = stat_scc(df_devs)
     else:
-        ct = df_dur_corr
+        ct = df_state_sim
     ct = ct.replace(pd.NA, np.inf)
     values = ct.values.T
     devs = ct.index
@@ -483,7 +467,7 @@ def state_cross_correlation(df_devs=None, lst_devs=None, df_dur_corr=None, figsi
     return fig
 
 @save_fig
-def state_fractions(df_devs=None, lst_devs=None, df_states=None, figsize=None,
+def state_fractions(df_devs=None, df_states=None, figsize=None,
                     color=None, color_sec=None, order='frac_on', file_path=None):
     """
     Plot bars the on/off fraction of all devices
@@ -493,9 +477,6 @@ def state_fractions(df_devs=None, lst_devs=None, df_states=None, figsize=None,
     df_devs : pd.DataFrame, optional
         recorded devices from a dataset. Fore more information refer to the
         :ref:`user guide<device_dataframe>`.
-    lst_devs : lst of str, optional
-        A list of devices that are included in the statistic. The list can be a
-        subset of the recorded activities or contain activities that are not recorded.
     df_states : pd.DataFrame
         A precomputed correlation table. If the *df_tcorr* parameter is given, parameters
         *df_devs* and *lst_devs* are ignored. The transition table can be computed
@@ -532,7 +513,7 @@ def state_fractions(df_devs=None, lst_devs=None, df_states=None, figsize=None,
         Either a figure if file_path is not specified or nothing.
     """
     assert not (df_devs is None and df_states is None)
-    assert order in ['frac_on', 'name', 'area']
+    assert order in ['frac_on', 'alphabetical', 'area']
 
     title = 'Device state fractions'
     xlabel ='fraction per state'
@@ -544,7 +525,7 @@ def state_fractions(df_devs=None, lst_devs=None, df_states=None, figsize=None,
     color2 = (get_secondary_color()if color_sec is None else color_sec)
 
     if df_states is None:
-        df = device_state_fractions(df_devs, lst_devs=lst_devs)
+        df = device_state_fractions(df_devs)
     else:
         df = df_states
 
@@ -565,7 +546,7 @@ def state_fractions(df_devs=None, lst_devs=None, df_states=None, figsize=None,
 
     # plot boolean devices
     df_bool = df[df[DEVICE].isin(dtypes[BOOL])].copy().sort_values(by=DEVICE)
-    off_values = df_bool.loc[(df_bool[VAL] == False), 'frac'].values
+    off_values = df_bool.loc[(df_bool[VALUE] == False), 'frac'].values
     plt.barh(dtypes[BOOL], off_values, label=off_label, color=color)
     # careful: notice "bottom" parameter became "left"
     plt.barh(dtypes[BOOL], (1-off_values), left=off_values, label=on_label, color=color2)
@@ -584,11 +565,11 @@ def state_fractions(df_devs=None, lst_devs=None, df_states=None, figsize=None,
     # plot categorical devices
     cat_centers = []
     for j, dev in enumerate(dtypes[CAT]):
-        categories = df.loc[(df[DEVICE] == dev), VAL].copy().sort_values().values
+        categories = df.loc[(df[DEVICE] == dev), VALUE].copy().sort_values().values
         cum_sum = 0
         cat_centers.append([])
         for i, cat in enumerate(categories):
-            value = df.loc[(df[DEVICE] == dev) & (df[VAL] == cat), 'frac'].values[0]
+            value = df.loc[(df[DEVICE] == dev) & (df[VALUE] == cat), 'frac'].values[0]
             # save the center in bar plot as well as the value for setting
             # the annotations later
             cat_centers[j].append((cum_sum + value/2, value))
@@ -602,7 +583,7 @@ def state_fractions(df_devs=None, lst_devs=None, df_states=None, figsize=None,
             ax.text(center, y, '{:.4f}'.format(text), ha='center', va='center', color='white')
 
     if dtypes[CAT]:
-        ax.legend(bbox_to_anchor=(1,1))
+        ax.legend(bbox_to_anchor=(1, 1))
     else:
         if first_number_left:
             ax.legend(ncol=2, bbox_to_anchor=(0, 1),
@@ -620,8 +601,8 @@ def state_fractions(df_devs=None, lst_devs=None, df_states=None, figsize=None,
 
 
 @save_fig
-def event_count(df_devs=None, lst_devs=None, df_tc=None, figsize=None,
-                y_scale='linear', color=None, order='count', file_path=None):
+def event_count(df_devs=None, df_tc=None, figsize=None,
+                scale='linear', color=None, order='count', file_path=None):
     """
     bar chart displaying how often activities are occurring
 
@@ -630,14 +611,11 @@ def event_count(df_devs=None, lst_devs=None, df_tc=None, figsize=None,
     df_devs : pd.DataFrame, optional
         recorded devices from a dataset. Fore more information refer to the
         :ref:`user guide<device_dataframe>`.
-    lst_devs : lst of str, optional
-        A list of devices that are included in the statistic. The list can be a
-        subset of the recorded activities or contain activities that are not recorded.
     df_tc : pd.DataFrame
         A precomputed correlation table. If the *df_tcorr* parameter is given, parameters
         *df_devs* and *lst_devs* are ignored. The transition table can be computed
         in :ref:`stats <stats_devs_tcorr>`.
-    y_scale : {"log", "linear"}, default: None
+    scale : {"log", "linear"}, default: None
         The axis scale type to apply.
     figsize : (float, float), default: None
         width, height in inches. If not provided, the figsize is inferred by automatically.
@@ -668,14 +646,14 @@ def event_count(df_devs=None, lst_devs=None, df_tc=None, figsize=None,
         Either a figure if file_path is not specified or nothing.
     """
     assert not (df_devs is None and df_tc is None)
-    assert y_scale in ['log', 'linear']
+    assert scale in ['log', 'linear']
     assert order in ['alphabetic', 'count', 'room']
     
     title = 'Device events'
     x_label = 'count'
     df_col = 'event_count'
 
-    df = (stats_event_count(df_devs.copy(), lst_devs=lst_devs) if df_tc is None else df_tc)
+    df = (stats_event_count(df_devs.copy()) if df_tc is None else df_tc)
     num_dev = len(df)
     figsize = (_num_bars_2_figsize(num_dev) if figsize is None else figsize)
     color = (get_primary_color() if color is None else color)
@@ -690,14 +668,15 @@ def event_count(df_devs=None, lst_devs=None, df_tc=None, figsize=None,
     plt.xlabel(x_label)
     ax.barh(df[DEVICE], df[df_col], color=color)
 
-    if y_scale == LOG:
+    if scale == LOG:
         ax.set_xscale(LOG)
 
     return fig
 
 
 @save_fig
-def event_raster(df_devices, figsize=(10, 6), time_selected=[None, None], file_path=None):
+def event_raster(df_devices, figsize=(10, 6), start_time=None, end_time=None,
+                 order='alphabetical', file_path=None):
     """ Plots an event raster
 
     """
@@ -709,13 +688,20 @@ def event_raster(df_devices, figsize=(10, 6), time_selected=[None, None], file_p
                         .sort_values(by=TIME)\
                         .reset_index(drop=True)
 
-    start_time = pd.Timestamp(time_selected[0]) if (time_selected[0] is not None) else None
-    end_time = pd.Timestamp(time_selected[1]) if time_selected[1] is not None else None
-    df_devs = select_timespan(df_devices=df_devs, start_time=start_time, end_time=end_time)
+    start_time = str_to_timestamp(start_time) if (start_time is not None) else None
+    end_time = str_to_timestamp(end_time) if (end_time is not None) else None
+    df_devs = select_timespan(df_devs=df_devs, start_time=start_time, end_time=end_time)
 
-    devs = df_devs[DEVICE].unique()
+    if start_time is None:
+        start_time = df_devs[TIME].iloc[0]
+    if end_time is None:
+        end_time = df_devs[TIME].iloc[-1]
 
-    df_devs['num_time'], start_time, end_time = map_time_to_numeric(df_devs[TIME])
+    devs = device_order_by(df_devs, rule=order)
+
+    df_devs['num_time'], start_time, end_time = map_time_to_numeric(
+        df_devs[TIME], start_time=start_time, end_time=end_time)
+
     data_lst = dev_raster_data_gen(df_devs, devs)
 
     # create list of lists, where each list corresponds to an activity with tuples of start_time and time_length
@@ -726,6 +712,8 @@ def event_raster(df_devices, figsize=(10, 6), time_selected=[None, None], file_p
     ax.set_yticks(np.arange(len(devs)))
     ax.set_yticklabels(devs.tolist())
     ax.set_ylabel(y_label)
+    ax.set_xlim([0, 1])
+
     xaxis_format_time2(fig, ax, start_time, end_time)
 
     return fig
@@ -795,8 +783,8 @@ def event_cross_correlogram(df_devices=None, corr_data=(None, None, None), bin_s
 
 
 @save_fig
-def plot_device_states(df_devices, time_selected=[None, None], figsize=(20,8),
-                               grid=False, file_path=""):
+def states(df_devices, start_time=None,end_time=None, figsize=(20, 8),
+           order='alphabetical', grid=False, file_path=""):
     """ Plots the devices events as raster combined with the activites over a timespan
 
     Parameters
@@ -815,11 +803,9 @@ def plot_device_states(df_devices, time_selected=[None, None], figsize=(20,8),
                         .sort_values(by=TIME)\
                         .reset_index(drop=True)
 
-
-    start_time = pd.Timestamp(time_selected[0]) if (time_selected[0] is not None) else None
-    end_time = pd.Timestamp(time_selected[1]) if (time_selected[1] is not None) else None
-    df_devs = select_timespan(df_devices=df_devs, start_time=start_time, end_time=end_time,
-                              clip_activities=True)
+    start_time = str_to_timestamp(start_time) if (start_time is not None) else None
+    end_time = str_to_timestamp(end_time) if (end_time is not None) else None
+    df_devs = select_timespan(df_devs=df_devs, start_time=start_time, end_time=end_time)
 
     if start_time is None:
         start_time = df_devs[TIME].iloc[0]
@@ -840,6 +826,7 @@ def plot_device_states(df_devices, time_selected=[None, None], figsize=(20,8),
     ax.set_yticks(np.arange(len(devs), dtype=np.float32))
     ax.set_yticklabels(devs.tolist())
     ax.set_ylabel(ylabel)
+    ax.set_xlim([0, 1])
 
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, bbox_to_anchor=(1, 1), loc="upper left")
@@ -864,7 +851,7 @@ def _plot_device_states(ax, df_devs: pd.DataFrame, devs: list, start_time, end_t
 
     # do preprocessing
     dtypes = infer_dtypes(df_devs)
-    df_devs = device_rep1_2_rep2(df_devs, extrapolate_states=True, first_ts=start_time, last_ts=end_time)
+    df_devs = device_events_to_states(df_devs, extrapolate_states=True, st=start_time, et=end_time)
 
     df_devs['num_st'], _, _ = map_time_to_numeric(df_devs[START_TIME], start_time, end_time)
     df_devs['num_et'], _, _ = map_time_to_numeric(df_devs[END_TIME], start_time, end_time)
@@ -877,8 +864,8 @@ def _plot_device_states(ax, df_devs: pd.DataFrame, devs: list, start_time, end_t
     for i, dev in enumerate(devs):
         df = df_devs[df_devs[DEVICE] == dev].copy()
         if dev in dtypes[BOOL]:
-            tuples_off = df.loc[(df[VAL] == False), [col_bar_start, col_bar_len]].values.tolist()
-            tuples_on = df.loc[(df[VAL] == True), [col_bar_start, col_bar_len]].values.tolist()
+            tuples_off = df.loc[(df[VALUE] == False), [col_bar_start, col_bar_len]].values.tolist()
+            tuples_on = df.loc[(df[VALUE] == True), [col_bar_start, col_bar_len]].values.tolist()
 
             ax.broken_barh(tuples_off, (i-0.25, 0.5), facecolors=color_off, label=off_label)
             ax.broken_barh(tuples_on, (i-0.25, 0.5), facecolors=color_on, label=on_label)
@@ -889,14 +876,14 @@ def _plot_device_states(ax, df_devs: pd.DataFrame, devs: list, start_time, end_t
                 off_label, on_label = None, None
 
         elif dev in dtypes[CAT]:
-            categories = df.loc[df[DEVICE] == dev, VAL].unique()
+            categories = df.loc[df[DEVICE] == dev, VALUE].unique()
             for cat in categories:
-                values = df.loc[(df[VAL] == cat), [col_bar_start, col_bar_len]].values.tolist()
+                values = df.loc[(df[VALUE] == cat), [col_bar_start, col_bar_len]].values.tolist()
                 ax.broken_barh(values, (i-0.25, 0.5), facecolors=tab(j), label=dev + ' - ' + cat)
                 j += 1
 
         elif dev in dtypes[NUM]:
-            values = pd.to_numeric(df[VAL])
+            values = pd.to_numeric(df[VALUE])
             values = (values-values.min())/(values.max() - values.min())*0.5
             values = values + i - 0.25
             ax.plot(df['num_st'], values, color=color_num, linestyle='--', marker='o')

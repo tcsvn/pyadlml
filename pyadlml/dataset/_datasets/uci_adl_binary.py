@@ -1,20 +1,99 @@
-import pandas as pd
-from pyadlml.dataset.activities import START_TIME, END_TIME, ACTIVITY, correct_activities
-from pyadlml.dataset.devices import DEVICE, correct_devices
-from pyadlml.dataset.obj import Data
-from pyadlml.dataset.io import fetch_handler as _fetch_handler
 import os
-
+from pathlib import Path
+import pandas as pd
+from pyadlml.constants import ACTIVITY, DEVICE, END_TIME, START_TIME
+from pyadlml.dataset._core.activities import correct_activities
+from pyadlml.dataset._core.devices import device_boolean_on_states_to_events
+from pyadlml.dataset.io.downloader import MegaDownloader
+from pyadlml.dataset.io.remote import DataFetcher
 
 UCI_ADL_BINARY_URL = 'https://mega.nz/file/AQIgDQJD#oximAQFjexTKwNP3WYzlPnOGew06YSQ2ef85vvWGN94'
 UCI_ADL_BINARY_FILENAME = 'uci_adl_binary.zip'
+ORD_A = 'OrdonezA'
+ORD_B = 'OrdonezB'
 
 
-def fetch_uci_adl_binary(keep_original=True, cache=True, retain_corrections=False, subject='OrdonezA'):
+class UCIFetcher(DataFetcher):
+    def __init__(self, *args, **kwargs):
+
+        downloader = MegaDownloader(
+            url=UCI_ADL_BINARY_URL,
+            fn=UCI_ADL_BINARY_FILENAME,
+            url_cleaned=None,
+            fn_cleaned=None,
+        )
+
+        super().__init__(
+            dataset_name='amsterdam',
+            downloader=downloader,
+            correct_activities=True,
+            correct_devices=True
+        )
+
+    def _correct_activities(self, retain_corrections, **kwargs):
+        ident = kwargs.get('ident')
+        assert ident is not None, 'blablabla'
+        # manual activity correction for OrdonezB
+        if ident == ORD_B:
+            # the activity grooming is often overlapped by sleeping
+            # Since grooming is more important make it the dominant activity (opinionated)
+            df_act, correction_act = correct_activities(df_act, excepts=['Grooming'], retain_corrections=retain_corrections)
+
+        elif ident == ORD_A:
+            # Manually replace 3 rows where START_TIME > END_TIME in the activity files
+            # 72 "2011-12-01 19:28:51  2011-12-01 16:29:59  Toileting"
+            # to "2011-12-01 19:28:51  2011-19-01 16:29:59  Toileting"
+            # 81 "2011-12-02 12:20:41  2011-12-01 10:20:59  Grooming"
+            # to "2011-12-02 12:20:41  2011-12-01 12:20:59  Grooming"
+            # 83 "2011-12-02 12:27:47  2011-12-01 11:35:49  Breakfast"
+            # to "2011-12-02 12:27:47  2011-12-01 12:35:49  Breakfast"
+            df_act.iat[69, 1] = pd.Timestamp('2011-12-01 19:29:59')
+            df_act.iat[78, 1] = pd.Timestamp('2011-12-02 12:20:59')
+            df_act.iat[80, 1] = pd.Timestamp('2011-12-02 12:35:49')
+
+            df_act, correction_act = correct_activities(df_act, retain_corrections=retain_corrections)
+
+        return df_act, correction_act
+
+
+    def load_data(self, folder_path: Path, ident):
+        assert ident in [ORD_A, ORD_B]
+
+        # fix path and Ordonez B activity file
+        sub_dev_file = folder_path.joinpath('{}_Sensors.txt'.format(ident))
+        if ident == ORD_B:
+            fix_OrdonezB_ADLS(folder_path.joinpath('OrdonezB_ADLs.txt'))
+            sub_act_file = folder_path.joinpath('{}_ADLs_corr.txt'.format(ident))
+        else:
+            sub_act_file = folder_path.joinpath('{}_ADLs.txt'.format(ident))
+
+        # load activities and devices
+        df_act = _load_activities(sub_act_file)
+        df_dev, df_areas = _load_devices(sub_dev_file)
+        df_dev = device_boolean_on_states_to_events(df_dev)
+
+        lst_act = df_act[ACTIVITY].unique()
+        lst_dev = df_dev[DEVICE].unique()
+
+        return dict(
+            activities=df_act,
+            devices=df_dev,
+            activity_list=lst_act,
+            device_list=lst_dev,
+            device2area=df_areas
+        )
+
+
+
+
+def fetch_uci_adl_binary(subject='OrdonezA', keep_original=True, cache=True,
+                         retain_corrections=False, folder_path=None) -> dict:
     """
 
     Parameters
     ----------
+    subject : str of {'OrdonezA', 'OrdonezB'}, default='OrdonezA'
+        decides which dataset of the two houses is loaded.
     keep_original : bool, default=True
         Determines whether the original dataset is deleted after downloading
         or kept on the hard drive.
@@ -25,30 +104,14 @@ def fetch_uci_adl_binary(keep_original=True, cache=True, retain_corrections=Fals
         When set to *true* data points that are changed or dropped during preprocessing
         are listed in the respective attributes of the data object.  Fore more information
         about the attributes refer to the :ref:`user guide <error_correction>`.
-    subject : str of {'OrdonezA', 'OrdonezB'}, default='OrdonezA'
-        decides which dataset of the two houses is loaded.
+
 
     Returns
     -------
     data : object
     """
-    assert subject in ['OrdonezA', 'OrdonezB']
-    dataset_name = 'uci_adl_binary'
-
-    def load_uci_adl_binary(folder_path):
-        sub_dev_file = os.path.join(folder_path, '{}_Sensors.txt'.format(subject))
-        if subject == 'OrdonezB':
-            fix_OrdonezB_ADLS(os.path.join(folder_path, 'OrdonezB_ADLs.txt'))
-            sub_act_file = os.path.join(folder_path, '{}_ADLs_corr.txt'.format(subject))
-        else:
-            sub_act_file = os.path.join(folder_path, '{}_ADLs.txt'.format(subject))
-
-        return load(sub_dev_file, sub_act_file, retain_corrections, subject)
-
-    data = _fetch_handler(keep_original, cache, dataset_name,
-                        UCI_ADL_BINARY_FILENAME, UCI_ADL_BINARY_URL,
-                        load_uci_adl_binary, data_postfix=subject)
-    return data
+    return UCIFetcher()(keep_original=keep_original, cache=cache, #load_cleaned=load_cleaned,
+                              retain_corrections=retain_corrections, folder_path=folder_path)
 
 
 def fix_OrdonezB_ADLS(path_to_file):
@@ -94,29 +157,3 @@ def _load_devices(dev_path):
     df_dev[START_TIME] = pd.to_datetime(df_dev[START_TIME])
     df_dev[END_TIME] = pd.to_datetime(df_dev[END_TIME])
     return df_dev, df_locs
-
-def load(dev_path, act_path, retain_corrections, subject):
-    """
-    """
-    assert subject in ['OrdonezA', 'OrdonezB']
-    df_act = _load_activities(act_path)
-    df_dev, df_loc = _load_devices(dev_path)
-
-    if subject == 'OrdonezB':
-        # the activity grooming is often overlapped by sleeping
-        # as I deem this activity as important i make it dominant
-        df_act, cor_lst = correct_activities(df_act, excepts=['Grooming'])
-    elif subject == 'OrdonezA':
-        df_act, cor_lst = correct_activities(df_act)
-
-    lst_act = df_act[ACTIVITY].unique()
-    lst_dev = df_dev[DEVICE].unique()
-
-    df_dev = correct_devices(df_dev)
-    data = Data(df_act, df_dev, activity_list=lst_act, device_list=lst_dev)
-    data.df_dev_rooms = df_loc
-
-    if retain_corrections:
-        data.correction_activities = cor_lst
-
-    return data

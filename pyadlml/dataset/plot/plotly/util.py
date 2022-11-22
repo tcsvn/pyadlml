@@ -1,4 +1,5 @@
-from pyadlml.constants import ACTIVITY, START_TIME, END_TIME
+from pyadlml.constants import ACTIVITY, BOOL, CAT, START_TIME, END_TIME
+import numpy as np
 
 def _style_colorbar(fig, label):
     fig.update_traces(colorbar=dict(
@@ -18,55 +19,8 @@ def _dyn_y_label_size(plot_height, nr_labels):
     else:
         return 9
 import pandas as pd
+import json
 
-
-class ActivityDict(dict):
-    """ Dictionary with activity pd.DataFrames as values and subject names as keys.
-    """
-    def nr_acts(self):
-        """"""
-        return max([len(df_acts[ACTIVITY].unique()) for df_acts in self.values()])
-
-    def get_activity_union(self): 
-        return list(set([item for v in self.values() \
-                              for item in v[ACTIVITY].unique()]))
-
-    def min_starttime(self):
-        return min([df_acts[START_TIME].iloc[0] for df_acts in self.values()])
-
-    def max_endtime(self):
-        return min([df_acts[END_TIME].iloc[-1] for df_acts in self.values()])
-
-    def concat(self):
-        return pd.concat(self.values())
-
-    @classmethod
-    def wrap(cls, df_acts):
-        if isinstance(df_acts, pd.DataFrame): 
-            df_acts = df_acts.copy().reset_index(drop=True)  # TODO not here
-            df_acts = ActivityDict({'subject':df_acts})
-            return df_acts
-        elif isinstance(df_acts, list):
-            return ActivityDict({f'subject_{i}':df for i, df in enumerate(df_acts)})
-        elif isinstance(df_acts, ActivityDict):
-            return df_acts
-        elif isinstance(df_acts, dict):
-            return ActivityDict(df_acts)
-        else:
-            raise NotImplementedError
-
-    def unwrap(self, inst_type: type):
-        if inst_type  == ActivityDict:
-            return self
-        elif inst_type == list:
-            return list(self.values())
-        elif inst_type == dict:
-            return super(self)
-        elif inst_type == pd.DataFrame:
-            assert len(self) == 1
-            return list(self.values())[0]
-        else:
-            raise NotImplementedError
 
 def format_device_labels(labels: list, dtypes: dict, order='alphabetical',
                          boolean_state=False, categorical_state=False, custom_rule=None):

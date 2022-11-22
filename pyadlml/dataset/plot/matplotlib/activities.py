@@ -3,22 +3,23 @@ import matplotlib.ticker as ticker
 import numpy as np
 import pandas as pd
 
-from pyadlml.dataset import ACTIVITY, TIME, START_TIME, END_TIME
+from pyadlml.constants import ACTIVITY, TIME, START_TIME, END_TIME
 from pyadlml.dataset.stats.activities import activities_duration_dist, activity_duration, \
     activities_transitions, activities_count, activity_duration, activities_dist, activity_order_by_duration
-from pyadlml.dataset._core.activities import add_idle
-from pyadlml.dataset.plot.util import func_formatter_seconds2time_log, ridgeline, \
+from pyadlml.dataset._core.activities import add_other_activity
+from .util import func_formatter_seconds2time_log, ridgeline, \
     func_formatter_seconds2time, heatmap, annotate_heatmap, heatmap_square, savefig, \
     _num_bars_2_figsize, _num_boxes_2_figsize, \
     _num_items_2_heatmap_square_figsize, _num_items_2_ridge_figsize, \
     _num_items_2_ridge_ylimit, xaxis_format_one_day, save_fig, get_qualitative_cmap, plot_grid, xaxis_format_time2, \
     map_time_to_numeric
 from pyadlml.util import get_sequential_color, get_secondary_color, get_primary_color, get_diverging_color
+from ..util import activity_order_by
 
 
 @save_fig
-def counts(df_acts=None, lst_acts=None, df_ac=None, y_scale="linear", idle=False,
-           figsize=None, color=None, file_path=None):
+def count(df_acts=None, df_ac=None, scale="linear", other=False,
+          figsize=None, color=None, file_path=None):
     """
     Plot a bar chart displaying how often activities are occurring.
 
@@ -27,13 +28,10 @@ def counts(df_acts=None, lst_acts=None, df_ac=None, y_scale="linear", idle=False
     df_acts : pd.DataFrame, optional
         recorded activities from a dataset. Fore more information refer to the
         :ref:`user guide<activity_dataframe>`.
-    lst_acts : lst of str, optional
-        A list of activities that are included in the statistic. The list can be a
-        subset of the recorded activities or contain activities that are not recorded.
-    idle : bool, default: False
+    other : bool, default: False
         Determines whether gaps between activities should be assigned
         the activity *idle* or be ignored.
-    y_scale : {"log", "linear"}, default: linear
+    scale : {"log", "linear"}, default: linear
         The axis scale type to apply.
     figsize : (float, float), default: None
         width, height in inches. If not provided, the figsize is inferred by automatically.
@@ -46,8 +44,10 @@ def counts(df_acts=None, lst_acts=None, df_ac=None, y_scale="linear", idle=False
 
     Examples
     --------
-    >>> from pyadlml.plot import plot_activity_bar_count
-    >>> plot_activity_bar_count(data.df_activities, idle=True)
+    >>> from pyadlml.plot import plot_activities_count
+    >>> from pyadlml.dataset import fetch_amsterdam
+    >>> data = fetch_amsterdam()
+    >>> plot_activities_count(data.df_activities, idle=True)
 
     .. image:: ../_static/images/plots/act_bar_cnt.png
        :height: 300px
@@ -62,7 +62,7 @@ def counts(df_acts=None, lst_acts=None, df_ac=None, y_scale="linear", idle=False
         Either a figure if file_path is not specified or nothing 
     """
     assert not (df_acts is None and df_ac is None)
-    assert y_scale in ['linear', 'log']
+    assert scale in ['linear', 'log']
 
     title ='Activity occurrences'
     col_label = 'occurrence'
@@ -72,9 +72,9 @@ def counts(df_acts=None, lst_acts=None, df_ac=None, y_scale="linear", idle=False
     # create statistics if the don't exists
     if df_ac is None:
         df_acts = df_acts.copy()
-        if idle:
-            df_acts = add_idle(df_acts)
-        df = activities_count(df_acts, lst_acts=lst_acts)
+        if other:
+            df_acts = add_other_activity(df_acts)
+        df = activities_count(df_acts)
     else:
         df = df_ac
     
@@ -92,15 +92,15 @@ def counts(df_acts=None, lst_acts=None, df_ac=None, y_scale="linear", idle=False
     plt.xlabel(x_label)
     ax.barh(df[ACTIVITY], df[col_label], color=color)
     
-    if y_scale == 'log':
+    if scale == 'log':
         ax.set_xscale('log')
 
     return fig
 
 
 @save_fig
-def boxplot(df_acts, lst_acts=None, y_scale='linear', idle=False,
-            figsize=None, file_path=None):
+def boxplot(df_acts, scale='linear', other=False, figsize=None,
+            order='alphabetical', file_path=None):
     """
     Plot a boxplot for activity durations.
 
@@ -109,24 +109,23 @@ def boxplot(df_acts, lst_acts=None, y_scale='linear', idle=False,
     df_acts : pd.DataFrame, optional
         recorded activities from a dataset. Fore more information refer to the
         :ref:`user guide<activity_dataframe>`.
-    lst_acts : lst of str, optional
-        A list of activities that are included in the statistic. The list can be a
-        subset of the recorded activities or contain activities that are not recorded.
     figsize : (float, float), default: None
         width, height in inches. If not provided, the figsize is inferred by automatically.
-    y_scale : {"log", "linear"}, default: None
+    scale : {"log", "linear"}, default: None
         The axis scale type to apply.
-    idle : bool, default: False
+    other : bool, default: False
         Determines whether gaps between activities should be assigned
-        the activity *idle* or be ignored.
+        the activity *other* or be ignored.
+    order : str, default='alphabetical'
+        The order in which the activities are displayed
     file_path : str, optional
         If set, saves the plot under the given file path and return *None* instead
         of returning the figure.
 
     Examples
     --------
-    >>> from pyadlml.plot import plot_activity_bp_duration
-    >>> plot_activity_bp_duration(data.df_activities)
+    >>> from pyadlml.plot import plot_activity_boxplot
+    >>> plot_activity_boxplot(data.df_activities)
 
     .. image:: ../_static/images/plots/act_bp.png
        :height: 300px
@@ -140,39 +139,40 @@ def boxplot(df_acts, lst_acts=None, y_scale='linear', idle=False,
     res : fig or None
         Either a figure if file_path is not specified or nothing
     """
-    assert y_scale in ['linear', 'log']
+    assert scale in ['linear', 'log']
     
     title = 'Activity durations'
     xlabel = 'Seconds'
 
-    if idle:
-        df_acts = add_idle(df_acts)
+    if other:
+        df_acts = add_other_activity(df_acts)
 
-    df = activities_duration_dist(df_acts, lst_acts=lst_acts)
-    # select data for each device
-    activities = df[ACTIVITY].unique()
-    df['seconds'] = df['minutes']*60     
+    act_order = np.flip(activity_order_by(df_acts, rule=order))
+    df = activities_duration_dist(df_acts)
 
-    num_act = len(activities)
+    # Select data for each device
+    df['seconds'] = df['minutes']*60
+
+    num_act = len(act_order)
     figsize = (_num_bars_2_figsize(num_act) if figsize is None else figsize)
 
     dat = []
-    for activity in activities:
+    for activity in act_order:
         df_activity = df[df[ACTIVITY] == activity]
-        #tmp = np.log(df_device['td'].dt.total_seconds())
-        dat.append(df_activity['seconds']) 
+        dat.append(df_activity['seconds'])
     
-    # plot boxsplot
+    # Plot boxsplot
     fig, ax = plt.subplots(figsize=figsize)
     ax.boxplot(dat, vert=False)
     ax.set_title(title)
-    ax.set_yticklabels(activities, ha='right')
+    ax.set_yticklabels(act_order, ha='right')
     ax.set_xlabel(xlabel)
-    ax.set_xscale('log')
 
-    # create secondary axis with time format 1s, 1m, 1d
+    if scale == 'log':
+        ax.set_xscale('log')
+
+    # Create secondary axis with time format 1s, 1m, 1d
     ax_top = ax.secondary_xaxis('top', functions=(lambda x: x, lambda x: x))
-    #ax_top.set_xlabel('time')
     ax_top.xaxis.set_major_formatter(
         ticker.FuncFormatter(func_formatter_seconds2time))
 
@@ -180,8 +180,8 @@ def boxplot(df_acts, lst_acts=None, y_scale='linear', idle=False,
 
 
 @save_fig
-def total_duration(df_acts=None, lst_acts=None, df_dur=None, y_scale='linear', idle=False,
-                   figsize=None, color=None, file_path=None):
+def duration(df_acts=None, df_dur=None, scale='linear', idle=False,
+             figsize=None, color=None, file_path=None):
     """
     Plots the cumulative duration for each activity in a bar plot.
 
@@ -193,7 +193,7 @@ def total_duration(df_acts=None, lst_acts=None, df_dur=None, y_scale='linear', i
     lst_acts : lst of str, optional
         A list of activities that are included in the statistic. The list can be a
         subset of the recorded activities or contain activities that are not recorded.
-    y_scale : {"log", "linear"}, default: None
+    scale : {"log", "linear"}, default: None
         The axis scale type to apply.
     idle : bool, default: False
         Determines whether gaps between activities should be assigned
@@ -209,8 +209,8 @@ def total_duration(df_acts=None, lst_acts=None, df_dur=None, y_scale='linear', i
 
     Examples
     --------
-    >>> from pyadlml.plot import plot_activity_bar_duration
-    >>> plot_activity_bar_duration(data.df_activities)
+    >>> from pyadlml.plot import duration
+    >>> duration(data.df_activities)
 
     .. image:: ../_static/images/plots/act_bar_dur.png
        :height: 300px
@@ -224,7 +224,7 @@ def total_duration(df_acts=None, lst_acts=None, df_dur=None, y_scale='linear', i
     res : fig or None
         Either a figure if file_path is not specified or nothing
     """
-    assert y_scale in ['linear', 'log']
+    assert scale in ['linear', 'log']
     assert not (df_acts is None and df_dur is None)
 
     title = 'Cummulative activity durations'
@@ -234,8 +234,8 @@ def total_duration(df_acts=None, lst_acts=None, df_dur=None, y_scale='linear', i
 
     if df_dur is None:
         if idle:
-            df_acts = add_idle(df_acts.copy())
-        df = activity_duration(df_acts, lst_acts=lst_acts, time_unit=freq)
+            df_acts = add_other_activity(df_acts.copy())
+        df = activity_duration(df_acts, time_unit=freq)
     else:
         df = df_dur
     df = df.sort_values(by=[freq], axis=0)
@@ -248,7 +248,7 @@ def total_duration(df_acts=None, lst_acts=None, df_dur=None, y_scale='linear', i
     plt.title(title)
     plt.xlabel(xlabel)
     ax.barh(df[ACTIVITY], df['seconds'], color=color)
-    if y_scale == 'log':
+    if scale == 'log':
         ax.set_xscale('log')
         
         
@@ -262,7 +262,7 @@ def total_duration(df_acts=None, lst_acts=None, df_dur=None, y_scale='linear', i
 
 
 @save_fig
-def transitions(df_acts=None, lst_acts=None, df_trans=None, z_scale="linear",
+def transitions(df_acts=None, df_trans=None, scale="linear",
                 figsize=None, idle=False, numbers=True, grid=True,
                 cmap=None, file_path=None):
     """
@@ -271,16 +271,13 @@ def transitions(df_acts=None, lst_acts=None, df_trans=None, z_scale="linear",
     df_acts : pd.DataFrame, optional
         recorded activities from a dataset. Fore more information refer to the
         :ref:`user guide<activity_dataframe>`.
-    lst_acts : lst of str, optional
-        A list of activities that are included in the statistic. The list can be a
-        subset of the recorded activities or contain activities that are not recorded.
     df_trans : pd.DataFrame
         A precomputed transition table. If the *df_trans* parameter is given, parameters
         *df_acts* and *lst_acts* are ignored. The transition table can be computed
         in :ref:`stats <stats_acts_trans>`.
     figsize : (float, float), default: None
         width, height in inches. If not provided, the figsize is inferred by automatically.
-    z_scale : {"log", "linear"}, default: None
+    scale : {"log", "linear"}, default: None
         The axis scale type to apply.
     numbers : bool, default: True
         Whether to display numbers inside the heatmaps fields or not.
@@ -299,8 +296,8 @@ def transitions(df_acts=None, lst_acts=None, df_trans=None, z_scale="linear",
 
     Examples
     --------
-    >>> from pyadlml.plot import plot_activity_hm_transition
-    >>> plot_activity_hm_transition(data.df_activities)
+    >>> from pyadlml.plot import transitions
+    >>> transitions(data.df_activities)
 
     .. image:: ../_static/images/plots/act_hm_trans.png
        :height: 300px
@@ -315,15 +312,15 @@ def transitions(df_acts=None, lst_acts=None, df_trans=None, z_scale="linear",
     res : fig or None
         Either a figure if file_path is not specified or nothing.
     """
-    assert z_scale in ['linear', 'log'], 'z-scale has to be either of type None or log'
+    assert scale in ['linear', 'log'], 'scale has to be either of type None or log'
     assert not (df_acts is None and df_trans is None)
 
     title = 'Activity transitions'
     z_label = 'count'
 
     if df_trans is None:
-        df_acts = add_idle(df_acts) if idle else df_acts
-        df = activities_transitions(df_acts, lst_acts=lst_acts)
+        df_acts = add_other_activity(df_acts) if idle else df_acts
+        df = activities_transitions(df_acts)
     else:
         df = df_trans
 
@@ -339,7 +336,7 @@ def transitions(df_acts=None, lst_acts=None, df_trans=None, z_scale="linear",
     values = df.values
     
 
-    log = True if z_scale == 'log' else False
+    log = True if scale == 'log' else False
     valfmt = '{x:.0f}'
         
      # begin plotting
@@ -353,8 +350,8 @@ def transitions(df_acts=None, lst_acts=None, df_trans=None, z_scale="linear",
 
 
 @save_fig
-def density_one_day(df_acts=None, df_act_dist=None, idle=False, dt=None,
-                    n=1000, ylim_upper=None, color=None, figsize=None, file_path=None):
+def density(df_acts=None, df_act_dist=None, idle=False, dt=None,
+            n=1000, ylim_upper=None, color=None, figsize=None, file_path=None):
     """
     Plots the activity density distribution over one day.
 
@@ -402,7 +399,7 @@ def density_one_day(df_acts=None, df_act_dist=None, idle=False, dt=None,
     Returns
     -------
     res : fig or None
-        Either a figure if file_path is not specified or nothing.
+        Either a figure if file_path is not specified otherwise nothing.
     """
     assert not (df_acts is None and df_act_dist is None)
 
@@ -413,7 +410,7 @@ def density_one_day(df_acts=None, df_act_dist=None, idle=False, dt=None,
 
     if df_act_dist is None:
         if idle:
-            df_acts = add_idle(df_acts)
+            df_acts = add_other_activity(df_acts)
         df = activities_dist(df_acts.copy(), n=n, dt=dt, relative=True)
         if df.empty:
             raise ValueError("no activity was recorded and no activity list was given.")
@@ -469,7 +466,57 @@ def density_one_day(df_acts=None, df_act_dist=None, idle=False, dt=None,
 
 @save_fig
 def correction(df_act_pre, df_act_post, grid=True, figsize=(10, 5), file_path=None):
-    """
+    """ Plots the activities before and after the automatic correction. Refer to the user guide: TODO
+
+
+    Parameters
+    ----------
+    df_acts : pd.DataFrame, optional
+        recorded activities from a dataset. Fore more information refer to the
+        :ref:`user guide<activity_dataframe>`.
+    lst_acts : lst of str, optional
+        A list of activities that are included in the statistic. The list can be a
+        subset of the recorded activities or contain activities that are not recorded.
+    df_act_dist : pd.DataFrame, optional
+        A precomputed activity density distribution. If the *df_trans* parameter is given, parameters
+        *df_acts* and *lst_acts* are ignored. The transition table can be computed
+        in :ref:`stats <stats_acts_trans>`.
+    n : int, default=1000
+        The number of monte-carlo samples to draw.
+    ylim_upper: float, optional
+        The offset from the top of the plot to the first ridge_line. Set this if
+        the automatically determined value is not satisfying.
+    figsize : (float, float), default: None
+        width, height in inches. If not provided, the figsize is inferred by automatically.
+    color : str, optional
+        sets the color of the plot. When not set, the primary theming color is used.
+        Learn more about theming in the :ref:`user guide <theming>`
+    idle : bool, default: False
+        Determines whether gaps between activities should be assigned
+        the activity *idle* or be ignored.
+    file_path : str, optional
+        If set, saves the plot under the given file path and return *None* instead
+        of returning the figure.
+
+    Examples
+    --------
+    >>> from pyadlml.dataset import fetch_amsterdam
+    >>> from pyadlml.plot import plot_activity_correction
+
+    >>> corr = fetch_amsterdam().correction_activities
+    >>> plot_activity_correction(corr[0][0], corr[0][1])
+
+    .. image:: ../_static/images/plots/act_ridge_line.png
+       :height: 300px
+       :width: 500 px
+       :scale: 90 %
+       :alt: alternate text
+       :align: center
+
+    Returns
+    -------
+    res : fig or None
+        Either a figure if file_path is not specified otherwise nothing.
 
     """
     title = 'Activity corrections'
@@ -488,12 +535,12 @@ def correction(df_act_pre, df_act_post, grid=True, figsize=(10, 5), file_path=No
 
     acts = activity_order_by_duration(df_act_pre)
 
-    df_act_pre['num_st'], _,_ = map_time_to_numeric(df_act_pre[START_TIME], start_time, end_time)
-    df_act_pre['num_et'], _,_ = map_time_to_numeric(df_act_pre[END_TIME], start_time, end_time)
+    df_act_pre['num_st'], _, _ = map_time_to_numeric(df_act_pre[START_TIME], start_time, end_time)
+    df_act_pre['num_et'], _, _ = map_time_to_numeric(df_act_pre[END_TIME], start_time, end_time)
     df_act_pre['diff'] = df_act_pre['num_et'] - df_act_pre['num_st']
 
-    df_act_post['num_st'], _,_ = map_time_to_numeric(df_act_post[START_TIME], start_time, end_time)
-    df_act_post['num_et'], _,_ = map_time_to_numeric(df_act_post[END_TIME], start_time, end_time)
+    df_act_post['num_st'], _, _ = map_time_to_numeric(df_act_post[START_TIME], start_time, end_time)
+    df_act_post['num_et'], _, _ = map_time_to_numeric(df_act_post[END_TIME], start_time, end_time)
     df_act_post['diff'] = df_act_post['num_et'] - df_act_post['num_st']
 
 
@@ -517,8 +564,8 @@ def correction(df_act_pre, df_act_post, grid=True, figsize=(10, 5), file_path=No
     ax2.barh(df_act_post.index, df_act_post['diff'], left=df_act_post['num_st'],
              color=df_act_post['color'], label=df_act_post[ACTIVITY])
 
-    ax1.set_xlim(-0.05,1.05)
-    ax2.set_xlim(-0.05,1.05)
+    ax1.set_xlim(-0.05, 1.05)
+    ax2.set_xlim(-0.05, 1.05)
 
     from matplotlib.patches import Patch
     legend_elements = [Patch(facecolor=tab(i), label=act) for i, act in enumerate(acts)]

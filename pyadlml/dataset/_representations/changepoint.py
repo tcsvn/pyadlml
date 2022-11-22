@@ -1,5 +1,5 @@
 import pandas as pd
-from pyadlml.dataset import TIME, DEVICE, VAL
+from pyadlml.constants import TIME, DEVICE, VALUE
 
 def create_changepoint(df_devs):
     """
@@ -7,29 +7,41 @@ def create_changepoint(df_devs):
     Parameters
     ----------
     df_devs : pd.DataFrame
-        TODO
+        A device dataframe, refer to guide
 
     Returns
     -------
-        todo
+    df : pd.DataFrame
     """
 
     # create binary vectors and set all changepoints to true
     df = df_devs.copy()
-    df[VAL] = True
-    df = df.pivot(index=TIME, columns=DEVICE, values=VAL)\
+    df[VALUE] = True
+    df = df.pivot(index=TIME, columns=DEVICE, values=VALUE)\
         .fillna(False)\
         .astype(int)\
         .reset_index()
     return df
 
 
-def resample_changepoint(cp, t_res):
+def resample_changepoint(cp, dt):
     """
+    Resamples the changepoint representation with a given resolution
 
+    Parameters
+    ----------
+    cp : pd.DataFrame
+        A device dataframe in changepoint representation
+
+    dt : str
+
+    Returns
+    -------
+    cp : pd.DataFrame
+        Resampled dataframe in changepoint representation
     """
     cp = cp.set_index(TIME)
-    resampler = cp.resample(t_res, kind='timestamp')
+    resampler = cp.resample(dt, kind='timestamp')
     cp = resampler.apply(_cp_evaluator)\
         .reset_index()
     return cp
@@ -40,7 +52,7 @@ def _cp_evaluator(series: pd.Series):
     Parameters
     ----------
         series: pd.Series
-            conatins name of the column the evaluator operates on
+            contains name of the column the evaluator operates on
             contains the timestamps for that change in set frame and the value 
             that the specified column has at set timestamp.
 

@@ -1,11 +1,71 @@
 import pandas as pd
 import numpy as np
-from pyadlml.dataset import START_TIME, END_TIME, ACTIVITY
+from pyadlml.constants import START_TIME, END_TIME, ACTIVITY, TIME
+from pyadlml.dataset._core.activities import add_other_activity
+from pyadlml.dataset.plotly.util import ActivityDict
+from pyadlml.dataset.stats.util import df_density_binned
+from datetime import timezone, datetime
+
+
+def activity_order_by_duration(df_acts: pd.DataFrame) -> list:
+    """ Computes a list of activities ordered by the cumulated time per activity
+
+    Parameters
+    ----------
+    df_acts : pd.DataFrame
+        An activity dataframe with columns 'start_time', 'end_time' and 'activity'.
+
+    Returns
+    -------
+    list
+        An ordered list where the first is the most prominent activity, followed by the second most prominent ...
+    """
+    if isinstance(df_acts, pd.DataFrame):
+        dct_acts = ActivityDict.wrap(df_acts)
+    else: 
+        dct_acts = df_acts
+    dfs = [activity_duration(df).set_index(ACTIVITY) for df in dct_acts.values()]
+
+    df = pd.concat(dfs, axis=1).fillna(0)
+    df['sum'] = df.sum(axis=1)
+    df = df.sort_values(by='sum', ascending=False)
+    return df.index.to_list()
+
+
+def activity_order_by_count(df_acts: pd.DataFrame) -> list:
+    """ Computes a list ordered by the most cumulated time per activity
+
+    Parameters
+    ----------
+    df_acts : pd.DataFrame
+        An activity dataframe with columns 'start_time', 'end_time' and 'activity'.
+
+    Returns
+    -------
+    list
+        An ordered list where the first is the most prominent activity, followed by the second most prominent ...
+    """
+    if isinstance(df_acts, pd.DataFrame):
+        dct_acts = ActivityDict.wrap(df_acts)
+    else: 
+        dct_acts = df_acts
+    dfs = [activities_count(df).set_index(ACTIVITY) for df in dct_acts.values()]
+
+    df = pd.concat(dfs, axis=1).fillna(0)
+    df['sum'] = df.sum(axis=1)
+    df = df.sort_values(by='sum', ascending=False)
+    return df.index.to_list()
+
 
 def _get_freq_func(freq):
     """ returns the correct transform function of time differences into integers
         the column on which the function is applied has to be of type timedelta
     Parameters
+    ----------
+
+
+    Returns
+    -------
     """
     assert freq in ['minutes', 'hours', 'seconds', 'm', 'h', 's']
     if freq == 'seconds' or freq == 's':
@@ -15,9 +75,36 @@ def _get_freq_func(freq):
     else:
         return lambda x: x.total_seconds()/3600
 
-def activities_duration_dist(df_acts, lst_acts=None, freq='minutes'):
+def coverage(df_activities, df_devices, datapoints=False):
+    """ Computes the activity coverage for the devices.
+
+    Parameters
+    ----------
+    df_activities : pd.DataFrame
+        Todo
+    datapoints: bool, default=False
+        Determines whether the activity coverage is computed with respect
+        to the datapoints covered or the total time.
+
+    Returns
+    -------
+    cov : float
+        The percentage covered by activities
     """
-    Computes the activity distribution.
+    if datapoints:
+        from pyadlml.dataset._core.acts_and_devs import label_data
+        df_acts = df_activities.copy()
+        lbl_devs = label_data(df_devices, df_acts)
+        nr_nans = lbl_devs[ACTIVITY].isna().sum()
+        return 1 - nr_nans/len(lbl_devs)
+    else:
+        durations = activity_duration(df_activities, idle=True)
+        total = durations['minutes'].sum()
+        amount_idle = durations.loc[(durations[ACTIVITY] == 'idle'), 'minutes'].values[0]
+        return 1 - amount_idle/total
+
+def activities_duration_dist(df_acts, lst_acts=None, freq='minutes', idle=False):
+    """ Computes the activity distribution.
 
     Parameters
     ----------
@@ -30,12 +117,23 @@ def activities_duration_dist(df_acts, lst_acts=None, freq='minutes'):
     freq : str, optional
         Defaults to 1000.
         Can be one of 'minutes', 'seconds', 'hours', 'm', 'h', 's'.
+    idle : bool, default=False
+        Whether to include the idle activity. More in user guide
+
     Returns
     -------
     df : pd.DataFrame
+        First column activity names second column total time in frequency.
+
+    Example
+    -------
+    .. code python::
+        TODO
 
     """
     df = df_acts.copy()
+    if idle:
+        df = add_other_activity(df)
 
     # integrate the time difference for activities
     diff = 'total_time'
@@ -43,15 +141,16 @@ def activities_duration_dist(df_acts, lst_acts=None, freq='minutes'):
     df = df[[ACTIVITY, diff]]
 
     # if no data is logged for a certain activity append 0.0 duration value
-    if lst_acts is not None:
-        for activity in set(lst_acts).difference(set(list(df[ACTIVITY]))):
-            df = df.append(pd.DataFrame(
-                data=[[activity, pd.Timedelta('0ns')]],
-                columns=df.columns, index=[len(df)]))
+    #if lst_acts is not None:
+    #    for activity in set(lst_acts).difference(set(list(df[ACTIVITY]))):
+    #        df = df.append(pd.DataFrame(
+    #            data=[[activity, pd.Timedelta('0ns')]],
+    #            columns=df.columns, index=[len(df)]))
+
     df[freq] = df[diff].apply(_get_freq_func(freq))
     return df.sort_values(by=ACTIVITY)
 
-def activity_durations(df_acts, lst_acts=None, time_unit='minutes', norm=False):
+def activity_duration(df_acts, time_unit='minutes', normalize=False, idle=False):
     """ Compute how much time an inhabitant spent performing an activity
 
     Parameters
@@ -59,12 +158,9 @@ def activity_durations(df_acts, lst_acts=None, time_unit='minutes', norm=False):
     df_acts : pd.DataFrame
         All recorded activities from a dataset. Fore more information refer to the
         :ref:`user guide<activity_dataframe>`.
-    lst_acts : list, optional
-        A list of activities that are included in the statistic. The list can be a
-        subset of the recorded activities or contain activities that are not recorded.
     time_unit : str of {'minutes', 'seconds', 'hours', 'm', 's', 'h'}
         The unit of time the durations are returned in.
-    norm : bool
+    normalize : bool, default=False
         If set to *true* rather than returning the durations in a specified
         time unit, the fraction of the durations is returned.
 
@@ -88,20 +184,20 @@ def activity_durations(df_acts, lst_acts=None, time_unit='minutes', norm=False):
     6         use toilet    195.249567
 
     """
-    df = activities_duration_dist(df_acts, lst_acts=lst_acts, freq=time_unit)
+    df = activities_duration_dist(df_acts, freq=time_unit, idle=idle)
     if df.empty:
         raise ValueError("no activity was recorded")
     df = df.groupby(ACTIVITY).sum().reset_index()
     df.columns = [ACTIVITY, time_unit]
 
     # compute fractions of activities to each other
-    if norm:
-        norm = df[time_unit].sum()
-        df[time_unit] = df[time_unit].apply(lambda x: x / norm)
+    if normalize:
+        normalize = df[time_unit].sum()
+        df[time_unit] = df[time_unit].apply(lambda x: x / normalize)
 
     return df.sort_values(by=ACTIVITY)
 
-def activities_count(df_acts, lst_acts=None):
+def activities_count(df_acts: pd.DataFrame) -> pd.DataFrame:
     """ Computes how many times a certain activity occurs within the dataset.
 
     Parameters
@@ -109,13 +205,10 @@ def activities_count(df_acts, lst_acts=None):
     df_acts : pd.DataFrame
         All recorded activities from a dataset. Fore more information refer to the
         :ref:`user guide<activity_dataframe>`.
-    lst_acts : list, optional
-        A list of activities that are included in the statistic. The list can be a
-        subset of the recorded activities or contain activities that are not recorded.
 
     Returns
     -------
-    df : pd.Dataframe
+    pd.Dataframe
 
     Examples
     --------
@@ -135,21 +228,21 @@ def activities_count(df_acts, lst_acts=None):
     res_col_name = 'occurrence'
     df = df_acts.copy()
 
-    # count the occurences of the activity
+    # Count the occurences of the activity
     df = df.groupby(ACTIVITY).count().reset_index()
     df = df.drop(columns=[END_TIME])
     df.columns = [ACTIVITY, res_col_name]
 
     # correct for missing activities
-    if lst_acts is not None:
-        diff = set(lst_acts).difference(set(list(df[ACTIVITY])))
-        for activity in diff:
-            df = df.append(pd.DataFrame(data=[[activity, 0.0]], columns=df.columns, index=[len(df) + 1]))
+    #if lst_acts is not None:
+    #    diff = set(lst_acts).difference(set(list(df[ACTIVITY])))
+    #    for activity in diff:
+    #        df = df.append(pd.DataFrame(data=[[activity, 0.0]], columns=df.columns, index=[len(df) + 1]))
 
     return df.sort_values(by=ACTIVITY)
 
 
-def activities_transitions(df_acts, lst_acts=None):
+def activities_transitions(df_acts):
     """  Compute a transition matrix that displays how often one
     activity was followed by another.
 
@@ -158,9 +251,6 @@ def activities_transitions(df_acts, lst_acts=None):
     df_acts : pd.DataFrame
         All recorded activities from a dataset. Fore more information refer to the
         :ref:`user guide<activity_dataframe>`.
-    lst_acts : list, optional
-        A list of activities that are included in the statistic. The list can be a
-        subset of the recorded activities or contain activities that are not recorded.
 
     Returns
     -------
@@ -189,23 +279,36 @@ def activities_transitions(df_acts, lst_acts=None):
     """
 
     df = df_acts.copy()
-    df = df[['activity']]
-    df['act_after'] = df['activity'].shift(-1)
-    df = pd.crosstab(df["activity"], df['act_after'])
+    df = df[[ACTIVITY]]
+    df['act_after'] = df[ACTIVITY].shift(-1)
+    df = pd.crosstab(df[ACTIVITY], df['act_after'])
 
-    if lst_acts is not None:
-        diff = set(lst_acts).difference(set(list(df.index)))
-        for activity in diff:
+    cols = list(df.columns)
+    rows = list(df.index)
+    for r in rows:
+        if r not in cols:
+            break
+
+    # Catches the case when either an activity is only followed once and not preceeded by another
+    # activity or an activity is only preceeded once and not succeded by another activity
+    if len(df.columns) != len(df.index):
+        row_diff = set(df.columns).difference(set(list(df.index)))
+        col_diff = set(df.index).difference(set(list(df.columns)))
+        for activity in col_diff:
+            # when columns are missing
             df[activity] = 0
+        for activity in row_diff:
+            # when rows are missing
             df = df.append(pd.DataFrame(data=0.0, columns=df.columns, index=[activity]))
 
     # sort activities alphabetically
     df = df.sort_index(axis=0)
     df = df.sort_index(axis=1)
+
     return df
 
 
-def activities_dist(df_acts, lst_acts=None, n=1000):
+def activities_dist(df_acts, n=1000, dt=None, relative=False):
     """
     Approximate the activity densities for one day by
     using monte-carlo sampling from the activity intervals.
@@ -215,11 +318,10 @@ def activities_dist(df_acts, lst_acts=None, n=1000):
     df_acts : pd.DataFrame
         All recorded activities from a dataset. Fore more information refer to the
         :ref:`user guide<activity_dataframe>`.
-    lst_acts : list, optional
-        A list of activities that are included in the statistic. The list can be a
-        subset of the recorded activities or contain activities that are not recorded.
     n : int, optional
         The number of samples to draw from each activity. Defaults to 1000.
+    dt : str of { 'xm', }, default=None
+        if set
 
     Examples
     --------
@@ -247,54 +349,67 @@ def activities_dist(df_acts, lst_acts=None, n=1000):
     #        any sample
     # Todo include range for day or week
 
-    label='activity'
     df = df_acts.copy()
+    activities = df_acts[ACTIVITY].unique()
 
-    res = pd.DataFrame(index=range(n))
-    for i in df[label].unique():
-        series = _sample_ts(df[df[label] == i], n)
-        res[i] = series
+    #res = pd.DataFrame(index=range(n), columns=activities, data=0)
+    res = pd.DataFrame(index=range(len(activities)*n), columns=[TIME, ACTIVITY], dtype=object)
 
-    if lst_acts is not None:
-        for activity in set(lst_acts).difference(res.columns):
-            res[activity] = pd.NaT
+    # sample for each column separately
+    for i, activity in enumerate(activities):
+        series = _sample_ts(df.loc[df[ACTIVITY] == activity, [START_TIME, END_TIME]], n)
+        res.loc[n*i:n*i+n-1, TIME] = series.values
+        res.loc[n*i:n*i+n-1, ACTIVITY] = activity
+
+    if relative and dt is None:
+        res[TIME] = pd.to_datetime('1/1/2000 - ' + res[TIME])
+        res[TIME] = res[TIME] - np.datetime64("2000-01-01 00:00:00")
+        res[TIME] = res[TIME] / np.timedelta64(1, 's')
+
+    if dt is not None:
+        res[TIME] = pd.to_datetime('1/1/2000 - ' + res[TIME])
+        res = df_density_binned(res, column_str=ACTIVITY, dt=dt)
+
     return res
+    
 
-def _sample_ts(sub_df, n):
-    """
-    params:
-        sub_df: pd.DataFrame
-            dataframe with two time intervals 
+
+
+def _sample_ts(df, n):
+    """ Samples one column of activities. First chooses one activity at random and then samples a timepoint from
+        within that activities interval
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+            dataframe with two time intervals
             | start_time    | end_time  | .... |
             ------------------------------------
             | ts            | ts        | ...
 
-    returns:
-        series: pd.Series
-            series of sampled timestamps
+    Returns
+    -------
+    pd.Series
+        The sampled timestamps
     """
-    assert 'start_time' in sub_df.columns \
-        and 'end_time' in sub_df.columns
+    assert START_TIME in df.columns and END_TIME in df.columns
 
-    xs = np.empty(shape=(n), dtype=object)    
+    xs = np.empty(shape=(n,), dtype=object)
     for i in range(n):
-        idx_sample = np.random.randint(0, sub_df.shape[0])
-        interval = sub_df.iloc[idx_sample]
-        rand_stamp = _gen_rand_time(ts_min=interval.start_time,  ts_max=interval.end_time)
-        rand_stamp = '1990-01-01T'+ rand_stamp            
-        tmp = pd.to_datetime(rand_stamp)
-        xs[i] = tmp
-    return pd.Series(xs)     
+        interval = df.iloc[np.random.randint(0, df.shape[0])]
 
-def _gen_rand_time(ts_min, ts_max):
-    from datetime import timezone, datetime
+        # convert to unix timestamp
+        unx_min = interval.start_time.replace(tzinfo=timezone.utc).timestamp()
+        unx_max = interval.end_time.replace(tzinfo=timezone.utc).timestamp()
 
-    # convert to unix timestamp
-    unx_min = ts_min.replace(tzinfo=timezone.utc).timestamp()
-    unx_max = ts_max.replace(tzinfo=timezone.utc).timestamp()
+        # sample uniform and convert back to timestamp
+        try:
+            unx_sample = np.random.randint(unx_min, unx_max)
+        except ValueError:
+            if unx_min == unx_max:
+                unx_sample = unx_min
+            else:
+                raise ValueError('Sampling interval went wrong')
+        xs[i] = datetime.utcfromtimestamp(unx_sample).strftime('%H:%M:%S')
 
-    # sample uniform and convert back to timestamp
-    unx_sample = np.random.randint(unx_min, unx_max)
-    ts_sample = datetime.utcfromtimestamp(unx_sample).strftime('%H:%M:%S')
-    
-    return ts_sample
+    return pd.Series(xs)

@@ -1,22 +1,22 @@
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 import numpy as np
 import pandas as pd
+from bokeh.io import curdoc
+from bokeh.models import ColumnDataSource, RadioButtonGroup, CustomJS, CheckboxGroup, Select, DataRange, DataRange1d, \
+    FuncTickFormatter, LogTickFormatter, Panel, Tabs
 
 from pyadlml.dataset import ACTIVITY
-from  pyadlml.dataset.stats.activities import activities_duration_dist, activity_durations,\
-    activities_transitions, activities_count, activity_durations, activities_dist
-from pyadlml.dataset._core.activities import add_idle
+from  pyadlml.dataset.stats.activities import activities_duration_dist, activity_duration,\
+    activities_transitions, activities_count, activity_duration, activities_dist
+from pyadlml.dataset._core.activities import add_other_activity
 from pyadlml.dataset.plot.util import func_formatter_seconds2time_log, ridgeline, \
     func_formatter_seconds2time, heatmap, annotate_heatmap, heatmap_square, savefig, \
     _num_bars_2_figsize, _num_boxes_2_figsize, \
     _num_items_2_heatmap_square_figsize, _num_items_2_ridge_figsize,\
     _num_items_2_ridge_ylimit
 from pyadlml.util import get_sequential_color, get_secondary_color, get_primary_color, get_diverging_color
+from bokeh.plotting import figure, show
 
-
-def hist_counts(df_acts=None, lst_acts=None, df_ac=None, y_scale="linear", idle=False,
-                figsize=None, color=None, file_path=None):
+def hist_counts(df_acts=None, lst_acts=None, df_ac=None):
     """
     Plot a bar chart displaying how often activities are occurring.
 
@@ -33,14 +33,173 @@ def hist_counts(df_acts=None, lst_acts=None, df_ac=None, y_scale="linear", idle=
         the activity *idle* or be ignored.
     y_scale : {"log", "linear"}, default: linear
         The axis scale type to apply.
-    figsize : (float, float), default: None
-        width, height in inches. If not provided, the figsize is inferred by automatically.
-    color : str, optional
-        sets the color of the plot. When not set, the primary theming color is used.
-        Learn more about theming in the :ref:`user guide <theming>`
-    file_path : str, optional
-        If set, saves the plot under the given file path and return *None* instead
-        of returning the figure.
+
+    Examples
+    --------
+    >>> from pyadlml.plot import plot_activity_bar_count
+    >>> plot_activity_bar_count(data.df_activities, idle=True)
+
+    .. image:: ../_static/images/plots/act_bar_cnt.png
+       :height: 300px
+       :width: 500 px
+       :scale: 90 %
+       :alt: alternate text
+       :align: center
+
+    Returns
+    -------
+    res : fig or None
+        Either a figure if file_path is not specified or nothing
+    """
+    assert not (df_acts is None and df_ac is None)
+
+    title ='Activity occurrences'
+    col_label = 'occurrence'
+    x_label = 'counts'
+
+    # create statistics if the don't exists
+    if df_ac is None:
+        df_acts = df_acts.copy()
+        df_acts = add_other_activity(df_acts)
+        df = activities_count(df_acts, lst_acts=lst_acts)
+    else:
+        df = df_ac
+
+    # prepare dataframe for plotting
+    df.reset_index(level=0, inplace=True)
+    df = df.sort_values(by=[col_label], axis=0)
+
+    # create a new plot with a title and axis labels
+    from bokeh.io import output_file, show
+    from bokeh.models import ColumnDataSource
+    from bokeh.plotting import figure
+    from bokeh.models.tools import HoverTool
+    from bokeh.layouts import layout
+
+    # create data column objects
+    activities = df[ACTIVITY].values
+    counts = df[col_label].values
+
+    idle_idx = np.where(activities == 'idle')[0]
+    activities_w_idle = np.delete(activities.copy(), idle_idx, 0)
+    counts_w_idle = np.delete(counts.copy(), idle_idx, 0)
+
+    source = ColumnDataSource(data=dict(y=activities, x=counts))
+    saved_source = ColumnDataSource(data=dict(
+        activities=activities,
+        counts=counts))
+    saved_source_w_idle = ColumnDataSource(data=dict(
+        counts=counts_w_idle,
+        activities=activities_w_idle,
+    ))
+    upper_next_10 = np.ceil(max(counts)/(10**(len(str(max(counts))))))*10**(len(str(max(counts))))# round to the highest 10th number of the maximum
+
+    # create linear plot
+    p1 = figure(title=title, y_range=activities, x_axis_label=x_label,
+                x_range=[0, np.ceil(max(counts))],
+               sizing_mode='stretch_width', plot_height=400,
+               tools=[HoverTool()],
+               tooltips="Activity @y occurred @x times.")
+    p1.hbar(y='y', left=0, right='x', height=0.9, source=source,
+           legend_field="y", color=get_primary_color(),
+           line_color='white')
+
+    p1.ygrid.grid_line_color = None
+    p1.legend.orientation = "vertical"
+    p1.legend.location = "bottom_right"
+    p1.legend.click_policy = 'mute'
+
+    # create log plot
+    p2 = figure(title=title, y_range=activities, x_axis_label=x_label, x_axis_type='log',
+                x_range=[0.1, upper_next_10],
+               sizing_mode='stretch_width', plot_height=400,
+               tools=[HoverTool()],
+               tooltips="Activity @y occurred @x times.")
+    p2.hbar(y='y', left=0.1, right='x', height=0.9, source=source,
+           legend_field="y", color=get_primary_color(),
+           line_color='white')
+
+    p2.ygrid.grid_line_color = None
+    p2.legend.orientation = "vertical"
+    p2.legend.location = "bottom_right"
+    p2.legend.click_policy = 'mute'
+
+    # create widgets
+    checkbox_group = create_idle_checkbox('counts', source=source, saved_source=saved_source, saved_source_w_idle=saved_source_w_idle,
+                                          p1=p1, p2=p2)
+    LABELS = ["Linear", "Log"]
+
+    radio_button_group = RadioButtonGroup(labels=LABELS, active=0)
+
+    tab1 = Panel(child=p1, title='linear')
+    tab2 = Panel(child=p2, title='log')
+    tabs = Tabs(tabs=[tab1, tab2], tabs_location='below', disabled=True)
+    radio_button_group.js_link('active', tabs, 'active')
+
+    layout = layout([[tabs],[checkbox_group, radio_button_group]],
+        sizing_mode='stretch_width'
+    )
+    show(layout)
+
+def create_idle_checkbox(col_name, source, saved_source, saved_source_w_idle, p1, p2):
+    checkbox_group = CheckboxGroup(labels=["idle"], active=[0, 1])
+    callback = CustomJS(
+        args=dict(source=source, saved_source=saved_source, saved_source_w_idle=saved_source_w_idle, p1=p1, p2=p2),
+        code="""
+        var active = cb_obj.active[0];
+        var sdata = saved_source.data;
+        var sdata_w_idle = saved_source_w_idle.data;
+        var data = source.data;
+
+        data['x'] = []
+        data['y'] = []
+    
+        if (active == 0){
+            console.log("set data to include idle")
+            data['x'] = sdata.%s
+            data['y'] = sdata.activities
+        }
+        else {
+            console.log("set data to without idle")
+            data['x'] = sdata_w_idle.%s
+            data['y'] = sdata_w_idle.activities
+        }
+        source.data = data
+        //console.log(source.data)
+        source.change.emit();
+        
+        // the plot can only be changed after the data source changes
+        if (active == 0){
+            p1.y_range.factors = sdata.activities
+            p2.y_range.factors = sdata.activities
+        }
+        else {
+            p1.y_range.factors = sdata_w_idle.activities
+            p2.y_range.factors = sdata_w_idle.activities
+        }
+        p1.change.emit();
+        p2.change.emit();
+        """%(col_name, col_name))
+    checkbox_group.js_on_click(callback)
+    return checkbox_group
+
+def hist_counts2(df_acts=None, lst_acts=None, df_ac=None):
+    """
+    Plot a bar chart displaying how often activities are occurring.
+
+    Parameters
+    ----------
+    df_acts : pd.DataFrame, optional
+        recorded activities from a dataset. Fore more information refer to the
+        :ref:`user guide<activity_dataframe>`.
+    lst_acts : lst of str, optional
+        A list of activities that are included in the statistic. The list can be a
+        subset of the recorded activities or contain activities that are not recorded.
+    idle : bool, default: False
+        Determines whether gaps between activities should be assigned
+        the activity *idle* or be ignored.
+    y_scale : {"log", "linear"}, default: linear
+        The axis scale type to apply.
 
     Examples
     --------
@@ -60,18 +219,15 @@ def hist_counts(df_acts=None, lst_acts=None, df_ac=None, y_scale="linear", idle=
         Either a figure if file_path is not specified or nothing 
     """
     assert not (df_acts is None and df_ac is None)
-    assert y_scale in ['linear', 'log']
 
     title ='Activity occurrences'
     col_label = 'occurrence'
     x_label = 'counts'
-    color = (get_primary_color() if color is None else color)
-        
+
     # create statistics if the don't exists
     if df_ac is None:
         df_acts = df_acts.copy()
-        if idle:
-            df_acts = add_idle(df_acts)
+        df_acts = add_other_activity(df_acts)
         df = activities_count(df_acts, lst_acts=lst_acts)
     else:
         df = df_ac
@@ -79,30 +235,61 @@ def hist_counts(df_acts=None, lst_acts=None, df_ac=None, y_scale="linear", idle=
     # prepare dataframe for plotting
     df.reset_index(level=0, inplace=True)
     df = df.sort_values(by=[col_label], axis=0)
-    
-    # define plot modalities
-    num_act = len(df)
-    figsize = (_num_bars_2_figsize(num_act) if figsize is None else figsize)
-    
-    # create plot
-    fig, ax = plt.subplots(figsize=figsize)
-    plt.title(title)
-    plt.xlabel(x_label)
-    ax.barh(df['activity'], df[col_label], color=color)
-    
-    if y_scale == 'log':
-        ax.set_xscale('log')
 
-    # save or return fig
-    if file_path is not None:
-        savefig(fig, file_path)
-        return None
-    else:
-        return fig
+    # create a new plot with a title and axis labels
+    from bokeh.io import output_file, show
+    from bokeh.models import ColumnDataSource
+    from bokeh.plotting import figure
+    from bokeh.models.tools import HoverTool
+    from bokeh.layouts import layout
+
+    df['log'] = np.log(df[col_label])
+    df['linear'] = df[col_label]
+
+    source = ColumnDataSource(data=dict(y=[], x=[], title=[]))
+    axis_map = {
+        'Linear Scaling': 'linear',
+        'Log Scaling': 'log',
+        0: 'linear',
+        1: 'log'
+    }
+    x_axis = RadioButtonGroup(labels=list(axis_map.keys())[:2], active=0)
+
+    p = figure(height=600, width=700, title="", y_range=df[ACTIVITY].values,
+           sizing_mode='stretch_width',
+           tools=[HoverTool()],
+           tooltips="Activity @y occurred @x times.")
+    p.hbar(right='x', y='y', left=0, height=0.9, source=source, legend_field="y", color=get_primary_color(), line_color='white')
+
+    def update():
+        #p.y_range = DataRange1d(df[ACTIVITY].values)
+        print('#'*100)
+        x_name = axis_map[x_axis.active]
+        if x_name == 'linear':
+            p.xaxis.axis_label = 'count'
+        else:
+            p.xaxis.axis_label = 'log count'
+            #p.xaxis.formatter = FuncTickFormatter(code="""return Math.log(tick).toFixed(2)""")
+            p.xaxis.formatter = LogTickFormatter()
+        p.title.text = "Test"
+        print(df[x_name].values)
+        print(df[ACTIVITY].values)
+        source.data = dict(
+            x=df[x_name].values,
+            y=df[ACTIVITY].values,
+        )
+
+    x_axis.on_change('active', lambda attr, old, new: update())
+    layout = layout([[p],[x_axis]],
+        sizing_mode='stretch_width'
+    )
+    update()
+    curdoc().add_root(layout)
+    curdoc().title = "Test 5"
+    #show(layout)
 
 
-def boxplot_duration(df_acts, lst_acts=None, y_scale='linear', idle=False,
-                     figsize=None, file_path=None):
+def boxplot_duration(df_acts, lst_acts=None, file_path=None):
     """
     Plot a boxplot for activity durations.
 
@@ -142,21 +329,18 @@ def boxplot_duration(df_acts, lst_acts=None, y_scale='linear', idle=False,
     res : fig or None
         Either a figure if file_path is not specified or nothing
     """
-    assert y_scale in ['linear', 'log']
-    
     title = 'Activity durations'
     xlabel = 'seconds'
 
-    if idle:
-        df_acts = add_idle(df_acts)
+    df_acts = add_other_activity(df_acts)
 
     df = activities_duration_dist(df_acts, lst_acts=lst_acts)
+
     # select data for each device
     activities = df[ACTIVITY].unique()
     df['seconds'] = df['minutes']*60     
 
     num_act = len(activities)
-    figsize = (_num_bars_2_figsize(num_act) if figsize is None else figsize)
 
     dat = []
     for activity in activities:
@@ -184,8 +368,7 @@ def boxplot_duration(df_acts, lst_acts=None, y_scale='linear', idle=False,
     else:
         return fig
 
-def hist_cum_duration(df_acts=None, lst_acts=None, df_dur=None, y_scale='linear', idle=False,
-                      figsize=None, color=None, file_path=None):
+def hist_cum_duration(df_acts=None, lst_acts=None, df_dur=None, file_path=None):
     """
     Plots the cumulative duration for each activity in a bar plot.
 
@@ -228,45 +411,92 @@ def hist_cum_duration(df_acts=None, lst_acts=None, df_dur=None, y_scale='linear'
     res : fig or None
         Either a figure if file_path is not specified or nothing
     """
-    assert y_scale in ['linear', 'log']
     assert not (df_acts is None and df_dur is None)
 
     title = 'Cummulative activity durations'
-    xlabel = 'seconds'
+    x_label = 'seconds'
     freq = 'seconds'
-    color = (get_primary_color() if color is None else color)
 
     if df_dur is None:
-        if idle:
-            df_acts = add_idle(df_acts.copy())
-        df = activity_durations(df_acts, lst_acts=lst_acts, time_unit=freq)
+        df_acts = add_other_activity(df_acts.copy())
+        df = activity_duration(df_acts, lst_acts=lst_acts, time_unit=freq)
     else:
         df = df_dur
     df = df.sort_values(by=[freq], axis=0)
 
-    num_act = len(df)
-    figsize = (_num_bars_2_figsize(num_act) if figsize is None else figsize)
-    
-    # plot
-    fig, ax = plt.subplots(figsize=figsize)
-    plt.title(title)
-    plt.xlabel(xlabel)
-    ax.barh(df[ACTIVITY], df['seconds'], color=color)
-    if y_scale == 'log':
-        ax.set_xscale('log')
-        
-        
-    # create secondary axis with time format 1s, 1m, 1d
-    ax_top = ax.secondary_xaxis('top', functions=(lambda x: x, lambda x: x))
-    ax_top.set_xlabel('time')
-    ax_top.xaxis.set_major_formatter(
-        ticker.FuncFormatter(func_formatter_seconds2time))
+    # create a new plot with a title and axis labels
+    from bokeh.io import output_file, show
+    from bokeh.models import ColumnDataSource
+    from bokeh.plotting import figure
+    from bokeh.models.tools import HoverTool
+    from bokeh.layouts import layout
 
-    if file_path is not None:
-        savefig(fig, file_path)
-        return 
-    else:
-        return fig
+    col_label = freq
+
+    # create data column objects
+    activities = df[ACTIVITY].values
+    counts = df[col_label].values
+
+    idle_idx = np.where(activities == 'idle')[0]
+    activities_w_idle = np.delete(activities.copy(), idle_idx, 0)
+    counts_w_idle = np.delete(counts.copy(), idle_idx, 0)
+
+    source = ColumnDataSource(data=dict(y=activities, x=counts))
+    saved_source = ColumnDataSource(data=dict(
+        activities=activities,
+        counts=counts))
+    saved_source_w_idle = ColumnDataSource(data=dict(
+        counts=counts_w_idle,
+        activities=activities_w_idle,
+    ))
+    upper_next_10 = np.ceil(max(counts)/(10**(len(str(max(counts))))))*10**(len(str(max(counts))))# round to the highest 10th number of the maximum
+
+    # create linear plot
+    p1 = figure(title=title, y_range=activities, x_axis_label=x_label,
+                x_range=[0, np.ceil(max(counts))],
+               sizing_mode='stretch_width', plot_height=400,
+               tools=[HoverTool()],
+               tooltips="Activity @y occurred @x seconds")
+    p1.hbar(y='y', left=0, right='x', height=0.9, source=source,
+           legend_field="y", color=get_primary_color(),
+           line_color='white')
+
+    p1.ygrid.grid_line_color = None
+    p1.legend.orientation = "vertical"
+    p1.legend.location = "bottom_right"
+    p1.legend.click_policy = 'mute'
+
+    # create log plot
+    p2 = figure(title=title, y_range=activities, x_axis_label=x_label, x_axis_type='log',
+                x_range=[0.1, upper_next_10],
+               sizing_mode='stretch_width', plot_height=400,
+               tools=[HoverTool()],
+               tooltips="Activity @y occurred @x times.")
+    p2.hbar(y='y', left=0.1, right='x', height=0.9, source=source,
+           legend_field="y", color=get_primary_color(),
+           line_color='white')
+
+    p2.ygrid.grid_line_color = None
+    p2.legend.orientation = "vertical"
+    p2.legend.location = "bottom_right"
+    p2.legend.click_policy = 'mute'
+
+    # create widgets
+    checkbox_group = create_idle_checkbox('counts', source=source, saved_source=saved_source, saved_source_w_idle=saved_source_w_idle,
+                                          p1=p1, p2=p2)
+    LABELS = ["Linear", "Log"]
+
+    radio_button_group = RadioButtonGroup(labels=LABELS, active=0)
+
+    tab1 = Panel(child=p1, title='linear')
+    tab2 = Panel(child=p2, title='log')
+    tabs = Tabs(tabs=[tab1, tab2], tabs_location='below', disabled=True)
+    radio_button_group.js_link('active', tabs, 'active')
+
+    layout = layout([[tabs],[checkbox_group, radio_button_group]],
+        sizing_mode='stretch_width'
+    )
+    show(layout)
 
 def heatmap_transitions(df_acts=None, lst_acts=None, df_trans=None, z_scale="linear",
                         figsize=None, idle=False, numbers=True, grid=True,
@@ -328,7 +558,7 @@ def heatmap_transitions(df_acts=None, lst_acts=None, df_trans=None, z_scale="lin
     z_label = 'count'
 
     if df_trans is None:
-        df_acts = add_idle(df_acts) if idle else df_acts
+        df_acts = add_other_activity(df_acts) if idle else df_acts
         df = activities_transitions(df_acts, lst_acts=lst_acts)
     else:
         df = df_trans
@@ -421,7 +651,7 @@ def ridge_line(df_acts=None, lst_acts=None, df_act_dist=None, idle=False,
 
     if df_act_dist is None:
         if idle:
-            df_acts = add_idle(df_acts)
+            df_acts = add_other_activity(df_acts)
         df = activities_dist(df_acts.copy(), lst_acts=lst_acts, n=n)
         if df.empty:
             raise ValueError("no activity was recorded and no activity list was given.")
