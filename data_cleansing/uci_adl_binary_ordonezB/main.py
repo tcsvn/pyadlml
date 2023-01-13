@@ -32,6 +32,9 @@ df_acts = data['activities']
 df_devs = data['devices']
 df_devs, _ = correct_devices(df_devs)
 
+
+
+
 """
 Correct overlapping activities
 """
@@ -50,32 +53,18 @@ df_acts = df_acts.sort_values(by=START_TIME)\
 assert not _is_activity_overlapping(df_acts)
 
 
-# TODO
-joblib.dump({'activities': df_acts, 'devices':df_devs}, workdir.joinpath('df_dump.joblib'))
 
 
 
-"""
-Select timespan
-
-The timespans are properly selected as is. No changes necessary.
-"""
+#---------------------------------------
+# Select timespan
+#   The timespans are properly selected as is. No changes necessary.
 
 
 #---------------------------------------
 # Remove or join irrelevant activities
+#   No irrelevant activities
 
-
-irrelevant_activities = [
-
-]
-# "Gwen search keys" happens one time
-# On phone and answering phone happen jointly 4 times
-# "Wash toaster" happens 1 time on Juli 25th. and no event or state chnage is happening
-# during the activity
-# The person shaved once on the Juli 29th in the kitchen no other device than the
-# "kitchen_pir" was involved
-df_acts = df_acts[~(df_acts[ACTIVITY].isin(irrelevant_activities))].reset_index(drop=True)
 
 """
 Activity cleanup
@@ -91,32 +80,20 @@ df_acts = update_df(
 )
 
 
-#Remove irrelevant devices
 # ---------------------------
-# Cupboard groceries is opened 3 times and only changes during juli 24th and 1th august during 
-# prepare diner on 2nd august right before going
-# to the toilet. On 2 of the 6 times for prepare during dinner the cupboard is opened.
+# Remove irrelevant devices
 
-# Frame happens 22 times. Of those 22 it happens 3 times during an activity (Play piano, prepare dinner and wash dishes)
+#irrelevant_devices = [
+#]
+#
+#df_devs = df_devs[~(df_devs[DEVICE].isin(irrelevant_devices))].reset_index(drop=True)
 
+df_devs = update_df(
+    workdir.joinpath('relabel_devices.py'),
+    df_devs,
+    'df_devs', 
+)
 
-irrelevant_devices = [
-    'cupboard groceries',
-    'frame'
-]
+joblib.dump({'activities': df_acts, 'devices':df_devs}, workdir.joinpath('df_dump.joblib'))
+print()
 
-df_devs = df_devs[~(df_devs[DEVICE].isin(irrelevant_devices))].reset_index(drop=True)
-
-
-
-
-
-# TODO  check for
-# half of the times before leaving the house the inhabitant
-# did not prepare for leaving
-
-# 2. August, toilet activities starts to early and covers kitchen events
-# Juli 26th get drink in night but no sensor fires ....
-# Juli 28th play piano needs join
-# juli 26th 2009 15:40 relabel
-# 27th toilet flush only one event (look for outliers)

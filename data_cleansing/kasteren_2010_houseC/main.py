@@ -4,7 +4,7 @@
 
 import pandas as pd
 import numpy as np
-from pyadlml.dataset._core.devices import is_device_df, device_remove_state_matching_signal
+from pyadlml.dataset._core.devices import is_device_df, device_remove_state_matching_signal, is_on_off_consistent
 from pyadlml.dataset._core.activities import _is_activity_overlapping, correct_succ_same_end_and_start_time, is_activity_df, _get_overlapping_activities
 from pyadlml.constants import ACTIVITY, START_TIME, END_TIME, TIME, VALUE, DEVICE
 from pyadlml.dataset.util import select_timespan, str_to_timestamp, append_devices, get_dev_rows_where, \
@@ -67,20 +67,17 @@ df_devs, df_acts = select_timespan(df_devs, df_acts,
                                              left_cut, right_cut, 
                                              clip_activities=True)
 
-# TODO
-joblib.dump({'activities': df_acts, 'devices':df_devs}, workdir.joinpath('df_dump.joblib'))
 
 #---------------------------------------
 # Remove or join irrelevant activities
 irrelevant_activities = [
-
+    'Put clothes in washingmachine',
+    'Take medication'
 ]
-# "Gwen search keys" happens one time
-# On phone and answering phone happen jointly 4 times
-# "Wash toaster" happens 1 time on Juli 25th. and no event or state chnage is happening
-# during the activity
-# The person shaved once on the Juli 29th in the kitchen no other device than the
-# "kitchen_pir" was involved
+# 'Put clothes in washingmachine' happens once and has no predictive device. 
+# 'Take medication' happens only 4 times covering 6 minutes total time 
+# and in the first half of the recording. No device is solely predictive for take meds. . 
+
 df_acts = df_acts[~(df_acts[ACTIVITY].isin(irrelevant_activities))].reset_index(drop=True)
 
 """
@@ -89,6 +86,96 @@ Activity cleanup
 
 Used label tool to adjust activities
 """
+df_acts = df_acts.sort_values(by=START_TIME).reset_index(drop=True)
+df_devs = df_devs.sort_values(by=TIME).reset_index(drop=True)
+
+# Shift from 28 november - 1st december
+time_shifted = ['2008-11-28 00:00:00', '2008-12-01 00:00:00']
+offset = pd.Timedelta('2min') + pd.Timedelta('30s')
+idxs = df_acts[((time_shifted[0] < df_acts[START_TIME]) & (df_acts[END_TIME] < time_shifted[1]))].index
+df_acts.loc[idxs, [START_TIME, END_TIME]] = df_acts.loc[idxs, [START_TIME, END_TIME]] + offset
+
+# Shift from 1st december until the 3rd where everything resumes to normal
+time_shifted = ['2008-12-01 00:00:00', '2008-12-03 16:50:00']
+offset = pd.Timedelta('2min') + pd.Timedelta('20s')
+idxs = df_acts[((time_shifted[0] < df_acts[START_TIME]) & (df_acts[END_TIME] < time_shifted[1]))].index
+df_acts.loc[idxs, [START_TIME, END_TIME]] = df_acts.loc[idxs, [START_TIME, END_TIME]] + offset
+
+# Shift from 1st december until the 3rd where everything resumes to normal
+time_shifted = ['2008-12-03 17:00:00', '2008-12-04 00:00:00']
+offset = - pd.Timedelta('20s')
+idxs = df_acts[((time_shifted[0] < df_acts[START_TIME]) & (df_acts[END_TIME] < time_shifted[1]))].index
+df_acts.loc[idxs, [START_TIME, END_TIME]] = df_acts.loc[idxs, [START_TIME, END_TIME]] + offset
+
+# Shift from 1st december until the 3rd where everything resumes to normal
+time_shifted = ['2008-12-04 00:00:00', '2008-12-08 00:00:00']
+offset = - pd.Timedelta('1min') - pd.Timedelta('30s')
+idxs = df_acts[((time_shifted[0] < df_acts[START_TIME]) & (df_acts[END_TIME] < time_shifted[1]))].index
+df_acts.loc[idxs, [START_TIME, END_TIME]] = df_acts.loc[idxs, [START_TIME, END_TIME]] + offset
+
+
+# Invert devices for uniformity. Yields consistent interpretaitno 
+# when a device produces event due to human interaction it turns on. 
+inv_list = [
+    'cabinet cups/bowl/tuna reed',
+    'door bedroom',
+    'front door reed',
+    'freezer reed',
+    'microwave reed',
+    'pans cupboard reed',
+    'refrigerator',
+    'toilet door downstairs',
+    'toilet flush upstairs',
+    'toilet flush downstairs',
+    'cupboard leftovers reed'
+]
+idx = df_devs[df_devs[DEVICE].isin(inv_list)].index
+df_devs.loc[idx, VALUE] = ~df_devs.loc[idx, VALUE]
+
+# TODO DEBUG
+#to_work = [
+#    'cupboard leftovers reed',
+#    'pans cupboard reed',
+#    'freezer reed',
+#    'microwave reed',
+#    'cabinet cups/bowl/tuna reed',
+#    'toilet flush upstairs', 
+#    'dresser pir',
+#    'toilet flush downstairs',
+#    'door bedroom',
+#    'cabinet plates spices reed',
+#    'toilet door downstairs',
+#]
+to_not_work = [
+#    'pressure mat bed right',
+#    'bathtub pir', 
+#    'pressure mat couch',
+#    'refrigerator',
+]
+#df_devs = df_devs[df_devs[DEVICE].isin(to_not_work)].copy()
+
+def remove_state(df_devs, device, state, state_cond, replacement=None):
+
+
+    df = df_devs[(df_devs[DEVICE] == device)].copy()
+    df['diff'] = df[TIME].shift(-1) - df[TIME]
+    mask = df['diff'].apply(state_cond) & (df[VALUE] == state)
+    idxs = df[mask | mask.shift(1)].index
+    df_devs = df_devs.drop(idxs)
+    return df_devs
+
+
+# Bathtub pir is a sensor that fires an event ~1s if it detects motion
+# 
+#df_devs = remove_state(df_devs, 'bathtub pir', True, lambda x: x > pd.Timedelta('10min'))
+
+# Pressuer mat bed right
+# TODO reapply
+df_devs = remove_state(df_devs, 'pressure mat bed right', True, 
+                       lambda x: x > pd.Timedelta('30min'))
+
+
+joblib.dump({'activities': df_acts, 'devices':df_devs}, workdir.joinpath('df_dump_pre_relabel.joblib'))
 
 df_acts = update_df(
     workdir.joinpath('relabel_activities.py'),
@@ -96,33 +183,38 @@ df_acts = update_df(
     'df_acts', 
 )
 
+assert not _is_activity_overlapping(df_acts)
+
 
 #Remove irrelevant devices
 # ---------------------------
-# Cupboard groceries is opened 3 times and only changes during juli 24th and 1th august during 
-# prepare diner on 2nd august right before going
-# to the toilet. On 2 of the 6 times for prepare during dinner the cupboard is opened.
 
-# Frame happens 22 times. Of those 22 it happens 3 times during an activity (Play piano, prepare dinner and wash dishes)
-
-
-irrelevant_devices = [
-    'cupboard groceries',
-    'frame'
-]
-
-df_devs = df_devs[~(df_devs[DEVICE].isin(irrelevant_devices))].reset_index(drop=True)
+#irrelevant_devices = [
+#]
+#
+#df_devs = df_devs[~(df_devs[DEVICE].isin(irrelevant_devices))].reset_index(drop=True)
 
 
+# Notes on relabel devices:
+# - cubpoard leftover reed 
+#     - is only used during prepare dinner and relax
+#     - since the device 
+# - microwave reed
+#     - Assuming the reed switch is mounted to the door. Therefore the device is 'on'
+#       if the door is opened. 
+# - keys
+#     - on dec 3rd the device is malfunctioning and producing ~200 events where
+#       the inhabitant is away... Removing those events
+
+df_devs = update_df(
+    workdir.joinpath('relabel_devices.py'),
+    df_devs,
+    'df_devs', 
+)
+df_devs = correct_on_off_inconsistency(df_devs)
 
 
-
-# TODO  check for
-# half of the times before leaving the house the inhabitant
-# did not prepare for leaving
-
-# 2. August, toilet activities starts to early and covers kitchen events
-# Juli 26th get drink in night but no sensor fires ....
-# Juli 28th play piano needs join
-# juli 26th 2009 15:40 relabel
-# 27th toilet flush only one event (look for outliers)
+df_acts = df_acts.sort_values(by=START_TIME).reset_index(drop=True)
+df_devs = df_devs.sort_values(by=TIME).reset_index(drop=True)
+joblib.dump({'activities': df_acts, 'devices':df_devs}, workdir.joinpath('df_dump.joblib'))
+print()

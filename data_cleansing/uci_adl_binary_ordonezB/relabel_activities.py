@@ -1214,3 +1214,290 @@ df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
 
 new_row=pd.Series({START_TIME: pd.Timestamp('2012-12-02 09:26:22'), END_TIME: pd.Timestamp('2012-12-02 10:15:43.384401300'), ACTIVITY: 'Sleeping'})
 df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['29.11.2012 09:50:00.000000','29.11.2012 09:56:59.000000','Toileting']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-11-29 09:49:34.991572800'), END_TIME: pd.Timestamp('2012-11-29 09:52:48.626185400'), ACTIVITY: 'Toileting'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Delete operation:
+idx_to_del = get_index_matching_rows(df_acts, 	[['12.11.2012 21:06:00.000000','12.11.2012 21:11:59.000000','Spare_Time/TV']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['17.11.2012 10:21:00.000000','17.11.2012 10:34:59.000000','Grooming']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-11-17 10:21:18.254916'), END_TIME: pd.Timestamp('2012-11-17 10:34:59'), ACTIVITY: 'Grooming'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['17.11.2012 10:18:00.000000','17.11.2012 10:20:59.000000','Showering']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-11-17 10:18:00'), END_TIME: pd.Timestamp('2012-11-17 10:21:13.611138'), ACTIVITY: 'Showering'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['30.11.2012 01:40:00.000000','30.11.2012 01:40:59.000000','Toileting']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-11-30 01:40:00'), END_TIME: pd.Timestamp('2012-11-30 01:40:28.778495'), ACTIVITY: 'Toileting'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['30.11.2012 01:41:00.000000','30.11.2012 10:20:59.000000','Sleeping']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-11-30 01:40:43.283263'), END_TIME: pd.Timestamp('2012-11-30 10:20:59'), ACTIVITY: 'Sleeping'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['02.12.2012 09:25:00.000000','02.12.2012 09:25:59.000000','Toileting']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-12-02 09:25:00'), END_TIME: pd.Timestamp('2012-12-02 09:25:40.616523900'), ACTIVITY: 'Toileting'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Delete operation:
+idx_to_del = get_index_matching_rows(df_acts, 	[['23.11.2012 10:56:00.000000','23.11.2012 12:35:59.000000','Sleeping']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Create operation:
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-11-23 10:56:04.785100'), END_TIME: pd.Timestamp('2012-11-23 12:36:07.231600'), ACTIVITY: 'Leaving'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['25.11.2012 13:41:00.000000','25.11.2012 13:45:59.000000','Toileting']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-11-25 13:41:00'), END_TIME: pd.Timestamp('2012-11-25 13:42:19.070850'), ACTIVITY: 'Toileting'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['30.11.2012 12:26:00.000000','30.11.2012 12:30:59.000000','Grooming']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-11-30 12:26:37.573425'), END_TIME: pd.Timestamp('2012-11-30 12:30:59'), ACTIVITY: 'Grooming'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['17.11.2012 14:42:00.000000','17.11.2012 16:24:59.000000','Leaving']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-11-17 14:42:00'), END_TIME: pd.Timestamp('2012-11-17 16:24:31.504720'), ACTIVITY: 'Leaving'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['26.11.2012 11:34:00.000000','26.11.2012 11:59:59.000000','Leaving']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-11-26 11:34:00'), END_TIME: pd.Timestamp('2012-11-26 11:59:45.948074'), ACTIVITY: 'Leaving'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['15.11.2012 11:42:00.000000','15.11.2012 13:02:59.000000','Leaving']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-11-15 11:42:00'), END_TIME: pd.Timestamp('2012-11-15 13:02:49.973523'), ACTIVITY: 'Leaving'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['15.11.2012 15:54:00.000000','15.11.2012 20:10:59.000000','Leaving']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-11-15 15:54:16.229537400'), END_TIME: pd.Timestamp('2012-11-15 20:10:59'), ACTIVITY: 'Leaving'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['16.11.2012 22:18:00.000000','17.11.2012 02:19:59.000000','Leaving']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-11-16 22:18:31.377550'), END_TIME: pd.Timestamp('2012-11-17 02:19:59'), ACTIVITY: 'Leaving'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['18.11.2012 10:53:00.000000','18.11.2012 14:34:59.000000','Leaving']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-11-18 10:53:00'), END_TIME: pd.Timestamp('2012-11-18 14:34:13.654231600'), ACTIVITY: 'Leaving'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['27.11.2012 21:12:00.000000','28.11.2012 01:37:59.000000','Leaving']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-11-27 21:12:00'), END_TIME: pd.Timestamp('2012-11-28 01:37:38.947296600'), ACTIVITY: 'Leaving'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['27.11.2012 11:53:00.000000','27.11.2012 11:53:59.000000','Grooming']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-11-27 11:53:00'), END_TIME: pd.Timestamp('2012-11-27 11:53:50.765519600'), ACTIVITY: 'Grooming'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['24.11.2012 00:33:00.000000','24.11.2012 10:02:59.000000','Sleeping']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-11-24 00:33:00'), END_TIME: pd.Timestamp('2012-11-24 10:02:29.793869300'), ACTIVITY: 'Sleeping'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['02.12.2012 01:41:00.000000','02.12.2012 09:20:59.000000','Sleeping']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-12-02 01:41:06.055957200'), END_TIME: pd.Timestamp('2012-12-02 09:20:59'), ACTIVITY: 'Sleeping'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['23.11.2012 14:40:00.000000','23.11.2012 14:41:59.000000','Toileting']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-11-23 14:40:00'), END_TIME: pd.Timestamp('2012-11-23 14:40:43.002957200'), ACTIVITY: 'Toileting'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['02.12.2012 19:10:00.000000','02.12.2012 19:11:59.000000','Toileting']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2012-12-02 19:10:00'), END_TIME: pd.Timestamp('2012-12-02 19:11:24.928314'), ACTIVITY: 'Toileting'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
