@@ -116,7 +116,6 @@ lst_to_del = [
 	['05.08.2009 05:53:01.324993','05.08.2009 05:54:47.140995','Use toilet'],
 ]
 idxs_to_delete += get_index_matching_rows(df_acts, lst_to_del)
-print(idxs_to_delete)
 
 #----------------------------------------------------------------------------------------------------
 new_rows_to_add = [*lst_to_add_0, *lst_to_add_1, *lst_to_add_2, *lst_to_add_3, *lst_to_add_4, *lst_to_add_5, *lst_to_add_6, ]

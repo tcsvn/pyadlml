@@ -15,7 +15,7 @@ from pyadlml.dataset import fetch_kasteren_2010
 from pyadlml.dataset._core.devices import correct_on_off_inconsistency, device_states_to_events
 import joblib
 from pathlib import Path
-from pyadlml.dataset.cleaning.util import update_df
+from pyadlml.dataset.cleaning.util import update_df, remove_state
 from pyadlml.dataset.cleaning.misc import remove_days
 
 set_data_home('/tmp/pyadlml')
@@ -154,15 +154,7 @@ to_not_work = [
 ]
 #df_devs = df_devs[df_devs[DEVICE].isin(to_not_work)].copy()
 
-def remove_state(df_devs, device, state, state_cond, replacement=None):
 
-
-    df = df_devs[(df_devs[DEVICE] == device)].copy()
-    df['diff'] = df[TIME].shift(-1) - df[TIME]
-    mask = df['diff'].apply(state_cond) & (df[VALUE] == state)
-    idxs = df[mask | mask.shift(1)].index
-    df_devs = df_devs.drop(idxs)
-    return df_devs
 
 
 # Bathtub pir is a sensor that fires an event ~1s if it detects motion

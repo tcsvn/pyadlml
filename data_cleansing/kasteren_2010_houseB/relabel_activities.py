@@ -1,6 +1,7 @@
 # Awesome script
 import pandas as pd
 from pyadlml.dataset._core.activities import get_index_matching_rows
+from pyadlml.constants import START_TIME, END_TIME, ACTIVITY
 
 
 #----------------------------------------# Toilet activity -> therefore cut activity and add "Use toilet" act below
@@ -691,4 +692,448 @@ idx_to_del = get_index_matching_rows(df_acts, 	[['2009-08-05 04:27:38.585991','2
 df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
 
 new_row=pd.Series({'start_time': pd.Timestamp('2009-08-05 04:28:04.839904700'), 'end_time': pd.Timestamp('2009-08-05 15:17:30.755998'), 'activity': 'Leaving the house'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Join operation: 
+idx_to_del = get_index_matching_rows(df_acts, 	[['05.08.2009 04:27:38.585991','05.08.2009 04:30:00.000000','Leaving the house']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+idx_to_del = get_index_matching_rows(df_acts, 	[['05.08.2009 04:28:04.839904','05.08.2009 15:17:30.755998','Leaving the house']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-08-05 04:27:38.585991'), END_TIME: pd.Timestamp('2009-08-05 15:17:30.755998'), ACTIVITY: 'Leaving the house'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['25.07.2009 02:54:31.722762','25.07.2009 06:54:01.584992','Go to bed']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-25 02:54:31.722762700'), END_TIME: pd.Timestamp('2009-07-25 06:52:20.962300'), ACTIVITY: 'Go to bed'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Create operation:
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-25 06:52:49.684900'), END_TIME: pd.Timestamp('2009-07-25 06:53:49.510000'), ACTIVITY: 'Use toilet'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Delete operation:
+idx_to_del = get_index_matching_rows(df_acts, 	[['30.07.2009 03:04:02.518992','30.07.2009 03:06:26.297995','Brush teeth']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Create operation:
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-30 03:04:04.199300'), END_TIME: pd.Timestamp('2009-07-30 03:06:25.622200'), ACTIVITY: 'Use toilet'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['26.07.2009 16:20:07.791482','27.07.2009 04:58:12.477000','Leaving the house']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-26 16:20:11.635200'), END_TIME: pd.Timestamp('2009-07-27 04:58:12.477000'), ACTIVITY: 'Leaving the house'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['01.08.2009 12:13:07.557999','01.08.2009 12:16:11.131999','Wash dishes']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-08-01 12:13:11.319500'), END_TIME: pd.Timestamp('2009-08-01 12:16:11.131999'), ACTIVITY: 'Wash dishes'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['25.07.2009 11:51:31.740999','25.07.2009 11:54:32.944995','Use toilet']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-25 11:51:57.595800'), END_TIME: pd.Timestamp('2009-07-25 11:54:32.944995'), ACTIVITY: 'Use toilet'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['29.07.2009 18:15:03.972999','29.07.2009 18:18:00.579997','Prepare dinner']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-29 18:15:27.902900'), END_TIME: pd.Timestamp('2009-07-29 18:18:00.579997'), ACTIVITY: 'Prepare dinner'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['25.07.2009 11:13:25.489992','25.07.2009 11:29:22.478997','Prepare brunch']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-25 11:13:25.489992'), END_TIME: pd.Timestamp('2009-07-25 11:25:16.016200'), ACTIVITY: 'Prepare brunch'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['25.07.2009 11:29:53.740998','25.07.2009 11:50:47.944998','Eat brunch']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-25 11:25:43.843100'), END_TIME: pd.Timestamp('2009-07-25 11:50:47.944998'), ACTIVITY: 'Eat brunch'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['28.07.2009 10:20:17.116000','28.07.2009 10:23:51.618997','Prepare brunch']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-28 10:20:24.239000'), END_TIME: pd.Timestamp('2009-07-28 10:23:51.618997'), ACTIVITY: 'Prepare brunch'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['28.07.2009 10:18:16.604996','28.07.2009 10:20:17.115000','Play piano']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-28 10:18:16.604996'), END_TIME: pd.Timestamp('2009-07-28 10:20:22.277100'), ACTIVITY: 'Play piano'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['25.07.2009 15:12:05.317993','26.07.2009 03:31:07.941174','Leaving the house']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-25 15:12:59.708400'), END_TIME: pd.Timestamp('2009-07-26 03:31:07.941174800'), ACTIVITY: 'Leaving the house'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['31.07.2009 09:51:35.211998','31.07.2009 09:56:42.690998','Eat brunch']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-31 09:52:17.294300'), END_TIME: pd.Timestamp('2009-07-31 09:56:42.690998'), ACTIVITY: 'Eat brunch'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['31.07.2009 09:46:49.041996','31.07.2009 09:51:23.846993','Prepare brunch']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-31 09:46:49.041996'), END_TIME: pd.Timestamp('2009-07-31 09:52:11.547200'), ACTIVITY: 'Prepare brunch'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['25.07.2009 13:03:31.307994','25.07.2009 13:13:59.600995','Take shower']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-25 13:03:31.307994'), END_TIME: pd.Timestamp('2009-07-25 13:11:50.788200'), ACTIVITY: 'Take shower'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['25.07.2009 13:14:03.505993','25.07.2009 13:14:36.986992','Get dressed']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-25 13:12:07.205800'), END_TIME: pd.Timestamp('2009-07-25 13:14:36.986992'), ACTIVITY: 'Get dressed'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['28.07.2009 19:21:28.733994','28.07.2009 19:51:15.423271','Play piano']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-28 19:21:28.733994'), END_TIME: pd.Timestamp('2009-07-28 19:50:59.224800'), ACTIVITY: 'Play piano'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['24.07.2009 21:03:41.644996','24.07.2009 21:15:02.139997','Wash dishes']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-24 21:05:31.009200'), END_TIME: pd.Timestamp('2009-07-24 21:15:02.139997'), ACTIVITY: 'Wash dishes'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['29.07.2009 19:11:10.505000','30.07.2009 03:03:58.141999','Leaving the house']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-29 19:11:34.670900'), END_TIME: pd.Timestamp('2009-07-30 03:03:58.141999'), ACTIVITY: 'Leaving the house'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['31.07.2009 09:45:23.180995','31.07.2009 09:46:23.316999','Use toilet']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-31 09:45:37.246000'), END_TIME: pd.Timestamp('2009-07-31 09:46:28.407800'), ACTIVITY: 'Use toilet'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['31.07.2009 01:26:01.247920','31.07.2009 09:45:23.031870','Go to bed']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-31 01:26:01.247920500'), END_TIME: pd.Timestamp('2009-07-31 09:45:29.786600'), ACTIVITY: 'Go to bed'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['30.07.2009 12:03:50.079993','30.07.2009 12:04:18.250993','Wash dishes']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-30 12:03:57.711800'), END_TIME: pd.Timestamp('2009-07-30 12:04:27.199000'), ACTIVITY: 'Wash dishes'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['03.08.2009 04:26:25.310991','03.08.2009 05:37:24.709997','Go to bed']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-08-03 04:26:25.310991'), END_TIME: pd.Timestamp('2009-08-03 05:37:17.078100'), ACTIVITY: 'Go to bed'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['28.07.2009 19:21:28.733994','28.07.2009 19:50:59.224800','Play piano']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-28 19:21:28.733994'), END_TIME: pd.Timestamp('2009-07-28 19:50:49.861500'), ACTIVITY: 'Play piano'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['02.08.2009 09:54:50.683992','02.08.2009 10:08:02.872000','Play piano']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-08-02 09:54:57.876400'), END_TIME: pd.Timestamp('2009-08-02 10:08:02.872000'), ACTIVITY: 'Play piano'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['04.08.2009 13:48:27.480998','04.08.2009 14:05:06.811998','Play piano']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-08-04 13:48:42.593600'), END_TIME: pd.Timestamp('2009-08-04 14:05:06.811998'), ACTIVITY: 'Play piano'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['30.07.2009 13:03:16.813997','30.07.2009 13:05:22.152001','Get dressed']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-30 13:03:27.203400'), END_TIME: pd.Timestamp('2009-07-30 13:05:22.152001'), ACTIVITY: 'Get dressed'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['27.07.2009 12:16:28.286083','27.07.2009 12:17:42.087993','Use toilet']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-27 12:16:28.286083200'), END_TIME: pd.Timestamp('2009-07-27 12:17:39.944100'), ACTIVITY: 'Use toilet'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['27.07.2009 23:25:08.868997','27.07.2009 23:25:50.553993','Use toilet']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-27 23:25:08.868997'), END_TIME: pd.Timestamp('2009-07-27 23:25:50.553993'), ACTIVITY: 'Use toilet'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['27.07.2009 23:25:08.868997','27.07.2009 23:25:50.553993','Use toilet']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-27 23:24:17.730900'), END_TIME: pd.Timestamp('2009-07-27 23:25:14.800700'), ACTIVITY: 'Use toilet'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['30.07.2009 03:04:04.199300','30.07.2009 03:06:25.622200','Use toilet']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-30 03:05:41.033000'), END_TIME: pd.Timestamp('2009-07-30 03:06:28.431600'), ACTIVITY: 'Use toilet'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['31.07.2009 11:12:05.658001','31.07.2009 11:13:33.633993','Use toilet']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-31 11:12:05.658001'), END_TIME: pd.Timestamp('2009-07-31 11:13:20.260800'), ACTIVITY: 'Use toilet'})
+df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)
+
+#----------------------------------------
+# 
+
+
+# Modify operation:
+
+idx_to_del = get_index_matching_rows(df_acts, 	[['31.07.2009 01:26:01.247920','31.07.2009 09:45:29.786600','Go to bed']],
+)
+df_acts = df_acts.drop(index=idx_to_del).reset_index(drop=True)
+
+new_row=pd.Series({START_TIME: pd.Timestamp('2009-07-31 01:25:34.374300'), END_TIME: pd.Timestamp('2009-07-31 09:45:29.786600'), ACTIVITY: 'Go to bed'})
 df_acts = pd.concat([df_acts, new_row.to_frame().T], axis=0).reset_index(drop=True)

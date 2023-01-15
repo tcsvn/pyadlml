@@ -5,7 +5,7 @@
 import pandas as pd
 import numpy as np
 from pyadlml.dataset._core.devices import is_device_df, device_remove_state_matching_signal
-from pyadlml.dataset._core.activities import _is_activity_overlapping, is_activity_df, _get_overlapping_activities
+from pyadlml.dataset._core.activities import _is_activity_overlapping, correct_succ_same_end_and_start_time, is_activity_df, _get_overlapping_activities
 from pyadlml.constants import ACTIVITY, START_TIME, END_TIME, TIME, VALUE, DEVICE
 from pyadlml.dataset.util import select_timespan, str_to_timestamp, append_devices, get_dev_rows_where, \
     get_dev_row_where
@@ -15,7 +15,7 @@ from pyadlml.dataset import fetch_kasteren_2010
 from pyadlml.dataset._core.devices import correct_on_off_inconsistency, device_states_to_events
 import joblib
 from pathlib import Path
-from pyadlml.dataset.cleaning.util import update_df
+from pyadlml.dataset.cleaning.util import update_df, remove_state
 from pyadlml.dataset.cleaning.misc import remove_days
 
 set_data_home('/tmp/pyadlml')
@@ -42,6 +42,13 @@ df_acts = update_df(
     df_acts,
     'df_acts', 
 )
+
+df_acts = df_acts.sort_values(by=START_TIME)\
+                 .reset_index(drop=True)
+
+df_acts = correct_succ_same_end_and_start_time(df_acts)
+
+
 
 assert not _is_activity_overlapping(df_acts)
 
@@ -94,11 +101,14 @@ Activity cleanup
 Used label tool to adjust activities
 """
 
-df_acts = update_df(
-    workdir.joinpath('relabel_activities.py'),
-    df_acts,
-    'df_acts', 
-)
+
+to_not_work = [
+    #press bed left',
+    #'kitchen pir', 
+    #'bathroom pir',
+    #'press bed right',
+]
+df_devs = df_devs[~df_devs[DEVICE].isin(to_not_work)].copy()
 
 
 #Remove irrelevant devices
@@ -106,29 +116,76 @@ df_acts = update_df(
 # Cupboard groceries is opened 3 times and only changes during juli 24th and 1th august during 
 # prepare diner on 2nd august right before going
 # to the toilet. On 2 of the 6 times for prepare during dinner the cupboard is opened.
-
-# Frame happens 22 times. Of those 22 it happens 3 times during an activity (Play piano, prepare dinner and wash dishes)
-
-
+# - Frame 
+#   happens 22 times. Of those 22 it happens 3 times during an activity (Play piano, prepare dinner and wash dishes)
+# - bedroom pir 
+#       is correctly active with a high firing rate on the first day. The rest is strash 
+# - sink float
+#       is active on the first two days then never again. Event distribution unrecognizable.
+# - pressure mat server corner
+#       Happens most of the time when there is no activity. Multiple malfunctioning timeframes
+#       where events are spammed. 
+#
 irrelevant_devices = [
     'cupboard groceries',
-    'frame'
+    'frame',
+    'bedroom pir',
+    'sink float',
+    'pressure mat server corner'
 ]
 
 df_devs = df_devs[~(df_devs[DEVICE].isin(irrelevant_devices))].reset_index(drop=True)
 
 
+inv_list = [
+    'balcony door',
+]
+idx = df_devs[df_devs[DEVICE].isin(inv_list)].index
+df_devs.loc[idx, VALUE] = ~df_devs.loc[idx, VALUE]
 
-# TODO
-joblib.dump({'activities': df_acts, 'devices':df_devs}, workdir.joinpath('df_dump.joblib'))
-exit()
 
-# TODO  check for
-# half of the times before leaving the house the inhabitant
-# did not prepare for leaving
+# Remove states
+df_devs = remove_state(df_devs, 'Bedroom door', True, 
+                       lambda x: x < pd.Timedelta('2s'))
 
-# 2. August, toilet activities starts to early and covers kitchen events
-# Juli 26th get drink in night but no sensor fires ....
-# Juli 28th play piano needs join
-# juli 26th 2009 15:40 relabel
-# 27th toilet flush only one event (look for outliers)
+# PIRs trigger with a refractory period of 1s. On-states greater than one
+# second are most likely an artifact.
+df_devs = remove_state(df_devs, 'bathroom pir', True, 
+                       lambda x: x > pd.Timedelta('1.5s'), 
+                       replacement=(True, '1s'))
+df_devs = remove_state(df_devs, 'kitchen pir', True, 
+                       lambda x: x > pd.Timedelta('1.5s'), 
+                       replacement=(True, '1s'))
+df_devs = remove_state(df_devs, 'press bed left', True, 
+                       lambda x: x > pd.Timedelta('60s'), 
+                       replacement=(True, '1s'))
+df_devs = remove_state(df_devs, 'press bed right', True, 
+                       lambda x: x > pd.Timedelta('60s'), 
+                       replacement=(True, '1s'))
+
+
+
+
+
+
+df_acts = df_acts.sort_values(by=START_TIME).reset_index(drop=True)
+df_devs = df_devs.sort_values(by=TIME).reset_index(drop=True)
+
+joblib.dump({'activities': df_acts, 'devices':df_devs}, workdir.joinpath('df_dump_pre_relabel.joblib'))
+
+df_acts = update_df(
+    workdir.joinpath('relabel_activities.py'),
+    df_acts,
+    'df_acts', 
+)
+df_devs = update_df(
+    workdir.joinpath('relabel_devices.py'),
+    df_devs,
+    'df_devs', 
+)
+df_devs = correct_on_off_inconsistency(df_devs)
+
+df_acts = df_acts.sort_values(by=START_TIME).reset_index(drop=True)
+df_devs = df_devs.sort_values(by=TIME).reset_index(drop=True)
+joblib.dump({'activities':df_acts, 'devices':df_devs}, workdir.joinpath('df_dump.joblib'))
+print()
