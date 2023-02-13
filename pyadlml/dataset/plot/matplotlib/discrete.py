@@ -1,14 +1,31 @@
-from pyadlml.dataset.stats.discrete import contingency_table_01, cross_correlation
-from pyadlml.dataset.plot.util import heatmap_contingency as hm_cont
-from pyadlml.dataset.plot.util import annotate_heatmap, heatmap, heatmap_square, \
+import functools
+from pyadlml.dataset.stats.discrete import contingency_table_01 as cn01, cross_correlation as cc
+from pyadlml.dataset.plot.matplotlib.util import heatmap_contingency as hm_cont, save_fig
+from pyadlml.dataset.plot.matplotlib.util import annotate_heatmap, heatmap, heatmap_square, \
     _num_bars_2_figsize, func_formatter_log_1
-from pyadlml.util import get_primary_color, get_diverging_color
+from pyadlml.dataset.util import extract_kwargs
+from pyadlml.util import get_primary_color, get_diverging_color, get_secondary_color
 import matplotlib.pyplot as plt
-import matplotlib
 import pandas as pd 
 import numpy as np
 
-def heatmap_contingency(X, y, rep='', z_scale=None, figsize=None, numbers=True):
+
+
+def ensure_yis_series(func):
+    @extract_kwargs
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        y = kwargs.pop('y')
+        if isinstance(y, pd.DataFrame) and len(y.columns) == 1:
+            y = y.iloc[:,0]
+        kwargs['y'] = y
+        return func(*args, **kwargs)
+    return wrapper
+
+
+@save_fig
+@ensure_yis_series
+def contingency_table(X, y, rep='', z_scale=None, figsize=None, numbers=True, file_path=None):
     """ plots the contingency between features and labels of data
     Parameters
     ----------
@@ -23,7 +40,7 @@ def heatmap_contingency(X, y, rep='', z_scale=None, figsize=None, numbers=True):
     cbarlabel = 'counts'
     valfmt = ("{x:.0f}" if z_scale!='log' else func_formatter_log_1)
 
-    df_con = contingency_table_01(X, y)
+    df_con = cn01(X, y)
     vals = df_con.values.T
     acts = df_con.columns.values
     devs = list(df_con.index)
@@ -32,17 +49,51 @@ def heatmap_contingency(X, y, rep='', z_scale=None, figsize=None, numbers=True):
     for i, dev in enumerate(devs):
         if 'On' in dev:
             devs[i] = 'On'
-    return hm_cont(acts, devs, vals, title, cbarlabel, z_scale=z_scale, figsize=figsize, valfmt=valfmt, numbers=numbers)
+    fig =  hm_cont(acts, devs, vals, title, cbarlabel, z_scale=z_scale, figsize=figsize, valfmt=valfmt, numbers=numbers)
+    plt.tight_layout()
+    return fig
 
-def hist_activities(y, scale=None, color=None, figsize=(9,3)):
-    """
+@save_fig
+def device_fraction(X, figsize=(9,4), color=None, file_path=None):
+
+    title = 'Fraction'
+    x_label = 'count'
+
+    color = (get_primary_color() if color is None else color)
+    color2 = get_secondary_color()
+
+
+    df = X.apply(lambda x: x.value_counts())
+    off_values = df.loc[0,:]
+    on_values = df.loc[1,:]
+
+
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.set_title(title)
+    ax.set_xlabel(x_label)
+
+
+    # Plot 0os 
+    ax.barh(df.columns, off_values, label='0', color=color)
+    ax.barh(df.columns, on_values, left=off_values, label='1', color=color2)
+
+    return fig
+
+@save_fig
+@ensure_yis_series
+def activity_count(y, scale="linear", color=None, figsize=(9,3), file_path=None):
+    """ Plot activity count
+
     Parameters
     ----------
-    y: np array
+    y: np array or pd.Series
         label of strings
     scale: None or log
+
     """
-    title = 'Label occurence'
+    assert scale in ['linear', 'log']
+
+    title = 'Label frequency'
     xlabel = 'counts'
     color = (get_primary_color() if color is None else color)
 
@@ -56,8 +107,50 @@ def hist_activities(y, scale=None, color=None, figsize=(9,3)):
         plt.xscale('log')
 
     ax.barh(ser.index, ser.values, orientation='horizontal', color=color)
-    plt.xlabel(xlabel)
+    ax.set_xlabel(xlabel)
     fig.suptitle(title)
+
+    plt.tight_layout()
+    return fig
+
+
+@save_fig
+def mutual_info(X, y, scale="linear", color=None, figsize=(9,3), file_path=None):
+    """ Plot activity count
+
+    Parameters
+    ----------
+    X: array-like, (n_samples, n_features)
+        asdf
+    y: np array or pd.Series
+        label of strings
+    X
+    scale: None or log
+
+    """
+    assert scale in ['linear', 'log']
+
+    title = 'Mutual Information: I(X,y) = H(y)-H(y|X)'
+    xlabel = 'I(X,y)'
+    color = (get_primary_color() if color is None else color)
+
+    from sklearn.feature_selection import mutual_info_classif
+    mi = mutual_info_classif(X, y, discrete_features=True)
+
+
+    figsize = (_num_bars_2_figsize(len(X.columns)) if figsize is None else figsize)
+    fig, ax = plt.subplots(1, 1, figsize=figsize)
+
+    if scale == 'log': 
+        plt.xscale('log')
+
+    ax.barh(X.columns, mi, orientation='horizontal', color=color)
+    ax.set_xlabel(xlabel)
+    fig.suptitle(title)
+
+    plt.tight_layout()
+    return fig
+
 
 
 def corr_devices_01(rep, figsize=(19,14)):
@@ -114,6 +207,8 @@ def corr_devices_01(rep, figsize=(19,14)):
     fig.tight_layout()
     plt.show()
 
+
+
 def heatmap_cross_correlation(df_dev, figsize=(10,8)):
 
 
@@ -121,7 +216,7 @@ def heatmap_cross_correlation(df_dev, figsize=(10,8)):
     cmap = get_diverging_color()
     cbarlabel = 'similarity'
 
-    ct = cross_correlation(df_dev)
+    ct = cc(df_dev)
     vals = ct.values.T.astype(np.float64)
     devs = list(ct.index)
     

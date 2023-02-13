@@ -9,8 +9,8 @@ from datetime import timedelta
 import numpy as np
 
 from pyadlml.constants import DEVICE, TIME, VALUE, STRFTIME_HOUR, STRFTIME_DATE, PRIMARY_COLOR, SECONDARY_COLOR
-from pyadlml.dataset.plotly.activities import _set_compact_title, _scale_xaxis
-from pyadlml.dataset.stats.devices import event_count, event_cross_correlogram, events_one_day, \
+from pyadlml.dataset.plot.plotly.activities import _set_compact_title, _scale_xaxis
+from pyadlml.dataset.stats.devices import event_count, event_cross_correlogram, event_cross_correlogram3, events_one_day, \
                                           inter_event_intervals
 from pyadlml.dataset.util import check_scale, activity_order_by, device_order_by
 from pyadlml.dataset.stats.devices import state_times
@@ -234,3 +234,137 @@ def boxplot_state(df_devs, scale='linear', height=350, binary_state='on',
                                 'Start time=%{customdata[1]|' + STRFTIME_DATE + '}<extra></extra>'
 
     return fig
+
+
+
+def plotly_device_event_correlogram(df_devs, corr_data=(None, None, None), height=600):
+
+    from pyadlml.dataset.stats.devices import event_cross_correlogram2
+    if corr_data:
+        cc, bins, devs = corr_data
+    else:
+        cc, bins, devs = event_cross_correlogram2(df_devs, v1=False, use_dask=True)
+
+    fig = make_subplots(rows=len(devs), cols=len(devs), horizontal_spacing=0.005,
+                        vertical_spacing=0.005, column_titles=devs.tolist(), row_titles=devs.tolist(),
+    
+    )
+    from pyadlml.dataset.plot.plotly.util import CatColMap
+
+    def plot_histogram(fig, row, col, bins, counts, dev1, dev2, cm):
+        counts = np.concatenate([counts[:int(len(counts)/2)],
+                            counts[int(len(counts)/2)+1:]]) 
+        fig.add_trace(
+            go.Bar(
+                x=bins,
+                y=counts,
+                opacity=1,
+                hovertemplate=f'Fix {dev1} w.r.t events of {dev2}<extra></extra>',
+                showlegend=False,
+                marker=dict(line_width=0, color=cm[dev1])
+            ), row=row, col=col
+        )
+        fig.update_xaxes(showticklabels=False, row=row, col=col)
+        fig.update_yaxes(showticklabels=False, row=row, col=col)
+        
+        return fig
+    cm = CatColMap()
+    for i in range(len(devs)):
+        for j in range(len(devs)):
+            cm.update(cat=devs[i])
+            fig = plot_histogram(fig, i+1,j+1, bins, cc[i, j], devs[i], devs[j], cm)
+
+    # Rotate columns and row annotation correctly 
+    for i in range(len(devs)*2):
+        if i < len(devs):
+            # Case for cols
+            fig.layout['annotations'][i]['textangle'] = -90
+        else:
+            fig.layout['annotations'][i]['textangle'] = 0
+
+    return fig
+
+
+def plotly_event_correlogram(df_devs=None, cc_data=None, fix=[], to=[], max_lag='2min', binsize='1s', use_dask=False, height=600):
+
+        
+        # Wrap if not list
+        fix = [fix] if isinstance(fix, str) else fix
+        to = [to] if isinstance(to, str) else to
+            
+        if cc_data is None:
+            cc, bins, rows, cols = event_cross_correlogram3(
+                df_devs, fix=fix, to=to, maxlag=max_lag, binsize=binsize,
+                use_dask=use_dask
+            )
+        else:
+            cc, bins, rows, cols = cc_data[0], cc_data[1], cc_data[2], cc_data[3]
+
+        fig = make_subplots(rows=len(rows), cols=len(cols), horizontal_spacing=0.005,
+                            vertical_spacing=0.005, column_titles=cols, row_titles=rows,
+        
+        )
+        from pyadlml.dataset.plot.plotly.util import CatColMap
+        import pandas as pd
+        def plot_histogram(fig, row, col, bins, counts, dev1, dev2, cm):
+            counts = np.concatenate([counts[:int(len(counts)/2)],
+                                counts[int(len(counts)/2)+1:]]) 
+
+            tmp = pd.interval_range(start=pd.Timedelta('0s'), end=pd.Timedelta(max_lag), freq=pd.Timedelta(binsize)).values
+            len_cd = len(bins)
+            cd = np.full(bins.shape, fill_value='', dtype=object)
+            for i in range(0, len(cd)):
+                if i < len(tmp)-1:
+                    cd[i] = '(-' + str(tmp[len(tmp)-i-1].right) + ', -' + str(tmp[len(tmp)-i-1].left) + ']'
+                elif i == len(tmp)-1:
+                    cd[i] = '(-' + str(tmp[len(tmp)-i-1].right) + ', ' + str(tmp[len(tmp)-i-1].left) + ']'
+                elif i == len(tmp):
+                    cd[i] = '(0 days 00:00:00, 0 days 00:00:00]'
+                else:
+                    cd[i] = str(tmp[(i-1)%len(tmp)])
+            half = int(np.ceil(len(bins)/2))
+            before = np.full(half, fill_value='before', dtype=object)
+            after = np.full(half, fill_value='after', dtype=object)
+            cd1 = np.concatenate([before, after])[:-1]
+            cd1[half-1] = 'at'
+            cd = np.stack([cd, cd1]).T 
+
+
+            fig.add_trace(
+                go.Bar(
+                    x=bins,
+                    y=counts,
+                    opacity=1,
+                    customdata=cd, 
+                    hovertemplate='%{y} events of "' + dev1 + '" occur during %{customdata[0]}<br>%{customdata[1]}' + f' a type "{dev2}" event<extra></extra>',
+                    showlegend=False,
+                    marker=dict(line_width=0, color=cm[dev2])
+                ), row=row, col=col
+            )
+            fig.update_xaxes(showticklabels=False, row=row, col=col)
+            fig.update_yaxes(showticklabels=False, row=row, col=col)
+
+            return fig
+
+        # Color row-wise
+        cm = CatColMap()
+        for i in range(len(rows)):
+            for j in range(len(cols)):
+                cm.update(cat=cols[j])
+                fig = plot_histogram(fig, i+1,j+1, bins, cc[i, j], rows[i], cols[j], cm)
+
+        # Rotate columns and row annotation correctly 
+        for i in range(len(cols) + len(rows)):
+            if i < len(cols):
+                # Case for cols
+                hm = {1:-0, 2:-10, 3:-20, 4:-40, 5:-50}
+                #fig.layout['annotations'][i]['textangle'] = hm[len(cols)]
+                fig.layout['annotations'][i]['textangle'] = -20
+            else:
+                hm = {1: 70, 2: 80, 3:80, 4:80, 5:80}
+                #fig.layout['annotations'][i]['textangle'] = hm[len(rows)] 
+                fig.layout['annotations'][i]['textangle'] = 70
+
+        fig.update_layout(height=height)
+        return fig
+

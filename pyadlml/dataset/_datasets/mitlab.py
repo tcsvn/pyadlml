@@ -60,7 +60,7 @@ def fetch_mitlab(subject='subject1', keep_original=False, cache=True,
                  retain_corrections=False, folder_path=None) -> dict:
     """
     Fetches the :ref:`mitlab <ds_mitlab>` dataset from the internet. The original dataset or its cached version
-    is stored in the :ref:`data home <storage>` folder.
+    is stored in the data_home folder.
 
     Parameters
     ----------

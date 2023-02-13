@@ -1,4 +1,5 @@
-from pyadlml.constants import START_TIME, ACTIVITY, END_TIME
+from pathlib import Path
+from pyadlml.constants import OTHER, START_TIME, ACTIVITY, END_TIME
 import pandas as pd
 import numpy as np
 
@@ -13,6 +14,44 @@ import numpy as np
 
 """
 INT_EPS = pd.Timedelta('1ms')
+COLS = [START_TIME, END_TIME, ACTIVITY]
+
+
+def get_index_matching_rows(df_act, rows, tolerance='1ms'):
+    """
+
+    Note
+    ----
+    Attention, since rows are read from strings or whatever the format assumed is dayfirst
+               i.e. 01.08.2009 equalst the first of august.
+    
+    """
+    if isinstance(rows, list):
+        df = pd.DataFrame(rows, columns=COLS)
+        df[START_TIME] = pd.to_datetime(df[START_TIME], errors='coerce', dayfirst=True)
+        df[END_TIME] = pd.to_datetime(df[END_TIME], errors='coerce', dayfirst=True)
+    else:
+        print('went here')
+        df = rows
+
+    assert isinstance(df, pd.DataFrame)
+
+    tol = pd.Timedelta(tolerance)
+    idxs = []
+    for idx, row in df.iterrows():
+        mask_st = (row[START_TIME]-tol < df_act[START_TIME])\
+                & (df_act[START_TIME] < row[START_TIME]+tol)
+        mask_et = (row[END_TIME]-tol < df_act[END_TIME])\
+                & (df_act[END_TIME] < row[END_TIME]+tol)
+        mask_act = (df_act[ACTIVITY] == row[ACTIVITY])
+        res = df_act[mask_st & mask_et & mask_act].index.values
+        assert len(res) <= 1
+        if len(res) == 1:
+            idxs.append(*res)
+        if len(res) == 0:
+            print('Warning!!!. Activity corrections are not applied!')
+    return idxs
+
 
 
 def is_activity_df(df):
@@ -56,8 +95,9 @@ def _is_activity_overlapping(df):
 
     """
     assert df.shape[1] == 3, "Activity dataframes must have 3 columns."
-    epsilon = pd.Timedelta('0ms')
-    mask = (df[END_TIME].shift()-df[START_TIME]) >= epsilon
+
+    df = df.sort_values(by=START_TIME).reset_index(drop=True)
+    mask = (df[END_TIME].shift()-df[START_TIME]) >= pd.Timedelta('0ms')
     overlapping = df[mask]
     return not overlapping.empty
 
@@ -96,7 +136,7 @@ def add_other_activity(acts, min_diff=pd.Timedelta('5s')):
             return pd.Series({
                 START_TIME: series.end_time + pd.Timedelta('1ms'),
                 END_TIME: next_entry.start_time - pd.Timedelta('1ms'),
-                ACTIVITY: 'idle'
+                ACTIVITY: OTHER
             })
 
     acts['diff'] = acts[START_TIME].shift(-1) - acts[END_TIME]
@@ -514,6 +554,20 @@ def exists_st_before_et(df_acts):
     violating = df[mask]
     return not violating.empty
 
+def correct_succ_same_end_and_start_time(df: pd.DataFrame) -> pd.DataFrame:
+    """ Correct pairwise activities where the firsts end_time is equal to the seconds start_time
+        by adding a ms onto the respective start_time
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Activity dataframe
+
+    """
+    test = df[END_TIME].shift(1) - df[START_TIME]
+    mask = (test == pd.Timedelta('0s'))
+    df.loc[mask, START_TIME] += pd.Timedelta(INT_EPS)
+    return df
 
 def correct_activities(df, strats=[], excepts=[], retain_corrections=False):
     """ gets df in form of activities and removes overlapping activities
@@ -537,10 +591,7 @@ def correct_activities(df, strats=[], excepts=[], retain_corrections=False):
     df = df.drop_duplicates(ignore_index=True)
 
     # Correct pairwise activities where the firsts end_time is equal to the seconds start_time
-    if True:
-        test = df[END_TIME].shift(1) - df[START_TIME]
-        mask = (test == pd.Timedelta('0s'))
-        df.loc[mask, START_TIME] += pd.Timedelta(INT_EPS)
+    df = correct_succ_same_end_and_start_time(df)
 
     # Check if an end_time is greater than a start_time
     if exists_st_before_et(df):
@@ -588,6 +639,13 @@ class ActivityDict(dict):
         return list(set([item for v in self.values() \
                               for item in v[ACTIVITY].unique()]))
 
+    def apply(self, func):
+        """ Applies a function to each dataframe
+        """
+        for k, df in self.items():
+            self[k] = func(df)
+        return self
+
     def min_starttime(self):
         min_lst = []
         for df_acts in self.values():
@@ -599,11 +657,16 @@ class ActivityDict(dict):
         max_lst = []
         for df_acts in self.values():
             if not df_acts.empty:
-                max_lst.append(df_acts[START_TIME].iloc[-1]) 
+                max_lst.append(df_acts[END_TIME].iloc[-1]) 
         return max(max_lst)
 
     def concat(self):
         return pd.concat(self.values())
+
+    def copy(self):
+        """ Returns a deep copy of itsself
+        """
+        return ActivityDict({k:v.copy() for k, v in self.items()})
 
     @classmethod
     def wrap(cls, df_acts):

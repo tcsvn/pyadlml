@@ -1,3 +1,4 @@
+import pandas as pd
 
 # compute a chi-squared dependence table
 def rep2onoff(rep):

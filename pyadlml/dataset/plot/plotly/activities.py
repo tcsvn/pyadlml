@@ -1,6 +1,6 @@
 import functools
 import plotly.figure_factory as ff
-from .util import _style_colorbar
+from .util import legend_current_items, _style_colorbar, remove_whitespace_around_fig
 import plotly.express as px
 import pandas as pd
 import numpy as np
@@ -189,6 +189,7 @@ def bar_count(df_act, scale='linear', height=350, no_title=False, order='count')
         fig.update_xaxes(type='log')
     return fig
 
+@remove_whitespace_around_fig
 @check_scale
 def heatmap_transitions(df_act, scale='linear', height=350, order='alphabetical') -> plotly.graph_objects.Figure:
     """
@@ -223,6 +224,70 @@ def heatmap_transitions(df_act, scale='linear', height=350, order='alphabetical'
 
     fig.update_xaxes(tickangle=45)
     fig.update_yaxes(visible=False, showticklabels=False)
-    fig.update_layout(margin=dict(l=0, r=0, b=0, t=30, pad=0), height=height)
     _style_colorbar(fig, cbarlabel)
+    return fig
+
+@remove_whitespace_around_fig
+def correction(df_pre, df_post):
+    from pyadlml.dataset.plot.plotly.util import plot_activities_into, CatColMap
+
+    fig = make_subplots(rows=1, cols=2, shared_xaxes=True,
+                        subplot_titles=("Pre correction", "Post correction"),
+    )
+
+    cat_colmap = CatColMap() 
+    act_order = activity_order_by(dct_acts=df_pre, rule='duration')
+
+    fig = plot_activities_into(fig, df_post, y_label='', cat_col_map=cat_colmap,
+                               act_order=act_order, row=1, col=2
+    )
+
+
+    # Plot pre activities
+    df = df_pre.copy()
+    df = df.sort_values(by=START_TIME).reset_index(drop=True)
+    df['dur'] = (df[END_TIME] - df[START_TIME])
+    df['lengths' ] = df['dur'].astype("timedelta64[ms]")
+    df['dur'] = df['dur'].astype(str)
+
+    trace_lst = []
+    for i in range(len(df)):
+        act_name = df.loc[i, ACTIVITY]
+        start_time = df.loc[i, START_TIME]
+        end_time = df.loc[i, END_TIME]
+        bar_length = df.loc[i, 'lengths']
+        duration = df.loc[i, 'dur']
+
+        cat_colmap.update(act_name, fig)
+        show_legend = act_name not in legend_current_items(fig)
+        act_mask = (df[ACTIVITY] == act_name)
+        hover_template = '<b>' + act_name + '</b><br>'\
+                        + 'Start_time: %{base|' + STRFTIME_DATE + '}<br>' \
+                        + 'End_time: %{x| ' + STRFTIME_DATE + '}<br>' \
+                        + 'Dur: %{customdata}<extra></extra>'
+
+        trace = go.Bar(name=act_name,
+                       base=[start_time],
+                       x=[bar_length],
+                       y=[str(i)],
+                       marker_color=cat_colmap[act_name],
+                       legendgroup=act_name,
+                       customdata=[duration],
+                       orientation='h',
+                       width=0.9,
+                       textposition='auto',
+                       alignmentgroup=True,
+                       offsetgroup=act_name,
+                       showlegend=show_legend,
+                       hovertemplate=hover_template,
+        )
+        trace_lst.append(trace)
+
+    [fig.add_trace(trace, row=1, col=1) for trace in trace_lst]
+
+    fig.update_xaxes(matches='x')
+    fig.update_yaxes(fixedrange=True)
+
+    fig.update_layout(height=300)
+
     return fig

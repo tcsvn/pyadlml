@@ -128,7 +128,7 @@ def contingency_table_events(df_devices, df_activities, per_state=False, other=F
     devs = df_devices[DEVICE].unique()
     acts = df_activities[ACTIVITY].unique()
 
-    df = label_data(df_devices, df_activities, idle=other, n_jobs=n_jobs)
+    df = label_data(df_devices, df_activities, other=other, n_jobs=n_jobs)
     if not per_state:
         df[VALUE] = 1
         df = pd.pivot_table(df, columns=ACTIVITY, index=DEVICE, values=VALUE, aggfunc=len, fill_value=0)\
@@ -384,8 +384,8 @@ def contingency_table_states(df_devs, df_acts, other=False, n_jobs=1):
     OFF_praefix = 'off'
     SEP = ':'
 
-    df_devs = df_devs.copy()
-    df_acts = df_acts.copy()
+    df_devs = df_devs.copy().reset_index(drop=True).sort_values(by=TIME)
+    df_acts = df_acts.copy().reset_index(drop=True).sort_values(by=START_TIME)
     df_acts[TD] = df_acts[END_TIME] - df_acts[START_TIME]
 
     dtypes = infer_dtypes(df_devs)
@@ -393,7 +393,7 @@ def contingency_table_states(df_devs, df_acts, other=False, n_jobs=1):
     end_time = df_acts.iat[-1, 1]
     from pyadlml.dataset._core.devices import device_events_to_states
     df_devs = device_events_to_states(df_devs, extrapolate_states=True,
-                                      st=start_time, et=end_time)
+                                      start_time=start_time, end_time=end_time)
     bool_mask_true = (df_devs[DEVICE].isin(dtypes[BOOL])) & (df_devs[VALUE] == True)
     bool_mask_false = (df_devs[DEVICE].isin(dtypes[BOOL])) & (df_devs[VALUE] == False)
     mask_cat = (df_devs[DEVICE].isin(dtypes[CAT]))
@@ -416,6 +416,8 @@ def contingency_table_states(df_devs, df_acts, other=False, n_jobs=1):
 
         overlap_total = df_acts[mask_total_ov]
         if not overlap_total.empty:
+            if len(overlap_total) != 1:
+                print()
             assert len(overlap_total) == 1, 'trouble double dup dup.'
             # One activity overlaps the whole state
             ol = overlap_total.iloc[0]

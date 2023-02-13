@@ -15,9 +15,20 @@ class MegaDownloader(DatasetDownloader):
         self.fn_cleaned = fn_cleaned
     
     
-    def download_cleaned(self, dest: Path) -> None:
-        """ Download from mega"""
-        self._download_from_mega(dest, self.fn_cleaned, self.url_cleaned, unzip=False)
+    def download_cleaned(self, fp_dest: Path, ident=None) -> None:
+        """ Download from mega
+        dest:  Path
+            Path to the cleaned file
+        """
+        fn_cleaned = self.fn_cleaned[ident] if ident is not None else self.fn_cleaned
+        url_cleaned = self.url_cleaned[ident] if ident is not None else self.url_cleaned
+
+        self._download_from_mega(fp_dest.parent, fn_cleaned, url_cleaned, unzip=False)
+        import shutil
+        src = fp_dest.parent.joinpath(fn_cleaned)
+        sink = fp_dest
+        shutil.move(src, sink)
+
 
     def download(self, dest: Path) -> None:
         self._download_from_mega(dest, self.fn, self.mega_url, unzip=True)

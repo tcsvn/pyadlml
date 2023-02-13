@@ -9,7 +9,6 @@ estimator, as a chain of transforms and estimators.
 #         Lars Buitinck
 # License: BSD
 from joblib import Parallel
-from scipy import sparse
 from sklearn.base import clone, TransformerMixin, BaseEstimator
 from sklearn.utils.fixes import delayed
 from sklearn.utils.metaestimators import if_delegate_has_method
@@ -44,13 +43,23 @@ class XAndYTransformer():
     pass
 
 
-class XOrYTransformer():
-    """
-    a class that inherits from XOrYTransformer signals to the pipeline
+class XOrYTransformer(object):
+    """ A class that inherits from XOrYTransformer signals to the pipeline
     to transform X or y given inputs X or y. The transformation is not
     applied if X and y are missing.
     """
-    pass
+    def x_or_y_transform(func):
+        def wrapper(self, *args, **kwargs):
+            X, y = func(self, *args, **kwargs)
+            if X is None and y is not None:
+                return y
+            elif X is not None and y is None:
+                return X
+            elif X is not None and y is not None:
+                return X, y
+            else:
+                raise ValueError("XorYtransformers transform has to return at least one not None value")
+        return wrapper
 
 
 # TODO try _BaseComposition for get and set params
@@ -430,7 +439,7 @@ class Pipeline(SklearnPipeline):
         with _print_elapsed_time('Pipeline',
                                  self._log_message(len(self.steps) - 1)):
             if last_step == 'passthrough':
-                return Xt
+                return Xt, yt
             fit_params_last_step = fit_params_steps[self.steps[-1][0]]
             if hasattr(last_step, 'fit_transform'):
                 return last_step.fit_transform(Xt, yt, **fit_params_last_step)
@@ -438,14 +447,19 @@ class Pipeline(SklearnPipeline):
                 return last_step.fit(Xt, yt,
                                      **fit_params_last_step).transform(Xt)
 
-    def _transform(self, X, y=None):
+    def _transform(self, X, y=None, retrieve_last_time=False, **transform_params_steps):
         """
-        is there to extend
+        Extends transform behavior by allowing for transform params and x or y transformation
         """
+        #transform_params_steps = self._check_fit_params(**transform_params)
+
         Xt = X
+        if retrieve_last_time:
+            memory = Xt.copy()
+
         if y is None:
             for _, name, transform in self._iter():
-                Xt = transform.transform(Xt)
+                Xt = transform.transform(Xt, **transform_params_steps[name])
             return Xt
         else:
             yt = y
@@ -453,12 +467,20 @@ class Pipeline(SklearnPipeline):
                 if self._skip_transform(transform):
                     continue
                 if isinstance(transform, YTransformer):
-                    yt = transform.fit_transform(yt, Xt)
+                    yt = transform.transform(yt, Xt, **transform_params_steps[name])
                 elif isinstance(transform, XAndYTransformer) \
                         or isinstance(transform, XOrYTransformer):
-                    Xt, yt = transform.fit_transform(Xt, yt)
+                    Xt, yt = transform.transform(Xt, yt, **transform_params_steps[name])
                 else:
-                    Xt = transform.transform(Xt)
+                    Xt = transform.transform(Xt, **transform_params_steps[name])
+
+                if retrieve_last_time:
+                    # Check if time column is 
+                    if 'time' not in Xt.columns:
+                        return memory['time']
+                    else:
+                        memory = Xt.copy()
+
             return Xt, yt
 
     @if_delegate_has_method(delegate='_final_estimator')
@@ -485,6 +507,7 @@ class Pipeline(SklearnPipeline):
         -------
         y_pred : array-like
         """
+        predict_params_steps = self._check_fit_params(**predict_params_steps)
         Xt = X
         # TODO BUG in evaluation mode the transformed X_t and Xt for pipe.transform have different ouput
         for _, name, transform in self._iter(with_final=False):
@@ -492,11 +515,11 @@ class Pipeline(SklearnPipeline):
                     or isinstance(transform, XAndYTransformer):
                 continue
 
-            Xt = transform.transform(Xt)
+            Xt = transform.transform(Xt, **predict_params_steps[name])
         return self.steps[-1][-1].predict(Xt, **predict_params)
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def predict_proba(self, X):
+    def predict_proba(self, X, **predict_params):
         """Apply transforms, and predict_proba of the final estimator
 
         Parameters
@@ -509,16 +532,56 @@ class Pipeline(SklearnPipeline):
         -------
         y_proba : array-like of shape (n_samples, n_classes)
         """
+
+        predict_proba_params_steps = self._check_fit_params(**predict_params)
         Xt = X
         for _, name, transform in self._iter(with_final=False):
             if self._skip_transform(transform) or isinstance(transform, YTransformer) \
                     or isinstance(transform, XAndYTransformer):
                 continue
             elif isinstance(transform, XOrYTransformer):
-                Xt, _ = transform.fit_transform(Xt, None)
+                Xt, _ = transform.transform(Xt, None, **predict_proba_params_steps)
             else:
-                Xt = transform.transform(Xt)
+                Xt = transform.transform(Xt, **predict_proba_params_steps)
         return self.steps[-1][-1].predict_proba(Xt)
+
+
+    def transform(self, X, y, **transform_params):
+        """Transform the data, and apply `transform` with the final estimator.
+
+        Call `transform` of each transformer in the pipeline. The transformed
+        data are finally passed to the final estimator that calls
+        `transform` method. Only valid if the final estimator
+        implements `transform`.
+
+        This also works where final estimator is `None` in which case all prior
+        transformations are applied.
+
+        Parameters
+        ----------
+        X : iterable
+            Data to transform. Must fulfill input requirements of first step
+            of the pipeline.
+
+        Returns
+        -------
+        Xt : ndarray of shape (n_samples, n_transformed_features)
+            Transformed data.
+        """
+        tparams_steps, pipe_params = self._check_transform_params(**transform_params)
+        return self._transform(X, y, **pipe_params, **tparams_steps)
+
+
+    def _check_transform_params(self, **fit_params):
+        fit_params_steps = {name: {} for name, step in self.steps if step is not None}
+        pipe_params = {}
+        for pname, pval in fit_params.items():
+            if "__" not in pname:
+                pipe_params[pname] = pval
+                continue
+            step, param = pname.split("__", 1)
+            fit_params_steps[step][param] = pval
+        return fit_params_steps, pipe_params
 
     @if_delegate_has_method(delegate='_final_estimator')
     def decision_function(self, X):
@@ -546,7 +609,7 @@ class Pipeline(SklearnPipeline):
         return self.steps[-1][-1].decision_function(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def score_samples(self, X):
+    def score_samples(self, X, **score_params):
         """Apply transforms, and score_samples of the final estimator.
 
         Parameters
@@ -559,15 +622,16 @@ class Pipeline(SklearnPipeline):
         -------
         y_score : ndarray of shape (n_samples,)
         """
+        score_params_steps = self._check_fit_params(**score_params)
         Xt = X
-        for _, _, transformer in self._iter(with_final=False):
+        for _, name, transformer in self._iter(with_final=False):
             if self._skip_transform(transformer) or isinstance(transformer, YTransformer) \
                     or isinstance(transformer, XAndYTransformer):
                 continue
             elif isinstance(transformer, XOrYTransformer):
-                Xt, _ = transformer.fit_transform(Xt, None)
+                Xt, _ = transformer.fit_transform(Xt, None, score_params[name])
             else:
-                Xt = transformer.transform(Xt)
+                Xt = transformer.transform(Xt, **score_params[name])
         return self.steps[-1][-1].score_samples(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
@@ -596,13 +660,13 @@ class Pipeline(SklearnPipeline):
         return self.steps[-1][-1].predict_log_proba(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def score(self, X, y=None, sample_weight=None):
+    def score(self, X, y=None, sample_weight=None, **score_params):
         """Apply transforms, and score with the final estimator
 
         Parameters
         ----------
         X : iterable
-            Data to predict on. Must fulfill input requirements of first step
+            Data to predict on. Must fulfill input rquirements of first step
             of the pipeline.
 
         y : iterable, default=None
@@ -619,21 +683,23 @@ class Pipeline(SklearnPipeline):
         """
         Xt = X
         yt = y
+        score_params_steps = self._check_fit_params(**score_params)
+
         for _, name, transform in self._iter(with_final=False):
             if self._skip_transform(transform):
                 continue
             elif isinstance(transform, XOrYTransformer):
-                Xt, yt = transform.fit_transform(Xt, yt)
+                Xt, yt = transform.transform(Xt, yt, **score_params_steps[name])
             elif isinstance(transform, YTransformer):
-                yt = transform.fit_transform(yt, Xt)
+                yt = transform.transform(yt, Xt, **score_params_steps[name])
             elif isinstance(transform, XAndYTransformer):
-                Xt, yt = transform.fit_transform(Xt, yt)
+                Xt, yt = transform.transform(Xt, yt, **score_params_steps[name])
             else:
-                Xt = transform.transform(Xt)
+                Xt = transform.transform(Xt, **score_params_steps[name])
         score_params = {}
         if sample_weight is not None:
             score_params['sample_weight'] = sample_weight
-        return self.steps[-1][-1].score(Xt, yt, **score_params)
+        return self.steps[-1][-1].score(Xt, yt)
 
 
 def _fit_transform_one(transformer,

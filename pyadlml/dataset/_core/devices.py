@@ -1,4 +1,6 @@
+from pathlib import Path
 import numpy as np
+from scipy import signal as sc_signal
 import pandas as pd
 
 from pyadlml.constants import START_TIME, END_TIME, TIME, VALUE, DEVICE, BOOL, NUM, CAT
@@ -6,6 +8,7 @@ from pyadlml.dataset.util import df_difference, infer_dtypes
 
 CORRECTION_TS = 'correction_ts'
 CORRECTION_ONOFF_INCONS = 'correction_on_off_inconsistency'
+COLS_DEV = [TIME, DEVICE, VALUE]
 
 """
     df_devices:
@@ -77,7 +80,7 @@ def _is_dev_rep2(df: pd.DataFrame):
     return True
 
 
-def is_device_df(df: pd.DataFrame):
+def is_device_df(df: pd.DataFrame) -> bool:
     """ Checks if a dataframe is a valid device dataframe.
     """
     return DEVICE in df.columns \
@@ -86,58 +89,87 @@ def is_device_df(df: pd.DataFrame):
            and len(df.columns) == 3
 
 
-def device_events_to_states(df_rep1: pd.DataFrame, extrapolate_states=False, st=None, et=None):
-    """ Transforms device dataframe from an event representation into a state representation,
-        where a row a devices state with start and end time.
+def get_index_matching_rows(df_devs, rows, tolerance='1ms'):
 
+    if isinstance(rows, list):
+        df = pd.DataFrame(rows, columns=COLS_DEV)
+        df[TIME] = pd.to_datetime(df[TIME], errors='coerce', dayfirst=True)
+    else:
+        print('went here')
+        df = rows
+
+    assert isinstance(df, pd.DataFrame)
+
+    tol = pd.Timedelta(tolerance)
+    idxs = []
+    for _, row in df.iterrows():
+        mask_st = (row[TIME]-tol < df_devs[TIME])\
+                & (df_devs[TIME] < row[TIME]+tol)
+        mask_dev = (df_devs[DEVICE] == row[DEVICE])
+        res = df_devs[mask_st & mask_dev].index.values
+        assert len(res) <= 1
+        if len(res) == 1:
+            idxs.append(*res)
+        if len(res) == 0:
+            print('Warning!!! Tried to delete device but could not')
+    return idxs
+
+
+
+
+
+
+def device_events_to_states(df_devs: pd.DataFrame, start_time=None, end_time=None, extrapolate_states=False):
+    """ Transforms device dataframe from an event representation into a state representation,
+        
     Parameters
     ----------
-    df_rep1 : pd.DataFrame
-        rep1: col (time, device, val)
+    df_devs : pd.DataFrame
+        In event representation, a dataframe with columns (time, device, value)
         example row: [2008-02-25 00:20:14, Freezer, False]
     extrapolate_states : Boolean, default=False
         Whether boolean devices should add extra states for the first occurring events
-    st : pd.Timestamp, str or default=None
+    start_time : pd.Timestamp, str or default=None
         The start time from which to
-    et : pd.Timestamp, str or default=None
+    end_time : pd.Timestamp, str or default=None
         The start time from which to
 
     Returns
     -------
     df : pd.DataFrame
-        rep: columns are (start time, end_time, device, state)
+        In state representation with columns (start time, end_time, device, value)
         example row: [2008-02-25 00:20:14, 2008-02-25 00:22:14, Freezer, True]
-    or 
+
     df, lst
     """
     epsilon = '1ns'
 
-    df = df_rep1.copy() \
+    df = df_devs.copy() \
         .reset_index(drop=True) \
         .sort_values(TIME)
 
+
+
     dtypes = infer_dtypes(df)
 
-    if st is None:
-        first_timestamp = df[TIME].iloc[0]
-    else:
-        first_timestamp = pd.Timestamp(st)
-    if et is None:
-        last_timestamp = df[TIME].iloc[-1]
-    else:
-        last_timestamp = pd.Timestamp(et)
+    first_timestamp = df[TIME].iloc[0] if start_time is None else pd.Timestamp(start_time)
+    last_timestamp  = df[TIME].iloc[-1] if end_time is None else pd.Timestamp(end_time)
 
     if extrapolate_states:
         # create additional rows in order to compensate for the state duration of the first event
         # to the selected event for boolean devices
         eps = pd.Timedelta(epsilon)
+
+        # Prevents boolean cast warning when extrapolatiing states
+        df[VALUE] = df[VALUE].astype(object)
+
         for dev in dtypes[BOOL]:
             df_dev = df[df[DEVICE] == dev]
             first_row = df_dev.iloc[0].copy()
             if first_row[TIME] != first_timestamp and first_row[TIME] - first_timestamp > pd.Timedelta('1s'):
                 first_row[VALUE] = not first_row[VALUE]
                 first_row[TIME] = first_timestamp + eps
-                df = pd.concat([df, first_row])
+                df = pd.concat([df, first_row.to_frame().T], axis=0, ignore_index=True)
             eps += pd.Timedelta(epsilon)
 
     df = df.sort_values(TIME).reset_index(drop=True)
@@ -700,14 +732,104 @@ def _generate_signal(signal, dt='250ms'):
         discretized_sig[current_step:current_step + steps] = 1 if state else -1
         current_step += steps
 
+    # TODO refactor, why does the extrapolation of states do not work out???
+    # Eliminate Zeropadding
+    last_state = discretized_sig[0]
+    for i in range(1, len(discretized_sig)):
+        if discretized_sig[i] == 0:
+            discretized_sig[i] = last_state
+        last_state = discretized_sig[i] 
+
     return discretized_sig
+
+
+
+def create_sig_and_corr(df: pd.DataFrame, hit_idx: int, dt_prae_hit: pd.Timedelta, dt_post_hit: pd.Timedelta,
+                        ss_discrete: np.ndarray):
+    """ 
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        
+
+    """
+    idx, first, last = get_idxs(df, hit_idx, dt_prae_hit, dt_post_hit)
+    tmp = df.loc[idx, [VALUE, 'diff']].values
+    tmp = np.insert(tmp, 0, [[not tmp[0, 0], first]], axis=0)
+    tmp = np.append(tmp, [[not tmp[-1, 0], last]], axis=0)
+    signal = _generate_signal(tmp, dt='250ms')
+    corr = sc_signal.correlate(signal, ss_discrete, mode='full')
+    return signal, corr
+
+
+def get_idxs(df, hit_idx, dt_prae_hit, dt_post_hit):
+    """ Gets device indices of events before and after to the hit 
+        to later on process in a cross correlation.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        device dataframe of the selected device
+    hit_idx: int
+        Indice of the hit
+    dt_prae_hit: pd.Timedelta
+        How much time to consider prea hit
+    dt_prae_hit: pd.Timedelta
+        How much time to consider post hit
+
+    Returns
+    -------
+    list, 
+        The involved indices for the signal
+    """
+    get_df_idx = lambda x: df[df['index'] == x].index.values[0]
+
+    res_idxs = [hit_idx]
+    df = df.reset_index()
+
+    if get_df_idx(hit_idx) == 0:
+        first = dt_prae_hit
+    else:
+        # Iterate the events backward and finish if iterated time difference
+        # is higher than the origs. signals 
+        idx_lower = get_df_idx(hit_idx) - 1
+        dt_iter = dt_prae_hit
+        dt_prev_tmp = dt_iter - df.at[idx_lower, 'diff']
+        while dt_prev_tmp > pd.Timedelta('0s') and idx_lower >= 0:
+            dt_iter -= df.at[idx_lower, 'diff']
+            res_idxs.insert(0, df.at[idx_lower, 'index'])
+            idx_lower -= 1
+            dt_prev_tmp -= df.at[idx_lower, 'diff']
+        first = dt_iter
+
+    if get_df_idx(hit_idx) == len(df) - 1:
+        last = dt_post_hit
+    else:
+        # Iterate the events forward and finish if iterated time difference
+        # is higher than the origs. signals 
+        idx_upper = get_df_idx(hit_idx) + 1
+        dt_iter = dt_post_hit
+        dt_next_tmp = dt_iter - df.at[idx_upper, 'diff']
+        while dt_next_tmp > pd.Timedelta('0s') and idx_upper < len(df) - 1:
+            dt_iter -= df.at[idx_upper, 'diff']
+            res_idxs.append(df.at[idx_upper, 'index'])
+            idx_upper += 1
+            dt_next_tmp -= df.at[idx_upper, 'diff']
+        last = dt_iter
+
+    df = df.set_index('index')
+    return res_idxs, first, last
+
 
 
 def device_remove_state_matching_signal(df_devs: pd.DataFrame,
                                         #signal: list[tuple[bool, str], ... ],
+                                        device: str,
                                         signal: list,
-                                        state_indicator: int,
-                                        eps_state: str = '0.2s', eps_corr: float = 0.1) -> pd.DataFrame:
+                                        matching_state: int,
+                                        corr_threshold=0.2, 
+                                        eps_state: str = '0.2s') -> pd.DataFrame:
     """
     Removes states from a device dataframe that match a signal.
 
@@ -739,11 +861,88 @@ def device_remove_state_matching_signal(df_devs: pd.DataFrame,
     >>> df = device_remove_state_matching_signal(df, sig_original, eps_corr=2)
     """
 
+
+    matching_state_idx = matching_state
+    eps_state = '0.2s'
+    # Tolerance for cross correlation w.r.t. auto correlation to highlight as a match
+    sig_search = [(s[0], pd.Timedelta(s[1])) for s in signal]
+
+
+    # Find 
+    td = pd.Timedelta(sig_search[matching_state_idx][1])
+    state = sig_search[matching_state_idx][0]
+    eps_state = pd.Timedelta(eps_state)
+
     from scipy import signal as sc_signal
-    df = df_devs.copy()
+    # Create auto correlation and retrieve a proper threshold
+    ss_discrete = _generate_signal(sig_search, dt='250ms')
+    auto_corr = sc_signal.correlate(ss_discrete, ss_discrete, mode='full')
+    auto_corr_max = auto_corr.max()
+
+    # Compute the number of counts that the signal may deviate
+    # but still counts as a match
+    # For example if a window is 72 units long and the maximum
+    # correlation would also be 72 for a signal with the same length. Therefore
+    # the eps_corr count would be 14 if the signal is allowed to differ 20%
+    if isinstance(corr_threshold, float):
+        corr_threshold = int(len(ss_discrete)*corr_threshold)
+        corr_threshold = auto_corr_max - corr_threshold
+
+    # Count total length and length up and after matching state of signal
+    ss_total_dt, ss_dt_prae_match, ss_dt_post_match = [pd.Timedelta('0s')]*3
+    for i, (s, dt) in enumerate(sig_search):
+        ss_total_dt += dt
+        if i < matching_state_idx:
+            ss_dt_prae_match += dt
+        if i > matching_state_idx:
+            ss_dt_post_match += dt
+
+    plot_dt_around_sig = ss_total_dt*0.25
+
+
+
+    def create_hit_list(df_devs):
+        df = df_devs[df_devs[DEVICE] == device].copy()
+        df['to_convert'] = False
+        df['diff'] = pd.Timedelta('0ns')
+        df['target'] = False
+
+        df['diff'] = df[TIME].shift(-1) - df[TIME]
+        df['target'] = (td - eps_state < df['diff'])\
+                    & (df['diff'] < td + eps_state)\
+                    & (df[VALUE] == state)
+
+        # Correct the case where the first occurence is already a match
+        df.at[df.index[-1], 'diff'] = ss_total_dt
+
+        # Get indices of hits and select first match for display
+        hits = df[(df['target'] == True)].index.to_list()
+        return hits, df
+
+    hits, df = create_hit_list(df_devs)
+
+    df_sel_dev = df_devs.copy()[df_devs[DEVICE] == device].reset_index()
+
+    for h in hits:
+        sig, corr = create_sig_and_corr(df, h, ss_dt_prae_match, ss_dt_post_match, ss_discrete)
+
+        if corr.max() > corr_threshold:
+            # Get succeding dev index
+            mask = (df_sel_dev['index'] == h)
+            idxs_to_drop = df_sel_dev[mask | mask.shift(1)]['index'].values.tolist()
+            df_devs = df_devs.drop(idxs_to_drop)
+
+    return df_devs.reset_index(drop=True)
+
+
+
+
+    # Old
+
+    from scipy import signal as sc_signal
     sig_original = signal
-    td = pd.Timedelta(sig_original[state_indicator][1])
-    state = sig_original[state_indicator][0]
+    td = pd.Timedelta(sig_original[matching_state][1])
+    state = sig_original[matching_state][0]
     eps_state = pd.Timedelta(eps_state)
 
     # Create perfect correlation yielding a proper threshold
@@ -761,9 +960,9 @@ def device_remove_state_matching_signal(df_devs: pd.DataFrame,
     # Create a timelength to append to
     tmp1 = [pd.Timedelta(s[1]) for s in sig_original]
     max_sig = sum(tmp1, pd.Timedelta('0s'))
-    states_to_past = [pd.Timedelta(sig_original[s][1]) for s in range(0, state_indicator)]
+    states_to_past = [pd.Timedelta(sig_original[s][1]) for s in range(0, matching_state)]
     dt_states_to_past = sum(states_to_past, pd.Timedelta('0s'))
-    states_to_future = [pd.Timedelta(sig_original[s][1]) for s in range(state_indicator+1, len(sig_original))]
+    states_to_future = [pd.Timedelta(sig_original[s][1]) for s in range(matching_state+1, len(sig_original))]
     dt_states_to_future = sum(states_to_future, pd.Timedelta('0s'))
 
     df = df.copy().reset_index(drop=True)
@@ -822,38 +1021,8 @@ def device_remove_state_matching_signal(df_devs: pd.DataFrame,
             tmp = np.append(tmp, [[not tmp[-1, 0], last]], axis=0)
             signal = _generate_signal(tmp, dt='250ms')
 
-            #print('-'*10,f'\ndev {dev}: idx: {idx}')
-            #print(f'{len(win)} vs {len(signal)}')
             corr = sc_signal.correlate(signal, win, mode='full')
-            #print(f'max corr: {corr.max()}')
-            #print('perfect corr max: ', perfect_corr_max)
-            #if True:
-            #    import matplotlib.pyplot as plt
-            #    tmp_corr = []
-            #    if True:
-            #    #for t in range(1, len(signal)):
-            #        #s1 = signal[:t]
-            #        #s2 = win[-t:]
-            #        #tmp_corr.append((s1*s2).sum())
-            #        #fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(6, 10))
-            #        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(6, 10))
-            #        ax1.plot(np.arange(len(win)), win)
-            #        ax1.scatter(np.arange(len(win)), win)
-            #        ax2.plot(np.arange(len(signal)), signal)
-            #        ax2.scatter(np.arange(len(signal)), signal)
 
-            #        ax3.plot(np.arange(len(corr)), corr, label='signal vs. window')
-            #        ax3.plot(np.arange(len(perfect_corr)), perfect_corr, label='win vs. win')
-            #        ax3.legend()
-
-            #        #ax4.plot(np.arange(len(tmp_corr)), tmp_corr, label='corr')
-            #        #ax4.plot(np.arange(len(s2)), s2, label='s2')
-            #        #ax4.plot(np.arange(len(signal)), signal, alpha=0.1, label='full s1')
-            #        #ax4.plot(np.arange(len(s1)), s1, label='s1')
-            #        #ax4.legend()
-            #        plt.savefig('tmp.png')
-            #        plt.clf()
-            #    ax3
 
             is_match = perfect_corr_max - corr.max() < eps_corr
             if is_match:

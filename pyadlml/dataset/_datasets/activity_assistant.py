@@ -1,52 +1,137 @@
+import functools
 import os
 import pandas as pd
+import numpy as np
 from pathlib import Path
-from pyadlml.constants import START_TIME, END_TIME, DEVICE, VALUE, TIME, ACTIVITY
+from pyadlml.constants import AREA, START_TIME, END_TIME, DEVICE, VALUE, TIME, ACTIVITY, STRFTIME_PRECISE
 from pyadlml.dataset._core.activities import ActivityDict
+from pyadlml.dataset.util import extract_kwargs
 
 DATA_NAME = 'devices.csv'
 DEV_MAP_NAME = 'device_map.csv'
 ACT_MAP_NAME = 'activity_map.csv'
+DEV2AREA_NAME = 'device_area_map.csv'
+ACT2AREA_NAME = 'activity_area_map.csv'
 ACT_NAME = 'activities_subject_%s.csv'
 MAP_ID = 'id'
 
-def _read_activities(path_to_file: Path, path_to_mapping: dict):
+
+
+def _folder2filename(filename):
+    def deco(func):
+        @extract_kwargs
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            path = kwargs.pop('path')
+            path = Path(path) if isinstance(path, str) else path
+            if not path.is_file() and path.is_dir():
+                # If there is no file and the path is maps to a directory
+                # create the filename after convention
+                kwargs['path'] = path.joinpath(filename)
+            else:
+                kwargs['path'] = path       
+
+            return func(*args, **kwargs)
+        return wrapper
+    return deco
+
+
+@_folder2filename(ACT_NAME)
+def read_activities(path: Path, act_map: dict = None):
     """
     """
-    activities = pd.read_csv(path_to_file)
-    act_map = pd.read_csv(path_to_mapping, index_col=MAP_ID)\
-                .to_dict()[ACTIVITY]
-    activities[ACTIVITY] = activities[ACTIVITY].map(act_map)
-    activities[START_TIME] = pd.to_datetime(activities[START_TIME])
-    activities[END_TIME] = pd.to_datetime(activities[END_TIME])
-    return activities
+    df_acts = pd.read_csv(path)
+
+    if act_map is not None:
+        df_acts[ACTIVITY] = df_acts[ACTIVITY].map(act_map)
+
+    df_acts[START_TIME] = pd.to_datetime(df_acts[START_TIME], dayfirst=True)
+    df_acts[END_TIME] = pd.to_datetime(df_acts[END_TIME], dayfirst=True)
+    return df_acts
+
+@_folder2filename(ACT_NAME)
+def write_activities(df: pd.DataFrame, path) -> None:
+    df.to_csv(path, index=False, date_format=STRFTIME_PRECISE)
 
 
-def _read_devices(path_to_dev_file, path_to_mapping):
-    devices = pd.read_csv(path_to_dev_file)
-    dev_map = pd.read_csv(path_to_mapping, index_col=MAP_ID)\
-                .to_dict()[DEVICE]
+@_folder2filename(DATA_NAME)
+def write_devices(df, path):
+    df.to_csv(path, index=False, date_format=STRFTIME_PRECISE)
 
-    devices[DEVICE] = devices[DEVICE].map(dev_map)
-    devices[VALUE] = devices[VALUE].astype(str).replace({
+@_folder2filename(DATA_NAME)
+def read_devices(path: Path, dev_map: dict = None):
+    """
+    Parameters
+    ----------
+    path: Path
+        either path to file direct, or path to folder conatining
+        'devices.csv' file
+    """
+    df_devs = pd.read_csv(path)
+
+    if dev_map is not None:
+        df_devs[DEVICE] = df_devs[DEVICE].map(dev_map)
+
+    # TODO refactor, ensure that True, False mapping is only applied
+    #      to devices with two values 
+    df_devs[VALUE] = df_devs[VALUE].astype(str).replace({
         "0": False, "0.0": False, 
         "1": True, "1.0": True,
         "True":True, "False": False,
         "true":True, "false": False,
     })
-    devices[TIME] = pd.to_datetime(devices[TIME])
-    devices = devices.reset_index(drop=True)
-    return devices
+    df_devs[TIME] = pd.to_datetime(df_devs[TIME], dayfirst=True)
+    df_devs = df_devs.reset_index(drop=True)
+    return df_devs
+
+@_folder2filename(DEV2AREA_NAME)
+def read_device2area(path: Path, dev_map: dict) -> pd.DataFrame:
+    """"""
+    dev2area = pd.read_csv(path)
+    dev2area[DEVICE] = dev2area[DEVICE].map(dev_map)
+    assert (dev2area.columns == np.array([DEVICE, AREA])).all()
+    return dev2area
+
+@_folder2filename(DEV2AREA_NAME)
+def write_device2area(df: pd.DataFrame, path: Path):
+    assert (df.columns == np.array([DEVICE, AREA])).all()
+    df.to_csv(path, sep=',', index=False)
 
 
-def _read_activity_list(path_to_file):
-    lst_activities = pd.read_csv(path_to_file)
-    return list(lst_activities[ACTIVITY])
+@_folder2filename(ACT2AREA_NAME)
+def read_activity2area(path: Path, act_map: dict) -> pd.DataFrame:
+    """"""
+    act2area = pd.read_csv(path)
+    act2area[ACTIVITY] = act2area[ACTIVITY].map(act_map)
+    assert (act2area.columns == np.array([ACTIVITY, AREA])).all()
+    return act2area
+
+@_folder2filename(ACT2AREA_NAME)
+def write_activity2area(df: pd.DataFrame, path: Path):
+    assert (df.columns == np.array([ACTIVITY, AREA])).all()
+    df.to_csv(path, sep=',', index=False)
 
 
-def _read_device_list(path_to_file):
-    lst_devices = pd.read_csv(path_to_file)
-    return list(lst_devices[DEVICE])
+@_folder2filename(DEV_MAP_NAME)
+def read_device_map(path: Path) -> dict: 
+    return pd.read_csv(path, index_col=MAP_ID)\
+                .to_dict()[DEVICE]
+
+@_folder2filename(DEV_MAP_NAME)
+def write_device_map(df: pd.DataFrame, path: Path):
+    assert (df.columns == np.array(['id', DEVICE])).all()
+    df.to_csv(path, sep=',', index=False)
+
+@_folder2filename(ACT_MAP_NAME)
+def read_activity_map(path: Path) -> dict:
+    return pd.read_csv(path, index_col=MAP_ID)\
+                .to_dict()[ACTIVITY]
+
+@_folder2filename(ACT_MAP_NAME)
+def write_activity_map(df: pd.DataFrame, path: Path):
+    assert (df.columns == np.array(['id', ACTIVITY])).all()
+    df.to_csv(path, sep=',', index=False)    
+
 
 
 def load(folder_path: str, subjects:list=[], retain_corrections=False) -> dict:
@@ -75,28 +160,34 @@ def load(folder_path: str, subjects:list=[], retain_corrections=False) -> dict:
     """
     assert isinstance(folder_path, str) or isinstance(folder_path, Path)
     assert isinstance(subjects, list)
-
-    df_dev = _read_devices(Path(folder_path).joinpath(DATA_NAME),
-                           Path(folder_path).joinpath(DEV_MAP_NAME))
-
-    # get mappings
-    lst_dev = _read_device_list(Path(folder_path).joinpath(DEV_MAP_NAME))
-    lst_act = _read_activity_list(Path(folder_path).joinpath(ACT_MAP_NAME))
-
-    #data = Data(None, df_dev, activity_list=lst_act, device_list=lst_dev)
+    fp = Path(folder_path) 
 
 
+    # Get mappings
+    act_map = read_activity_map(fp.joinpath(ACT_MAP_NAME))
+    dev_map = read_device_map(fp.joinpath(DEV_MAP_NAME))
+
+    # Get dev and act list
+    lst_dev = dev_map.values()
+    lst_act = act_map.values()
+
+    # Get area mappings
+    dev2area = read_device2area(fp.joinpath(DEV2AREA_NAME), dev_map)
+    act2area = read_activity2area(fp.joinpath(ACT2AREA_NAME), act_map)
+
+
+    df_dev = read_devices(fp.joinpath(DATA_NAME), dev_map)
 
     # If no subjects where specified read the files from the folder following the naming schemata
     if not subjects:
-        for fp in Path(folder_path).iterdir():
-            if ACT_NAME[:18] in fp.name:
-                subjects.append(fp.name[19:-4])
+        for file in Path(fp).iterdir():
+            if ACT_NAME[:18] in file.name:
+                subjects.append(file.name[19:-4])
 
     act_dct = ActivityDict()
     for subject in subjects:
-        df_act = _read_activities(Path(folder_path).joinpath(ACT_NAME%(subject)),
-                                  Path(folder_path).joinpath(ACT_MAP_NAME))
+        df_act = read_activities(Path(fp).joinpath(ACT_NAME%(subject)),
+                                  act_map)
         act_dct[subject] = df_act
 
     return dict(
@@ -104,4 +195,6 @@ def load(folder_path: str, subjects:list=[], retain_corrections=False) -> dict:
         device_list=lst_dev,
         activities=act_dct,
         activity_list=lst_act,
+        dev2area=dev2area,
+        act2area=act2area
     )

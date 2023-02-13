@@ -13,7 +13,7 @@ from .util import func_formatter_seconds2time, save_fig, \
     heatmap_square, heatmap, annotate_heatmap, heatmap_contingency, map_time_to_numeric, \
     get_qualitative_cmap, plot_cc, create_todo, xaxis_format_time, xaxis_format_time2, \
     dev_raster_data_gen,plot_grid
-from pyadlml.dataset.plotly.util import format_device_labels 
+from pyadlml.dataset.plot.plotly.util import format_device_labels 
 from pyadlml.dataset.util import select_timespan, infer_dtypes, str_to_timestamp
 
 from pyadlml.dataset.stats.activities import activity_order_by_duration

@@ -19,21 +19,39 @@ In Proceedings of the Eighth International Conference on Pervasive Computing (Pe
 KASTEREN_2010_URL = 'https://mega.nz/file/VIhnxAxB#3UI77ZA1uh0tRiT6vHTfhYolm-uxbAXuV2TxxIyQ2AU'
 KASTEREN_2010_FILENAME = 'kasteren_2010.zip'
 
+KASTEREN_2010_A_CLEANED_URL = 'https://mega.nz/file/RJYmlKrB#9UuLiAS0yhtud98TmRc4D7uRfEYdFh5USWVMnUekWyo'
+KASTEREN_2010_A_CLEANED_FN = 'cleaned_kasteren_2010_A.joblib'
+
+KASTEREN_2010_B_CLEANED_URL = 'https://mega.nz/file/8QgFDCAT#2nQRGyelCE82VgA_N28W5edOU6hyTA8mjv_MNW-WBGk'
+KASTEREN_2010_B_CLEANED_FN = 'cleaned_kasteren_2010_B.joblib'
+
+KASTEREN_2010_C_CLEANED_URL = 'https://mega.nz/file/8Ihj0a6S#WNPJlS0eO1Gx5GkQlleR-d2t1_Ih3xC_sstnSgQXRoY'
+KASTEREN_2010_C_CLEANED_FN = 'cleaned_kasteren_2010_C.joblib'
+
+
 
 class KasterenFetcher(DataFetcher):
-    def __init__(self):
+    def __init__(self, auto_corr_acts=True):
 
         downloader = MegaDownloader(
             url=KASTEREN_2010_URL,
             fn=KASTEREN_2010_FILENAME,
-            url_cleaned=None,
-            fn_cleaned=None,
+            url_cleaned={
+                'A': KASTEREN_2010_A_CLEANED_URL,
+                'B': KASTEREN_2010_B_CLEANED_URL,
+                'C': KASTEREN_2010_C_CLEANED_URL,
+            },
+            fn_cleaned={
+                'A': KASTEREN_2010_A_CLEANED_FN,
+                'B': KASTEREN_2010_B_CLEANED_FN,
+                'C': KASTEREN_2010_C_CLEANED_FN,
+            },
         )
 
         super().__init__(
             dataset_name='kasteren_2010',
             downloader=downloader,
-            correct_activities=True,
+            correct_activities=auto_corr_acts,
             correct_devices=True
         )
 
@@ -60,6 +78,7 @@ class KasterenFetcher(DataFetcher):
 
 #@correct_acts_and_devs
 def fetch_kasteren_2010(house:str ='A', keep_original=False, cache=True,
+                        auto_corr_activities=True, load_cleaned=False,
                         retain_corrections=False, folder_path=None) -> dict:
     """
     Fetches the amsterdam dataset from the internet. The original dataset or its cached version
@@ -76,6 +95,11 @@ def fetch_kasteren_2010(house:str ='A', keep_original=False, cache=True,
     cache : bool, default=True
         Determines whether the data object should be stored as a binary file for quicker access.
         For more information how caching is used refer to the :ref:`user guide <storage>`.
+    load_cleaned : bool, default=False
+        Whether to load the 
+    auto_corr_activities : bool, default=True
+        Return activities and devices as is, without applying any correction. You have 
+        entered the danger zone.
     retain_corrections : bool, default=False
         When set to *true*, data points that change or drop during preprocessing
         are listed in respective attributes of the data object. Fore more information
@@ -95,9 +119,9 @@ def fetch_kasteren_2010(house:str ='A', keep_original=False, cache=True,
     dict
         A dictionary containing device and activity dataframes
     """
-    return KasterenFetcher()(keep_original=keep_original, cache=cache, #load_cleaned=load_cleaned,
+    return KasterenFetcher(auto_corr_acts=auto_corr_activities)(keep_original=keep_original, cache=cache, #load_cleaned=load_cleaned,
                               retain_corrections=retain_corrections, folder_path=folder_path,
-                              ident=house
+                              ident=house, load_cleaned=load_cleaned
     )
 
 def _load_activities(path, house):
@@ -155,6 +179,10 @@ def _load_devices(path, house):
         nr_devs = dev_labels.shape[0]
         for i in range(nr_devs):
             dev_map[dev_labels[i][0][0][0]] = dev_labels[i][1][0]
+        
+        # The sensor names are flipped in the original dataset
+        dev_map[5] = 'Hall-Bathroom door'
+        dev_map[6] = 'Hall-Toilet door'
     elif house == 'B':
         dev_map = _dev_map_House_B()
     elif house == 'C':

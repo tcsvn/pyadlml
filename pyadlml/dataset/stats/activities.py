@@ -1,8 +1,7 @@
 import pandas as pd
 import numpy as np
 from pyadlml.constants import START_TIME, END_TIME, ACTIVITY, TIME
-from pyadlml.dataset._core.activities import add_other_activity
-from pyadlml.dataset.plotly.util import ActivityDict
+from pyadlml.dataset._core.activities import add_other_activity, ActivityDict
 from pyadlml.dataset.stats.util import df_density_binned
 from datetime import timezone, datetime
 

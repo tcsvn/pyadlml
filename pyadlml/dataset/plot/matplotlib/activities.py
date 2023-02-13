@@ -14,8 +14,7 @@ from .util import func_formatter_seconds2time_log, ridgeline, \
     _num_items_2_ridge_ylimit, xaxis_format_one_day, save_fig, get_qualitative_cmap, plot_grid, xaxis_format_time2, \
     map_time_to_numeric
 from pyadlml.util import get_sequential_color, get_secondary_color, get_primary_color, get_diverging_color
-from ..util import activity_order_by
-
+from pyadlml.dataset.util import activity_order_by
 
 @save_fig
 def count(df_acts=None, df_ac=None, scale="linear", other=False,
@@ -474,26 +473,14 @@ def correction(df_act_pre, df_act_post, grid=True, figsize=(10, 5), file_path=No
     df_acts : pd.DataFrame, optional
         recorded activities from a dataset. Fore more information refer to the
         :ref:`user guide<activity_dataframe>`.
-    lst_acts : lst of str, optional
-        A list of activities that are included in the statistic. The list can be a
-        subset of the recorded activities or contain activities that are not recorded.
     df_act_dist : pd.DataFrame, optional
         A precomputed activity density distribution. If the *df_trans* parameter is given, parameters
         *df_acts* and *lst_acts* are ignored. The transition table can be computed
         in :ref:`stats <stats_acts_trans>`.
-    n : int, default=1000
-        The number of monte-carlo samples to draw.
-    ylim_upper: float, optional
-        The offset from the top of the plot to the first ridge_line. Set this if
-        the automatically determined value is not satisfying.
-    figsize : (float, float), default: None
-        width, height in inches. If not provided, the figsize is inferred by automatically.
+
     color : str, optional
         sets the color of the plot. When not set, the primary theming color is used.
         Learn more about theming in the :ref:`user guide <theming>`
-    idle : bool, default: False
-        Determines whether gaps between activities should be assigned
-        the activity *idle* or be ignored.
     file_path : str, optional
         If set, saves the plot under the given file path and return *None* instead
         of returning the figure.

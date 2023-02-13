@@ -3,9 +3,9 @@ this file is to bring datasets into specific representations
 """
 import pandas as pd
 from pyadlml.util import get_parallel, get_npartitions
-from pyadlml.constants import TIME, ACTIVITY, START_TIME, END_TIME
+from pyadlml.constants import OTHER, TIME, ACTIVITY, START_TIME, END_TIME
 
-def label_data(df_devs: pd.DataFrame, df_acts: pd.DataFrame, idle=False, n_jobs=1, inplace=True):
+def label_data(df_devs: pd.DataFrame, df_acts: pd.DataFrame, other=False, n_jobs=1, inplace=True):
     """
     Label a dataframe with corresponding activities based on a time-index.
 
@@ -15,9 +15,9 @@ def label_data(df_devs: pd.DataFrame, df_acts: pd.DataFrame, idle=False, n_jobs=
         some data representation that possesses a column 'time' including timestamps.
     df_acts : pd.DataFrame
         a datasets activities. TODO
-    idle : bool, optional, default=False
+    other : bool, optional, default=False
         if true this leads to datapoints not falling into a logged activity to be
-        labeled as idle
+        labeled as "other"
     n_jobs : int, optional, default=1
         the number of jobs that are run in parallel TODO look up sklearn
     inplace : bool, optional, default=True
@@ -32,15 +32,16 @@ def label_data(df_devs: pd.DataFrame, df_acts: pd.DataFrame, idle=False, n_jobs=
     3 2008-03-20 00:34:39  False  ...   False
 
     now include
-    >>> label_data(raw, data.df_activities, idle=True, n_jobs=10)
+    >>> label_data(raw, data.df_activities, other=True, n_jobs=10)
     1 time                    0   ...      13 activity
-    2 2008-03-20 00:34:38  False  ...    True idle
+    2 2008-03-20 00:34:38  False  ...    True other
     3 2008-03-20 00:34:39  False  ...   False act1
 
     Returns
     -------
     df : pd.DataFrame
     """
+
     df_devs = df_devs.copy()
     df_devs[ACTIVITY] = -1
 
@@ -48,7 +49,7 @@ def label_data(df_devs: pd.DataFrame, df_acts: pd.DataFrame, idle=False, n_jobs=
         df_devs[ACTIVITY] = df_devs[TIME].apply(
                     _map_timestamp2activity,
                     df_act=df_acts,
-                    idle=idle)
+                    other=other)
     else:
         N = get_npartitions()
         if n_jobs == -1 or n_jobs > N:
@@ -62,13 +63,13 @@ def label_data(df_devs: pd.DataFrame, df_acts: pd.DataFrame, idle=False, n_jobs=
                         lambda df: df.apply(
                             _map_timestamp2activity,
                             df_act=df_acts,
-                            idle=idle)).\
+                            other=other)).\
                     compute(scheduler='processes')
     return df_devs
 
 
 
-def _map_timestamp2activity(timestamp, df_act, idle):
+def _map_timestamp2activity(timestamp, df_act, other):
     """ Map the given timestamp map to an activity in df_act
 
     Parameters
@@ -77,8 +78,8 @@ def _map_timestamp2activity(timestamp, df_act, idle):
         E.g timestamp 2008-02-26 00:39:25
     df_act : pd.DataFrame
         An activity dataframe
-    idle : boolean
-        Whether to map gaps to NAT or idle
+    other : boolean
+        Whether to map gaps to NAT or "other"
 
     Returns
     -------
@@ -91,9 +92,9 @@ def _map_timestamp2activity(timestamp, df_act, idle):
     match_amount = len(matches.index)
 
     # 1. case no activity interval matched
-    if match_amount == 0 and idle:
-        return 'idle'
-    elif match_amount == 0 and not idle:
+    if match_amount == 0 and other:
+        return OTHER
+    elif match_amount == 0 and not other:
         return pd.NaT
 
     # 2. case single row matches

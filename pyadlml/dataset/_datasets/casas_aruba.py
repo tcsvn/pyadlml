@@ -50,7 +50,7 @@ def fetch_casas_aruba(keep_original=True, cache=True, retain_corrections=False,
                       folder_path=None):
     """
     Fetches the casas aruba dataset from the internet. The original dataset or its cached version
-    is stored in the :ref:`data home <storage>` folder.
+    is stored in the data_home folder.
 
     Parameters
     ----------

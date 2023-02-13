@@ -322,18 +322,21 @@ def resampling_imputation_loss(df_devices: pd.DataFrame, dt: str, return_fractio
     float or int
         Either the fraction or the total amount of lost events depending on the `return_fraction` parameter
     """
-    df_devs = df_devices.copy()
+    df_devs = df_devices.copy()\
+                        .drop(columns=[VALUE])\
+                        .set_index(TIME)
+    nr_events_disregarded = 0
+    
+    # For each device count the #events that excessively fall into one bin
+    for dev in df_devs[DEVICE].unique():
+        # Resample and count the number of events that fall into one bin
+        tmp = df_devs[df_devs[DEVICE] == dev].copy()\
+                          .resample(dt, kind='timestamp')\
+                          .count()
 
-    # resample and count the number of events that fall into one bin
-    df_devs = df_devs.drop(columns=[VALUE])\
-        .set_index(TIME)\
-        .resample(dt, kind='timestamp')\
-        .count()
-
-    # count the time bins that have more than one event
-    # and subtract one event that would survive the imputation
-    val_imp = df_devs[(df_devs[DEVICE] > 1)] - 1
-    nr_events_disregarded = val_imp.sum()
+        # Subtract one event for that no imputation woudl be necessary
+        val_imp = tmp[(tmp[DEVICE] >= 1)] - 1
+        nr_events_disregarded += val_imp.sum()
 
     if return_fraction:
         return nr_events_disregarded/len(df_devices)
@@ -450,7 +453,8 @@ def event_cross_correlogram(df_devices: pd.DataFrame, binsize: str = '1s', maxla
     """  Calculate cross correlogram
 
       ccg = correlogram(t, assignment, binsize, maxlag) calculates the
-      cross- and autocorrelograms for all pairs of clusters with input
+      cross- and autocorrelograms for all device pairs.
+      For device on y axis, the events of device on x-axis happen around that device 
 
     Parameters
     ----------
@@ -463,7 +467,7 @@ def event_cross_correlogram(df_devices: pd.DataFrame, binsize: str = '1s', maxla
 
     Returns
     -------
-    ccg             computed correlograms   #bins x #device x #device
+    ccg             computed correlograms   #device x #device x #bins 
     bins            bin times relative to center    #bins x 1
     """
 
@@ -472,13 +476,13 @@ def event_cross_correlogram(df_devices: pd.DataFrame, binsize: str = '1s', maxla
     df_dev = df_devices.copy()
 
     devices = df_devices[DEVICE].unique()
-    n_cluster = len(devices)
+    n_devs = len(devices)
     maxlag = pd.Timedelta(maxlag).seconds
     binsize = pd.Timedelta(binsize).seconds
 
     n_bins = int((maxlag / binsize) * 2) + 1    # add +1 for symmetric histogram
 
-    ccg = np.zeros((n_bins, n_cluster, n_cluster))
+    ccg = np.zeros((n_devs, n_devs, n_bins))
     bins = np.linspace(-maxlag, maxlag, n_bins)
 
     # get times in milliseconds relative to the first event
@@ -492,14 +496,15 @@ def event_cross_correlogram(df_devices: pd.DataFrame, binsize: str = '1s', maxla
 
         hist_sum = np.zeros(n_bins)
 
-        # for every event in target build a histogram around that event
+        # Fix event of reference and do histogram of target events around that fixation
         for k, event in enumerate(t_ref):
 
-            # for auto-correlogram delete the reference event from the target array
-            tar_tar = np.delete(t_tar, k) if ref == tar else t_tar
+            # In case of auto-correlogram delete the reference event from the target array
+            # otherwise the 0-bin will have additional #len(tar) events 
+            t_tar_prime = np.delete(t_tar, k) if ref == tar else t_tar
 
             # create histograms
-            hist, edges = np.histogram(tar_tar, bins=n_bins, range=(event - maxlag,  event + maxlag), density=False)
+            hist, _ = np.histogram(t_tar_prime, bins=n_bins, range=(event - maxlag,  event + maxlag), density=False)
             hist_sum += hist
         return hist_sum
 
@@ -507,19 +512,49 @@ def event_cross_correlogram(df_devices: pd.DataFrame, binsize: str = '1s', maxla
     result = []
     for i, ref in enumerate(devices):
         for j, tar in enumerate(devices):
-            result.append(dask.delayed(calc_hist)(df_dev, ref, tar))
-    result = dask.compute(result, scheduler='threads')[0]
+            result.append(calc_hist(df_dev, ref, tar))
+            #result.append(dask.delayed(calc_hist)(df_dev, ref, tar))
+    #result = dask.compute(result, scheduler='threads')[0]
 
     # reintegrate into array
     for i, ref in enumerate(devices):
         for j, tar in enumerate(devices):
-            tmp = result[i*len(devices)+j]
-            ccg[:, i, j] = tmp
+            ccg[i, j, :] = result[i*len(devices)+j] # (n_bins,) -> (n_bins, dev, dev)
 
-    return (ccg, bins)
+    return ccg, bins
 
 
-def event_cross_correlogram2(df_devices, binsize='1s', maxlag='2m'):
+def _calc_hist(df_dev, ref, tar, n_bins, maxlag):
+
+    # Select reference and target device
+    t_ref = df_dev.loc[df_dev[DEVICE] == ref, 'event_times'].copy().values
+    t_tar = df_dev.loc[df_dev[DEVICE] == tar, 'event_times'].copy().values
+    # Duplicate target #ref times on 0-axis
+    tar_matrix = np.tile(t_tar, (len(t_ref), 1))                # (TA,) -> (RE, TA)
+    # Duplicate ref #target times on 1-axis
+    shift = np.repeat(t_ref.reshape(-1, 1), len(t_tar), axis=1) # (RE, ) -> (RE, TA)
+
+    # Shift every target (row) by reference fix point => zero-centering
+    # i.e. first target tm[0,:] is shifted by 0, since shift[0,:] = 0 pointwise, loop
+    shifted_target = tar_matrix - shift     # (RE, TA) -> (RE, TA)
+
+    # Compute histograms around 0, (RE, TA) -> (RE, n_bins, 2) containing hist and edges
+    if True:
+        tmp2 = np.apply_along_axis(lambda *x, **y: np.histogram(*x, **y)[0], axis=1, arr=shifted_target, 
+                                bins=n_bins, range=(-maxlag, maxlag), density=False)
+        hist_sum2 = tmp2.sum(axis=0)
+        return hist_sum2
+
+    tmp = np.apply_along_axis(np.histogram, axis=1, arr=shifted_target,
+                            bins=n_bins, range=(-maxlag, maxlag), density=False)
+
+    # Count over hists (0)
+    hist_sum = tmp[:, 0].sum(axis=0)
+    return hist_sum
+
+
+
+def event_cross_correlogram2(df_devices, binsize='1s', maxlag='2m', v1=True, use_dask=False):
     """  Calculate cross correlogram
 
       ccg = correlogram(t, assignment, binsize, maxlag) calculates the
@@ -543,13 +578,13 @@ def event_cross_correlogram2(df_devices, binsize='1s', maxlag='2m'):
     df_dev = df_devices.copy()
 
     devices = df_devices[DEVICE].unique()
-    n_cluster = len(devices)
+    n_devs = len(devices)
     maxlag = pd.Timedelta(maxlag).seconds
     binsize = pd.Timedelta(binsize).seconds
 
     n_bins = int((maxlag / binsize) * 2) + 1    # add +1 for symmetric histogram
 
-    ccg = np.zeros((n_cluster, n_cluster, n_bins))
+    ccg = np.zeros((n_devs, n_devs, n_bins))
     bins = np.linspace(-maxlag, maxlag, n_bins)
 
     # get times in milliseconds relative to the first event
@@ -566,33 +601,226 @@ def event_cross_correlogram2(df_devices, binsize='1s', maxlag='2m'):
     
     """
 
-    def calc_hist(df_dev, ref, tar):
-        # select reference and target device
-        t_ref = df_dev.loc[df_dev[DEVICE] == ref, ET].copy().values
-        t_tar = df_dev.loc[df_dev[DEVICE] == tar, ET].copy().values
-
-        tar_matrix = np.tile(t_tar, (len(t_ref), 1))
-        shift = np.repeat(t_ref.reshape(-1, 1), len(t_tar), axis=1)
-        shifted_target = tar_matrix - shift
-
-        tmp = np.apply_along_axis(np.histogram, axis=1, arr=shifted_target,
-                                  bins=n_bins, range=(-maxlag, maxlag), density=False)
-        hist_sum = tmp[:, 0].sum()
-
-        return hist_sum
 
     # make dask delayed computation for each field
     result = []
     import itertools
+    import dask
+    if use_dask:
+        df_dev = dask.delayed(df_dev)
+
+    k = 0
     for i, j in itertools.combinations_with_replacement(range(0, len(devices)), 2):
-        result.append(calc_hist(df_dev, devices[i], devices[j]))
+        #print(f'({i},{j}) -> {k}')
+        if use_dask:
+            result.append(dask.delayed(_calc_hist)(df_dev, devices[i], devices[j], n_bins, maxlag))
+        else:
+            result.append(_calc_hist(df_dev, devices[i], devices[j], n_bins, maxlag))
+        k+=1
+
+    if use_dask:
+        result = dask.compute(*result)
 
     # reintegrate into array
     for k, (i, j) in enumerate(itertools.combinations_with_replacement(range(0, len(devices)), 2)):
+        #print(f'{k} -> ({i}, {j})')
+        if i != j:
+            ccg[i, j, :] = result[k]
+            ccg[j, i, :] = np.flip(result[k])
+        else:
+            ccg[i, i, :] = result[k]
+
+    return ccg, bins, devices
+
+
+
+
+def event_cross_correlogram3(df_devices, binsize='1s', maxlag='2m', fix=[], to=[], use_dask=False):
+    """  Calculate event cross correlogram. 
+        Device A event is fixed and the events of another device B are counted happening in the range of
+        maxlag around the fixed events of device A. 
+        Therefore, the histgoram c_ij displays the events of device i happening around the device j. 
+        Thus a bar in the histogram c_ij means x amound of device i events happen before/after an event
+        of device j
+
+    Parameters
+    ----------
+    df_devices :
+        device dataframe
+    fix : list
+
+    to: list
+
+    binsize : str, default='1s'
+        The size of one bin in the correlogram
+    maxlag : str, default='2m'
+        The size of the window for which spikes should be considered.
+
+    Returns
+    -------
+    ccg             computed correlograms   #bins x #device x #device
+    bins            bin times relative to center    #bins x 1
+    """
+    ET = 'event_times'
+    df_dev = df_devices.copy()
+
+    devices = df_devices[DEVICE].unique()
+    n_devs = len(devices)
+
+    if not fix and not to:
+        n_rows, n_cols = [n_devs]*2
+        rows, cols = [devices]*2
+    if fix:
+        n_cols, cols = len(fix), fix
+    if to:
+        n_rows, rows = len(to), to
+
+
+    maxlag = pd.Timedelta(maxlag).seconds
+
+    binsize = pd.Timedelta(binsize).seconds
+
+    n_bins = int((maxlag / binsize) * 2) + 1    # add +1 for symmetric histogram
+
+    ccg = np.zeros((n_rows, n_cols, n_bins))
+    bins = np.linspace(-maxlag, maxlag, n_bins)
+
+    # get times in milliseconds relative to the first event
+    start_time = df_dev[TIME].iloc[0]
+    df_dev[ET] = (df_dev[TIME] - start_time).dt.seconds
+    """
+    Normally a correlogram between two devices is computed by fixing one event of device 1, computing 
+    the histogram of the device 2 eventrain, zero-centered around the fixed event and repeat the procedure 
+    for every event of device 1.
+    
+    The fast implementation repeats the event stream of device 1. Then subtract for devices 2 event stream
+    is computed. By subtracting each event  from devices 1 vectorized event stream  all events are zero centered
+    
+    
+    """
+    def combination_with_replacement(l1, l2, r=2):
+        lst = []
+        hm = set()
+        for e1 in l1:
+            for e2 in l2:
+                p = frozenset([e1, e2])
+                if p not in hm:
+                    hm.add(p)
+                    lst.append((e1, e2))
+        return lst
+    class CombHM():
+        def __init__(self, rows, cols):
+            self.iter_lst = []
+            self.value_dict = dict()
+            k=0
+            for e1 in rows:
+                for e2 in cols:
+                    key = (e1, e2)
+                    if not self._has_item(key):
+                        self.value_dict[key] = None
+                        self.iter_lst.append(key)
+                        k+=1
+
+        def _has_item(self, key):
+            if key in self.value_dict.keys():
+                return True
+            elif (key[1], key[0]) in self.value_dict.keys():
+                return True
+            else:
+                return False
+
+        def _is_rev_key(self, key):
+            if key in self.value_dict.keys():
+                return False
+            elif (key[1], key[0]) in self.value_dict.keys():
+                return True
+            else:
+                raise AttributeError
+
+        def __iter__(self): 
+            return self.iter_lst.__iter__()
+
+        def __next__(self):
+            return self.iter_lst.__next__()
+
+        def __setitem__(self, idxs, value):
+            if isinstance(idxs, int):
+                idxs = self.iter_lst[idxs]
+            else:
+                assert len(idxs) == 2
+                idxs = (idxs[0], idxs[1])
+
+            self.value_dict[idxs] = value
+
+        def __getitem__(self, idxs):
+            """
+            For a single index return the order in which the elements were added. For
+            multiple indices 
+            """
+            if isinstance(idxs, int):
+                idxs = self.iter_lst[idxs]
+            else:
+                assert len(idxs) == 2
+                idxs = (idxs[0], idxs[1])
+
+            if self._has_item(idxs):
+                if self._is_rev_key(idxs):
+                    return np.flip(self.value_dict[(idxs[1], idxs[0])])
+                else:
+                    return self.value_dict[idxs]
+            else:
+                raise AttributeError
+
+
+    # make dask delayed computation for each field
+    result = []
+    import itertools
+    import dask
+    if use_dask:
+        df_dev = dask.delayed(df_dev)
+
+    combis = CombHM(rows, cols)
+
+    #if rows != cols:
+    if True:
+        for r, c in combis:
+            # TODO REMOVE Compute when the column events happen w.r.t. to a fixed row event
+            # Compute when the row events happen w.r.t. to a fixed column event
+            if use_dask:
+                combis[r,c] = dask.delayed(_calc_hist)(df_dev, c, r, n_bins, maxlag)
+            else:
+                combis[r,c] = _calc_hist(df_dev, c, r, n_bins, maxlag)
+
+        if use_dask:
+            keys = list(combis)
+            for k, v in zip(keys, dask.compute(*[combis[k] for k in keys])):
+                combis[k] = v 
+
+        for r, c in itertools.product(range(len(rows)), range(len(cols))):
+            ccg[r, c, :] = combis[rows[r], cols[c]]
+
+        return ccg, bins, rows, cols 
+
+    else:
+        k = 0
+        for i, j in itertools.combinations_with_replacement(range(0, len(devices)), 2):
+            #print(f'({i},{j}) -> {k}')
+            if use_dask:
+                result.append(dask.delayed(_calc_hist)(df_dev, devices[i], devices[j], n_bins, maxlag))
+            else:
+                result.append(_calc_hist(df_dev, devices[i], devices[j], n_bins, maxlag))
+            k+=1
+
+        if use_dask:
+            result = dask.compute(*result)
+
+        # reintegrate into array
+        for k, (i, j) in enumerate(itertools.combinations_with_replacement(range(0, len(devices)), 2)):
+            #print(f'{k} -> ({i}, {j})')
             if i != j:
                 ccg[i, j, :] = result[k]
                 ccg[j, i, :] = np.flip(result[k])
             else:
                 ccg[i, i, :] = result[k]
 
-    return ccg, bins
+    return ccg, bins, rows, cols 

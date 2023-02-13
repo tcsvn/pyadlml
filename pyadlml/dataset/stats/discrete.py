@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from pyadlml.constants import ACTIVITY
 
 ON_APPENDIX = " On"
 OFF_APPENDIX = " Off"
@@ -10,19 +11,19 @@ def contingency_table_01(X, y):
     X : pd.Series or DataFrame
         matrix of 0-1 vectors as rows representing a state of 
         the smart home
-    y : np array of string
+    y : pd.Series
         labels for X
     
     Returns
     ---------
     pd.DataFrame
     """
+    assert len(X) == len(y), 'Shape mismatch'
+    assert isinstance(y, pd.Series)
 
-    X = X.copy()
-    if isinstance(y, pd.DataFrame):
-        y = y['activity']
+    X = X.copy().reset_index(drop=True)
+    y = y.copy().reset_index(drop=True)
 
-    X = X.reset_index(drop=True)
     first_dev = X.columns[0]
     index = X[first_dev]
     res = pd.crosstab(index=index, columns=y)

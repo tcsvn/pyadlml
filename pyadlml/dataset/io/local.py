@@ -33,7 +33,7 @@ def set_data_home(path_to_folder):
     """
     from pyadlml import DATA_HOME
     global DATA_HOME
-    DATA_HOME = path_to_folder
+    DATA_HOME = Path(path_to_folder)
 
 
 def _ensure_dh_folder_exists():

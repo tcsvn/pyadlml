@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 
-from pyadlml.stats import device_state_fractions
+from pyadlml.stats import device_state_fraction
 from pyadlml.constants import DEVICE, TIME, VALUE, BOOL, CAT, START_TIME, END_TIME, NUM
 from pyadlml.dataset.stats.devices import state_cross_correlation as stat_scc, \
     inter_event_intervals as stat_iei, event_cross_correlogram as stat_event_cc, events_one_day, \
@@ -17,7 +17,7 @@ from .util import heatmap_square, func_formatter_seconds2time, \
     sort_devices, add_top_axis_time_format, map_time_to_numeric, plot_cc, create_todo, xaxis_format_time, \
     dev_raster_data_gen, xaxis_format_time2, get_qualitative_cmap, plot_grid
 
-from pyadlml.dataset.plotly.util import format_device_labels
+from pyadlml.dataset.plot.plotly.util import format_device_labels
 from pyadlml.dataset._core.devices import _is_dev_rep2, device_events_to_states, split_devices_binary, contains_non_binary
 from pyadlml.dataset.stats.util import comp_tds_sums, comp_tds_sums_mean, comp_tds_sums_median
 from pyadlml.dataset.util import select_timespan, infer_dtypes, str_to_timestamp, device_order_by
@@ -72,12 +72,12 @@ def inter_event_intervals(df_devices=None, inter_event_intervals=None, scale='lo
 
     """
     assert not (df_devices is None and inter_event_intervals is None)
-    title='Devices Inter-event-intervals'
+    title='Device Inter-event-times'
     log_sec_col = 'total_log_secs'
     sec_col = 'total_secs'
     ylabel='count'
     xlabel_top = 'time'
-    ax1label = '$\Delta t$ count'
+    ax1label = '$\Delta t$'
     ax3label = 'imputed events'
     xlabel = 'log seconds' if scale == 'log' else 'seconds'
     color = (get_primary_color() if color is None else color)
@@ -540,16 +540,16 @@ def state_fractions(df_devs=None, df_states=None, figsize=None,
 
     # Figure Size 
     fig, ax = plt.subplots(figsize=figsize)
-    plt.title(title)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
 
     # plot boolean devices
     df_bool = df[df[DEVICE].isin(dtypes[BOOL])].copy().sort_values(by=DEVICE)
     off_values = df_bool.loc[(df_bool[VALUE] == False), 'frac'].values
-    plt.barh(dtypes[BOOL], off_values, label=off_label, color=color)
+    ax.barh(dtypes[BOOL], off_values, label=off_label, color=color)
     # careful: notice "bottom" parameter became "left"
-    plt.barh(dtypes[BOOL], (1-off_values), left=off_values, label=on_label, color=color2)
+    ax.barh(dtypes[BOOL], (1-off_values), left=off_values, label=on_label, color=color2)
 
     # set the text centers for the boolean devices to the middle for the greater fraction
     first_number_left = True
@@ -573,7 +573,7 @@ def state_fractions(df_devs=None, df_states=None, figsize=None,
             # save the center in bar plot as well as the value for setting
             # the annotations later
             cat_centers[j].append((cum_sum + value/2, value))
-            plt.barh([dev], [value], label=dev + ' : ' + cat, left=[cum_sum])
+            ax.barh([dev], [value], label=dev + ' : ' + cat, left=[cum_sum])
             cum_sum += value
 
 
@@ -760,7 +760,7 @@ def plot_time_spans_slicer(X, window_size, stride, unit='m', file_path=None):
 
 @save_fig
 def event_cross_correlogram(df_devices=None, corr_data=(None, None, None), bin_size='1s', max_lag='2m', axis='off',
-                            figsize=(5, 5), file_path=None):
+                            figsize=(5, 5), file_path=None, use_dask=False):
     #Plot cross-correlograms of all pairs.
     #   plotCCG(ccg,bins) plots a matrix of cross(auto)-correlograms for
     #   all pairs of clusters. Inputs are:
@@ -777,7 +777,7 @@ def event_cross_correlogram(df_devices=None, corr_data=(None, None, None), bin_s
         bins = corr_data[1]
         devices = corr_data[2]
 
-    fig = plot_cc(ccg, bins, title=title, y_label=devices, axis=axis, figsize=figsize)
+    fig = plot_cc(ccg, bins, title=title, y_label=devices, axis=axis, figsize=figsize, use_dask=use_dask)
 
     return fig
 
@@ -851,7 +851,7 @@ def _plot_device_states(ax, df_devs: pd.DataFrame, devs: list, start_time, end_t
 
     # do preprocessing
     dtypes = infer_dtypes(df_devs)
-    df_devs = device_events_to_states(df_devs, extrapolate_states=True, st=start_time, et=end_time)
+    df_devs = device_events_to_states(df_devs, extrapolate_states=True, start_time=start_time, end_time=end_time)
 
     df_devs['num_st'], _, _ = map_time_to_numeric(df_devs[START_TIME], start_time, end_time)
     df_devs['num_et'], _, _ = map_time_to_numeric(df_devs[END_TIME], start_time, end_time)

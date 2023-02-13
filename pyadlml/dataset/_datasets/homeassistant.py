@@ -36,42 +36,40 @@ def load_homeassistant(db_url:str, start_time=None, end_time=None) -> pd.DataFra
     """ weird new requirement 
     """
     if 'sqlite' in db_url:
-        lc_null_fix = ",iif(last_changed is NULL,last_updated,last_changed) as last_changed"
+        lc_null_fix = ",iif(last_changed_ts is NULL,last_updated_ts,last_changed_ts) as last_changed_ts"
     elif 'mariadb' in db_url:
-        lc_null_fix = ",if(last_changed is NULL,last_updated,last_changed) as last_changed"
+        lc_null_fix = ",if(last_changed_ts is NULL,last_updated_ts,last_changed_ts) as last_changed_ts"
     elif 'postgresql' in db_url:
-        lc_null_fix = ',(case when last_changed is NULL then last_updated else last_changed end)'
+        lc_null_fix = ',(case when last_changed_ts is NULL then last_updated_ts else last_changed_ts end)'
     else:
         print("WARNING: LAST_CHANGED may be null not substituted")
         lc_null_fix = ''
 
+    # Convert timestamps to seconds
+    start_time_nx = pd.Timestamp(start_time).timestamp()
+    end_time_nx = pd.Timestamp(end_time).timestamp()
 
-    if start_time == None and end_time == None:
-        query = f"""
-        SELECT entity_id, state, last_updated
-        {lc_null_fix}
-        FROM states
-        WHERE
-            state NOT IN ('unknown', 'unavailable')
-        ORDER BY last_updated DESC
-        LIMIT {limit}
-        """
-    else:
-        if end_time == None:
-            end_time = datetime.datetime.utcnow()
-        query = f"""
-        SELECT entity_id, state, last_updated
-        {lc_null_fix}
-        FROM states
-        WHERE
-            state NOT IN ('unknown', 'unavailable') AND
-            last_updated BETWEEN 
-            '{start_time}' AND '{end_time}'
-        ORDER BY last_updated ASC
-        LIMIT {limit}
-        """
+    if start_time is None and end_time is None:
+        cond_time = ''
+    if start_time is None and end_time is not None:
+        raise NotImplementedError
+    if start_time is not None and end_time is None:
+        raise NotImplementedError
+    if start_time is not None and end_time is not None:
+        cond_time = f"AND last_updated_ts BETWEEN '{start_time_nx}' AND '{end_time_nx}'"
+    
+    query = f"""
+    SELECT entity_id, state, last_updated_ts
+    {lc_null_fix}
+    FROM states
+    WHERE
+        state NOT IN ('unknown', 'unavailable')
+        {cond_time}
+    LIMIT {limit}
+    """
     df = pd.read_sql_query(query, db_url)
-    df = df.drop(columns='last_updated')
+    df['last_changed_ts'] = pd.to_datetime(df['last_changed_ts'], unit='s', origin='unix')
+    df = df.drop(columns='last_updated_ts')
     return df
 
 def load_homeassistant_devices(db_url, device_list, start_time=None, end_time=None):
@@ -108,16 +106,15 @@ def load_homeassistant_devices(db_url, device_list, start_time=None, end_time=No
 
     # Bring into pyadlml structure
     df = df[df['entity_id'].isin(device_list)]
-    df = df.rename(columns={'entity_id': DEVICE, 'state': VALUE, 'last_changed': TIME})
+    df = df.rename(columns={'entity_id': DEVICE, 'state': VALUE, 'last_changed_ts': TIME})
     df = df[[TIME, DEVICE, VALUE]]
 
     # Convert to proper datatypes
     df[TIME] = pd.to_datetime(df[TIME])
 
     # Map binary device values to -> True, False
-    # TODO critical, what happens if a non-binary-device 
     #      is on or off or if binary-device is not on or off
-    df[VALUE] = df[VALUE].replace(to_replace='on', value=1)
-    df[VALUE] = df[VALUE].replace(to_replace='off', value=0)
+    df[VALUE] = df[VALUE].replace(to_replace='on', value=True)
+    df[VALUE] = df[VALUE].replace(to_replace='off', value=False)
 
     return df

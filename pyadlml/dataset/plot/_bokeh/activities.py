@@ -8,8 +8,8 @@ from pyadlml.dataset import ACTIVITY
 from  pyadlml.dataset.stats.activities import activities_duration_dist, activity_duration,\
     activities_transitions, activities_count, activity_duration, activities_dist
 from pyadlml.dataset._core.activities import add_other_activity
-from pyadlml.dataset.plot.util import func_formatter_seconds2time_log, ridgeline, \
-    func_formatter_seconds2time, heatmap, annotate_heatmap, heatmap_square, savefig, \
+from pyadlml.dataset.plot.util import fmt_seconds2time_log, ridgeline, \
+    fmt_seconds2time, heatmap, annotate_heatmap, heatmap_square, savefig, \
     _num_bars_2_figsize, _num_boxes_2_figsize, \
     _num_items_2_heatmap_square_figsize, _num_items_2_ridge_figsize,\
     _num_items_2_ridge_ylimit
@@ -360,7 +360,7 @@ def boxplot_duration(df_acts, lst_acts=None, file_path=None):
     ax_top = ax.secondary_xaxis('top', functions=(lambda x: x, lambda x: x))
     #ax_top.set_xlabel('time')
     ax_top.xaxis.set_major_formatter(
-        ticker.FuncFormatter(func_formatter_seconds2time))
+        ticker.FuncFormatter(fmt_seconds2time))
 
     if file_path is not None:
         savefig(fig, file_path)

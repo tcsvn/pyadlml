@@ -14,7 +14,7 @@ def fetch_tuebingen_2019(keep_original=False, cache=True, load_cleaned=False,\
                          retain_corrections=False, folder_path=None):
     """
     Fetches the tuebingen_2019 dataset from the internet. The original dataset or its cached version
-    is stored in the :ref:`data home <storage>` folder.
+    is stored in the data_home folder.
 
     Parameters
     ----------
@@ -37,7 +37,7 @@ def fetch_tuebingen_2019(keep_original=False, cache=True, load_cleaned=False,\
 
     class TueFetcher(DataFetcher):
         def load_data(self, folder_path):
-            return act_assist.load(folder_path=folder_path)
+            return act_assist.load(fp=folder_path)
 
 
     downloader = MegaDownloader(

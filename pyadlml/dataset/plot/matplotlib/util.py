@@ -1044,7 +1044,7 @@ def plot_hist(ax, bins, counts, color='k'):
     assert np.allclose(bins_, bins)
     assert np.allclose(counts_, counts)
 
-def plot_cc(ccg, bins, title, y_label=None, x_label=None, axis='off', figsize=None):
+def plot_cc(ccg, bins, title, y_label=None, x_label=None, axis='off', figsize=None, use_dask=False):
     """
     Plots a cross correlogram of histograms
     """
@@ -1091,12 +1091,49 @@ def plot_cc(ccg, bins, title, y_label=None, x_label=None, axis='off', figsize=No
             ax.set_xticklabels(['-' + bound, '-1m', '1m', bound], rotation='vertical')
 
 
+    if not use_dask:
+        for ix in range(I):
+            for jx in range(J):
+                ax = plt.subplot(gs[J*ix+jx], facecolor=bg)
+                #ax = plt.subplot(K,K,K*ix+jx+1, facecolor=bg)
 
-    for ix in range(I):
-        for jx in range(J):
-            ax = plt.subplot(gs[J*ix+jx], facecolor=bg)
-            #ax = plt.subplot(K,K,K*ix+jx+1, facecolor=bg)
+                counts = ccg[ix, jx, :]
+                # remove middle count because it is weird for a histogram to have.. TODO check in correlogram method
+                counts = np.concatenate([counts[:int(len(counts)/2)],
+                                    counts[int(len(counts)/2)+1:]])
+                if ix == jx:
+                    plot_hist(ax, bins, counts, color=colors[ix, :])
+                else:
+                    plot_hist(ax, bins, counts, color='k')
 
+                ax.set_xlim(1.2 * bins[[0, -1]])
+                ylim = np.array(list(ax.get_ylim()))
+                ax.set_ylim(np.array([0, 1.2]) * ylim)
+                ax.set_yticks([])
+
+                if ix == 0 and x_label is not None:
+                    sec_ax = ax.secondary_xaxis('top')
+                    sec_ax.set_xticks([])
+                    sec_ax.set_xlabel(x_label[jx], rotation=45)
+
+                if ix != I-1 and ix != 0:
+                    ax.set_xticks([])
+
+                if ix == I-1:
+                    set_x_ticks(ax, I)
+
+                if jx == 0:
+                    ax.set_yticks([])
+                    if y_label is not None:
+                        ax.set_ylabel(y_label[ix], rotation='horizontal', ha='right')
+
+                if ix != jx:
+                    ax.plot(0, 0, '*', c=colors[jx, :])
+        #plt.tight_layout()
+        fig.show()
+        return fig
+    else:
+        def func(ax, ix, jx):
             counts = ccg[ix, jx, :]
             # remove middle count because it is weird for a histogram to have.. TODO check in correlogram method
             counts = np.concatenate([counts[:int(len(counts)/2)],
@@ -1129,10 +1166,17 @@ def plot_cc(ccg, bins, title, y_label=None, x_label=None, axis='off', figsize=No
 
             if ix != jx:
                 ax.plot(0, 0, '*', c=colors[jx, :])
-    #plt.tight_layout()
-    fig.show()
-    return fig
+        import dask
 
+        res = []
+        for ix in range(I):
+            for jx in range(J):
+                ax = plt.subplot(gs[J*ix+jx], facecolor=bg)
+                #ax = plt.subplot(K,K,K*ix+jx+1, facecolor=bg)
+                res.append(dask.delayed(func)(ax, ix, jx))
+        res = dask.compute(*res)
+        fig.show()
+        return fig
 
 def save_fig(func):
     """ Decorator that saves a figure to a filepath rather then returning it

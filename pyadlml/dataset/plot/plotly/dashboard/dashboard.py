@@ -9,29 +9,32 @@ from dash.dependencies import *  # TODO remove if nothing else is imported
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 from dask.delayed import delayed
-
+import numpy as np
 from pyadlml.constants import (ACTIVITY, DEVICE, END_TIME, START_TIME, TIME,
                                VALUE)
 from pyadlml.dataset._core.acts_and_devs import label_data
-from pyadlml.dataset._core.activities import create_empty_activity_df
+from pyadlml.dataset._core.activities import add_other_activity, create_empty_activity_df
 from pyadlml.dataset._datasets.aras import _create_device_df
-from pyadlml.dataset.plotly.activities import *
-from pyadlml.dataset.plotly.acts_and_devs import *
-from pyadlml.dataset.plotly.dashboard.callbacks import (
+from pyadlml.dataset.plot.plotly.util import dash_get_trigger_element, dash_get_trigger_value
+from pyadlml.dataset.plot.plotly.activities import *
+from pyadlml.dataset.plot.plotly.acts_and_devs import *
+from pyadlml.dataset.plot.plotly.dashboard.callbacks import (
     _create_activity_tab_callback, _create_acts_vs_devs_tab_callback, _initialize_activity_toggle_cbs)
-from pyadlml.dataset.plotly.dashboard.layout import (
-    DEV_DENS_SLIDER, activities_layout, acts_n_devs_layout,
+from pyadlml.dataset.plot.plotly.dashboard.layout import (
+    BIN_SIZE_SLIDER, DEV_DENS_SLIDER, LAG_SLIDER, activities_layout, acts_n_devs_layout,
     acts_vs_devs_layout, device_layout_graph_bottom, devices_layout)
-from pyadlml.dataset.plotly.devices import bar_count as dev_bar_count
-from pyadlml.dataset.plotly.devices import boxplot_state
-from pyadlml.dataset.plotly.devices import device_iei as dev_iei
-from pyadlml.dataset.plotly.devices import event_density
-from pyadlml.dataset.plotly.util import ActivityDict
+from pyadlml.dataset.plot.plotly.devices import bar_count as dev_bar_count
+from pyadlml.dataset.plot.plotly.devices import boxplot_state
+from pyadlml.dataset.plot.plotly.devices import device_iei as dev_iei
+from pyadlml.dataset.plot.plotly.devices import event_density
+from pyadlml.dataset._core.activities import ActivityDict
 from pyadlml.dataset.stats.acts_and_devs import (contingency_table_events,
                                                  contingency_table_states)
-from pyadlml.dataset.util import (device_order_by, num_to_timestamp,
+from pyadlml.dataset.util import (activity_order_by, device_order_by, num_to_timestamp,
                                   select_timespan, timestamp_to_num)
-
+from pyadlml.dataset.plot.plotly.devices import plotly_event_correlogram as dev_cc
+from pyadlml.dataset.plot.plotly.util import deserialize_range, serialize_range, range_from_fig
+from pyadlml.constants import ts2str, str2ts
 
 def _get_plot_height_devs(nr_devs):
     # Determine the plot height and fontsize for activity plots
@@ -56,7 +59,7 @@ def _get_plot_height_acts(nr_acts):
         return 350
 
 
-def dashboard(app, name, embedded=False, df_acts=None, df_devs=None, start_time=None, end_time=None):
+def dashboard(app, name, embedded=False, df_acts=None, df_devs=None, dev2area=None, start_time=None, end_time=None):
     """ Creates a dashboard
 
     Note
@@ -97,16 +100,15 @@ def dashboard(app, name, embedded=False, df_acts=None, df_devs=None, start_time=
 
     plot_height_devs = _get_plot_height_devs(nr_devs)
     plot_height_acts = _get_plot_height_acts(nr_acts)
+    is_top_down_view = (nr_devs < 60)
+    plot_height_ands = (plot_height_devs+50 if is_top_down_view else 1300)
 
     # Get Layout
     layout_activities = [activities_layout(df, k, plot_height_acts) 
                          for k, df in curr_df_acts.items()]
     layout_devices = devices_layout(curr_df_devs, True, plot_height_devs)
-    layout_acts_vs_devs = [acts_vs_devs_layout(
-        df, k,
-        None,       # TODO refactor, in order for dummy to be assigned
-        plot_height=plot_height_acts
-    ) for k, df in curr_df_acts.items()]
+    layout_acts_vs_devs = [acts_vs_devs_layout(df, k, df_devs, plot_height=plot_height_acts) 
+                           for k, df in curr_df_acts.items()]
 
     # Generate tabs for multiple persons
     activity_tabs = [dbc.Tab(l, label=f'Act: {act_name}', tab_id=f'tab-acts-{act_name}') 
@@ -114,58 +116,85 @@ def dashboard(app, name, embedded=False, df_acts=None, df_devs=None, start_time=
     acts_vs_devs_tabs = [
                  dbc.Tab(l, label=f'Act: {act_name} ~ Devices', tab_id=f'tab-acts_vs_devs-{act_name}')
                  for act_name, l in zip(curr_df_acts.keys(), layout_acts_vs_devs)]
+    
+    def layout_content(and_layout, tabs_and_content):
+        if is_top_down_view:
+            return [
+                and_layout, 
+                html.Br(),
+                html.Div([
+                    *tabs_and_content
+                ]),
+            ]
+        else:
+            return [
+                dbc.Row([
+                    dbc.Col([
+                        and_layout, 
+                    ], md=7),
+                    dbc.Col([
+                        html.Div([
+                            *tabs_and_content
+                        ]),
+                    ], md=5),
+                ], style=dict(width="2800px", height="1500px"))
+            ]
+
     content = [
-            dcc.Input(id='act_assist_path', type='hidden', value='filler text'),
-            dcc.Input(id='subject_names', type='hidden', value='filler text'),
-            html.H2(children=f'Dashboard: {name}'),
-            acts_n_devs_layout(df_acts, df_devs, start_time, end_time,
-                               set_et, plot_height_devs+50),
-            html.Br(),
-        html.Div([
-            dbc.Tabs(
+        dcc.Input(id='act_assist_path', type='hidden', value='filler text'),
+        dcc.Input(id='subject_names', type='hidden', value='filler text'),
+        html.H2(children=f'Dashboard: {name}'),
+
+        *layout_content(
+            acts_n_devs_layout(df_devs, df_acts, start_time, end_time, set_et, plot_height_ands),
+            [dbc.Tabs(
                 [*activity_tabs,
-                 dbc.Tab(layout_devices, label='Devices', tab_id='tab-devs'),
-                 *acts_vs_devs_tabs
-                 ], id='tabs', active_tab=f'tab-acts-{list(curr_df_acts.keys())[0]}',
+                    dbc.Tab(layout_devices, label='Devices', tab_id='tab-devs'),
+                    *acts_vs_devs_tabs
+                    ], id='tabs', active_tab=f'tab-acts-{list(curr_df_acts.keys())[0]}',
             ),
-            html.Div(id="content"),
-        ]),
-        # Store intermediate values of hard to compute values
-        # dcc.Store(id='current-df-acts'),
+            html.Div(id="content"),]
+        )
     ]
 
     if embedded:
         layout = dbc.Container(
             children=content, 
-            style={'width': 1000, 'margin': 'auto'}
+            style={'width': 1300, 'margin': 'auto'}
         )
     else:
+        width = 1320 if is_top_down_view else 2200
         layout = dbc.Container(
             children=content,
-            style={'margin': 'auto'}
+            style={'width': width}
         )
     app.layout = layout
 
+    df_acts.apply(add_other_activity)
 
-    create_callbacks(app, df_acts, df_devs, start_time, end_time, plot_height_acts, plot_height_devs)
+    create_callbacks(app, df_acts, df_devs, start_time, end_time, dev2area, 
+                     plot_height_acts, plot_height_devs, plot_height_ands
+    )
 
 def _sel_avd_event_click(avd_event_select, curr_df_acts, curr_df_devs):
     """Select devices and activities from click data of the event contingency table"""
+
+    # Get relevant acts and devs
+    activity = avd_event_select['points'][0]['y']
+    device = avd_event_select['points'][0]['x']
+    df_devs = curr_df_devs[curr_df_devs[DEVICE] == device].copy()
+    df_acts = curr_df_acts[curr_df_acts[ACTIVITY] == activity].copy()
+
     # Select devices
-    a = avd_event_select['points'][0]['y']
-    d = avd_event_select['points'][0]['x']
-    df_tmp = curr_df_devs[curr_df_devs[DEVICE] == d]
-    df_tmp = label_data(df_tmp, curr_df_acts)
-    df_tmp = df_tmp[df_tmp[ACTIVITY] == a]
-    sel_devices = df_tmp[[TIME, DEVICE, VALUE]]
+    sel_devices = label_data(df_devs, df_acts).dropna()
+    sel_devices = sel_devices[[TIME, DEVICE, VALUE]]
 
     # Select activities
     sel_activities = create_empty_activity_df()
     for _, sel_dev in sel_devices.iterrows():
-        mask = (curr_df_acts[START_TIME] < sel_dev[TIME]) \
-               & (sel_dev[TIME] < curr_df_acts[END_TIME])
-        tmp = curr_df_acts[mask]
-        sel_activities = pd.concat([sel_activities, tmp])
+        mask = (df_acts[START_TIME] < sel_dev[TIME]) \
+               & (sel_dev[TIME] < df_acts[END_TIME])
+        sel_activities = pd.concat([sel_activities, df_acts[mask]])
     sel_activities = sel_activities.drop_duplicates()
     return sel_devices, sel_activities
 
@@ -256,7 +285,7 @@ def _sel_dev_iei(dev_iei_select, df_devs, scale, fig):
 
 def _sel_dev_density(selection, df_devs, dt):
 
-    from pyadlml.dataset.plotly.dashboard.layout import DEV_DENS_SLIDER
+    from pyadlml.dataset.plot.plotly.dashboard.layout import DEV_DENS_SLIDER
     df = df_devs.copy().set_index(TIME, drop=False)
     dt = pd.Timedelta(DEV_DENS_SLIDER[dt])
     df_res = pd.DataFrame(columns=[TIME, DEVICE, VALUE])
@@ -340,8 +369,15 @@ def _initialize_toggle_callbacks(app):
     def toggle_collapse_act_bp(n, is_open):
         return bool(n) ^ bool(is_open)
 
+    @app.callback(
+        Output("clps-dev-cc", "is_open"),
+        [Input("clps-dev-cc-button", "n_clicks")],
+        [State("clps-dev-cc", "is_open")],
+    )
+    def toggle_collapse_act_bp(n, is_open):
+        return bool(n) ^ bool(is_open)
 
-def create_callbacks(app, dct_acts, df_devs, start_time, end_time, plt_height_acts, plt_height_devs):
+def create_callbacks(app, dct_acts, df_devs, start_time, end_time, dev2area, plt_height_acts, plt_height_devs, plt_height_ands):
 
     def gen_trigger(id, val):
         return html.Div(id=id, style=dict(display="none"), **{"data-value": val})
@@ -354,16 +390,30 @@ def create_callbacks(app, dct_acts, df_devs, start_time, end_time, plt_height_ac
     @app.callback(
         Output("and_clipboard", "content"),
         Input("graph-acts_n_devs", "clickData"),
-        State("and_dev-type", "value")
+        Input("and_btn_copy_range", "n_clicks"),
+        State("and_dev-type", "value"),
+        State("graph-acts_n_devs", "figure")
     )
-    def element_to_clipboard(tmp, dev_type):
-        if tmp is None:
+    def element_to_clipboard(tmp, btn_cr, dev_type, fig_and):
+
+        ctx = dash.callback_context
+        trigger_val =  dash_get_trigger_value(ctx)
+        trigger = dash_get_trigger_element(ctx)
+        is_copy_range = (trigger == 'and_btn_copy_range')
+        if trigger_val is None\
+            or (tmp is None and not is_copy_range):
             raise PreventUpdate
-        dp = tmp['points'][0]
-        is_activity = (dp['y'] == 'Activity')
-        is_dev_state = not is_activity and dev_type == 'state'
-        is_dev_event = not is_activity and dev_type == 'event'
-        if is_activity:
+
+        if not is_copy_range:
+            dp = tmp['points'][0]
+            is_activity = (dp['y'] == 'Activity')
+            is_dev_state = not is_activity and dev_type == 'state'
+            is_dev_event = not is_activity and dev_type == 'event'
+
+        if is_copy_range:
+            range = range_from_fig(fig_and)
+            s = f'{ts2str(range[0])},{ts2str(range[1])}'
+        elif is_activity:
             start_time = dp['base']
             end_time = dp['x']
             s = f'\'{start_time}\',\'{end_time}\',#activity'
@@ -476,7 +526,7 @@ def create_callbacks(app, dct_acts, df_devs, start_time, end_time, plt_height_ac
 
         ctx = dash.callback_context
 
-        if _get_trigger_value(ctx) is None:
+        if dash_get_trigger_value(ctx) is None:
             raise PreventUpdate
 
         # Catch block if no act-order or dev-order is initialized
@@ -551,7 +601,7 @@ def create_callbacks(app, dct_acts, df_devs, start_time, end_time, plt_height_ac
         devs_usel_state = None
         # Create activity and device order if needed
         if _is_trigger(ctx, 'and_dev-order-trigger') or dev_order is None:
-            dev_order = device_order_by(curr_df_devs, dev_order_trigger)
+            dev_order = device_order_by(curr_df_devs, dev_order_trigger, dev2area)
         if _is_trigger(ctx, 'and_act-order-trigger') or act_order is None:
             act_order = activity_order_by(curr_dct_acts, act_order_trigger)
 
@@ -563,19 +613,30 @@ def create_callbacks(app, dct_acts, df_devs, start_time, end_time, plt_height_ac
                 and not reset_selection:
                 df_act_curr_sel[subj] = _sel_act_trans_sel(locals()[f'act_trans_select_{subj}'],
                                                     df_acts=curr_dct_acts[subj])
-                act_curr_sel = f'acts_graph-transition-{subj}'
+                locals()[f'act_curr_sel_{subj_name}'] = f'acts_graph-transition-{subj}'
 
             if (_is_trigger(ctx, f'acts_graph-boxplot-{subj}') \
                 or locals()[f'act_curr_sel_{subj}'] == f'acts_graph-boxplot-{subj}')\
                 and not reset_selection:
                 df_act_curr_sel[subj] = _sel_point_to_activities(locals()[f'act_boxplot_select_{subj}'])
-                act_curr_sel = f'acts_graph-boxplot-{subj}'
+                locals()[f'act_curr_sel_{subj_name}'] = f'acts_graph-boxplot-{subj}'
 
             if (_is_trigger(ctx, f'acts_graph-bar-{subj}') \
                 or locals()[f'act_curr_sel_{subj}'] == f'acts_graph-bar-{subj}')\
                 and not reset_selection:
                 df_act_curr_sel[subj] = _sel_act_bar(locals()[f'act_bar_select_{subj}'], df_acts=curr_dct_acts[subj])
-                act_curr_sel = f'acts_graph-bar-{subj}'
+                locals()[f'act_curr_sel_{subj_name}'] = f'acts_graph-bar-{subj}'
+
+            if _is_trigger(ctx, f'avd_graph-event-contingency-{subj}')\
+                and not reset_selection:
+                df_dev_curr_sel, df_act_curr_sel[subj] = _sel_avd_event_click(
+                    locals()[f'avd_event_select_{subj_name}'],
+                    curr_dct_acts[subj],
+                    curr_df_devs
+                )
+                locals()[f'act_curr_sel_{subj_name}'] = f'avd_graph-event-contingency-{subj}'
+                dev_curr_sel = f'avd_graph-event-contingency-{subj}'
+                devs_usel_state = False
 
         #if update_devices:
         if (_is_trigger(ctx, 'devs_graph-bar') or dev_curr_sel == 'devs_graph-bar')\
@@ -609,25 +670,20 @@ def create_callbacks(app, dct_acts, df_devs, start_time, end_time, plt_height_ac
             dev_curr_sel = 'devs_graph-density'
             devs_usel_state = False
 
-        if _is_trigger(ctx, 'avd_graph-event-contingency') and not reset_selection:
-            df_dev_curr_sel, df_act_curr_sel = _sel_avd_event_click(avd_event_select,
-                                                               curr_dct_acts,
-                                                               curr_df_devs)
-            act_curr_sel = 'avd_graph-event-contingency'
-            dev_curr_sel = 'avd_graph-event-contingency'
-            devs_usel_state = False
+
 
         if reset_selection:
             df_act_curr_sel = None
             df_dev_curr_sel = None
-            act_curr_sel = ''
+            for subj in dct_acts.subjects():
+                locals()[f'act_curr_sel_{subj_name}'] = ''
             dev_curr_sel = ''
 
         states = (dev_type_trigger == 'state')
-        fig_and = activities_and_devices(dct_acts1, df_devs1, st=st, et=et,
+        fig_and = activities_and_devices(df_devs1, dct_acts1, st=st, et=et,
                                          states=states, act_order=act_order, dev_order=dev_order,
                                          df_acts_usel=df_act_curr_sel, df_devs_usel=df_dev_curr_sel,
-                                         devs_usel_state=devs_usel_state, height=plt_height_devs+50
+                                         devs_usel_state=devs_usel_state, height=plt_height_ands
                                          )
 
         # Determine reset selection button values
@@ -697,6 +753,7 @@ def create_callbacks(app, dct_acts, df_devs, start_time, end_time, plt_height_ac
             Output('devs_graph-bar', 'figure'),
             Output('devs_graph-fraction', 'figure'),
             Output('devs_graph-boxplot', 'figure'),
+            Output('devs_graph-cc', 'figure'),
             Output('devs_order', 'data'),
         ],
         inputs=[
@@ -713,6 +770,11 @@ def create_callbacks(app, dct_acts, df_devs, start_time, end_time, plt_height_ac
             Input('devs_bp-binary-state', 'value'),
             Input('devs_dens-slider', 'value'),
             Input('devs_dens-scale', 'value'),
+
+            Input('devs_cc-sel-fix', 'value'),
+            Input('devs_cc-sel-to', 'value'),
+            Input('devs_cc-lag-slider', 'value'),
+            Input('devs_cc-binsize-slider', 'value'),
         ],
         state=[
             State('devs_graph-iei', 'figure'),
@@ -720,16 +782,17 @@ def create_callbacks(app, dct_acts, df_devs, start_time, end_time, plt_height_ac
             State('devs_graph-bar', 'figure'),
             State('devs_graph-fraction', 'figure'),
             State('devs_graph-boxplot', 'figure'),
+            State('devs_graph-cc', 'figure'),
             State('devs_order', 'data'),
         ]
     )
     def update_dev_tab(dev_trigger, rng, sel_devices,
                        active_tab, bar_scale, bar_order, iei_scale, iei_per_dev,
-                       bp_scale, bp_binary_state, dens_slider, dens_scale,
-                       fig_iei, fig_dens, fig_left, fig_frac, fig_bp, dev_order, 
+                       bp_scale, bp_binary_state, dens_slider, dens_scale, cc_fix, cc_to, cc_slider_lag, cc_slider_bin,
+                       fig_iei, fig_dens, fig_left, fig_frac, fig_bp, fig_cc, dev_order, 
                        ):
         ctx = dash.callback_context
-        if _get_trigger_value(ctx) is None or active_tab != 'tab-devs':
+        if dash_get_trigger_value(ctx) is None or active_tab != 'tab-devs':
             raise PreventUpdate
 
         try:
@@ -743,8 +806,8 @@ def create_callbacks(app, dct_acts, df_devs, start_time, end_time, plt_height_ac
         curr_df_devs = select_timespan(df_devs=df_devs, start_time=st, end_time=et,
                                        clip_activities=True)
         curr_df_devs = curr_df_devs[curr_df_devs[DEVICE].isin(sel_devices)]
-        from pyadlml.dataset.plotly.devices import bar_count
-        from pyadlml.dataset.plotly.devices import fraction as dev_fraction
+        from pyadlml.dataset.plot.plotly.devices import bar_count
+        from pyadlml.dataset.plot.plotly.devices import fraction as dev_fraction
 
         is_trigger_bar_drop = _is_trigger(ctx, 'devs_bar-drop')
         is_trigger_bar_scale = _is_trigger(ctx, 'devs_bar-scale')
@@ -756,6 +819,12 @@ def create_callbacks(app, dct_acts, df_devs, start_time, end_time, plt_height_ac
         is_trigger_dens_slider = _is_trigger(ctx, 'devs_dens-slider')
         is_trigger_sel_dev = _is_trigger(ctx, 'select-devices')
         is_trigger_dev_update = _is_trigger(ctx, 'dev-trigger') or is_trigger_sel_dev
+
+        is_trigger_cc_fix = _is_trigger(ctx, 'devs_cc-sel-fix')
+        is_trigger_cc_to = _is_trigger(ctx, 'devs_cc-sel-to')
+        is_trigger_cc_slider_lag = _is_trigger(ctx, 'devs_cc-lag-slider')
+        is_trigger_cc_slider_bin = _is_trigger(ctx, 'devs_cc-binsize-slider')
+
         order_update = _is_trigger(ctx, 'devs_bar-order')
         new_data_signal = (is_trigger_dev_update and dev_trigger == 'new_data')
 
@@ -771,6 +840,8 @@ def create_callbacks(app, dct_acts, df_devs, start_time, end_time, plt_height_ac
         update_frac = order_update or new_data_signal
         update_density = is_trigger_dens_slider or order_update \
                     or new_data_signal or is_trigger_dens_scale
+        update_cc = is_trigger_cc_fix or is_trigger_cc_slider_lag or is_trigger_cc_to \
+                    or is_trigger_cc_slider_bin or new_data_signal
 
         if order_update or dev_order is None or is_trigger_dev_update or is_trigger_sel_dev:
             dev_order = device_order_by(curr_df_devs, rule=bar_order)
@@ -796,6 +867,13 @@ def create_callbacks(app, dct_acts, df_devs, start_time, end_time, plt_height_ac
         def f_update_iei(u_iei, fig_iei, cd_dev, scale, per_dev):
             return dev_iei(cd_dev, scale=scale, per_device=per_dev, height=plt_height_devs) if u_iei else fig_iei
 
+        def f_update_cc(u_cc, fig_cc, fix, to, scale, binsize):
+            if u_cc:
+                return dev_cc(df_devs, height=plt_height_devs, fix=fix, to=to, max_lag=LAG_SLIDER[scale], binsize=BIN_SIZE_SLIDER[binsize])
+            else:
+                return fig_cc
+
+
         import dask
         figs = [
             dask.delayed(f_update_iei)(update_iei, fig_iei, curr_df_devs, iei_scale, iei_per_dev),
@@ -805,20 +883,19 @@ def create_callbacks(app, dct_acts, df_devs, start_time, end_time, plt_height_ac
             dask.delayed(f_update_frac)(fig_frac, curr_df_devs, dev_order, update_frac),
             dask.delayed(f_update_bp)(update_bp, fig_bp, curr_df_devs, dev_order, bp_scale,
                                       bp_binary_state),
+            dask.delayed(f_update_cc)(update_cc, fig_cc, cc_fix, cc_to, cc_slider_lag, cc_slider_bin),
         ]
         figs = dask.compute(figs)[0]
 
-        return figs[0], figs[1], figs[2], figs[3], figs[4], json.dumps(list(dev_order))
+        return figs[0], figs[1], figs[2], figs[3], figs[4], figs[5], json.dumps(list(dev_order))
 
 
     for subj_name in dct_acts.keys():
         _create_activity_tab_callback(app, subj_name, dct_acts[subj_name], start_time, end_time, plt_height_acts)
-        _create_acts_vs_devs_tab_callback(app, subj_name, dct_acts[subj_name], df_devs, start_time, end_time)
+        _create_acts_vs_devs_tab_callback(app, subj_name, dct_acts[subj_name], df_devs, start_time, end_time, dev2area)
 
 
 def _is_trigger(ctx, val):
     return ctx.triggered[0]['prop_id'].split('.')[0] == val
 
 
-def _get_trigger_value(ctx):
-    return ctx.triggered[0]['value']

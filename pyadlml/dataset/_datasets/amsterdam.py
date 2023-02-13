@@ -55,7 +55,7 @@ def fetch_amsterdam(keep_original=False, cache=True, load_cleaned=False,
                     retain_corrections=False, folder_path=None):
     """
     Fetches the amsterdam dataset from the internet. The original dataset or its cached version
-    is stored in the :ref:`data home <storage>` folder.
+    is stored in the data_home folder.
 
     Parameters
     ----------

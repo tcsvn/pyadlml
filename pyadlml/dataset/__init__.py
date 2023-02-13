@@ -12,3 +12,7 @@ from pyadlml.dataset._datasets.homeassistant import (
 
 from pyadlml.dataset._datasets.activity_assistant import load as load_act_assist
 from pyadlml.dataset import io
+
+# TODO refactor, importing stuff from pyadlml.dataset must not require 
+#                torch as a dependency to be installed. 
+#from pyadlml.dataset.misc import TorchDataset
