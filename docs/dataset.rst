@@ -9,17 +9,14 @@ Datasets
     any warranty to be correct. 
 
 
-This page presents an exhaustive list of all supported datasets.
-The attributes ``Activities`` and ``Devices`` follow the schemata  ``#x/#X``, where ``#x`` is
-the number of distinct activities and ``#X`` is the total number of activity recordings.
-For example ``activities: 7/263`` means the dataset has 263 recordings of 7 different activities.
-In addition, the activity ``Coverage`` per dataset is given in the same way. Hereby the first number
-indicates the total time covered by activities for the dataset. The second number represents the amount of
-datapoints where an activity label is available. The activity coverage can be taken as a measure for a datasets quality.
-Finally, the ``DeviceType`` informs whether the dataset contains  *boolean*, *numerical* or *categorical* devices.
-
-If a cleaned version is available for a dataset it is indicated. The data cleaning process is documented
-in jupyter `notebooks`_. To get a feel for the datasets this is the recommended place to look.
+This page presents an comprehensive list of all the supported datasets.
+The attributes ``Activities`` and ``Devices`` follow the schema  ``#x/#X``, where ``#x``
+represents the number of distinct activities and ``#X`` is the total number of activity recordings.
+For instance, ``activities: 7/263`` indicates that the dataset has 263 recordings of 7 different activities.
+Moreover, the page provides information on the activity ``Coverage``, where the first number
+denotes the total time covered by activities, and the second number represents the amount of
+datapoints where an activity label is available. Activity coverage can be a useful metric to evaluate a dataset's quality.
+Finally, the ``DeviceType`` specifies whether the dataset contains  *boolean*, *numerical* or *categorical* devices.
 
 Amsterdam
 ~~~~~~~~~
@@ -46,14 +43,11 @@ To download the dataset execute
 
 .. note::
 
-    A cleaned version of the amsterdam dataset is available and can be loaded with
+    To download the cleaned version of the amsterdam type
 
     .. code:: python
 
         clean_data = fetch_amsterdam(load_cleaned=True)
-
-    The cleaned dataset can be reproduced with the `amsterdam notebook`_.
-
 
 .. warning::
 
@@ -84,8 +78,6 @@ To download the dataset execute
 
     data = fetch_casas_aruba()
 
-for more information visit `casas aruba notebook`_.
-
 
 Aras
 ~~~~
@@ -113,8 +105,6 @@ To download the dataset execute
     data = fetch_aras(subject="Resident 1")
     dir(data)
     >>> [..., df_activities_resident1, df_activities_resident2, df_devices, ...]
-
-for more information visit `aras notebook`_.
 
 
 Kasteren 2010
@@ -145,7 +135,14 @@ To download the dataset execute
 
     data = fetch_kasteren_2010(house='A')
 
-for more information visit `kasteren 2010 house A`_.
+
+.. note::
+
+    To download the cleaned version of the kasteren dataset type
+
+    .. code:: python
+
+        clean_data = fetch_kasteren_2010(house='A', load_cleaned=True)
 
 House B
 -------
@@ -165,7 +162,14 @@ To download the dataset execute
 
     data = fetch_kasteren_2010()
 
-for more information visit `casas aruba notebook`_.
+
+.. note::
+
+    To download the cleaned version of the kasteren dataset type
+
+    .. code:: python
+
+        clean_data = fetch_kasteren_2010(house='B', load_cleaned=True)
 
 
 House C
@@ -186,8 +190,14 @@ To download the dataset execute
 
     data = fetch_kasteren_2010()
 
-for more information visit `casas aruba notebook`_.
 
+.. note::
+
+    To download the cleaned version of the kasteren dataset type
+
+    .. code:: python
+
+        clean_data = fetch_kasteren_2010(house='C', load_cleaned=True)
 
 
 MitLab
@@ -216,7 +226,6 @@ To download execute
 
     data = fetch_mitlab(subject="subject1")
 
-for more information visit `mitlab subject1 notebook`_.
 
 Subject 2
 ---------
@@ -236,7 +245,6 @@ To download the dataset execute
 
     data = fetch_mitlab(subject="subject2")
 
-for more information visit `mitlab subject2 notebook`_.
 
 UCI_ADL_Binary
 ~~~~~~~~~~~~~~
@@ -265,7 +273,16 @@ To download the dataset use the ``subject`` parameter with  ``OrdonezA``
 
     data = fetch_uci_adl_binary(subject='OrdonezA')
 
-for more information visit `uci adl binary subjectB notebook`_.
+
+.. note::
+
+    To download the cleaned version of the uci dataset type
+
+    .. code:: python
+
+        clean_data = fetch_uci_adl_binary(subject='OrdonezA', load_cleaned=True)
+
+
 
 Ordonez B
 ---------
@@ -286,7 +303,15 @@ To download the dataset use the ``subject`` parameter with  ``OrdonezB``
     data = fetch_uci_adl_binary(subject='OrdonezB')
 
 
-for more information visit `uci adl binary subjectA notebook`_
+.. note::
+
+    To download the cleaned version of the uci dataset type
+
+    .. code:: python
+
+        clean_data = fetch_uci_adl_binary(subject='OrdonezB', load_cleaned=True)
+
+
 
 Tuebingen 2019
 ~~~~~~~~~~~~~~
@@ -308,9 +333,7 @@ Tuebingen 2019
 
     data = fetch_tuebingen_2019()
 
-for more information visit `tuebingen 2019 notebook`_.
 
-.. _notebooks: https://github.com/tcsvn/pyadlml/blob/master/notebooks/datasets/
 .. _amsterdam notebook: https://github.com/tcsvn/pyadlml/blob/master/notebooks/datasets/amsterdam.ipynb
 .. _aras notebook: https://github.com/tcsvn/pyadlml/blob/master/notebooks/datasets/aras.ipynb
 .. _casas aruba notebook: https://github.com/tcsvn/pyadlml/blob/master/notebooks/datasets/casas_aruba.ipynb

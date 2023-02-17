@@ -24,57 +24,67 @@ activity_duration
 
 .. autofunction:: pyadlml.stats.activity_duration
 
+activity_coverage
+-----------------
+
+.. autofunction:: pyadlml.stats.activity_coverage
+
+
 
 Devices
 ~~~~~~~
 
-.. autofunction:: pyadlml.stats.device_trigger_sliding_window
 
 device_fraction
--------------
-.. autofunction:: pyadlml.stats.device_state_fractions
+---------------
+
+.. autofunction:: pyadlml.stats.device_state_fraction
 
 device_on_time
 --------------
 
-.. autofunction:: pyadlml.stats.device_on_time
+.. autofunction:: pyadlml.stats.device_state_time
 
-device_time_diff
-----------------
+device_events_one_day
+---------------------
 
-.. autofunction:: pyadlml.stats.device_time_diff
+.. autofunction:: pyadlml.stats.device_events_one_day
 
-device_trigger_one_day
-----------------------
+device_event_count
+------------------
 
-.. autofunction:: pyadlml.stats.device_trigger_one_day
+.. autofunction:: pyadlml.stats.device_event_count
 
-device_trigger_count
---------------------
+device_state_similarity
+-----------------------
 
-.. autofunction:: pyadlml.stats.device_trigger_count
+.. autofunction:: pyadlml.stats.device_state_similarity
 
-device_duration_corr
---------------------
+device_inter_event_times
+------------------------
 
-.. autofunction:: pyadlml.stats.device_duration_corr
+.. autofunction:: pyadlml.stats.device_inter_event_times
+
+device_event_cross_correlogram
+------------------------------
+
+.. autofunction:: pyadlml.stats.device_event_cross_correlogram
+
+
 
 
 
 Activities ~ Devices
 ~~~~~~~~~~~~~~~~~~~~
 
-contingency_triggers
---------------------
 
-.. autofunction:: pyadlml.stats.contingency_duration
+contingency_events
+------------------
 
-contingency_triggers_01
------------------------
+.. autofunction:: pyadlml.stats.contingency_table_events
 
-.. autofunction:: pyadlml.stats.contingency_triggers
+contingency_states
+------------------
 
-contingency_duration
---------------------
+.. autofunction:: pyadlml.stats.contingency_table_states
 
-.. autofunction:: pyadlml.stats.contingency_duration

@@ -1,9 +1,9 @@
 5. Feature extraction
 =====================
 
-The following transformers can be used to extract features from the *timestamps* devices triggers.
-In general you can choose whether to solely return the extracted values or to append it to
-a given dataframe as one-hot encoding or feature column.
+The following transformers are available for extracting features from the *timestamps* devices triggers.
+Depending on your preference, you can choose to return the extracted values or to append them
+to a given dataframe as one-hot encoding or feature column.
 
 
 Time of day
