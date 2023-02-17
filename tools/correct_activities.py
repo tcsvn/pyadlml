@@ -276,7 +276,7 @@ if __name__ == '__main__':
                     ),
                     data=_df_to_rows(current_case[0]),
                     editable=False,
-                    style_table={'height': '300px', 'overflowY': 'auto'},
+                    style_table={'height': '200px', 'overflowY': 'auto'},
                     style_cell = {'font-size': '12px'},
                 ),
             ], md=6),
@@ -290,7 +290,7 @@ if __name__ == '__main__':
                         data=_df_to_rows(current_case[1]),
                         editable=True,
                         row_deletable=True,
-                        style_table={'height': '300px', 'overflowY': 'auto'},
+                        style_table={'height': '200px', 'overflowY': 'auto'},
                         style_cell = {'font-size': '12px'},
                     ),
                 ),
@@ -302,7 +302,7 @@ if __name__ == '__main__':
                     ])
                 ])
             ], md=6)
-        ], className='mb-3'),
+        ], className='mb-1'),
         dbc.Row(
             dbc.Textarea(id='code', value='', readOnly=False, 
                         style={'height': '100px'}

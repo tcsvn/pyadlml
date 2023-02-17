@@ -5,12 +5,11 @@
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
-   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="120mm"
-   height="100mm"
-   viewBox="0 0 120 100"
+   width="70mm"
+   height="70mm"
+   viewBox="0 0 70 70"
    version="1.1"
    id="svg8"
    inkscape:version="1.0.2 (e86c870879, 2021-01-15, custom)"
@@ -30,10 +29,10 @@
        only_selected="false" />
     <inkscape:perspective
        sodipodi:type="inkscape:persp3d"
-       inkscape:vp_x="32.298554 : -84.31509 : 1"
-       inkscape:vp_y="0 : 458.26487 : 0"
-       inkscape:vp_z="374.66221 : -84.31509 : 1"
-       inkscape:persp3d-origin="203.48038 : -114.86606 : 1"
+       inkscape:vp_x="32.298555 : -114.31509 : 1"
+       inkscape:vp_y="0 : 458.26488 : 0"
+       inkscape:vp_z="374.66221 : -114.31509 : 1"
+       inkscape:persp3d-origin="203.48038 : -144.86606 : 1"
        id="perspective22" />
     <clipPath
        clipPathUnits="userSpaceOnUse"
@@ -548,13 +547,9 @@
     <clipPath
        clipPathUnits="userSpaceOnUse"
        id="clipPath707-9-8-8">
-      <use
-         x="0"
-         y="0"
-         xlink:href="#g703-75-1-5"
-         id="use709-2-5-8"
-         width="100%"
-         height="100%" />
+      <g
+         inkscape:label="Clip"
+         id="use709-2-5-8" />
     </clipPath>
     <clipPath
        clipPathUnits="userSpaceOnUse"
@@ -890,10 +885,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.48733262"
-     inkscape:cx="631.23543"
+     inkscape:cx="-110.55772"
      inkscape:cy="768.99797"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="layer2"
      inkscape:document-rotation="0"
      showgrid="false"
      units="mm"
@@ -919,76 +914,29 @@
     </rdf:RDF>
   </metadata>
   <g
-     inkscape:label="Layer 1"
-     inkscape:groupmode="layer"
-     id="layer1"
-     style="display:inline">
-    <rect
-       style="fill:#e6e6e6;fill-opacity:1;stroke-width:0.222714"
-       id="rect859"
-       width="107.1871"
-       height="83.06295"
-       x="6.2994437"
-       y="8.0866823" />
-    <a
-       id="a697-1-44-4"
-       transform="matrix(0.48601844,0,0,0.55156514,350.49378,235.4417)">
-      <g
-         id="g705-2-76-0"
-         clip-path="url(#clipPath707-2-0-6)" />
-    </a>
-    <a
-       id="a697-0-7-7"
-       transform="matrix(0.48601844,0,0,0.55156514,465.35417,234.66363)">
-      <g
-         id="g705-23-4-7"
-         clip-path="url(#clipPath707-9-8-8)">
-        <g
-           inkscape:label="Clip"
-           id="g703-75-1-5" />
-      </g>
-    </a>
-  </g>
-  <g
      inkscape:groupmode="layer"
      id="layer2"
      inkscape:label="Layer 2"
      style="display:inline">
     <path
        style="display:inline;fill:#5fbcd3;fill-opacity:1;stroke-width:0.53454"
-       d="m 33.495463,50.739254 c -3.64357,-1.81212 -5.07202,-6.84467 -2.96071,-10.4308 2.97344,-5.05047 10.11434,-4.97102 12.96574,0.14427 3.633392,6.51816 -3.28337,13.62953 -10.00503,10.28653 z"
+       d="m 6.5079481,35.922578 c -3.6435679,-1.81212 -5.072017,-6.84467 -2.9607082,-10.4308 2.9734382,-5.05047 10.1143361,-4.97102 12.9657361,0.14427 3.633392,6.51816 -3.28337,13.62953 -10.0050279,10.28653 z"
        id="path857-4" />
     <path
        style="display:inline;fill:#5fd38d;fill-opacity:1;stroke-width:0.53454"
-       d="m 61.13017,37.141844 c -3.64357,-1.81212 -5.07202,-6.84468 -2.96071,-10.43081 2.97344,-5.05047 10.114339,-4.97102 12.965739,0.14427 3.63339,6.51817 -3.28337,13.62954 -10.005029,10.28654 z"
+       d="m 34.142653,22.325168 c -3.64357,-1.81212 -5.07202,-6.84468 -2.96071,-10.43081 2.97344,-5.0504682 10.114339,-4.9710182 12.965739,0.14427 3.63339,6.51817 -3.28337,13.62954 -10.005029,10.28654 z"
        id="path857-4-3" />
     <path
        style="display:inline;fill:#5fd38d;fill-opacity:1;stroke-width:0.53454"
-       d="m 67.291174,75.373094 c -3.643568,-1.81212 -5.072018,-6.84467 -2.960709,-10.4308 2.973439,-5.05047 10.114334,-4.97102 12.965734,0.14427 3.63339,6.51816 -3.28337,13.62953 -10.005025,10.28653 z"
+       d="m 40.303657,60.556418 c -3.643568,-1.81212 -5.072018,-6.84467 -2.960709,-10.4308 2.973439,-5.05047 10.114334,-4.97102 12.965734,0.14427 3.63339,6.51816 -3.28337,13.62953 -10.005025,10.28653 z"
        id="path857-4-3-0" />
     <path
        style="display:inline;fill:#c83737;fill-opacity:1;stroke-width:0.53454"
-       d="m 80.424189,53.390374 c -3.64357,-1.81212 -5.07201,-6.84467 -2.96071,-10.4308 2.97344,-5.05047 10.114341,-4.97102 12.965741,0.14427 3.63339,6.51816 -3.28337,13.62953 -10.005031,10.28653 z"
+       d="m 53.436672,38.573698 c -3.64357,-1.81212 -5.07201,-6.84467 -2.96071,-10.4308 2.97344,-5.05047 10.114341,-4.97102 12.965741,0.14427 3.63339,6.51816 -3.28337,13.62953 -10.005031,10.28653 z"
        id="path857-4-3-0-3" />
     <path
        style="display:inline;fill:#c83737;fill-opacity:1;stroke-width:0.53454"
-       d="m 55.352352,57.326014 c -3.64357,-1.81212 -5.07201,-6.84467 -2.96071,-10.4308 2.97344,-5.05047 10.11434,-4.97102 12.96574,0.14427 3.633387,6.51816 -3.28337,13.62953 -10.00503,10.28653 z"
+       d="m 28.364835,42.509338 c -3.64357,-1.81212 -5.07201,-6.84467 -2.96071,-10.4308 2.97344,-5.05047 10.11434,-4.97102 12.96574,0.14427 3.633387,6.51816 -3.28337,13.62953 -10.00503,10.28653 z"
        id="path857-4-3-0-3-0" />
-  </g>
-  <g
-     inkscape:groupmode="layer"
-     id="layer3"
-     inkscape:label="Layer 3">
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-       x="10.510107"
-       y="87.496605"
-       id="text1589"><tspan
-         sodipodi:role="line"
-         id="tspan1587"
-         x="10.510107"
-         y="87.496605"
-         style="stroke-width:0.264583">I.i.d</tspan></text>
   </g>
 </svg>

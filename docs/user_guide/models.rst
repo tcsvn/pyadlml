@@ -1,33 +1,39 @@
+9. Models
+*********
+
+The following models are implemented and shipped with pyadlml as is. Some models
+may need additional library's installed beforehand. Pyadlml doesn't include those
+library's in order to not be bloated.
+
+HMM: Hidden Markov Model
+========================
+
+TODO
+
+RNN: Recurrent Neural Net
+=========================
+
+TODO
+
+NODE: Neural Ordinary Differential Equation
+===========================================
+
+Definition
+~~~~~~~~~~
+
 Examples
-********
+~~~~~~~~
 
-Random Forests
-==============
+first install
 
-It is possible to load a device representation from a Home Assistant database . Every valid database url
-will suffice
+.. code-block::
+
+    $ pip install torchdiff-eq
+
+Then
 
 .. code:: python
 
-    from pyadlml.dataset import load_homeassistant
+    from pyadlml.models import NODE
 
-    db_url = "sqlite:///config/homeassistant-v2.db"
-    df_devices = load_homeassistant(db_url)
-
-.. _activity-assistant: http://github.com/tcsvn/activity-assistant/
-
-
-Hidden Markov Model
-===================
-
-TODO
-
-Recurrent Neural Net
-====================
-
-TODO
-
-Hawkes Process
-==============
-
-TODO
+    NODE().fit()

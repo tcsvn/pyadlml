@@ -61,24 +61,15 @@ Data management
 set_data_home
 ^^^^^^^^^^^^^
 
-.. autofunction:: pyadlml.dataset.set_data_home
+.. autofunction:: pyadlml.dataset.io.set_data_home
 
 get_data_home
 ^^^^^^^^^^^^^
 
-.. autofunction:: pyadlml.dataset.get_data_home
+.. autofunction:: pyadlml.dataset.io.get_data_home
 
-dump_in_data_home
-^^^^^^^^^^^^^^^^^
-
-.. autofunction:: pyadlml.dataset.dump_in_data_home
-
-load_from_data_home
-^^^^^^^^^^^^^^^^^^^
-
-.. autofunction:: pyadlml.dataset.load_from_data_home
 
 clear_data_home
 ^^^^^^^^^^^^^^^
 
-.. autofunction:: pyadlml.dataset.clear_data_home
+.. autofunction:: pyadlml.dataset.io.clear_data_home

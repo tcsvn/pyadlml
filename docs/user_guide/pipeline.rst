@@ -1,47 +1,159 @@
-Pipelines
-=========
+6. Pipelines
+============
 
-One objective of Pyadlml is to define production ready models for activity-assistant.
-This requires a standardized way to take a *device* dataframe in, apply some transformations
-and finally pass the result to a model that generates probabilities for activities. Even if there
-is no case using activity-assistant, a pipeline enables a clean machine learning workflow that is
-reproducible, consistent and works particularly well with cross-validation and grid-search.
+One of the primary goals of pyadlml is to develop production-ready models for `Activity Assistant`_.
+This necessitates a consistent procedure for applying transformations to both *device* and *activity* 
+dataframes and then forwarding the output to a classifier to estimate activity probabilities. 
+Implementing pipelines can prove advantageous, even if there is no intention to deploy any models, 
+as they allow for a streamlined machine learning workflow that is reproducible, consistent, especially 
+when combined with cross-validation and hyperparameter sweeps.
 
 
 .. image:: ../_static/images/pipeline.svg
-   :height: 200px
-   :width: 500 px
-   :scale: 100 %
+   :height: 50px
+   :width: 300 px
+   :scale: 200 %
    :alt: alternate text
    :align: center
 
 
-With the introduction of pipelines, scikit-learn offers a neat way to achieve this goal. However sklearn
-pipeline's functionality falls short in certain important aspects.
-There is no way to transform y-labels inside a pipeline step. This is required by pyadlml as an event stream is
-transformed, maybe upsampled before the *LabelEncoder* assigns activities to observations. Furthermore
-sklearn pipeline's do not allow for steps to be conditionally executed during training, testing or in production.
-If a pipeline step drops duplicates for i.i.d data this should only occur during training and not during evaluation
-or in production. To tackle these issues pyadlml extends sci-kit learn's pipeline with full backwards compatibility.
-A pipeline can be initialized and used for fitting and transforming data just as in sklearn:
+Sklearn pipeline's functionality falls short in certain important aspects relevant to predicting ADL.
+First, it does not offer the ability to transform :math:`y`-labels within a pipeline step, which is
+necessary when using the ``LabelMatcher``. Additionally, Sklearn pipeline does not permit the 
+conditional execution of steps during training, testing or in production. For instance, a pipeline step that
+drops duplicates should only do so during training and not during evaluation or in production.
+
+To address these and other limitations, pyadlml extends Sklearn's pipeline functionality by 
+introducing supplementary behavior while maintaining full backward compatibility:
 
 .. code:: python
 
     from pyadlml.pipeline import Pipeline
+    from pyadlml.preprocessing import StateVectorEncoder, LabelMatcher
+    from sklearn.classifier import DecisionTreeClassifier
 
-    steps = [ ... some steps ...]   # some data steps with a classifier as last step
-    pipe = Pipeline(steps)          # initialize the pipeline
-    pipe.fit(X, y)                  # fit the pipeline to data. X is transformed through every step until the last
-    y_pred = pipe.predict(X)        # make y-label predictions based on data X
-    Xprime = pipe[-1:].transform(X) # easy way to transform only the data without applying the classifier
-    # ...
+     # Define preprocessing steps and a classifier as last step
+    steps = [('sve': StateVectorEncoder()),
+             ('le': LabelMatcher()),
+             ('classifier': DecisionTreeClassifier())]
+
+    pipe = Pipeline(steps)              # Initialize the pipeline
+    pipe.fit(X, y)                      # Fit the pipeline to data
+    y_pred = pipe.predict(X)            # Make predictions based on data X
+
+    X_prime = pipe[:-1].transform(X)    # Neat way to only transform the data without applying the classifier
+
+
+Transformer types
+~~~~~~~~~~~~~~~~~
+
+.. image:: ../_static/images/pipeline_transformers.svg
+   :height: 40px
+   :width: 190 px
+   :scale: 270 %
+   :alt: alternate text
+   :align: center
+
+
+In the above example the ``LabelEncoder`` transforms the targets :math:`y` from within the pipeline.
+This behavior is not possible with sklearn since their pipeline calls ``fit_transform`` for every transformer
+with :math:`X` as the first argument, :math:`y` as an optional second argument and returns the transformed
+data :math:`X'` (orange). However the ``LabelEncoder`` generates the labels :math:`y` depending
+on :math:`X` and returns only the the transformed labels :math:`y'` and not the data (yellow).
+In order to correctly assign parameters and return values pyadlml's pipeline is sensible to different
+transformer types and adjusts its behaviour correspondingly. To indicate its type, a transformer has to inherit from
+the abstract classes ``YTransformer``, ``XOrYTransformer`` or ``XAndYTransformer``. If a
+transformer inherits none of the afformentioned classes it is assumed to be a *XTransformer*.
+
+YTransformer
+^^^^^^^^^^^^
+
+A transformer that transforms the labels :math:`y` as first argument depending on optional data :math:`X`
+has to inherit the class ``YTransformer``. The ``LabelEncoder`` is a typical prototype of an ``YTransformer``.
+The following code snippet shows its relevant parts:
+
+.. code:: python
+
+    class LabelEncoder(TransformerMixin, YTransformer):
+        def __init__(self, idle=True):
+            #... do init stuff
+
+        def fit_transform(self, df_activities, df_devices):
+            # ... Generate labels y_prime  and transform it conditioned on X
+            return y_prime
+
+XOrYTransformer
+^^^^^^^^^^^^^^^
+A common scenario involves applying a transformation to either or both data :math:`X` and labels :math:`y`. 
+An instance of this is a transformer that drops rows containing ``Nan`` values. When either labels or 
+devices are provided as arguments the transformer checks every row and drops the rows that contain a 
+``NaN`` value. When both arguments are provided, the transformer drops rows where at least one of both 
+dataframes contain a ``NaN`` value. An ``XOrYTransformer`` example implementation is given by
+
+.. code:: python
+
+    class DropNanValues(TransformerMixin, XOrYTransformer):
+        def __init__(self):
+            XOrYTransformer.__init__(self)
+
+        def fit_transform(self, X, y=None, **fit_params):
+            return self.transform(X, y)
+
+        @XOrYTransformer.x_or_y_transform
+        def transform(self, X=None, y=None):
+            """ Drops the time_index column
+            """
+            assert X is not None or Y is not None
+
+            if X is not None and y is not None:
+            if X is not None:
+                X = X.loc[:, X.columns != TIME]
+            if y is not None:
+                y = y.loc[:, y.columns != TIME]
+            return X, y
+
+By applying the decorator ``@XOrYTransformer.x_or_y_transform`` the returned values are automatically
+inferred.
+
+XAndYTransformer
+^^^^^^^^^^^^^^^^
+
+Finally, the ``XAndYTransformer`` requires data and labels to be passed and returns both.
+
+.. code:: python
+
+    class TODO(TransformerMixin, XAndYTransformer):
+        def __init__(self):
+            pass
+
+        def fit_transform(self, X, y, **fit_params):
+            """
+            """
+            assert X is not None and Y is not None
+            TODO
+            return X, y
+
+
 
 Pipeline modes and wrapper
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
+.. image:: ../_static/images/pipeline_modes.svg
+   :height: 90px
+   :width: 230 px
+   :scale: 200 %
+   :alt: alternate text
+   :align: center
+
+!!! DISCLAIMER !!!!
+under construction
+
+
+
 There are three different modes a pipeline can be in, the *training*, *evaluation* and *production* mode.
-To set a pipeline to one of the three modes call the respective method ``train()``, ``eval()`` or ``prod()``. The
-default mode of a pipeline is the *training* mode
+To set a pipeline into one of the three modes call the respective method ``train()``, ``eval()`` or ``prod()``.
+A pipline's default mode is the *training* mode
 
 .. code:: python
 
@@ -57,10 +169,11 @@ default mode of a pipeline is the *training* mode
 
 To execute steps conditionally on the three modes, the pipeline is made sensitive to the wrapper classes
 ``TrainOnlyWrapper``, ``EvalOnlyWrapper`` and ``TrainOrEvalOnlyWrapper``. Encapsulate the step, that should
-only be executed in a certain mode by passing the steps transformer/estimator to the wrappers constructor.
-Note that the transformers/estimators methods such as ``transform`` or ``predict`` can still be called through
-the wrapper. The following example defines a pipeline where the LabelEncoder is only executed when the pipeline is in train or in evaluation mode.
-Duplicates for x are only dropped during the training mode and not in evaluation or production mode.
+only be executed in a certain mode by passing the steps transformer to the wrappers constructor.
+Note that the transformers methods such as ``transform`` or ``predict`` can still be called through
+the wrapper. The following example defines a pipeline where the LabelEncoder is only executed when the pipeline
+is in train or in evaluation mode.
+Furthermore, :math:`x`'s duplicates are only dropped during the training mode and not in evaluation or production mode.
 
 .. code:: python
 
@@ -75,11 +188,11 @@ Duplicates for x are only dropped during the training mode and not in evaluation
 
     # define pipeline steps
     steps = [
-        ('enc', BinaryEncoder(encode='raw')),
-        ('lbl', TrainOrEvalOnlyWrapper(LabelEncoder(idle=True))),
+        ('sve', StateVectorEncoder(encode='raw')),
+        ('le', TrainOrEvalOnlyWrapper(LabelEncoder(idle=True))),
         ('drop_time_idx', DropTimeIndex()),
         ('drop_duplicates', TrainOnlyWrapper(DropDuplicates())),
-        ('classifier', RandomForestClassifier(random_state=42))
+        ('clf', DecisionTreeClassifier(random_state=42))
     ]
 
     pipe = Pipeline(steps).train()      # create pipeline and set the pipeline into training mode
@@ -112,45 +225,21 @@ Duplicates for x are only dropped during the training mode and not in evaluation
         }
         cvs = CVGridsearch(..., param_dict=param_dict)
 
+Pyadlml implements many useful transformers by default. Make sure to check out the api (TODO link) to get a
+full overview.
 
-
-Transformer types
-~~~~~~~~~~~~~~~~~
-
-In the above example the *LabelEncoder* is used inside the pipeline, which would not be possible with sklearn as
-for every step the *fit_transform* is called $X$ is passed but the encoder transforms only the labels. To
-mitigate this fact pyadlmls pipeline reacts differently to Transformers that inherit from the abstract classes *YTransformer*,
-*XOrYTransformer* and *XAndYTransformer*. Inside the pipeline sklearn calls the function fit_transform, which
-includes X and y as parameters. The *YTransformer* mdo
-
-.. code:: python
-
-    # example of YTransformer
-    class LabelEncoder(TransformerMixin, YTransformer):
-        def __init__(self, params):
-            #...
-
-        def fit_transform(self, y, X):
-            # ... get y and transform it conditioned on X
-            return y, X
-
-    # example of XOrYTransformer
-    class DropDuplicates(TransformerMixin, XOrYTransformer):
-        def __init__(self, params):
-            # ...
-
-        def fit_transform(self, X, y=None):
-            # transform X if only X is passed
-            # or transform y if only y is passed
-            # or transform X and Y if both are passed
-            # ...
 
 Feature Union
 ~~~~~~~~~~~~~
 
-To fully embrace the functionality of sklearn pyadlml extends the Feature union of sklearn. A feature union can
-be an intermediate step where the input is processed in parallel by different transformers and is afterwards concatenated.
-Sklearns feature union is not able to concatenate dataframes which is fixed by pyadlml's version.
+To fully embrace the functionalities of sklearn pipelines, pyadlml extends sklearn`s `FeatureUnion` class. A pipeline
+step that is a Feature Union processes the input by different transformers in parallel and concatenates the outputs as
+columns afterwards.
+
+.. raw:: html
+   :file: ../_static/pipeline_feature_union_example.html
+
+Sklearn`s feature union lacks the ability to concatenate dataframes. Therefore pyadlml .
 An example of a more complex pipeline using the feature union feature is
 
 .. code:: python
@@ -165,16 +254,13 @@ An example of a more complex pipeline using the feature union feature is
          ('pass_through', IdentityTransformer())])
 
     steps = [
-        ('encode_devices', BinaryEncoder()),
+        ('encode_devices', StateVectorEncoder()),
         ('fit_labels', TrainOrEvalOnlyWrapper(LabelEncoder())),
         ('feature_extraction', feature_extraction),
         ('drop_time_idx', DropTimeIndex()),
         ('drop_duplicates', TrainOnlyWrapper(DropDuplicates())),
         ('classifier', RandomForestClassifier(random_state=42))
     ]
-
-.. raw:: html
-   :file: ../_static/pipeline_feature_union_example.html
 
 The parameters of a feature union for cross validation and grid search can be set
 In addition pyadlml lets the set a parameter that ignores a parallel line entirely during the pipeline forward pass.
@@ -187,3 +273,5 @@ In addition pyadlml lets the set a parameter that ignores a parallel line entire
             ...,
     }
 
+
+.. _Activity Assistant: https://github.com/tcsvn/activity-assistant

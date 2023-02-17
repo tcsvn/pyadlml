@@ -6,9 +6,14 @@
 ![Read the Docs (version)](https://img.shields.io/readthedocs/pyadlml/latest?style=flat-square)
 ![License](https://img.shields.io/pypi/l/pyadlml?style=flat-square)
 <p align="center"><img width=95% src="https://github.com/tcsvn/pyadlml/blob/master/media/pyadlml_banner.png"></p>
-Activities of Daily living (ADLs) e.g cooking, working, sleeping and device readings are recorded by smart home inhabitants. The goal is to predict inhabitants activities using device readings. Pyadlml offers an easy way to fetch, visualize and preprocess common datasets. A further goal is to replicate prominent work in the domain.
+Activities of Daily living (ADLs) such as eating, working, sleeping and Smart Home device readings are recorded by inhabitants. Predicting resident activities based on the device event-stream allows for a range of applications, including automation, action recommendation and abnormal activity detection in the context of assisted living for elderly inhabitants. Pyadlml offers an easy way to fetch, visualize and preprocess common datasets.
 
 
+## !! Disclaimer !!
+Package is still an alpha-version and under active development. 
+As of now do not expect anything to work! APIs are going to change, 
+stuff breaks and the documentation may lack behind. Nevertheless, feel 
+free to take a look. The best and safest point is probably  the API reference.
 
 ## Last Stable Release
 ```sh 
@@ -18,68 +23,144 @@ $ pip install pyadlml
 ```sh
 $ git clone https://github.com/tcsvn/pyadlml
 $ cd pyadlml
+$ pip install .
 ```
 
 ## Usage example
-From a jupyter notebook run
+
+
+### Simple
+
 ```python
-from pyadlml.dataset import fetch_amsterdam
-
 # Fetch dataset
-data = fetch_amsterdam(cache=True)
+from pyadlml.dataset import fetch_amsterdam
+data = fetch_amsterdam()
+df_devs, df_acts = data['devices'], data['activities']
 
-# plot the persons activity density distribution over one day
-from pyadlml.dataset.plot.activities import ridge_line
-ridge_line(data.df_activities)
 
-# plot the signal cross correlation between devices
-from pyadlml.dataset.plot.devices import heatmap_cross_correlation
-heatmap_cross_correlation(data.df_devices)
+# Plot the estimated inhabitants activity density over one day
+from pyadlml.plot import plot_activity_density
+fig = plot_activity_density(df_acts)
+fig.show()
 
-# create a raw representation with 20 second timeslices
-from pyadlml.preprocessing import DiscreteEncoder, LabelEncoder
-enc_dat = DiscreteEncoder(rep='raw', t_res='20s')
-raw = enc_dat.fit_transform(data.df_devices)
 
-# label the datapoints with the corresponding activity
-lbls = LabelEncoder(raw).fit_transform(data.df_activities)
+# Create a vector representing the state of all Smart Home devices
+# at a certain time and discretize the events into 20 second bins
+from pyadlml.preprocessing import StateVectorEncoder, LabelMatcher
+sve = StateVectorEncoder(encode='raw', dt='20s')
+raw = sve.fit_transform(df_devs)
 
-X = raw.values
-y = lbls.values
+# Label each datum with the corresponding activity.
+# When there is no activity set the activity to "other"
+lbls = LabelMatcher(other=True).fit_transform(df_acts, raw)
 
-# from here on do all the other fancy machine learning stuff you already know
-from sklearn import svm
-clf = svm.SVC()
+# Extract numpy arrays without timestamps (1st column)
+X, y = raw.values[:,1:], lbls.values[:,1:]
+
+# Proceed with machine learning techniques you already know
+from sklearn.tree import DecisionTreeClassifier
+clf = DecisionTreeClassifier()
 clf.fit(X, y)
+clf.score(X, y)
 ...
 ```
 
-_For more examples and and how to use, please refer to the [documentation](https://pyadlml.readthedocs.io/en/latest/)_
+### Advanced
 
+
+```python
+from pyadlml.dataset import fetch_amsterdam
+from pyadlml.constants import VALUE
+from pyadlml.pipeline import Pipeline
+from pyadlml.preprocessing import IndexEncoder, LabelMatcher, DropTimeIndex, \
+                                Timestamp2Seqtime, EventWindows, DropColumn
+from pyadlml.model_selection import train_test_split
+from pyadlml.model import WaveNet
+from pyadlml.dataset.utils import TorchDataset
+from torch.utils.data import DataLoader
+from torch.optim import Adam 
+from torch.nn import functional as F
+
+# Get data and split into train/val/test based on time rather than #events
+data = fetch_amsterdam()
+X_train, X_val, X_test, y_train, y_val, y_test = train_test_split(
+    data['devices'], data['activities'], \
+    split=(0.6, 0.2, 0.2), temporal=True,
+)
+
+# Formulate all preprocessing steps using a sklearn styled pipeline 
+pipe = Pipeline([
+('enc', IndexEncoder()),            # Encode devices strings with indices
+('drop_obs', DropColumn(VALUE)),    # Disregard device observations
+('lbl', LabelMatcher(other=True)),  # Generate labels y  
+('drop_time', DropTimeIndex()),     # Remove timestamps for x and y
+('windows', EventWindows(           # Create sequences S with a sliding window
+              rep='many-to-one',    # Only one label y_i per sequence S_i
+              window_size=16,       # Each sequence contains 16 events 
+              stride=2)),           # A sequence is created every 2 events
+('passthrough', 'passthrough')      # Do not use a classifier in the pipeline
+])
+
+# Generate a dataset to sample from
+dataset = TorchDataset(X_train, y_train, pipe) 
+train_loader = DataLoader(dataset, batch_size=32, shuffle=True)
+model = WaveNet(
+    n_features=14,       # number of devices
+    n_classes=8          # number of activities
+)
+optimizer = Adam(model.parameters(), lr=3e-4)
+
+# Minimal trainloop to overfit the data
+for s in range(10000):
+    for (Xb, yb) in train_loader:
+        optimizer.zero_grad()
+        logits = model(Xb)
+        loss = F.cross_entropy(logits, yb)
+        loss.backward()
+        optimizer.step()
+
+...
+```
+
+
+
+_For more examples and how to use, please refer to the [documentation](https://pyadlml.readthedocs.io/en/latest/).
 ## Features
-  - 8 Datasets
-  - A bunch of plots visualizing devices, activities and their interaction
-  - Different data representations
-    - Discrete timeseries
-      - raw
-      - changepoint
-      - lastfired
-    - Timeseries as images 
- - Methods for importing data from Home Assistant/Activity Assistant
+  - 10 Datasets 
+  - Tools for data cleaning
+    - Merge overlapping activities
+    - Relabel activities and devices
+    - Find and replace specific patterns in device signals
+    - Interactive dashboard for data exploration
+  - Importing data from [Home Assistant]() or [Activity Assistant]()
+  - Many visualizations and statistics for devices, activities and their interaction
+  - Preprocessing methods
+    - Device encoder (index, raw, changepoint, last_fired, ...)
+    - Feature extraction (inter-event-times, intensity, time2vec, ...)
+    - Sliding windows (event, temporal, explicit or fuzzytime)
+  - Cross validation iterators adapted for ADLs
+    - Leave-K-day out, temporal
+  - Ready to use models
+    - RNNs
+    - Transformer
+  - Translate datasets to sktime format
  
 ### Supported Datasets
   - [x] Amsterdam [1]
   - [x] Aras [2]
   - [x] Casas Aruba (2011) [3]
-  - [ ] Casas Milan (2009) [4]
-  - [ ] Kasteren House A,B,C [5]
-  - [x] MitLab [6]
-  - [x] Tuebingen 2019 [7]
+  - [x] Kasteren House A,B,C [5]
+  - [x] MITLab [6]
   - [x] UCI Adl Binary [8]
-  
- 
-## Replication list  
-Here are papers I plan to replicate (TODO)
+  - [ ] Casas Milan (2009) [4]
+  - [ ] Casas Kairo [4]
+  - [ ] Casas Tokyo [4]
+  - [ ] Chinokeeh [9]
+  - [ ] Orange [TODO]
+
+## Examples, benchmarks and replications
+The project includes a model ranked leaderboard evaluated on cleaned version some datasets.
+Furthermore, there is a useful list of references (todo include link) that is still. 
 
 
 ## Contributing 
@@ -90,36 +171,45 @@ Here are papers I plan to replicate (TODO)
 5. Create a new Pull Request
 
 ## Related projects
-  - [activity-assistant](https://github.com/tcsvn/activity-assistant) - Recording, predicting ADLs within Home assistant.
+  - [Activity Assistant](https://github.com/tcsvn/activity-assistant) - Recording, predicting ADLs within Home assistant.
+  - [Sci-kit learn](https://github.com/sklearn) - The main inspiration and some borrowed source of code.
   
 ## Support 
 [![Buy me a coffee][buy-me-a-coffee-shield]][buy-me-a-coffee]
   
 ## How to cite
-If you are using pyadlml for puplications consider citing the package
+If you are using pyadlml for publications consider citing the package
 ```
-@software{activity-assistant,
+@software{pyadlml,
   author = {Christian Meier},
-  title = {pyadlml},    
+  title = {PyADLMl - Machine Learning library for Activities of Daily Living},    
   url = {https://github.com/tcsvn/pyadlml},
-  version = {0.0.1-alpha},
-  date = {2020-12-12}
+  version = {0.0.10-alpha},
+  date = {2023-11-15}
 }
 ```
 
 ## Sources
+
+#### Dataset
+
+
 [1]: T.L.M. van Kasteren; A. K. Noulas; G. Englebienne and B.J.A. Kroese, Tenth International Conference on Ubiquitous Computing 2008  
 [2]: H. Alemdar, H. Ertan, O.D. Incel, C. Ersoy, ARAS Human Activity Datasets in Multiple Homes with Multiple Residents, Pervasive Health, Venice, May 2013.  
 [3,4]: WSU CASAS smart home project: D. Cook. Learning setting-generalized activity models for smart spaces. IEEE Intelligent Systems, 2011.  
-[5]: TODO include  
+[5]: Transferring Knowledge of Activity Recognition across Sensor networks. Eighth International Conference on Pervasive Computing. Helsinki, Finland, 2010.  
 [6]: E. Munguia Tapia. Activity Recognition in the Home Setting Using Simple and Ubiquitous sensors. S.M Thesis  
-[7]: Me :)  
+[7]: Activity Recognition in Smart Home Environments using Hidden Markov Models. Bachelor Thesis. Uni Tuebingen.   
 [8]: Ordonez, F.J.; de Toledo, P.; Sanchis, A. Activity Recognition Using Hybrid Generative/Discriminative Models on Home Environments Using Binary Sensors. Sensors 2013, 13, 5460-5477.  
-  
+[9]: D. Cook and M. Schmitter-Edgecombe, Assessing the quality of activities in a smart environment. Methods of information in Medicine, 2009
+
+#### Software
+
+TODO add software used in TPPs 
+
 ## License
 MIT  © [tcsvn](http://deadlink)
 
 
 [buy-me-a-coffee-shield]: https://img.shields.io/static/v1.svg?label=%20&message=Buy%20me%20a%20coffee&color=6f4e37&logo=buy%20me%20a%20coffee&logoColor=white
-
 [buy-me-a-coffee]: https://www.buymeacoffee.com/tscvn

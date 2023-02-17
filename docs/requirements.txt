@@ -9,5 +9,4 @@ joblib
 mega.py
 dask[complete]
 matplotlib
-scipy
 sqlalchemy

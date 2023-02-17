@@ -1,16 +1,13 @@
 pyadlml.preprocessing
 *********************
 
-.. warning::
-    The classes naming will change. The description as of now does not match the behavior.
-
 Encoder
 =======
 
-BinaryEncoder
-~~~~~~~~~~~~~
+StateVectorEncoder
+~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: pyadlml.preprocessing.BinaryEncoder
+.. autoclass:: pyadlml.preprocessing.StateVectorEncoder
 
 LabelEncoder
 ~~~~~~~~~~~~~

@@ -41,6 +41,8 @@ if __name__ == '__main__':
     dct_acts = ActivityDict.wrap(data['activities'])
     df_devs = data['devices']
 
+    dev2area = data.pop('dev2area', None)
+
     # Determine plot dimensions based on #devices and #activities
     start_time = min(df_devs[TIME].iloc[0], *[dct_acts[key][START_TIME].iloc[0] for key in dct_acts.keys()])
     end_time = max(df_devs[TIME].iloc[-1], *[dct_acts[key][END_TIME].iloc[-1] for key in dct_acts.keys()])
@@ -49,7 +51,9 @@ if __name__ == '__main__':
 
     # Initialize graph and functions
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-    dashboard(app, args.dataset, True, dct_acts, df_devs, start_time, end_time)
+    dashboard(app, name=args.dataset, embedded=False, df_acts=dct_acts, df_devs=df_devs, 
+              dev2area=dev2area, start_time=start_time, end_time=end_time)
+
 
 
     print(f'Start server under: http://127.0.0.1:{args.port}/')

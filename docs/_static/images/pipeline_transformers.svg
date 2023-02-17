@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="190mm"
+   height="40mm"
+   viewBox="0 0 190 40"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1 (c68e22c387, 2021-05-23)"
+   sodipodi:docname="pipeline_transformers.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="1.0356019"
+     inkscape:cx="389.62848"
+     inkscape:cy="192.15878"
+     inkscape:window-width="1920"
+     inkscape:window-height="1002"
+     inkscape:window-x="-8"
+     inkscape:window-y="42"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <text
+       xml:space="preserve"
+       style="font-size:4.5861px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="3.3097262"
+       y="6.53373"
+       id="text1974"><tspan
+         sodipodi:role="line"
+         id="tspan1972"
+         style="stroke-width:0.264583"
+         x="3.3097262"
+         y="6.53373">X-Transformer</tspan></text>
+    <rect
+       style="fill:#ffb380;stroke-width:0.409315"
+       id="rect6279"
+       width="16.439781"
+       height="21.859489"
+       x="10.67995"
+       y="15.836341" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 7.6991045,18.772221 H 10.699103"
+       id="path6442" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 7.7442685,28.121009 H 10.744267"
+       id="path6444" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 27.245636,34.895646 h 3"
+       id="path6444-9" />
+    <text
+       xml:space="preserve"
+       style="font-size:4.5861px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="3.9956427"
+       y="20.35276"
+       id="text7312"><tspan
+         sodipodi:role="line"
+         id="tspan7310"
+         style="stroke-width:0.264583"
+         x="3.9956427"
+         y="20.35276">X</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.5861px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="31.14809"
+       y="36.562809"
+       id="text7312-6"><tspan
+         sodipodi:role="line"
+         id="tspan7310-1"
+         style="stroke-width:0.264583"
+         x="31.14809"
+         y="36.562809">X'</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.5861px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="0.03329191"
+       y="28.933968"
+       id="text7844"><tspan
+         sodipodi:role="line"
+         id="tspan7842"
+         style="stroke-width:0.264583"
+         x="0.03329191"
+         y="28.933968">(y)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.5861px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="47.554192"
+       y="6.5337281"
+       id="text1974-1"><tspan
+         sodipodi:role="line"
+         id="tspan1972-3"
+         style="stroke-width:0.264583"
+         x="47.554192"
+         y="6.5337281">Y-Transformer</tspan></text>
+    <rect
+       style="fill:#ffe680;stroke-width:0.409315"
+       id="rect6279-9"
+       width="16.439781"
+       height="21.859489"
+       x="54.84156"
+       y="15.836341" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 51.860725,18.77222 h 3"
+       id="path6442-7" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 51.905889,28.121008 h 3"
+       id="path6444-7" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 71.407258,34.895645 h 3"
+       id="path6444-9-9" />
+    <text
+       xml:space="preserve"
+       style="font-size:4.5861px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="43.226898"
+       y="29.927578"
+       id="text7312-9"><tspan
+         sodipodi:role="line"
+         id="tspan7310-8"
+         style="stroke-width:0.264583"
+         x="43.226898"
+         y="29.927578">(X)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.5861px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="75.309715"
+       y="36.562809"
+       id="text7312-6-2"><tspan
+         sodipodi:role="line"
+         id="tspan7310-1-3"
+         style="stroke-width:0.264583"
+         x="75.309715"
+         y="36.562809">y'</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.5861px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="48.879875"
+       y="19.720465"
+       id="text7844-8"><tspan
+         sodipodi:role="line"
+         id="tspan7842-3"
+         style="stroke-width:0.264583"
+         x="48.879875"
+         y="19.720465">y</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.5861px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="91.205254"
+       y="6.53373"
+       id="text1974-0"
+       inkscape:transform-center-x="3.0711679"
+       inkscape:transform-center-y="0.72262774"><tspan
+         sodipodi:role="line"
+         id="tspan1972-8"
+         style="stroke-width:0.264583"
+         x="91.205254"
+         y="6.53373">XOrY-Transformer</tspan></text>
+    <rect
+       style="fill:#87cdde;stroke-width:0.409315"
+       id="rect6279-9-2"
+       width="16.439781"
+       height="21.859489"
+       x="101.84583"
+       y="15.836339" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 98.864929,18.772221 h 2.999991"
+       id="path6442-7-2" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 98.910089,28.121009 h 2.999991"
+       id="path6444-7-8" />
+    <text
+       xml:space="preserve"
+       style="font-size:4.5861px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="90.928154"
+       y="20.352758"
+       id="text7312-9-8"><tspan
+         sodipodi:role="line"
+         id="tspan7310-8-0"
+         style="stroke-width:0.264583"
+         x="90.928154"
+         y="20.352758">(X)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.5861px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="121.25565"
+       y="36.562813"
+       id="text7312-6-2-4"><tspan
+         sodipodi:role="line"
+         id="tspan7310-1-3-7"
+         style="stroke-width:0.264583"
+         x="121.25565"
+         y="36.562813">(y')</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.5861px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="91.199135"
+       y="28.933971"
+       id="text7844-8-4"><tspan
+         sodipodi:role="line"
+         id="tspan7842-3-2"
+         style="stroke-width:0.264583"
+         x="91.199135"
+         y="28.933971">(y)</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 118.08232,25.894603 h 3"
+       id="path6442-7-2-9" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 118.12748,35.243391 h 3"
+       id="path6444-7-8-1" />
+    <text
+       xml:space="preserve"
+       style="font-size:4.5861px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="121.47927"
+       y="28.056625"
+       id="text7312-6-1"
+       inkscape:transform-center-x="-9.5748175"
+       inkscape:transform-center-y="3.9744526"><tspan
+         sodipodi:role="line"
+         id="tspan7310-1-2"
+         style="stroke-width:0.264583"
+         x="121.47927"
+         y="28.056625">(X')</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.5861px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="142.60443"
+       y="6.53373"
+       id="text1974-15"><tspan
+         sodipodi:role="line"
+         id="tspan1972-7"
+         style="stroke-width:0.264583"
+         x="142.60443"
+         y="6.53373">XAndY-Transformer</tspan></text>
+    <rect
+       style="fill:#87de87;stroke-width:0.409315"
+       id="rect6279-9-2-3"
+       width="16.439781"
+       height="21.859489"
+       x="155.38911"
+       y="15.836339" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 152.40812,18.772221 h 3"
+       id="path6442-7-2-0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 152.45328,28.121009 h 3"
+       id="path6444-7-8-19" />
+    <text
+       xml:space="preserve"
+       style="font-size:4.5861px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="148.7048"
+       y="20.35276"
+       id="text7312-9-8-2"><tspan
+         sodipodi:role="line"
+         id="tspan7310-8-0-7"
+         style="stroke-width:0.264583"
+         x="148.7048"
+         y="20.35276">X</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.5861px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="175.85727"
+       y="36.562813"
+       id="text7312-6-2-4-2"><tspan
+         sodipodi:role="line"
+         id="tspan7310-1-3-7-8"
+         style="stroke-width:0.264583"
+         x="175.85727"
+         y="36.562813">y'</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.5861px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="148.97578"
+       y="28.933971"
+       id="text7844-8-4-9"><tspan
+         sodipodi:role="line"
+         id="tspan7842-3-2-3"
+         style="stroke-width:0.264583"
+         x="148.97578"
+         y="28.933971">y</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 171.62552,25.894603 h 3"
+       id="path6442-7-2-9-1" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 171.67068,35.243391 h 3"
+       id="path6444-7-8-1-9" />
+    <text
+       xml:space="preserve"
+       style="font-size:4.5861px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="176.61005"
+       y="28.056625"
+       id="text7312-6-1-1"
+       inkscape:transform-center-x="-9.5748175"
+       inkscape:transform-center-y="3.9744526"><tspan
+         sodipodi:role="line"
+         id="tspan7310-1-2-5"
+         style="stroke-width:0.264583"
+         x="176.61005"
+         y="28.056625">X'</tspan></text>
+  </g>
+</svg>

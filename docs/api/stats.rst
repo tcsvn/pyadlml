@@ -30,10 +30,9 @@ Devices
 
 .. autofunction:: pyadlml.stats.device_trigger_sliding_window
 
-device_on_off
+device_fraction
 -------------
-
-.. autofunction:: pyadlml.stats.device_on_off
+.. autofunction:: pyadlml.stats.device_state_fractions
 
 device_on_time
 --------------
@@ -68,12 +67,12 @@ Activities ~ Devices
 contingency_triggers
 --------------------
 
-.. autofunction:: pyadlml.stats.contingency_triggers
+.. autofunction:: pyadlml.stats.contingency_duration
 
 contingency_triggers_01
 -----------------------
 
-.. autofunction:: pyadlml.stats.contingency_triggers_01
+.. autofunction:: pyadlml.stats.contingency_triggers
 
 contingency_duration
 --------------------

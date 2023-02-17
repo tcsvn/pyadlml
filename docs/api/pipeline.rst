@@ -1,8 +1,8 @@
 pyadlml.pipeline
 ****************
 
-Pipeline
-========
+Pipe
+====
 
 Pipeline
 ~~~~~~~~
@@ -10,28 +10,9 @@ Pipeline
 .. autoclass::  pyadlml.pipeline.Pipeline
 
 Feature Union
-~~~~~~~~
+~~~~~~~~~~~~~
 
 .. autoclass::  pyadlml.pipeline.FeatureUnion
-
-
-Transformer
-===========
-
-YTransformer
-~~~~~~~~~~~~
-
-.. autoclass::  pyadlml.pipeline.YTransformer
-
-XOrYTransformer
-~~~~~~~~~~~~~~~
-
-.. autoclass::  pyadlml.pipeline.XOrYTransformer
-
-XAndYTransformer
-~~~~~~~~~~~~~~~~
-
-.. autoclass::  pyadlml.pipeline.XAndYTransformer
 
 
 Wrapper
@@ -51,3 +32,22 @@ TrainOrEvalOnlyWrapper
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass::  pyadlml.pipeline.TrainOrEvalOnlyWrapper
+
+
+Transformer
+===========
+
+YTransformer
+~~~~~~~~~~~~
+
+.. autoclass::  pyadlml.pipeline.YTransformer
+
+XOrYTransformer
+~~~~~~~~~~~~~~~
+
+.. autoclass::  pyadlml.pipeline.XOrYTransformer
+
+XAndYTransformer
+~~~~~~~~~~~~~~~~
+
+.. autoclass::  pyadlml.pipeline.XAndYTransformer

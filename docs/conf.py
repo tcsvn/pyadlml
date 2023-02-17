@@ -57,5 +57,10 @@ html_static_path = ['_static']
 html_theme_options = {
   "github_url": "https://github.com/tcsvn/pyadlml",
   "show_prev_next": False,
-  "show_toc_level": 2
+  "show_toc_level": 2,
+  "logo":{
+    "image_light": "logo.svg",
+    "image_dark": "logo.svg",
+  }
 }
+numpydoc_show_class_members = False

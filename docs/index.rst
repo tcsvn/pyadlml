@@ -8,13 +8,15 @@ Activities of Daily Living - Machine Learning
 =============================================
 
 .. warning::
-   Project is under heavy development. Things are going to change and break. I am
-   currently in the process of writing the documentation. So take everything written
-   here with a huge grain of salt because it is subject to change and may be wrong.
+   As this project is still under active development, please note that the information 
+   presented here is subject to change and should be approached with caution.
 
-Activities of Daily living (ADLs) e.g cooking, working, sleeping and device readings
-are recorded by smart home inhabitants. The objective is to predict inhabitants activities
-using device readings. Pyadlml offers an easy way to fetch, visualize and preprocess common datasets
+
+Activities of Daily living (ADLs) such as eating, working, sleeping and Smart Home device readings are recorded by inhabitants. 
+Predicting resident activities based on the device event-stream allows for a range of applications, including automation, 
+action recommendation and abnormal activity detection in the context of assisted living for elderly inhabitants. 
+Pyadlml offers an easy way to fetch, visualize and preprocess common datasets.
+
 
 - Development: https://github.com/tcsvn/pyadlml
 - Documentation: https://pyadlml.readthedocs.io/
@@ -23,8 +25,8 @@ using device readings. Pyadlml offers an easy way to fetch, visualize and prepro
 Other useful references are
 
 - Notebooks: https://github.com/tcsvn/pyadlml/notebooks
-- Collect your own data: https://github.com/tcsvn/activity-assistant
-- Paperlist: https://github.com/tcsvn/pyadlml/todo
+- Want to collect your own dataset: https://github.com/tcsvn/activity-assistant
+- Awesome papers: https://github.com/tcsvn/pyadlml/todo
 
 
 Documentation
