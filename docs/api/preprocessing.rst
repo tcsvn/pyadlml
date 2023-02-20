@@ -4,15 +4,28 @@ pyadlml.preprocessing
 Encoder
 =======
 
+
+StateVectorEncoder
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pyadlml.preprocessing.IndexEncoder
+
+
 StateVectorEncoder
 ~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: pyadlml.preprocessing.StateVectorEncoder
 
 LabelEncoder
-~~~~~~~~~~~~~
+~~~~~~~~~~~~
 
 .. autoclass:: pyadlml.preprocessing.LabelEncoder
+
+
+LabelMatcher
+~~~~~~~~~~~~
+
+.. autoclass:: pyadlml.preprocessing.LabelMatcher
 
 
 Transformer
@@ -32,8 +45,3 @@ DropTimeIndex
 ~~~~~~~~~~~~~
 
 .. autoclass:: pyadlml.preprocessing.DropTimeIndex
-
-CVSubset
-~~~~~~~~
-
-.. autoclass:: pyadlml.preprocessing.CVSubset

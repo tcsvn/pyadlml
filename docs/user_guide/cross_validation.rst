@@ -1,21 +1,25 @@
 8. Hyperparameter search
 ========================
 
-A common technique to estimate hyperparameters is by cross-validation. Sklearn offers
-a variety of methods for performing this task.
-Pyadlml extends the ``TimeseriesSplit`` and introduces a novel ``LeaveKDaysOutSplit``,
-that perpetuates the LeaveOneDayOut split from Kasteren(cite).
-Using pyadlml's ``pipeline`` with the ``StateVectorEncoder`` or the
-``LabelEncoder`` gives rise to problems when applying sklearn's splits or search methods.
-Therefore pyadlml wraps most of sklearn's cross validators to enable make use of them.
-In addition an *online-split* and a *temporal-split* are introduced to enable using the pipeline
-and upsampled data.
+Cross-validation is a widely used model validation technique 
+that assesses a model's ability to generalize to new data. 
+It is often used to search the hyper-parameter 
+space and identify the best model based on cross validation scores.  
+Pyadlml introduces a novel extension of the LeaveOneDayOutSplit[1] method
+called ``LeaveKDaysOutSplit``. Additionally, Scikit-learns ``TimeseriesSplit`` 
+is extended to account for time-based, along with the classic index-based
+splits. To select the appropriate datapoints based on time or index ranges,
+the ``CrossValSelector`` transformer provides aid splitting the train dataframes.
 
 
 Timeseries split
 ~~~~~~~~~~~~~~~~
 
-The timeseries split
+The timeseries split maintains the temporal order of the data, using earlier data to train 
+the model and later data for evaluation. There are two approaches to apply the split: 
+the rolling-window cross-validation, which involves splitting the data 
+into a series of overlapping windows, and the expanding-window cross-validation, 
+where the window size increases with each iteration:
 
 .. image:: ../_static/images/cross_val.svg
    :height: 80px
@@ -24,26 +28,35 @@ The timeseries split
    :alt: alternate text
    :align: center
 
+The expanding-window approach is suitable for assesing the model's performance on 
+a longer time horizon, while the rolling-window approach is useful when dealing with a
+substantial amount of data or when the model's performance is expected to change over time. 
+To implement a rolling window split, set ``max_train_size`` to the desired window size:
+
 
 .. code:: python
 
-    >>> from pyadlml.dataset import fetch_amsterdam
     >>> from pyadlml.model_selection import TimeSeriesSplit
 
-    >>> data = fetch_amsterdam()
+    >>> # Expanding-window timeseries split
+    >>> ts = TimeSeriesSplit(n_splits=3)
+    >>> splits = ts.split(data['devices'])
 
-    >>> ts = TimeSeriesSplit(n_splits=5)
-    >>> splits = ts.split(data.df_devices)
+    >>> # Rolling-window timeseries split
+    >>> ts = TimeSeriesSplit(n_splits=5, max_train_size=10)
+    >>> splits = ts.split(data['devices'])
 
-    >>> print(splits)
+    >>> print(next(iter(splits)))
 
 
 LeaveKDayOut split
 ~~~~~~~~~~~~~~~~~~
 
-The ``LeaveKDayOut`` split removes :math:`k` days from the whole dataset as test set and uses the rest as training set.
-Hereby the data succeeding the removed day are shifted by k-days into the past to close the gap. This does not
-lead to data leakage from training into the test set as each day is seen as independent of each other.
+The ``LeaveKDayOut`` split creates a test set by removing :math:`k` days from the entire dataset and 
+using the remaining data as the training set. This procedure avoids data leakage from the training to the
+test set since each day is treated as independent of the others. Additionally, the split
+allows for a continuous timeseries by shifting the datapoints succeeding the removed k-days 
+by the appropriate amount into the past to fill the gap.
 
 .. image:: ../_static/images/ldo_split.svg
    :height: 80px
@@ -52,20 +65,24 @@ lead to data leakage from training into the test set as each day is seen as inde
    :alt: alternate text
    :align: center
 
-The following example shows how to do four splits, where each test split is two days long.
+The following example illustrates a four-fold data split, where each fold lasts for two days.
 
 .. code:: python
 
     >>> from pyadlml.model_selection import LeaveKDayOutSplit
 
-    >>> ts = LeaveKDayOutSplit(n_splits=4, k=2)
-    >>> x_train, x_test = ts.split(data.df_devices)
-    >>> print(x_train)
-    >>> print(x_test)
+    >>> lkdo = LeaveKDayOutSplit(n_splits=4, k=2)
+    >>> lkdo_split = ts.split(data['devices'])
+    >>> print(next(iter(lkdo_split)))
+    >>> TODO
 
-Sometimes it is not reasonable to define the start/end point of a daily period at midnight as
-the inhabitants behavioural pattern may differ. This could be when e.g the inhabitant
-regularly goes to bed at 2 o clock.
+
+The ``LeaveKDayOut`` split creates the test set by excluding data from :math:`k` consecutive
+days, starting at midnight and ending at midnight on a later day. However, defining the 
+daily period in this manner may not always be suitable, since the inhabitant's daily activity patterns 
+do not necessarily align with a midnight-to-midnight period. For instance, a resident may work late into 
+the night, requiring adjustments to the daily periods start and ending to maintain 
+the independence assumption. 
 
 .. image:: ../_static/images/leavekdayoutsplit.svg
    :height: 80px
@@ -74,120 +91,110 @@ regularly goes to bed at 2 o clock.
    :alt: alternate text
    :align: center
 
-
-To mitigate this behaviour an offset can be added to
-midnight in order to adjust the period. Take a look at (TODO link to device vs. activity plot)
-in order to determine a reasonable offset. The below example chooses the a period from 2 o clock
-to the next day by setting the ``offset='2h'``
+To accommodate such situations, the ``LeaveKDayOut`` split includes the option to add an 
+offset to the daily period's start time, as demonstrated below
 
 .. code:: python
 
+    >>> # Daily period should start and end on 2 o clock in the night
     >>> ts = LeaveKDayOutSplit(n_splits=4, k=2, offset='2h')
-    >>> x_train, x_test = ts.split(data.df_devices)
-    >>> print(x_train)
-    >>> print(x_test)
+    >>> splits = ts.split(data['devices'])
+    >>> print(next(iter(splits)))
+    >>> TODO 
 
 
-Online split
-~~~~~~~~~~~~
+Online and temporal split
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Cross-validation splits return a indices list for train and validation set.
-Then a train and test set is selected using the splits and the pipeline is fitted and evaluated
-afterwards. As the ``LabelEncoder`` generates labels inside the pipeline the labels train selection
-can not be determined before the pipeline is fitted. In order to include the ``LabelEncoder``'s
-parameters in the search, the splits have to be made in an online fashion during fitting.
-By including an additional step within a pipeline that selects the train- or validation
-set after devices and activities have been encoded cross-validation becomes possible.
+The traditional cross-valdiation procedure involves generating indices to select the train and validation sets,
+but is not well-suited for event streams of irregularly occuring points in time. This is because the 
+index-based selection may produce folds covering uneven time periods, leading to over- or under-coverage.
+To overcome this issue, pyadlml extends the ``LeaveKDayOutSplit`` and the ``TimseriesSplit`` to perform 
+temporal splits and return a time range instead of indices:
 
-The additional step contains the ``CVSplitter`` transformer, that selects the
-appropriate subset of the whole dataset:
-
-.. code:: python
-
-    from pyadlml.dataset import fetch_amsterdam
-    from pyadlml.preprocessing import StateVectorEncoder, LabelEncoder
-
-    # load data and get encoded vectors
-    data = fetch_amsterdam()
-    X = StateVectorEncoder().fit_transform(data.df_devices)
-    y = LabelEncoder().fit_transform(data.df_activities, X)
-
-    # example indices for train and validation set
-    train_index = [0,1,2,3,5,6,7]
-    val_index = [8,9,10]
-
-    # select train subset
-    train_splitter = CVSplitter(data_range=train_index)
-    X_train, y_train = train_splitter.transform(X, y)
-
-    # select validation subset
-    val_splitter = CVSplitter(data_range=val_index)
-    X_val, y_val = train_splitter.transform(X, y)
-
-
-To train a whole pipeline, we make use of the fact that steps can be conditional executed
-in different modes. By wrapping one ``CVSplitter`` with the ``TrainOnlyWrapper``,
-another with the ``EvalOnlyWrapper`` and passing the respective indices ranges as parameters
-the *online-split*  can be achieved. The following example shows a `KFold`
-cross validation, fitting a whole pipeline by using splitting train and test set within the pipe:
-
-.. code:: python
-
-    from pyadlml.preprocessing import StateVectorEncoder, LabelEncoder
-    from pyadlml.model_selection import KFold, train_test_split
-    from pyadlml.dataset import fetch_amsterdam
-
-    # get data and split into training and testing
-    data = fetch_amsterdam()
-    X_train, y_train, X_test, y_test = train_test_split(data.df_devices, data.df_activities)
-
-    # initialize standard KFold cross-validation
-    cv = KFold(n_splits=5)
-
-    scores = []
-    for train_idxs, val_idxs in cv.split(X_train, y_train):
-        steps = [
-            ('sve', StateVectorEncoder(encode='raw')),
-            ('le', TrainOrEvalOnlyWrapper(LabelEncoder(idle=False))),
-            ('train_split', TrainOnlyWrapper(CVSplitter(train_idxs))),
-            ('val_split', EvalOnlyWrapper(CVSplitter(val_idxs))),
-            ('drop_time_idx', DropTimeIndex()),
-            ('drop_duplicates', TrainOnlyWrapper(DropDuplicates())),
-            ('classifier', RandomForestClassifier(random_state=42))
-        ]
-        # create pipeline in training mode
-        pipe = Pipeline(steps).train()
-        pipe.fit(X_train, y_train)
-
-        # set pipeline to evaluation and score
-        pipe.eval()
-        scores.append(pipe.score(X_train, y_train))
-
-    scores = np.array(scores)
-    print('scores of the pipeline: {}'.format(scores))
-    print('mean score: {:.3f}'.format(scores.mean()))
-
-Temporal split
-~~~~~~~~~~~~~~
-
-As the ``StateVectorEncoder`` may up- or downsample datapoints dependent on the resolution :math:`dt`,
-the train- and testindices are not known beforehand.
-If e.g the data is upsampled to a certain size with :math:`dt=3s`
-
-The ``LeaveKDayOutSplit`` and the ``TimseriesSplit`` will return a timestamps tuple indicating the beginning
-and end of test and train set rather than indicies.
 
 .. code:: python
 
     >>> from pyadlml.model_selection import TimeSeriesSplit
 
-    >>> cv = TimeSeriesSplit(temporal_split=True)
-    >>> (train_int, test_int) = cv.split(X_train, y_train)
-    >>> print(train_int[0])
-    ['09.90123.','1231], ['09.90123.','1231],
-    >>> print(train_int[0], test_int)
+    >>> ts = TimeSeriesSplit(n_splits=3, max_train_size='2D', temporal_split=True)
+    >>> splits = ts.split(data['devices'])
+    >>> print(next(iter(splits)))
 
 
-The cross validation ``CVSplitter`` is able to detect automatically if the passed
-date_range are timestamps or indices and will split accordingly. Note that for a temporal split
-the passed dataframes have to contain the column TIME.
+.. note::
+
+    Temporal splits enable users with the opportunity to incorporate both up- and downsampling
+    data post-splitting, since the split does not depend on the number of datapoints.
+
+To select the appropriate datapoints for each split, import the helper class ``CrossValSelector``,
+set the respective time periods and transform the device and activity dataframes:
+
+.. code:: python
+
+    from pyadlml.dataset import fetch_amsterdam
+    from pyadlml.preprocessing import StateVectorEncoder, LabelMatcher
+    from pyadlml.model_selection import LeaveKDayOutSplit, CrossValSelector
+
+    data = fetch_amsterdam()
+
+    # Create 6 Folds with 1D missing
+    cv = LeaveKDayOutSplit(n_splits=5)
+
+    val_scores = []
+    for train_time, val_time in cv.split(data['devices'], data['activities']):
+
+        # Initialize the selector with time interval for training
+        cv_sel = CrossValSelector(data_range=train_time)
+        X_train, y_train =  cv_sel.fit_transform(data['devices'], data['activities'])
+
+        # Simple pipeline for iid data
+        steps = [
+            ('enc', StateVectorEncoder(encode='raw+changepoint')),
+            ('lbl', TrainOrEvalOnlyWrapper(LabelMatcher(other=False))),
+            ('drop_time', DropTimeIndex()),
+            ('drop_nans', DropNans()),
+            ('drop_dups', TrainOnlyWrapper(DropDuplicates())),
+            ('cls', RandomForestClassifier(random_state=42))
+        ]
+
+        # Create pipeline in training mode
+        pipe = Pipeline(steps)
+        pipe.fit(X_train, y_train)
+
+        # Instead of creating a new selector we just reuse the 
+        # one above by setting the parameters to the validation time interval
+        cv_sel.set_params(data_range=val_time)
+        X_val, y_val =  cv_sel.fit_transform(data['devices'], data['activities'])
+
+        # Set pipeline to evaluation compute the fold-score
+        pipe.eval()
+        scores.append(pipe.score(X_val, y_val))
+
+    print('Avg. score over folds: {:.3f}'.format(np.array(scores).mean()))
+
+
+.. note::
+    The ``CrossValSelector`` can be seamlessly integrated into a pipeline, by calling
+    the ``set_params`` on the respective pipeline step:
+
+    .. code:: python
+
+        ...
+        for train_time, val_time in cv.split(data['devices'], data['activities']):
+
+            steps = [
+                ('enc', StateVectorEncoder(encode='raw+changepoint', dt='10s')),
+                ('lbl', TrainOrEvalOnlyWrapper(LabelMatcher(other=False))),
+                ('cv_sel', CrossValSelector(data_range=train_time))
+                ('cls', RandomForestClassifier(random_state=42))
+            ]
+            pipe = Pipeline(steps)
+            pipe.fit(data['devices', data['activities'])
+
+            pipe.eval()
+            pipe['cv_sel'].set_params(data_range=val_time)
+
+            pipe.score(data['devices', data['activities'])
+
+

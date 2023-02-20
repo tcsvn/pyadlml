@@ -667,12 +667,10 @@ Fore more details, please refer to the cross-correlgram for devices (TODO link)
 Dashboard
 =========
 
-Pyadlml provides an interactive dashboard that can be easily launched by 
-navigating into the cloned local repository folder.
-The dashboard features an interactive version of most of the 
-plots discussed previously, and allows users to select and cross-filter
-data points to single out and analyse in the activities_and_events plot. 
-To launch the dashboard, please follow:
+Rapid feeback is critical for effective data exploration. To facilitate this,
+pyadlml offers an interactive dashboard that allows users to analyze data
+accross different plots. To launch the dashboard, navigate to the cloned  
+local repository folder and execute the ``dash_board.py`` application. 
 
 ::
 
@@ -680,7 +678,9 @@ To launch the dashboard, please follow:
     $ cd pyadlml
     $ python3 tools/dash_board.py --dataset kasteren_C
 
-
+The dashboard features an interactive version of most of the 
+plots discussed previously, and allows users to select and cross-filter
+data points to single out and analyse in the activities_and_events plot.
 
 .. image:: ../_static/images/dashboard.png
    :height: 936px
@@ -694,7 +694,8 @@ To launch the dashboard, please follow:
 Theming
 =======
 
-There are global options to set the color and colormaps for every plot during a session:
+Pyadlml provides global options to set the primary, secondary color and colormaps 
+for every plot during a session:
 
 .. code:: python
 

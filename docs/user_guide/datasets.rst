@@ -314,8 +314,9 @@ that can be applied to an activity or device dataframe.
 Merge overlapping activities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This package does not allow for an activity to overlap an other. To resolve overlapping activities
-use the following tool.  
+Within pyadlml, activities are considered to occur strictly sequential, meaning that one activity 
+cannot overlap with another activity. To resolve situations where activities overlap, pyadlml provides 
+the following tool.  
 
 
 ::
@@ -335,12 +336,12 @@ use the following tool.
 Filter binary signals
 ^^^^^^^^^^^^^^^^^^^^^
 
-In some cases, hardware is not properly configured, resulting in the generation of
-unwanted device signal patterns. For example, a switch that is not configured for debouncing
+In some cases, hardware used during an experiment is not properly configured, resulting in the generation of
+unwanted device signal patterns. For example, a switch that does not account for debouncing
 may report a short on-state everytime it is turned off.
-While, one might consider these artifacts to be part of the dataset,  
-it is the researchers responsibility to address any hardware issues during the experiment.
-Moreover, removing artifacts can help make algorithms more comparable across different datasets.
+While, these artifacts could be considered as part of the dataset,  
+it is the researchers responsibility to rectify any hardware issues arising during the experiment.
+Moreover, removing artifacts can aid in mak algorithms more comparable across different datasets.
 To identify faulty device states, the tool uses cross-correlation to match candidate patterns 
 for a given search pattern. Users can simply click on the pattern to remove it:
 
@@ -362,23 +363,34 @@ for a given search pattern. Users can simply click on the pattern to remove it:
 
 .. note::
 
-    In addition, the tool can be used to find a reasonable threshold in order
-    to remove the pattern automatically. Open the tool and determine a 
-    threshold i.e. 40.
+    In addition, the tool can be leveraged to establish a suitable threshold 
+    for the automted removal of patterns. Open the tool and determine a 
+    threshold by iterating through few examples. Next, use the 
+    ``remove_signal_patterns`` method to identify and delete the undesired
+    device states:
 
+    .. code:: python
 
-    .. code python::
-        >>> from pyadlml.dataset.cleaning import asdf
-        >>> asdf.()
+        >>> from pyadlml.dataset.util import remove_signal_pattern
+        >>> search_pattern = [
+            ('6s', True),
+            ('2s', False),
+            ('1s', True),
+            ('6s', False),
+        ]
+        >>> df_devs = remove_signal_pattern(df_devs, search_pattern, \
+                                            match_idx=2, threshold=40 \
+            )
 
 
 Relabel devices and activities 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As is often the case, device recordings and activities contain errors. Furthermore, start- 
-and endtime of activities often lack rigorously definition. At times, a researcher may opt 
-to redefine these boundaries in a consistent manner post-experiment to improve the mututal information 
-between activities and devices. For these purposes, the ``label_data.py`` tool can be used
+Frequently, device recordings contain errors, activities are mislabeled
+and due to the lack of a precise defintion for the activities start- and endtime 
+the labels may be inconsistent. For these reasons, a researcher may want to correct 
+label errors or choose to redefine activity boundaries after the experiment. 
+To accomplish this, the ``label_data.py`` tool can be used
 to relabel categorical, binary devices and activities:
 
 

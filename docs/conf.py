@@ -54,6 +54,10 @@ html_logo = "_static/logo.svg"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+html_context = {
+  "default_mode": "dark",
+}
+
 html_theme_options = {
   "github_url": "https://github.com/tcsvn/pyadlml",
   "show_prev_next": False,

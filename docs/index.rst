@@ -24,7 +24,6 @@ Pyadlml offers an easy way to fetch, visualize and preprocess common datasets.
 
 Other useful references are
 
-- Notebooks: https://github.com/tcsvn/pyadlml/notebooks
 - Want to collect your own dataset: https://github.com/tcsvn/activity-assistant
 - Awesome papers: https://github.com/tcsvn/pyadlml/todo
 
