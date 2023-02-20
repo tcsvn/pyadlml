@@ -334,7 +334,7 @@ def str_to_timestamp(val):
     return pd.to_datetime(val, dayfirst=True)
 
 
-def df_difference(df1: pd.DataFrame, df2: pd.DataFrame, which=None):
+def df_difference(df1: pd.DataFrame, df2: pd.DataFrame, which=None, return_mask=False):
     """Find rows which are different between two DataFrames.
 
     Parameters
@@ -344,8 +344,9 @@ def df_difference(df1: pd.DataFrame, df2: pd.DataFrame, which=None):
     df2 : pd.DataFrame
         TODO
     which : None or str, default=None
-        TODO
-
+        When set to 'left' returns the elements where the 
+        first dataframe differs from the second
+    return_mask: book, default=False
 
     Returns
     -------
@@ -360,9 +361,14 @@ def df_difference(df1: pd.DataFrame, df2: pd.DataFrame, which=None):
         how='outer'
     )
     if which is None:
-        diff_df = comparison_df[comparison_df['_merge'] != 'both']
+        mask = (comparison_df['_merge'] != 'both')
     else:
-        diff_df = comparison_df[comparison_df['_merge'] == which]
+        mask = (comparison_df['_merge'] == which)
+
+    if return_mask:
+        return mask
+    else:
+        diff_df = comparison_df[mask]
 
     if is_activity_df(df1):
         return diff_df[[START_TIME, END_TIME, ACTIVITY]]

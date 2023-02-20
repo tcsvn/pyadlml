@@ -2,7 +2,7 @@
 
 import numpy as np
 import pandas as pd
-from pyadlml.constants import BOOL, CAT, DEVICE, END_TIME, START_TIME, TIME, VALUE
+from pyadlml.constants import ACTIVITY, BOOL, CAT, DEVICE, END_TIME, START_TIME, TIME, VALUE
 from pyadlml.dataset.util import get_first_states, get_last_states, infer_dtypes, str_to_timestamp
 
 
@@ -36,9 +36,17 @@ def remove_days(df_devices, df_activities, days=[], offsets=[], retain_correctio
     days = np.array(days)[np.flip(np.argsort(days))]
     dtypes = infer_dtypes(df_devs)
 
+    from pyadlml.plot import plotly_activities_and_devices
+
+
+
 
     # 1. remove iteratively the latest day and shift the succeeding part accordingly
+    i=0
+    print('#'*100)
+    plotly_activities_and_devices(df_devs, df_acts).write_html(f'debug_{i}.html')
     for day in days:
+
         # when day is e.g 2008-03.23 00:00:00 then day after will be 2008-03-24 00:00:00
         # these variables have to be used as only timepoints can be compared as seen below
         day_after = day + pd.Timedelta('1D')
@@ -147,11 +155,16 @@ def remove_days(df_devices, df_activities, days=[], offsets=[], retain_correctio
         idxs = np.where(mask_db_into_sd)[0]
         assert len(idxs) <= 2
         if len(idxs) == 2:
-            # case 5: case when both activities extend into each days
-            # clip both to midnight
-            df_acts.iat[idxs[0], 2] = day
-            df_acts.iat[idxs[1], 1] = day + pd.Timedelta('1ms')
-        if len(idxs) == 1:
+            # case 5: case when both activities cross boundaries in each days
+            if df_acts.at[idxs[0], ACTIVITY] == df_acts.at[idxs[0], ACTIVITY]:
+                # if activities are the same, join them and remove second activity
+                df_acts.iat[idxs[0], 1] = df_acts.iat[idxs[1], 1]
+                df_acts = df_acts.drop(idxs[1])
+            else:
+                # Clip both to midnight [!]
+                df_acts.iat[idxs[0], 1] = day
+                df_acts.iat[idxs[1], 0] = day + pd.Timedelta('1ms')
+        elif len(idxs) == 1:
             idx_overlapping = idxs[0]
 
             # Check if the overlapping activity is part of the shifted or not
@@ -178,6 +191,10 @@ def remove_days(df_devices, df_activities, days=[], offsets=[], retain_correctio
         df_devs, corrections_dev = correct_devices(df_devs, retain_corrections)
 
         #assert not _is_activity_overlapping(df_acts)
+
+        i+=1
+        print(f'{i}. removing: ', day)
+        plotly_activities_and_devices(df_devs, df_acts).write_html(f'debug_{i}.html')
 
     if retain_corrections:
         try:

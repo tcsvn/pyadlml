@@ -65,7 +65,7 @@ def extract_time_difference(df, normalize=False, inplace=True):
     return df
 
 
-class DayOfWeekExtractor(TransformerMixin, BaseEstimator):
+class DayOfWeek(TransformerMixin, BaseEstimator):
     """
     Appends seven columns one-hot encoded for week days to a dataframe based
         on the dataframes timestamps.
@@ -131,7 +131,7 @@ class DayOfWeekExtractor(TransformerMixin, BaseEstimator):
             return df[self.WEEKDAYS]
 
 
-class TimeBinExtractor(TransformerMixin, BaseEstimator):
+class TimeOfDay(TransformerMixin, BaseEstimator):
     """
     Divides a day into equal-length time bins and assigns time bin as features to
     a row that falls into that bin.
@@ -217,7 +217,7 @@ class TimeBinExtractor(TransformerMixin, BaseEstimator):
             return df[cols]
 
 
-class EventTimeExtractor(TransformerMixin, BaseEstimator):
+class InterEventTime(TransformerMixin, BaseEstimator):
     """
     Extracts the time difference to either the next or previous event
 

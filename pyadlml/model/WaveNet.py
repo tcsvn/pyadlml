@@ -15,7 +15,7 @@ def print_in_out(layer, name=None):
 
 class WaveNet(nn.Module):
 
-    def __init__(self, n_features, n_emb, n_hidden, n_classes, dilation_factor):
+    def __init__(self, n_features, n_classes, n_emb=3, n_hidden=100, dilation_factor=2):
         """
         """
         super().__init__()

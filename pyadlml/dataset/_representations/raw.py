@@ -3,6 +3,7 @@ import pandas as pd
 
 from pyadlml.constants import DEVICE, TIME, VALUE, CAT, NUM, BOOL
 from pyadlml.dataset._core.devices import _create_devices, most_prominent_categorical_values
+from pyadlml.dataset.util import infer_dtypes
 
 ST_FFILL = 'ffill'
 ST_INT_COV = 'interval_coverage'
@@ -89,17 +90,16 @@ def resample_raw(df_raw, df_dev, dt, most_likely_values=None, n_jobs=1):
     """
 
     # get dtypes in order for choosing different collision behavior
-    dev_dtypes = _infer_types(df_raw)
+    dev_dtypes = infer_dtypes(df_dev)
     if most_likely_values is None:
         from pyadlml.dataset.devices import get_most_likely_value
         most_likely_values = get_most_likely_value(df_dev)
-    most_likely_values = most_likely_values.set_index(DEVICE)
-
+        most_likely_values = pd.DataFrame(most_likely_values).T
     variant = 'a'
     if variant == 'a':
         return resample_pandas(df_raw, dt, df_dev, dev_dtypes, most_likely_values)
     elif variant == 'c':
-        return resample_pandas_and_pandarell_applymap(df_raw, dt, df_dev, dev_dtypes, most_likely_value)
+        return resample_pandas_and_pandarell_applymap(df_raw, dt, df_dev, dev_dtypes, most_likely_values)
     elif variant == 'd':
         return resample_dask_pandarell(df_raw, dt, dev_dtypes, df_dev, most_likely_values)
     elif variant == 'b':
@@ -199,7 +199,7 @@ def resample_pandas_and_pandarell_applymap(df_raw, t_res, df_dev, dev_dtypes, mo
                 tmp = resolve_collision_categorical(series, t_res, df_dev)
 
             elif series.name in dev_dtypes['numerical']:
-                tmp = resolve_collision_numerical(series, t_res, df_dev, most_likely_values)
+                tmp = resolve_collision_numerical(series, t_res, df_dev, most_likely_value)
             else:
                 raise ValueError("The column/device didn't match either boolean, categorical or numerical type.")
             return tmp
@@ -216,7 +216,7 @@ def resample_pandas_and_pandarell_applymap(df_raw, t_res, df_dev, dev_dtypes, mo
 
 def resample_pure_dask(df_raw, t_res, dev_dtypes, df_dev, most_likely_values):
         import dask.dataframe as dd
-        dd_raw = dd.from_pandas(df_raw, npartitions=n_jobs)
+        dd_raw = dd.from_pandas(df_raw, 4)
 
         # TODO problem dask resampler doesn't implement function ffill
         # solution 1

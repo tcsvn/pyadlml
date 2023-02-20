@@ -22,7 +22,6 @@ from sklearn.utils.metaestimators import if_delegate_has_method# ,_safe_split
 from sklearn.utils.validation import check_is_fitted, indexable, _check_fit_params, _num_samples
 
 from pyadlml.pipeline import EvalOnlyWrapper, TrainOnlyWrapper, Pipeline, TrainOrEvalOnlyWrapper
-from pyadlml.preprocessing import CVSubset
 from sklearn.model_selection._search import BaseSearchCV as SklearnBaseSearchCV
 
 class BaseSearchCV(SklearnBaseSearchCV):
@@ -353,7 +352,7 @@ class BaseSearchCV(SklearnBaseSearchCV):
                 # set the cross val splitter training range to the whole dataset
                 if self.online_train_val_split:
                     for estim in self.best_estimator_:
-                        if isinstance(estim, CVSubset) and isinstance(estim, TrainOnlyWrapper):
+                        if isinstance(estim, CrossValSplitter) and isinstance(estim, TrainOnlyWrapper):
                             tmp = np.arange(len(X))
                             estim.set_range(tmp)
                             break
@@ -524,10 +523,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         for estim in estimator:
             if set_train_estim and set_test_estim:
                 break
-            if isinstance(estim, CVSubset) and isinstance(estim, EvalOnlyWrapper):
+            if isinstance(estim, CrossValSplitter) and isinstance(estim, EvalOnlyWrapper):
                 estim.set_range(test)
                 set_test_estim = True
-            if isinstance(estim, CVSubset) and isinstance(estim, TrainOnlyWrapper):
+            if isinstance(estim, CrossValSplitter) and isinstance(estim, TrainOnlyWrapper):
                 estim.set_range(train)
                 set_train_estim = True
             # TODO delete unti 906 above

@@ -5,9 +5,12 @@ from sklearn.model_selection._split import _BaseKFold
 
 from pyadlml.constants import ACTIVITY, TIME, START_TIME, END_TIME, DEVICE, VALUE
 from sklearn.model_selection import TimeSeriesSplit as SklearnTSSplit, KFold as SklearnKFold
+from sklearn.base import BaseEstimator, TransformerMixin
+from pyadlml.dataset._core.activities import is_activity_df
 
-from pyadlml.dataset.util import get_last_states, select_timespan
+from pyadlml.dataset.util import df_difference, get_last_states, select_timespan
 from pyadlml.dataset.cleaning.misc import remove_days
+from pyadlml.pipeline import XAndYTransformer, XOrYTransformer
 
 
 def train_test_split(df_devs, df_acts, split='leave_one_day_out', temporal=False,
@@ -260,6 +263,103 @@ def _split_acts(df_acts : pd.DataFrame, rnd_day, temporal : bool =False) -> list
         return idxs_train, idxs_test
 
 
+class CrossValSelector(BaseEstimator, TransformerMixin, XAndYTransformer):
+    """ Selects the subset from the whole dataset based on a given data_range.
+
+    Attributes
+    ----------
+    data_range  : list of either indices or tupel of timestamps
+        When the data_range is a tupel of timestamps, the range is seen as an interval
+        half open to the right (st, et)
+    y : boolean, default=False
+        Only
+
+    """
+    def __init__(self, data_range=None, day_shift=False):
+        self.data_range = data_range
+        self.day_shift = day_shift
+
+
+    def _extract_first_sample(self, data_range):
+        try:
+            sample = data_range[0][0]
+        except TypeError:
+            sample = data_range[0]
+        except IndexError:
+            sample = data_range[0]
+        return sample
+
+
+    def fit(self, X, y=None):
+        error_msg = "Data range has to be set to either time intervals or list of indicies. Not 'None'"
+        assert self.data_range is not None, error_msg
+
+        # determine whether the splits are made based on index ranges or timestamp tuples
+        sample = self._extract_first_sample(self.data_range)
+        self.is_temporal_split_ = not (isinstance(sample, int) or isinstance(sample, np.int64))
+
+        return self
+
+    def fit_transform(self, X, y):
+        self.fit(X, y)
+        return self.transform(X, y)
+
+    def transform(self, X, y):
+        """ Selects a subset of X and y based on the data_range and the split type.
+            
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Has to have one column named 'time' if the split is temporal.
+        """
+        # Case when x and y are activity and device dataframes
+        if self.is_temporal_split_:
+            # 1. case for |-sel-|-other-| or |-other-|-sel-|
+            if not isinstance(self.data_range[0], tuple):
+                st, et = self.data_range[0], self.data_range[1]
+                if is_activity_df(y):
+                    X_sel, y_sel = select_timespan(X, y, start_time=st, end_time=et, clip_activities=True)
+                else:
+                    assert X_sel.shape[0] == y_sel.shape[0]
+                    X_sel = select_timespan(X, start_time=st, end_time=et)
+                    # Get the elements that are different in X than in the selection,
+                    # namely the removed elements 
+                    mask_sel = df_difference(X, X_sel, which='left', return_mask=True)
+                    y_sel = y_sel[mask_sel]
+
+                    # TODO, Test if this path works
+                    raise NotImplementedError
+
+            # 2. case for |-sel-|-other-|-sel-|
+            else:
+                st1, et1 = self.data_range[0][0], self.data_range[0][1]
+                st2, et2 = self.data_range[1][0], self.data_range[1][1]
+
+                if self.day_shift:
+                    # Assume exclusive ranges [t1, t2)  
+                    days_to_remove = pd.date_range(et1, st2, freq='1D').values[:-1]
+                    if is_activity_df(y):
+                        X_sel, y_sel = remove_days(X, y, days=days_to_remove)
+                    else:
+                        X_sel1, y_sel1 = select_timespan(X, y, start_time=st1, end_time=et1, clip_activities=True)
+                        X_sel2, y_sel2 = select_timespan(X, y, start_time=st2, end_time=et2, clip_activities=True)
+                        X_sel2 = X_sel2 - pd.Timedelta(f'{len(days_to_remove)}D')
+                        y_sel2 = y_sel2 - pd.Timedelta(f'{len(days_to_remove)}D')
+                        X_sel, y_sel = pd.concat([X_sel1, X_sel2]), pd.concat([y_sel1, y_sel2])
+                else:
+                    X_sel1, y_sel1 = select_timespan(X, y, start_time=st1, end_time=et1, clip_activities=True)
+                    X_sel2, y_sel2 = select_timespan(X, y, start_time=st2, end_time=et2, clip_activities=True)
+                    X_sel, y_sel = pd.concat([X_sel1, X_sel2]), pd.concat([y_sel1, y_sel2])
+
+            return X_sel, y_sel
+
+        else:
+            X, y = self._safe_split(None, X, y, self.data_range)
+            return X, y
+
+
+
 class TimeSeriesSplit(_BaseKFold):
     """
     Parameters
@@ -432,7 +532,7 @@ class LeaveKDayOutSplit(object):
         The number of days to use for the test set.
     n_splits : int, default=1
         The number of splits. All splits are exclusive, meaning there will not be more t TODO
-    return_timestamps : bool, default=False
+    return_timestamp : bool, default=False
         When true timestamp intervals are returned rather than indicies. This is
         useful whenever data is upscaled or downscaled as the indicies in the testset
         can not be known beforehand.
@@ -448,9 +548,9 @@ class LeaveKDayOutSplit(object):
     --------
     >>> import os
     """
-    def __init__(self, n_splits=1, k=1, return_timestamps=False, epsilon='5ms', offset='0s', shift=False):
+    def __init__(self, n_splits=1, k=1, return_timestamp=False, epsilon='5ms', offset='0s', shift=False):
         self.n_splits = n_splits
-        self.return_timestamp = return_timestamps
+        self.return_timestamp = return_timestamp
         self.k = k
         self.offset = pd.Timedelta(offset)
         self.eps = pd.Timedelta(epsilon)
@@ -479,6 +579,10 @@ class LeaveKDayOutSplit(object):
     def split(self, X=None, y=None, groups=None):
         """ Generate indices to split data into training and test set.
 
+            Attention! The returned intervals for timestamps are half open
+                train [st, et), val [et, et2)
+            meaning the day specified for et should not be contained !!!
+
         Parameters
         ----------
         X : pd.DataFrame
@@ -494,10 +598,10 @@ class LeaveKDayOutSplit(object):
         """
 
         X = X.copy()
+
         first_day = X[TIME].iloc[0].floor('d')
         last_day = X[TIME].iloc[-1].ceil('d')
         days = pd.date_range(first_day, last_day, freq='1D').values
-        print(days)
         days[1:-2] = days[1:-2] + self.offset
 
         N = len(days)

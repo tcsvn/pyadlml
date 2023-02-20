@@ -5,7 +5,6 @@ from .preprocessing import \
     DropColumn, \
     DropTimeIndex, \
     LabelMatcher, \
-    CVSubset, \
     DropDuplicates,\
     Timestamp2Seqtime, \
     KeepOnlyDevices, \

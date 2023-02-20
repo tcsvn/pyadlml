@@ -9,7 +9,7 @@ from sklearn.tree import export_graphviz
 from pyadlml.dataset import *
 from pyadlml.dataset.io import set_data_home
 from pyadlml.preprocessing import StateVectorEncoder, LabelMatcher, DropTimeIndex, DropDuplicates, \
-    CVSubset
+    CrossValSplitter
 from pyadlml.pipeline import Pipeline, FeatureUnion, TrainOnlyWrapper, \
     EvalOnlyWrapper, TrainOrEvalOnlyWrapper, YTransformer
 from pyadlml.model_selection import train_test_split
