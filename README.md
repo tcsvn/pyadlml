@@ -129,18 +129,20 @@ _For more examples and how to use, please refer to the [documentation](https://p
 ## Features
   - 10 Datasets 
   - Tools for data cleaning
-    - Merge overlapping activities
     - Relabel activities and devices
+    - Merge overlapping activities
     - Find and replace specific patterns in device signals
     - Interactive dashboard for data exploration
   - Importing data from [Home Assistant]() or [Activity Assistant]()
-  - Many visualizations and statistics for devices, activities and their interaction
+  - Various statistics and visualizations for devices, activities and their interaction
   - Preprocessing methods
     - Device encoder (index, raw, changepoint, last_fired, ...)
     - Feature extraction (inter-event-times, intensity, time2vec, ...)
     - Sliding windows (event, temporal, explicit or fuzzytime)
-  - Cross validation iterators adapted for ADLs
-    - Leave-K-day out, temporal
+    - ... 
+  - Cross validation iterators and pipeline adapted for ADLs
+    - LeaveKDayOutSplit, TimeSeriesSplit
+    - YTransformer, XorYTransformer, ...
   - Ready to use models
     - RNNs
     - Transformer
