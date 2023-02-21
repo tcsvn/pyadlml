@@ -17,10 +17,10 @@ sys.path.insert(0, os.path.abspath('../'))
 # -- Project information -----------------------------------------------------
 
 project = 'pyadlml'
-copyright = '2020, Christian Meier'
+copyright = '2023, Christian Meier'
 author = 'Christian Meier'
 
-release = "0.0.1-alpha"
+release = "0.0.20-alpha"
 
 # -- General configuration ---------------------------------------------------
 

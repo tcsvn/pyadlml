@@ -128,12 +128,12 @@ _For more examples and how to use, please refer to the [documentation](https://p
 
 ## Features
   - 10 Datasets 
+  - Importing data from [Home Assistant]() or [Activity Assistant]()
   - Tools for data cleaning
     - Relabel activities and devices
     - Merge overlapping activities
     - Find and replace specific patterns in device signals
     - Interactive dashboard for data exploration
-  - Importing data from [Home Assistant]() or [Activity Assistant]()
   - Various statistics and visualizations for devices, activities and their interaction
   - Preprocessing methods
     - Device encoder (index, raw, changepoint, last_fired, ...)

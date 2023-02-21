@@ -5,6 +5,10 @@ numpydoc
 pandas
 numpy
 sklearn
+scikit-learn
+scipy
+plotly
+dash
 joblib
 mega.py
 dask[complete]
