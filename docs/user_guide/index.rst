@@ -15,7 +15,7 @@ required knowledge to begin read at least article 1, 2, and 4.
     stats_and_vis.rst
     device_encoder.rst
     feature_extraction.rst
-    .. pipeline.rst
+    windows.rst
     pipeline.rst
     .. representations.rst
     cross_validation.rst

@@ -264,7 +264,7 @@ def activities_and_device_events(df_devices, df_activities, start_time=None, end
         When set the file
 
     Returns
-    ------
+    -------
     fig or None
         Either a figure or nothing depending on if file_path is set.
     """
@@ -350,7 +350,7 @@ def activities_and_device_states(df_devices: pd.DataFrame, df_activities: pd.Dat
         When set the file
 
     Returns
-    ------
+    -------
     fig or None
         Either a figure or nothing depending on if file_path is set.
     """

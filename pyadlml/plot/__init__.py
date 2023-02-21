@@ -9,7 +9,7 @@ from pyadlml.dataset.plot.plotly.acts_and_devs import (
     contingency_states as plotly_contingency_states,
     contingency_events as plotly_contingency_events,
     activities_and_devices as plotly_activities_and_devices,
-    event_correlogram as plotly_activites_vs_devices_correlogram,
+    event_correlogram as plotly_activities_vs_devices_correlogram,
     activity_vs_device_events_hist as plotly_activities_vs_devices_histogram
 )
 
@@ -23,18 +23,19 @@ from pyadlml.dataset.plot.matplotlib.activities import (
 )
 
 from pyadlml.dataset.plot.plotly.activities import (
-    density as plotly_activity_density,
-    bar_count as plotly_activity_bar_count,
+    bar_count as plotly_activity_count,
+    boxplot_duration as plotly_activity_boxplot,
+    activity_duration as plotly_activity_duration,
     heatmap_transitions as plotly_activity_transitions,
-    boxplot_duration as plotly_activity_boxplot_duration,
+    density as plotly_activity_density,
     bar_cum as plotly_activity_duration,
 )
 
 from pyadlml.dataset.plot.matplotlib.devices import (
+    states as plot_device_states,
     state_fractions as plot_device_state_fractions,
     state_boxplot as plot_device_state_boxplot,
     state_similarity as plot_device_state_cross_correlation,
-    states as plot_device_states,
     inter_event_intervals as plot_device_inter_event_times,
     event_density_one_day as plot_device_event_density,
     event_count as plot_device_event_count,
@@ -43,7 +44,8 @@ from pyadlml.dataset.plot.matplotlib.devices import (
 )
 
 from pyadlml.dataset.plot.plotly.devices import (
-    fraction as plotly_device_fractions,
+    state_times as plotly_device_states, 
+    fraction as plotly_device_state_fractions,
     boxplot_state as plotly_device_state_boxplot,
     bar_count as plotly_device_event_count,
     event_density as plotly_device_event_density,

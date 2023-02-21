@@ -1,14 +1,14 @@
 pyadlml.feature_extraction
 ===========================
 
-DayOfWeekExtractor
-~~~~~~~~~~~~~~~~~~
-.. autofunction::  pyadlml.feature_extraction.DayOfWeekExtractor
+DayOfWeek
+~~~~~~~~~
+.. autofunction::  pyadlml.feature_extraction.DayOfWeek
 
-TimeBinExtractor
-~~~~~~~~~~~~~~~~
-.. autofunction::  pyadlml.feature_extraction.TimeBinExtractor
+TimeOfDay
+~~~~~~~~~
+.. autofunction::  pyadlml.feature_extraction.TimeOfDay
 
-TimeDiffExtractor
-~~~~~~~~~~~~~~~~~
-.. autofunction::  pyadlml.feature_extraction.EventTimeExtractor
+InterEventTime
+~~~~~~~~~~~~~~
+.. autofunction::  pyadlml.feature_extraction.InterEventTime

@@ -1,12 +1,13 @@
 pyadlml.preprocessing
 *********************
 
+
 Encoder
 =======
 
 
-StateVectorEncoder
-~~~~~~~~~~~~~~~~~~
+IndexEncoder
+~~~~~~~~~~~~
 
 .. autoclass:: pyadlml.preprocessing.IndexEncoder
 
@@ -15,11 +16,6 @@ StateVectorEncoder
 ~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: pyadlml.preprocessing.StateVectorEncoder
-
-LabelEncoder
-~~~~~~~~~~~~
-
-.. autoclass:: pyadlml.preprocessing.LabelEncoder
 
 
 LabelMatcher
@@ -34,14 +30,39 @@ Transformer
 IdentityTransformer
 ~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: pyadlml.preprocessing.IdentityTransformer
+.. autoclass:: pyadlml.preprocessing.Identity
 
 DropDuplicates
 ~~~~~~~~~~~~~~
 
 .. autoclass:: pyadlml.preprocessing.DropDuplicates
 
+
+DropDevices
+~~~~~~~~~~~
+
+.. autoclass:: pyadlml.preprocessing.DropDevices
+
+DropColumn
+~~~~~~~~~~
+
+.. autoclass:: pyadlml.preprocessing.DropColumn
+
+
 DropTimeIndex
 ~~~~~~~~~~~~~
 
 .. autoclass:: pyadlml.preprocessing.DropTimeIndex
+
+
+KeepOnlyDevices
+~~~~~~~~~~~~~~~
+
+.. autoclass:: pyadlml.preprocessing.KeepOnlyDevices
+
+
+Timestamp2Seqtime
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pyadlml.preprocessing.Timestamp2Seqtime
+

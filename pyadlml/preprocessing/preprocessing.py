@@ -144,7 +144,7 @@ class Df2Torch(TransformerMixin, XOrYTransformer):
         return X_tensor, y_tensor
 
 
-class IdentityTransformer(TransformerMixin, XOrYTransformer):
+class Identity(TransformerMixin, XOrYTransformer):
     def __init__(self):
         pass
 

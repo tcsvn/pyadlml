@@ -77,15 +77,15 @@ device_state_cross_correlation
 
 .. autofunction:: pyadlml.plot.plot_device_state_cross_correlation
 
-.. autofunction:: pyadlml.plot.plotly_device_state_cross_correlation
+.. .. autofunction:: pyadlml.plot.plotly_device_state_cross_correlation
 
 
-device_inter_event_intervals
-----------------------------
+device_inter_event_times
+------------------------
 
-.. autofunction:: pyadlml.plot.plot_device_inter_event_intervals
+.. autofunction:: pyadlml.plot.plot_device_inter_event_times
 
-.. autofunction:: pyadlml.plot.plotly_device_inter_event_intervals
+.. autofunction:: pyadlml.plot.plotly_device_inter_event_times
 
 
 device_event_density
@@ -109,7 +109,7 @@ device_event_raster
 
 .. autofunction:: pyadlml.plot.plot_device_event_raster
 
-.. autofunction:: pyadlml.plot.plotly_device_event_raster
+.. .. autofunction:: pyadlml.plot.plotly_device_event_raster
 
 device_event_correlogram
 ------------------------
@@ -128,15 +128,11 @@ activities_and_states
 
 .. autofunction:: pyadlml.plot.plot_activities_and_states
 
-.. autofunction:: pyadlml.plot.plotly_activities_and_states
-
 
 activities_and_events
 ---------------------
 
 .. autofunction:: pyadlml.plot.plot_activities_and_events
-
-.. autofunction:: pyadlml.plot.plotly_activities_and_events
 
 
 contingency_states
