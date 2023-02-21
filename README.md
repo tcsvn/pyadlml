@@ -13,7 +13,7 @@ Activities of Daily living (ADLs) such as eating, working, sleeping and Smart Ho
 Package is still an alpha-version and under active development. 
 As of now do not expect anything to work! APIs are going to change, 
 stuff breaks and the documentation may lack behind. Nevertheless, feel 
-free to take a look. The best and safest point is probably  the API reference.
+free to take a look. The safest point to start is probably the API reference.
 
 ## Last Stable Release
 ```sh 
@@ -38,7 +38,7 @@ data = fetch_amsterdam()
 df_devs, df_acts = data['devices'], data['activities']
 
 
-# Plot the estimated inhabitants activity density over one day
+# Plot the residents activity density over one day
 from pyadlml.plot import plot_activity_density
 fig = plot_activity_density(df_acts)
 fig.show()
@@ -51,13 +51,13 @@ sve = StateVectorEncoder(encode='raw', dt='20s')
 raw = sve.fit_transform(df_devs)
 
 # Label each datum with the corresponding activity.
-# When there is no activity set the activity to "other"
+# When an event matches no activity set the activity to "other"
 lbls = LabelMatcher(other=True).fit_transform(df_acts, raw)
 
 # Extract numpy arrays without timestamps (1st column)
 X, y = raw.values[:,1:], lbls.values[:,1:]
 
-# Proceed with machine learning techniques you already know
+# Proceed with machine learning stuff 
 from sklearn.tree import DecisionTreeClassifier
 clf = DecisionTreeClassifier()
 clf.fit(X, y)
@@ -81,7 +81,7 @@ from torch.utils.data import DataLoader
 from torch.optim import Adam 
 from torch.nn import functional as F
 
-# Get data and split into train/val/test based on time rather than #events
+# Featch data and split into train/val/test based on time rather than #events
 data = fetch_amsterdam()
 X_train, X_val, X_test, y_train, y_val, y_test = train_test_split(
     data['devices'], data['activities'], \
@@ -90,27 +90,27 @@ X_train, X_val, X_test, y_train, y_val, y_test = train_test_split(
 
 # Formulate all preprocessing steps using a sklearn styled pipeline 
 pipe = Pipeline([
-('enc', IndexEncoder()),            # Encode devices strings with indices
-('drop_obs', DropColumn(VALUE)),    # Disregard device observations
-('lbl', LabelMatcher(other=True)),  # Generate labels y  
-('drop_time', DropTimeIndex()),     # Remove timestamps for x and y
-('windows', EventWindows(           # Create sequences S with a sliding window
-              rep='many-to-one',    # Only one label y_i per sequence S_i
-              window_size=16,       # Each sequence contains 16 events 
-              stride=2)),           # A sequence is created every 2 events
-('passthrough', 'passthrough')      # Do not use a classifier in the pipeline
+    ('enc', IndexEncoder()),            # Encode devices strings with indices
+    ('drop_obs', DropColumn(VALUE)),    # Disregard device observations
+    ('lbl', LabelMatcher(other=True)),  # Generate labels y  
+    ('drop_time', DropTimeIndex()),     # Remove timestamps for x and y
+    ('windows', EventWindows(           # Create sequences S with a sliding window
+                  rep='many-to-one',    # Only one label y_i per sequence S_i
+                  window_size=16,       # Each sequence contains 16 events 
+                  stride=2)),           # A sequence is created every 2 events
+    ('passthrough', 'passthrough')      # Do not use a classifier in the pipeline
 ])
 
-# Generate a dataset to sample from
+# Create a dataset to sample from
 dataset = TorchDataset(X_train, y_train, pipe) 
 train_loader = DataLoader(dataset, batch_size=32, shuffle=True)
 model = WaveNet(
-    n_features=14,       # number of devices
-    n_classes=8          # number of activities
+    n_features=14,       # Number of devices
+    n_classes=8          # Number of activities
 )
 optimizer = Adam(model.parameters(), lr=3e-4)
 
-# Minimal trainloop to overfit the data
+# Minimal loop to overfit the data
 for s in range(10000):
     for (Xb, yb) in train_loader:
         optimizer.zero_grad()
@@ -124,7 +124,8 @@ for s in range(10000):
 
 
 
-_For more examples and how to use, please refer to the [documentation](https://pyadlml.readthedocs.io/en/latest/).
+_For more examples and how to use, please refer to the [documentation](https://pyadlml.readthedocs.io/en/latest/)._
+
 ## Features
   - 10 Datasets 
   - Tools for data cleaning
