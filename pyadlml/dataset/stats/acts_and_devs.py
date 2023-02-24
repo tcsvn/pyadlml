@@ -389,8 +389,8 @@ def contingency_table_states(df_devs, df_acts, other=False, n_jobs=1):
     df_acts[TD] = df_acts[END_TIME] - df_acts[START_TIME]
 
     dtypes = infer_dtypes(df_devs)
-    start_time = df_acts.iat[0, 0]
-    end_time = df_acts.iat[-1, 1]
+    start_time = df_acts.iat[0, 0] - pd.Timedelta('1s')
+    end_time = df_acts.iat[-1, 1] + pd.Timedelta('1s')
     from pyadlml.dataset._core.devices import device_events_to_states
     df_devs = device_events_to_states(df_devs, extrapolate_states=True,
                                       start_time=start_time, end_time=end_time)
@@ -407,52 +407,50 @@ def contingency_table_states(df_devs, df_acts, other=False, n_jobs=1):
         df[act] = pd.Timedelta('0ns')
 
     def func(row, df_acts):
-        mask_inside = (row.start_time < df_acts[START_TIME]) & (df_acts[END_TIME] < row.end_time)
+        assert row.end_time - row.start_time > pd.Timedelta('0ns')
+        mask_inside = (row.start_time <= df_acts[START_TIME]) & (df_acts[END_TIME] <= row.end_time)
         mask_right_ov = (df_acts[START_TIME] < row.end_time) & (row.end_time < df_acts[END_TIME])\
                       & (row.start_time < df_acts[START_TIME])
         mask_left_ov = (df_acts[START_TIME] < row.start_time) & (row.start_time < df_acts[END_TIME])\
                       & (df_acts[END_TIME] < row.end_time)
-        mask_total_ov = (df_acts[START_TIME] < row.start_time) & (row.end_time < df_acts[END_TIME])
+        mask_total_ov = (df_acts[START_TIME] <= row.start_time) & (row.end_time <= df_acts[END_TIME])
 
+        overlap_ins = df_acts[mask_inside]
+        overlap_left = df_acts[mask_left_ov]
+        overlap_right = df_acts[mask_right_ov]
         overlap_total = df_acts[mask_total_ov]
+
         if not overlap_total.empty:
-            if len(overlap_total) != 1:
-                print()
+            assert overlap_ins.empty and overlap_left.empty and overlap_right.empty
             assert len(overlap_total) == 1, 'trouble double dup dup.'
             # One activity overlaps the whole state
             ol = overlap_total.iloc[0]
             row[ol[ACTIVITY]] = row.end_time - row.start_time
             return row
 
-        overlap_ins = df_acts[mask_inside]
-        overlap_left = df_acts[mask_left_ov]
-        overlap_right = df_acts[mask_right_ov]
-
-        if overlap_ins.empty and overlap_right.empty and overlap_right.empty:
+        if overlap_ins.empty and overlap_right.empty and overlap_left.empty:
             # No matching activity return row
             return row
 
-        skip_acts = []
         if not overlap_left.empty:
+            assert len(overlap_left) == 1, 'trouble double dup dup.'
             ol = overlap_left.iloc[0]
-            row[ol[ACTIVITY]] = ol[END_TIME] - row.start_time
-            skip_acts.append(ol[ACTIVITY])
+            row[ol[ACTIVITY]] += ol[END_TIME] - row.start_time
 
         if not overlap_right.empty:
+            assert len(overlap_right) == 1, 'trouble double dup dup.'
             ol = overlap_right.iloc[0]
-            row[ol[ACTIVITY]] = row.end_time - ol[START_TIME]
-            skip_acts.append(ol[ACTIVITY])
+            row[ol[ACTIVITY]] += row.end_time - ol[START_TIME]
 
         assert len(overlap_right) < 2 and len(overlap_left) < 2, 'Trouble trouble double dup.'
 
-        if overlap_ins.empty:
-            return row
-        else:
+        if not overlap_ins.empty:
             ins_acts = overlap_ins[ACTIVITY].unique()
             state_agg = overlap_ins[[TD, ACTIVITY]].groupby(by=[ACTIVITY])[TD].sum()
             for act in ins_acts:
-                row.at[act] = state_agg[act]
-            return row
+                row.at[act] += state_agg[act]
+
+        return row
 
     if n_jobs > 1:
         import dask.dataframe as dd

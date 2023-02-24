@@ -148,8 +148,6 @@ def device_events_to_states(df_devs: pd.DataFrame, start_time=None, end_time=Non
         .reset_index(drop=True) \
         .sort_values(TIME)
 
-
-
     dtypes = infer_dtypes(df)
 
     first_timestamp = df[TIME].iloc[0] if start_time is None else pd.Timestamp(start_time)
