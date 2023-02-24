@@ -1,4 +1,4 @@
-from .windows import TimeWindows, EventWindows
+from .windows import TimeWindow, EventWindow, ExplicitWindow
 from .preprocessing import \
     StateVectorEncoder, \
     IndexEncoder, \

@@ -1,6 +1,7 @@
 from pyadlml.pipeline import XOrYTransformer, XAndYTransformer, YTransformer
-from pyadlml.constants import END_TIME, OTHER, START_TIME, TIME
+from pyadlml.constants import ACTIVITY, END_TIME, OTHER, START_TIME, TIME
 from sklearn.base import BaseEstimator, TransformerMixin
+import dask
 import pandas as pd
 import numpy as np
 from plotly.subplots import make_subplots
@@ -8,7 +9,7 @@ from pyadlml.dataset.plot.util import  \
     fmt_seconds2time, \
     fmt_seconds2time_log
 
-class Windows():
+class Windows(BaseEstimator, TransformerMixin):
     REP_M2M = 'many-to-many'
     REP_M2O = 'many-to-one'
 
@@ -19,15 +20,79 @@ class Windows():
 
 
 
-class ExplicitWindows():
+class ExplicitWindow(BaseEstimator, TransformerMixin, XOrYTransformer):
     """
     https://www.mdpi.com/1424-8220/21/18/6037
 
+    Divide the data stream into segments by 
+
     """
-    pass
+    def __init__(self, rep: str = 'many-to-many'):
+        TransformerMixin.__init__(self)
+        XOrYTransformer.__init__(self)
+        self.rep = rep
+
+    def fit(self, X, y):
+        assert self.rep in ['many-to-many', 'many-to-one']
+
+    def fit_transform(self, X, y):
+        self.fit(X,y)
+        return self.transform(X,y)
+
+    @XOrYTransformer.x_or_y_transform
+    def transform(self, X: pd.DataFrame, y:pd.DataFrame) -> pd.DataFrame:
+        """
+
+        Parameters
+        ----------
+        X: pd.DataFrame
+
+        y: pd.DataFrame
 
 
-class TimeWindows(Windows):
+        .. Note 
+        -------
+
+        Sequences are padded with NaNs to the length of the longest sequence in order to form a tensor.
+
+
+        Returns
+        -------
+        X: np.ndarray with shape (S, F, T)
+            where S is the #sequences, F is the #features, and T is the maxmimum sequence length
+        y: np.ndarray with shape (S, T)
+            where S is the #sequences and T is the maximum sequence length
+
+        """
+        assert len(y.columns) == 1
+
+        y = y.copy().reset_index(drop=True)
+        X = X.copy().reset_index(drop=True)
+
+        # Assign each sequence a unique number
+        y['tmp'] = (y[ACTIVITY] != y[ACTIVITY].shift(1)).cumsum()
+        S = y['tmp'].iat[-1]
+        T = y['tmp'].value_counts().max()
+        F = len(X.columns)
+
+        Xt = np.full((S, F, T), np.nan, dtype='object')
+        if self.rep == 'many-to-many':
+            yt = np.full((S, T), np.nan, dtype='object')
+        else:
+            yt = np.full((S), '', dtype='object')
+
+        for s, (_, grp) in enumerate(y.groupby('tmp')):
+            X_tmp = np.swapaxes(X.loc[grp.index, :].values, 0,1)
+            Xt[s, :, :X_tmp.shape[-1]] = X_tmp
+            if self.rep == 'many-to-many':
+                y_tmp = y.loc[grp.index, y.columns[:-1]].values.squeeze(-1)
+                yt[s, :y_tmp.shape[-1]] = y_tmp
+            else:
+                yt[s] = y.at[grp.index[0], ACTIVITY]
+
+        return Xt, yt
+
+class TimeWindow(Windows):
     """ Divide data stream into time segments with a regular interval.
 
     Note
@@ -40,56 +105,98 @@ class TimeWindows(Windows):
         TransformerMixin.__init__(self)
         XOrYTransformer.__init__(self)
         Windows.__init__(self, rep, window_size, stride)
-
         self.drop_empty_intervals = drop_empty_intervals
 
     def fit_transform(self, X, y):
+        self.fit(X, y)
         return self.transform(X, y)
 
-    @XOrYTransformer.x_or_y_transform
-    def transform(self, X=None, y=None) -> np.ndarray:
+    def fit(self, X, y):
+
         # Bring params into right format
         assert self.rep in [self.REP_M2M, self.REP_M2O]
         self.window_size = pd.Timedelta(self.window_size)
         self.stride = pd.Timedelta(self.stride) if self.stride is not None else self.window_size
 
+    @XOrYTransformer.x_or_y_transform
+    def transform(self, X, y) -> np.ndarray:
+        """
+        
+        
+        """
 
         # TODO refactor add conversion for different input types
         assert isinstance(X, pd.DataFrame) or X is None
         assert isinstance(y, pd.DataFrame) or y is None
 
-        # Solution without stride
         df = X.copy().sort_values(by=TIME)
-
-        res_X = []
-
-        res_y = [] if y is not None else None
-
-        st = X[TIME].iloc[0]
-        et = X[TIME].iloc[-1]
+        st = X[TIME].iloc[0] - pd.Timedelta('1s')
+        et = X[TIME].iloc[-1] + pd.Timedelta('1s')
         win_st = st
 
-        while win_st+self.window_size < et:
-            win = (win_st, win_st + self.window_size)
-            event_idxs = df[(win[0] < df[TIME]) & (df[TIME] < win[1])].index
-            
-            if not self.drop_empty_intervals or not event_idxs.empty:
-                res_X.append(X.iloc[event_idxs].copy().values)
-                if y is not None:
-                    res_y.append(y.iloc[event_idxs].copy().values)
+        X_list = []
+        y_list = []
+        max_seq_length = 0
+        i = 0
 
-            win_st += self.stride
 
-        return res_X, res_y 
+        st_windows = pd.date_range(st, et-self.window_size, freq=self.stride)
+        if self.drop_empty_intervals:
+            times = df[TIME].copy()
+            while win_st + self.window_size <= et:
+
+                win = (win_st, win_st + self.window_size)
+                # Important the interval is [st,et) right closed
+                event_idxs = df[(win[0] <= df[TIME]) & (df[TIME] < win[1])].index
+                
+                if not event_idxs.empty:
+                    X_list.append(X.iloc[event_idxs].copy())
+                    y_list.append(y.iloc[event_idxs].copy())
+                    max_seq_length = max(max_seq_length, len(X_list[i]))
+                    win_st = win_st + self.stride
+                    i += 1
+                else:
+                    # Get the next first window that covers the next event 
+                    next_event_time = times[win_st < times].iloc[0]
+                    win_min_idx_not_containing_ev = (st_windows <= next_event_time - self.window_size).cumsum().max() - 1
+                    win_st = st_windows[win_min_idx_not_containing_ev + 1]
+        else: 
+            for win_st in st_windows:
+                win = (win_st, win_st + self.window_size)
+                event_idxs = df[(win[0] <= df[TIME]) & (df[TIME] < win[1])].index
+                
+                if not event_idxs.empty:
+                    X_list.append(X.iloc[event_idxs].copy())
+                    y_list.append(y.iloc[event_idxs].copy())
+                    max_seq_length = max(max_seq_length, len(X_list[i]))
+                    i += 1
+
+
+        F = len(X.columns)
+        S = len(X_list)
+        T = max_seq_length
+        Xt = np.full((S, F, T), np.nan, dtype='object')
+        yt = np.full((S, T), '', dtype='object')
+
+        for s, (X_tmp, y_tmp) in enumerate(zip(X_list, y_list)):
+            X_tmp = np.swapaxes(X_tmp.values, 0,1)
+            Xt[s, :, :X_tmp.shape[-1]] = X_tmp
+            if self.rep == 'many-to-many':
+                y_tmp = y_tmp.values.squeeze(-1)
+                yt[s, :y_tmp.shape[-1]] = y_tmp
+            else:
+                yt[s] = y_tmp.iat[0, 0]
+
+        return Xt, yt 
 
 class FuzzyTimeWindows():
     """
     """
-    pass
+    def __init__(self):
+        pass
 
 
-
-class EventWindows(BaseEstimator, TransformerMixin, XOrYTransformer, Windows):
+class EventWindow(Windows, XOrYTransformer):
     """ Generate subsequences from a 
 
     .. image:: ../_static/images/many_to_many.svg
@@ -176,15 +283,14 @@ class EventWindows(BaseEstimator, TransformerMixin, XOrYTransformer, Windows):
         """
         Parameters
         ----------
-        X : nd.array
+        X : np.array
             Some kind of numpy array
-        y : nd.array
+        y : np.array
 
         Returns
         -------
-        x : nd.array
-            todo
-        y : nd.array
+        x : np.array of shape ()
+        y : np.array
             todo
         """
         return self.transform(X, y)
