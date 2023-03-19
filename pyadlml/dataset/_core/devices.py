@@ -170,6 +170,26 @@ def device_events_to_states(df_devs: pd.DataFrame, start_time=None, end_time=Non
                 df = pd.concat([df, first_row.to_frame().T], axis=0, ignore_index=True)
             eps += pd.Timedelta(epsilon)
 
+        for dev in dtypes[CAT]:
+            df_dev = df[df[DEVICE] == dev].copy()
+            first_row = df_dev.iloc[0].copy()
+            if first_row[TIME] != first_timestamp and first_row[TIME] - first_timestamp > pd.Timedelta('1s'):
+                df_dev['value_succ'] = df_dev['value'].shift(-1)
+                # Frequencies of category i followed by j
+                f_ij = pd.crosstab(df_dev[VALUE], df_dev['value_succ'])
+                # p(j | i) = f_ij rate where first was cat_i than transitioned to cat_j
+                # therefore get max_i for cat_j to get p(i | j)
+                max_cat_i = f_ij.index[f_ij.loc[:, first_row[VALUE]].argmax()] 
+                first_row[VALUE] = max_cat_i
+                first_row[TIME] = first_timestamp + eps
+                df = pd.concat([df, first_row.to_frame().T], axis=0, ignore_index=True)
+
+            eps += pd.Timedelta(epsilon)
+
+        if dtypes[CAT]:
+            print('Warning! Extrapolated categories based on most propable category.')
+
+
     df = df.sort_values(TIME).reset_index(drop=True)
 
     lst_cat_or_bool = dtypes[CAT] + dtypes[BOOL]
@@ -399,33 +419,50 @@ def correct_devices(df: pd.DataFrame, retain_correction=False) -> pd.DataFrame:
     if retain_correction:
         corrections[CORRECTION_TS] = df_difference(df, df_cor)
 
+    df_cor = df_cor.sort_values(by=TIME)\
+                   .reset_index(drop=True)
     df = df_cor.copy()
 
-    if contains_non_binary(df):
-        df_binary, df_non_binary = split_devices_binary(df)
-        non_binary_exist = True
-    else:
-        df_binary = df
-        non_binary_exist = False
+    dtypes = infer_dtypes(df)
+    df_binary = df[df[DEVICE].isin(dtypes[BOOL])].copy()
+    df_cat = df[df[DEVICE].isin(dtypes[CAT])].copy()
+    df_num = df[df[DEVICE].isin(dtypes[NUM])].copy()
 
     # correct on/off inconsistency
     if not is_on_off_consistent(df_binary):
         df_binary = correct_on_off_inconsistency(df_binary)
     assert is_on_off_consistent(df_binary)
 
-    # join dataframes
-    if non_binary_exist:
-        df = pd.concat([df_binary, df_non_binary], axis=0, ignore_index=True)
-    else:
-        df = df_binary
+    # Correct same succedding categories
+    df_cat = correct_cat_inconsistency(df_cat)
+
+    df = pd.concat([df_binary, df_cat, df_num], axis=0, ignore_index=True)
+    df = df.sort_values(by=TIME).reset_index(drop=True)
 
     if retain_correction:
         corrections[CORRECTION_ONOFF_INCONS] = df_difference(df_cor, df)
 
-    df = df.sort_values(by=TIME).reset_index(drop=True)
-
     return df, corrections
 
+def correct_cat_inconsistency(df_cat: pd.DataFrame) -> pd.DataFrame:
+    """ 
+
+    Parameters
+    ----------
+    df_cat : pd.DataFrame
+        A device dataframe ['time', 'device', 'value'] where each 
+        devices value are categorical
+
+    Returns
+    ------- 
+    """
+    idxs_to_drop = [-1]
+    while len(idxs_to_drop) != 0:
+        df_cat['shifted'] = df_cat.groupby(by=DEVICE)['value'].shift(1)
+        idxs_to_drop = df_cat[df_cat['value'] == df_cat['shifted']].index
+        df_cat = df_cat.drop(index=idxs_to_drop)
+
+    return df_cat.drop(columns=['shifted'])
 
 def on_off_consistent_func(df: pd.DataFrame, dev: list):
     """ compute for each device if it is on/off consistent

@@ -5,14 +5,16 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from plotly.colors import n_colors
 from datetime import timedelta
+from pyadlml.constants import *
 
 import numpy as np
 
 from pyadlml.constants import DEVICE, TIME, VALUE, STRFTIME_HOUR, STRFTIME_DATE, PRIMARY_COLOR, SECONDARY_COLOR
 from pyadlml.dataset.plot.plotly.activities import _set_compact_title, _scale_xaxis
+from pyadlml.dataset.plot.plotly.util import CatColMap
 from pyadlml.dataset.stats.devices import event_count, event_cross_correlogram, event_cross_correlogram3, events_one_day, \
                                           inter_event_intervals
-from pyadlml.dataset.util import check_scale, activity_order_by, device_order_by
+from pyadlml.dataset.util import check_scale, activity_order_by, device_order_by, infer_dtypes
 from pyadlml.dataset.stats.devices import state_times
 from plotly.graph_objects import Figure
 
@@ -93,7 +95,7 @@ def device_iei(df_devs, scale='linear', height=350, n_bins=20, per_device=False,
     return fig
 
 
-def fraction(df_dev, height=350, order='alphabetical') -> Figure:
+def fraction(df_dev, height=350, order='alphabetical', show_y_labels=True) -> Figure:
     """
         plots the fraction a device is on vs off over the whole time
     """
@@ -107,40 +109,63 @@ def fraction(df_dev, height=350, order='alphabetical') -> Figure:
 
     # Returns 'device', 'value', 'td', 'frac'
     df = state_fractions(df_dev)
-    def fm1(x):
-        if x in ['on', 'off']:
-            return x == 'on'
-        else:
-            return x
-    def f(x):
-        if isinstance(x, bool):
-            return 'on' if x else 'off'
-        else:
-            return x
-    df[VALUE] = df[VALUE].apply(f)
+    dtypes = infer_dtypes(df_dev)
+    mask_bool = df[DEVICE].isin(dtypes[BOOL])
+    ON = 'on'
+    OFF = 'off'
+    df.loc[mask_bool, VALUE] = df.loc[mask_bool, VALUE].map({True: ON, False: OFF})
+    # Create offsets    
 
-    fig = px.bar(df, y=DEVICE, x='frac', orientation='h', color=VALUE,
-                 color_discrete_sequence=[PRIMARY_COLOR, SECONDARY_COLOR],
-                 category_orders={DEVICE: dev_order}
-                 )
+    fig = make_subplots(rows=1, cols=1)
+    cat_col_map = CatColMap()    
+    cats = [OFF, ON] + df.loc[~mask_bool, VALUE].unique().tolist()
+
+    # Create running memory for each device from left to right
+    dev_frontier = pd.Series(index=df[DEVICE].unique(), data=0.0)
+    legendgrouptitle = 'States'
+    for cat in cats:
+        mask_df_devs = df[VALUE] == cat
+        devs = df.loc[mask_df_devs, 'device']
+        base = dev_frontier[devs].copy()
+        offset = df.loc[mask_df_devs].set_index(DEVICE)['frac']
+        cat_col_map.update(cat)
+
+        trace = go.Bar(
+            name=cat,
+            base=base,
+            x=offset,
+            y=devs,
+            legendgrouptitle_text=legendgrouptitle,
+            marker_color=cat_col_map[cat],
+            legendgroup=cat,
+            orientation='h',
+            width=0.9,
+            textposition='auto',
+        )
+        fig.add_trace(trace)
+        dev_frontier.loc[devs] += offset
+        legendgrouptitle = None
+
 
     # Set hovertemplate and custom data
     for i in range(len(fig.data)):
         val = fig.data[i].legendgroup
         mask = df[DEVICE].isin(fig.data[i].y) & (df[VALUE] == val)
-        cd = np.array([df.loc[mask, 'td'].astype(str),
-                       [fm1(val)]*len(fig.data[i].x)
+        cd = np.array([df.loc[mask, 'td'].astype(str), df.loc[mask, 'frac'],
+                       [val]*len(fig.data[i].x)
         ])
         fig.data[i].customdata = np.moveaxis(cd, 0, 1)
-        hover_template = 'Device=%{y}<br>Value=' + val + '<br>Fraction=%{x}<br>' + \
+        fig.data[i].hovertemplate = 'Device=%{y}<br>Value=' + val + '<br>Fraction=%{customdata[1]}<br>' + \
                          'Total=%{customdata[0]}<extra></extra>'
-        fig.data[i].hovertemplate = hover_template
 
+    # TODO device order
     _set_compact_title(fig, title)
     fig.update_layout(barmode='stack', margin=dict(l=0, r=0, b=0, t=30, pad=0),
                       height=height)
-    fig.update_yaxes(title=None, visible=False, showticklabels=False)
-    fig.update_xaxes(title=xlabel)
+    fig.update_xaxes(title=xlabel, range=[0,1])
+
+    if not show_y_labels:
+        fig.update_yaxes(title=None, visible=False, showticklabels=False)
 
     return fig
 

@@ -210,23 +210,19 @@ def state_fractions(df_devices: pd.DataFrame) -> pd.DataFrame:
     df_devs = df_devs.sort_values(START_TIME)
 
     # calculate total time interval for normalization
-    int_start = df_devs.iloc[0, 0]
-    int_end = df_devs.iloc[df_devs.shape[0] - 1, 1]
-    norm = int_end - int_start
+    int_start = df_devs.at[df_devs.index[0], START_TIME]
+    int_end = df_devs.at[df_devs.index[-1], END_TIME]
+    total_time = int_end - int_start
 
-    # calculate time deltas for online time
+    # Calculate time deltas for online time
     df_devs[diff] = df_devs[END_TIME] - df_devs[START_TIME]
     df_devs = df_devs.groupby(by=[DEVICE, VALUE])[diff].sum()
     df_devs = pd.DataFrame(df_devs)
     df_devs.columns = [td]
 
-    # compute percentage
-    df_devs[frac] = df_devs[td].dt.total_seconds()/norm.total_seconds()
+    # Calculate fraction
+    df_devs[frac] = df_devs[td].dt.total_seconds()/total_time.total_seconds()
 
-    # TODO refactor, delete flag
-    #if lst_devs is not None:
-    #    for dev in set(lst_devs).difference(set(list(df_devs.index))):
-    #        df_devs = df_devs.append(pd.DataFrame(data=[[pd.NaT, pd.NaT, pd.NA, pd.NA]], columns=df_devs.columns, index=[dev]))
     return df_devs.reset_index()\
         .rename(columns={'index': DEVICE})\
         .sort_values(by=[DEVICE])
@@ -824,3 +820,104 @@ def event_cross_correlogram3(df_devices, binsize='1s', maxlag='2m', fix=[], to=[
                 ccg[i, i, :] = result[k]
 
     return ccg, bins, rows, cols 
+
+
+
+def fano_factor(df_devs: pd.DataFrame, dt=None, inplace=False) -> float:
+    """
+    Repeat experiment serveral times -> measured spke count varies between one trial and the next.
+    The fano factor F is the variance of the spike count divided by its mean. 
+
+    Parameters
+    ----------
+
+
+
+    Returns
+    -------
+    float
+        the fano factor 
+
+    """
+    mean, variance = firing_rate_moments(df_devs, dt, inplace=True)
+    return variance / mean
+
+
+
+def firing_rate_moments(df_devs: pd.DataFrame, dt=None, times=None, inplace=False):
+    """ Calculates mean and variance 
+
+    Takes the temporal average
+        Each timeslice length dt is seen as an repeated experiment K
+            v_k = n_k^{sp}/T
+        The mean <n^sp> is estimated by averaging over all repeated timeslices
+
+
+    """
+    df = firing_rate(df, dt, inplace=False)
+    mean = df['rate'].average()
+
+    # \delta n_k^sp
+    deviations = (df['rate'] - mean)**2
+    variance = deviations.average()
+
+    return mean, variance
+
+
+
+def firing_rate(df_devs: pd.DataFrame, dt=None, times=None, inplace=False):
+    """
+    Compute the mean firing rate 
+        v = n^{sp}/T
+
+
+
+        file:///home/chris/Downloads/journal.pcbi.1010792.pdf
+
+        https://neuronaldynamics.epfl.ch/online/Ch7.S2.html
+
+
+    Parameters
+    ----------
+    df_devs : pd.DataFrame
+        The device readings in the format ['time', 'device', 'value']. 
+
+    dt : str, default=None
+
+
+
+    Returns
+    -------
+    """
+
+    df = df_devs.copy()\
+                .sort_values(by=TIME)\
+                .reset_index(drop=True)
+
+    if dt is None:
+        dt =df[TIME].last() - df[TIME].first()
+
+    df['rate'] = 1
+
+    df = df.set_index(TIME)
+    # Compute spike counts per window with wiundow anchored at the right edge
+    df['rate'] = df['rate'].rolling(dt, center=False).sum()
+
+    df = df.reset_index()
+
+    # Do not need this since window size equals rate
+    #amount, unit = _split_unit(dt)
+    # Convert to rate 
+    #df['rate'] = df['rate'] / amount
+
+    if inplace:
+        return df
+    else:
+        return df['rate'].values 
+
+
+def _split_unit(dt):
+
+    tail = dt.lstrip('0123456789')
+    head = dt[:-len(tail)]
+    return int(head), tail
