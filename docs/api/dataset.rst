@@ -14,10 +14,10 @@ fetch_aras
 
 .. autofunction:: pyadlml.dataset.fetch_aras
 
-fetch_casas_aruba
-^^^^^^^^^^^^^^^^^
+fetch_casas
+^^^^^^^^^^^
 
-.. autofunction:: pyadlml.dataset.fetch_casas_aruba
+.. autofunction:: pyadlml.dataset.fetch_casas
 
 fetch_mitlab
 ^^^^^^^^^^^^

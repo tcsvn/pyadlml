@@ -54,6 +54,10 @@ DATA_DCT_KEY_ACTS = 'activities'
 # Dataset identifiers
 DATASET_STRINGS = [
     'casas_aruba',
+    'casas_kyoto_2010',
+    'casas_milan',
+    'casas_cairo',
+    'casas_tulum',
     'amsterdam',
     'mitlab_1',
     'mitlab_2',

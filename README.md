@@ -15,7 +15,7 @@ As of now do not expect anything to work! APIs are going to change,
 stuff breaks and the documentation may lack behind. Nevertheless, feel 
 free to take a look. The safest point to start is probably the API reference.
 
-## Last Stable Release
+## Last (stable) Release
 ```sh 
 $ pip install pyadlml
 ```
@@ -65,7 +65,7 @@ clf.score(X, y)
 ...
 ```
 
-### Advanced
+### Less simple
 
 
 ```python
@@ -73,10 +73,10 @@ from pyadlml.dataset import fetch_amsterdam
 from pyadlml.constants import VALUE
 from pyadlml.pipeline import Pipeline
 from pyadlml.preprocessing import IndexEncoder, LabelMatcher, DropTimeIndex, \
-                                Timestamp2Seqtime, EventWindows, DropColumn
+                                  EventWindows, DropColumn
 from pyadlml.model_selection import train_test_split
 from pyadlml.model import WaveNet
-from pyadlml.dataset.utils import TorchDataset
+from pyadlml.dataset.torch import TorchDataset
 from torch.utils.data import DataLoader
 from torch.optim import Adam 
 from torch.nn import functional as F
@@ -127,8 +127,8 @@ for s in range(10000):
 _For more examples and how to use, please refer to the [documentation](https://pyadlml.readthedocs.io/en/latest/)._
 
 ## Features
-  - 10 Datasets 
-  - Importing data from [Home Assistant]() or [Activity Assistant]()
+  - Access to 14 Datasets 
+  - Importing data from [Home Assistant](https://www.home-assistant.io/) or [Activity Assistant](https://github.com/tcsvn/activity-assistant)
   - Tools for data cleaning
     - Relabel activities and devices
     - Merge overlapping activities
@@ -139,31 +139,34 @@ _For more examples and how to use, please refer to the [documentation](https://p
     - Device encoder (index, raw, changepoint, last_fired, ...)
     - Feature extraction (inter-event-times, intensity, time2vec, ...)
     - Sliding windows (event, temporal, explicit or fuzzytime)
-    - ... 
+    - Many more ... 
   - Cross validation iterators and pipeline adapted for ADLs
     - LeaveKDayOutSplit, TimeSeriesSplit
-    - YTransformer, XorYTransformer, ...
+    - Conditional transformer: YTransformer, XorYTransformer, ...
   - Ready to use models
     - RNNs
+    - WaveNet
     - Transformer
-  - Translate datasets to sktime format
+  - Translate datasets to sktime formats
  
 ### Supported Datasets
   - [x] Amsterdam [1]
   - [x] Aras [2]
   - [x] Casas Aruba (2011) [3]
+  - [X] Casas Cairo [4]
+  - [X] Casas Milan (2009) [4]
+  - [X] Casas Tulum [4]
+  - [X] Casas Kyoto (2010) [4]
   - [x] Kasteren House A,B,C [5]
   - [x] MITLab [6]
   - [x] UCI Adl Binary [8]
-  - [ ] Casas Milan (2009) [4]
-  - [ ] Casas Kairo [4]
-  - [ ] Casas Tokyo [4]
   - [ ] Chinokeeh [9]
   - [ ] Orange [TODO]
 
 ## Examples, benchmarks and replications
-The project includes a model ranked leaderboard evaluated on cleaned version some datasets.
-Furthermore, there is a useful list of references (todo include link) that is still. 
+The project includes a ranked model leaderboard evaluated on the cleaned dataset versions.
+Additionaly, here is a useful list of awesome references (todo include link) to papers
+and repos related to ADLs and machine learning.
 
 
 ## Contributing 
@@ -175,7 +178,7 @@ Furthermore, there is a useful list of references (todo include link) that is st
 
 ## Related projects
   - [Activity Assistant](https://github.com/tcsvn/activity-assistant) - Recording, predicting ADLs within Home assistant.
-  - [Sci-kit learn](https://github.com/sklearn) - The main inspiration and some borrowed source of code.
+  - [Sci-kit learn](https://github.com/sklearn) - The main inspiration and some borrowed source code.
   
 ## Support 
 [![Buy me a coffee][buy-me-a-coffee-shield]][buy-me-a-coffee]
@@ -187,8 +190,8 @@ If you are using pyadlml for publications consider citing the package
   author = {Christian Meier},
   title = {PyADLMl - Machine Learning library for Activities of Daily Living},    
   url = {https://github.com/tcsvn/pyadlml},
-  version = {0.0.10-alpha},
-  date = {2023-11-15}
+  version = {0.0.22-alpha},
+  date = {2023-01-03}
 }
 ```
 

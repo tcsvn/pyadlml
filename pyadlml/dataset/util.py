@@ -10,7 +10,7 @@ from pyadlml.constants import DATASET_STRINGS, TIME, END_TIME, START_TIME, DEVIC
     CAT, ACTIVITY
 from pandas.api.types import infer_dtype
 from pyadlml.dataset._core.activities import ActivityDict, _is_activity_overlapping, \
-    correct_activity_overlap
+    correct_activity_overlap, is_activity_df
 
 """
     includes generic methods for manpulating dataframes
@@ -643,31 +643,39 @@ def fetch_by_name(dataset: str, identifier=None, **kwargs) -> dict:
 
     from pyadlml.dataset import fetch_amsterdam, \
                                 fetch_mitlab, fetch_aras, fetch_kasteren_2010, \
-                                fetch_casas_aruba, fetch_tuebingen_2019, \
+                                fetch_tuebingen_2019, fetch_casas,\
                                 fetch_uci_adl_binary, load_act_assist
     if dataset == DATASET_STRINGS[0]:
-        return fetch_casas_aruba(**kwargs)
-    elif dataset == DATASET_STRINGS[1]:
-        return fetch_amsterdam(**kwargs)
-    elif dataset == DATASET_STRINGS[2]:
-        return fetch_mitlab(subject='subject1', **kwargs)
-    elif dataset == DATASET_STRINGS[3]:
-        return fetch_mitlab(subject='subject2', **kwargs)
-    elif dataset == DATASET_STRINGS[4]:
-        return fetch_aras(**kwargs)
+        return fetch_casas(testbed='aruba', **kwargs)
+    if dataset == DATASET_STRINGS[1]:
+        return fetch_casas(testbed='kyoto_2010', **kwargs)
+    if dataset == DATASET_STRINGS[2]:
+        return fetch_casas(testbed='milan', **kwargs)
+    if dataset == DATASET_STRINGS[3]:
+        return fetch_casas(testbed='cairo', **kwargs)
+    if dataset == DATASET_STRINGS[4]:
+        return fetch_casas(testbed='tulum', **kwargs)
     elif dataset == DATASET_STRINGS[5]:
-        return fetch_kasteren_2010(house='A', **kwargs)
+        return fetch_amsterdam(**kwargs)
     elif dataset == DATASET_STRINGS[6]:
-        return fetch_kasteren_2010(house='B', **kwargs)
+        return fetch_mitlab(subject='subject1', **kwargs)
     elif dataset == DATASET_STRINGS[7]:
-        return fetch_kasteren_2010(house='C', **kwargs)
+        return fetch_mitlab(subject='subject2', **kwargs)
     elif dataset == DATASET_STRINGS[8]:
-        return fetch_tuebingen_2019(**kwargs)
+        return fetch_aras(**kwargs)
     elif dataset == DATASET_STRINGS[9]:
-        return fetch_uci_adl_binary(subject='OrdonezA', **kwargs)
+        return fetch_kasteren_2010(house='A', **kwargs)
     elif dataset == DATASET_STRINGS[10]:
-        return fetch_uci_adl_binary(subject='OrdonezB', **kwargs)
+        return fetch_kasteren_2010(house='B', **kwargs)
     elif dataset == DATASET_STRINGS[11]:
+        return fetch_kasteren_2010(house='C', **kwargs)
+    elif dataset == DATASET_STRINGS[12]:
+        return fetch_tuebingen_2019(**kwargs)
+    elif dataset == DATASET_STRINGS[13]:
+        return fetch_uci_adl_binary(subject='OrdonezA', **kwargs)
+    elif dataset == DATASET_STRINGS[14]:
+        return fetch_uci_adl_binary(subject='OrdonezB', **kwargs)
+    elif dataset == DATASET_STRINGS[15]:
         return load_act_assist(identifier)
     elif dataset == 'joblib':
         return joblib.load(identifier)
@@ -697,3 +705,239 @@ def remove_devices(df_devs, rows):
     raise ValueError('deprecated: use get_index_matchingrows instead')
     idx_to_drop = [get_dev_row_where(df_devs, r[0], r[1], r[2]).index[0] for r in rows]
     return df_devs.drop(index=idx_to_drop)
+
+
+
+
+def to_sktime(df_devs: pd.DataFrame, df_acts: pd.DataFrame = None, return_type: str=None, 
+              return_X_y: bool=False):
+    """
+
+    Parameters
+    ----------
+    df_devs: pd.DataFrame
+        TODO 
+
+    df_acts: pd.DataFrame, optional
+        TODO
+
+    return_type: str or None, default=None
+        Memory data format specification to return X in, None = “nested_univ” type. str can be any supported sktime Panel mtype,
+        for list of mtypes, see datatypes.MTYPE_REGISTER for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            - “nested_univ: nested pd.DataFrame, pd.Series in cells 
+            - “numpy3D”/”numpy3d”/”np3D”: 3D np.ndarray (instance, variable, time index) 
+
+    return_X_y: bool, default=False
+        it returns two objects, if False, it appends the class labels to the dataframe.
+
+
+    
+    Returns 
+    -------
+    X: pd.DataFrame
+        The time series data for the problem with n_cases rows and either n_dimensions or n_dimensions+1 columns. Columns 1 to n_dimensions are the series associated with each case. If return_X_y is False, column n_dimensions+1 contains the class labels/target variable.
+    y: numpy array, optional
+        The class labels for each case in X, returned separately if return_X_y is True, or appended to X if False
+
+    """
+    from pyadlml.preprocessing.preprocessing import LabelMatcher
+
+    return_type = 'nested_univ' if return_type is None else return_type
+    return_type = 'numpy3d' if return_type in ['numpy3D', 'np3D', 'np3d'] else return_type
+
+    if return_type in ["pd-multiindex", "numpy2d"]:
+        err_txt = "BasicMotions loader: Error, attempting to load into a numpy2d array, but cannot because it is a multivariate problem. Use numpy3d instead"
+        raise ValueError(err_txt)
+
+    assert return_type in ["numpy3d","nested_univ"]
+
+
+    if df_acts is not None:
+        y = LabelMatcher(other=False).fit_transform(df_acts, df_devs).values
+        y = y[:,1].astype(np.dtype('U'))
+    else: 
+        y = None
+
+    if return_type == "nested_univ":
+        """
+        nested dataframe
+        , TIME, DEVICE, VALUE 
+        0, [S_T, S_D, S_V]
+        """
+        columns = [TIME, DEVICE, VALUE]
+        index = 'RangeIndex'
+        data = {TIME:[df_devs[TIME]], DEVICE:[df_devs[DEVICE]], VALUE: [df_devs[VALUE]]}
+        X = pd.DataFrame(columns=columns, index=[0], data=data)
+        if y is not None:
+            if return_X_y:
+                return X, y 
+            else:
+                X.loc[0, 'class_val'] = y
+                return X
+        else:
+            return X
+
+    elif return_type == "numpy3d":
+        """ 
+        Create array [S, F, T] with S being # sequences/recordings, F being
+        the number of features (possible F + 1 for y) and T being the sequence length
+        """
+        X = np.swapaxes(np.expand_dims(df_devs.values, 0), 1, 2)
+        if y is not None:
+            if return_X_y:
+                return X, y
+            else:
+                return np.append(X, y.reshape(1, 1, -1), axis=1)
+        else:
+            return X
+
+    else:
+        raise
+
+def to_sktime2(df_X: pd.DataFrame, df_y: pd.DataFrame, return_type: str=None, 
+              return_X_y: bool=False):
+    """
+
+    Parameters
+    ----------
+    df_X: pd.DataFrame
+        A dataframe where the columns are the features. There must be at least 
+        one column named 'time' in order to correclty match the labels. For 
+        example a device dataframe with features [TIME, DEVICE, VALUE]
+
+    df_acts: pd.DataFrame, optional
+        TODO
+
+    return_type: str or None, default=None
+        Memory data format specification to return X in, None = “nested_univ” type. str can be any supported sktime Panel mtype,
+        for list of mtypes, see datatypes.MTYPE_REGISTER for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            - “nested_univ: nested pd.DataFrame, pd.Series in cells 
+            - “numpy3D”/”numpy3d”/”np3D”: 3D np.ndarray (instance, variable, time index) 
+
+    return_X_y: bool, default=False
+        it returns two objects, if False, it appends the class labels to the dataframe.
+
+
+    
+    Returns 
+    -------
+    X: pd.DataFrame
+        The time series data for the problem with n_cases rows and either n_dimensions or n_dimensions+1 columns. Columns 1 to n_dimensions are the series associated with each case. If return_X_y is False, column n_dimensions+1 contains the class labels/target variable.
+    y: numpy array, optional
+        The class labels for each case in X, returned separately if return_X_y is True, or appended to X if False
+
+    """
+
+    from pyadlml.dataset._core.devices import is_device_df
+    return_type = 'nested_univ' if return_type is None else return_type
+    return_type = 'numpy3d' if return_type in ['numpy3D', 'np3D', 'np3d'] else return_type
+
+    if return_type in ["pd-multiindex", "numpy2d"]:
+        err_txt = "BasicMotions loader: Error, attempting to load into a numpy2d array, but cannot because it is a multivariate problem. Use numpy3d instead"
+        raise ValueError(err_txt)
+
+    assert return_type in ["numpy3d","nested_univ"]
+
+
+    """
+    Create appropriate targets depending on given input
+    """
+    if is_activity_df(df_y):
+        from pyadlml.preprocessing.preprocessing import LabelMatcher
+        y = LabelMatcher(other=False).fit_transform(df_y, df_X).values
+        y = y[:,1].astype(np.dtype('U'))
+    else:
+        # Ensure there are no other things such as timestamps choose the last dimension as 
+        y = df_y[:,:,-1] if len(df_y.shape) == 3 else df_y
+
+        if len(y.shape) == 2 and y.shape[1] > 1:
+            # When the windows were produces with many-to-many relationship reduce to many-to-one 
+            # since 
+            y = y[:,-1]
+            print('Warning!!! Reducing many-to-many into many-to-one. Check if this was the intended measure.')
+        y = y.squeeze() 
+        assert len(y.shape) == 1
+
+
+    X = df_X.copy()
+
+    assert y.shape[0] == X.shape[0], f"Shape mismatch between X and y: {y.shape[0]} vs. {X.shape[0]}"
+
+    if return_type == "nested_univ" and len(X.shape) == 2:
+        """ Convert a 2d dataframe or numpy array 
+        """
+        if isinstance(X, np.ndarray):
+            X = pd.DataFrame(X, columns=[f'dim_{i}'for i in range(X.shape[1])])
+
+        if not is_device_df(X):
+            # TODO do sth. here??
+            pass
+
+        """
+        nested dataframe
+        , TIME, DEVICE, VALUE 
+        0, [S_T, S_D, S_V]
+        """
+        F = len(X.columns)
+
+        X['target'] = y
+        X['tmp'] = (X['target'].shift(1) != X['target']).astype(int)
+        y = X[X['tmp'] == 1].loc[:, 'target'].copy().reset_index(drop=True)
+        X['tmp'] = X['tmp'].cumsum()
+
+        """
+        Produce [N, F, s]
+        where N is the number of each subsequence
+        """
+        data_X = []
+        for yi, (_, Xi) in zip(y, X.groupby(by='tmp')):
+            datum = {col: Xi[col] for col in Xi.columns[:-2]}
+            if not return_X_y:
+                datum['class_val'] = yi
+            data_X.append(datum)
+
+        X = pd.DataFrame(data_X)
+        if return_X_y:
+            return X, y 
+        else:
+            return X
+    elif return_type == "nested_univ" and len(X.shape) == 3:
+        """ Convert a 3d ndarray to nested_univ. This is the case when a windowing
+            approach is used before Sktime.
+
+            X has the shape (S, T, F) where S is the number of sequences, T the sequence length 
+            and F the number of features
+        """
+        data_X = []
+        for i in range(len(y)):
+            # Xi of shape (T, F) where T is the sequence length and F are the number of features
+            Xi, yi = X[i], y[i]
+            datum = {f'dim_{f}': pd.Series(Xi[:, f]) for f in range(Xi.shape[1])}
+            if not return_X_y:
+                datum['class_val'] = yi
+            data_X.append(datum)
+
+        X = pd.DataFrame(data_X)
+        if return_X_y:
+            return X, y 
+        else:
+            return X
+    elif return_type == "numpy3d":
+        """ 
+        Create array [S, F, T] with S being # sequences/recordings, F being
+        the number of features (possible F + 1 for y) and T being the sequence length
+        """
+        raise NotImplementedError
+        X = np.swapaxes(np.expand_dims(df_devs.values, 0), 1, 2)
+        if y is not None:
+            if return_X_y:
+                return X, y
+            else:
+                return np.append(X, y.reshape(1, 1, -1), axis=1)
+        else:
+            return X
+
+    else:
+        raise
