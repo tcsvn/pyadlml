@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from pyadlml.dataset._core.acts_and_devs import label_data
 from pyadlml.dataset._core.devices import create_device_info_dict
+from pyadlml.dataset.stats.activities import _get_freq_func
 from pyadlml.util import get_npartitions, get_parallel
 from pyadlml.constants import START_TIME, END_TIME, TIME, DEVICE, VALUE, ACTIVITY, CAT, NUM, BOOL
 from pyadlml.dataset.util import infer_dtypes, categorical_2_binary
@@ -10,7 +11,7 @@ from pyadlml.dataset._representations.raw import create_raw
 #import __logger__
 
 
-def cross_correlogram(df_devices, df_activities, maxlag, binsize,idle=False):
+def cross_correlogram(df_devices, df_activities, maxlag, binsize, other=False):
     """
     Computes the cross-correlogram between activity beginning and ending and device events.
 
@@ -22,9 +23,9 @@ def cross_correlogram(df_devices, df_activities, maxlag, binsize,idle=False):
     df_activities : pd.DataFrame
         All recorded activities from a dataset. Fore more information refer to the
         :ref:`user guide<activity_dataframe>`.
-    idle : bool, default=False
+    other : bool, default=False
         Determines whether gaps between activities should be assigned
-        the activity *idle* or be ignored.
+        the activity *other* or be ignored.
 
     Returns
     -------
@@ -203,7 +204,7 @@ def _calc_intervall_diff(i1, i2):
     return ma-mi
 
 
-def contingency_table_states_old(df_devs, df_acts, idle=False, distributed=False):
+def contingency_table_states_old(df_devs, df_acts, other=False, distributed=False):
     """
     Compute the time a device is "on" or "off" respectively
     during the different activities.
@@ -216,9 +217,9 @@ def contingency_table_states_old(df_devs, df_acts, idle=False, distributed=False
     df_acts : pd.DataFrame
         All recorded activities from a dataset. Fore more information refer to the
         :ref:`user guide<activity_dataframe>`.
-    idle : bool
+    other : bool
         Determines whether gaps between activities should be assigned
-        the activity *idle* or be ignored.
+        the activity *other* or be ignored.
 
     Examples
     --------
@@ -485,3 +486,131 @@ def contingency_table_states(df_devs, df_acts, other=False, n_jobs=1):
            df = pd.concat([df, pd.Series(name=dev_off_name, data=zero_line).to_frame().T], axis=0)
     
     return df
+
+
+def mutual_info_states(df_devs, df_acts):
+    raise NotImplementedError
+
+
+def mutual_info_events(df_devs: pd.DataFrame, df_acts: pd.DataFrame, kind='pointwise', other=True) -> pd.DataFrame:
+    """ Compute the mututal information between events and activities. How much does the 
+        occurence, pattern of events from a certain device reduce the uncertainty in observing 
+        some activity. This method provides
+
+        - pointwise mutual information measures the co-occurence of events during activities 
+          :math:`I(X,Y) = \log_2 \\frac{p(x,y)}{p(x)p(y)}` where :math:`p(x) = \\frac{o_x}{N}` 
+          with :math:`o_x` being the event number of device :math:`x` and :math:`N` the total 
+          number of events :math:`o_y` being the number of events labeled as an activity :math:`y` 
+          and finally :math:`p(x,y) = \frac{o_{xy}}{N}`
+
+          for further reading https://en.wikipedia.org/wiki/Pointwise_mutual_information.
+
+        - event count mi 
+        - latency of first event after activity onset
+        - coarse resolution binary pattern represenation of device event activity
+
+    Parameters
+    ----------
+    df_devs: pd.DataFrame
+        TODO add desc
+    df_acts: pd.DataFrame
+        TODO add desc
+    kind : str one of ['pointwise', 'timetofirstevent', '']
+
+    Returns 
+    -------
+
+    """
+    assert kind in ['pointwise', 'eventcount', 'timetofirstevent', 'binary_pattern']
+
+    if kind == 'pointwise':
+        c_xy_events = contingency_table_events(df_devs, df_acts)
+        c_xy_events = c_xy_events.set_index('device')
+
+        p_xy = c_xy_events.values
+        N = p_xy.sum()
+        p_y = np.tile(p_xy.sum(axis=0), (p_xy.shape[0], 1))/N
+        p_x = np.tile(p_xy.sum(axis=1), (p_xy.shape[1], 1)).T/N
+        p_xy = p_xy/N
+        mi = np.log2(p_xy / np.multiply(p_x, p_y))
+
+        return pd.DataFrame(data=mi, index=c_xy_events.index, columns=c_xy_events.columns)
+
+    if kind == 'eventcount':
+        """
+        compute 
+        """
+        df = label_data(df_devs, df_acts, other=other)
+        # Id each trial
+        df['trial_id'] = (df[ACTIVITY].shift(1) != df[ACTIVITY]).astype(int)
+        df_grp = df.groupby(by=[ACTIVITY, DEVICE, 'trial_id']).count()
+        devs = df_devs[DEVICE].unique()
+        acts = df_acts[ACTIVITY].unique()
+        from itertools import product
+        # Get the event count over all trials for each 
+        event_count = pd.DataFrame(index=devs, columns=acts, dtype=object)
+        for (dev, act) in product(dev, act):
+            event_count.at[dev, act] = df_grp.loc[(act, dev)][VALUE].values
+
+        print()
+    if kind == 'chi2':
+        c_xy_events = contingency_table_events(df_devs, df_acts)
+        c_xy_events = c_xy_events.set_index('device')
+        from sklearn.feature_selection import chi2
+        c2 = chi2(c_xy_events.values) * (1/(2*np.log(2)))
+
+
+    
+    return mi
+
+
+
+def time_dependent_firing_rate(df_devs, df_acts, device, activity, bin_width='10s'):
+    """
+    A trial is when an activity is performed.
+
+    time t is measured w.r. to the start of the activity.
+    The number of occurrences of events :math:`n_K(t;t+ \delta t)
+    Same as the peri-stimulus time histogram.
+
+    Parameters
+    ----------
+
+    bin_width : str one of ['xs', ]
+        The bin width :math:`delta_t`
+
+
+    """
+
+    df_acts = df_acts[df_acts[ACTIVITY] == activity].sort_values(by=START_TIME)\
+                                                    .reset_index(drop=True)
+    df_devs = df_devs[df_devs[DEVICE] == device].sort_values(by=TIME)\
+                                                .reset_index(drop=True)
+    bin_width = pd.Timedelta(bin_width)
+    
+    n_bins = np.ceil(max((df_acts[END_TIME] - df_acts[START_TIME])/bin_width))
+    max_dt = n_bins*bin_width
+
+    # the number of occurrences of event n_K(t; t+\Delta t)
+    counts = np.zeros(n_bins)
+
+    # Number of trials
+    K = df_acts.shape[0]
+
+    for _, act_ser in df_acts.iterrows():
+
+        dev_mask = (act_ser[START_TIME] < df_devs[TIME]) \
+                    & (df_devs[TIME] < act_ser[END_TIME])
+        devs = df_devs[dev_mask].copy() 
+
+        if devs.empty:
+            continue
+        vals = (devs[TIME] - act_ser[START_TIME]).apply(_get_freq_func('minutes')).values
+
+        add, bins = np.histogram(vals, bins=n_bins, range=(0,max_dt), density=False)
+        counts += add
+
+    # Compute event density as p(t) = 1/(\delta t) (n_k(t;t+\deltat))/K
+    counts = (1/bin_width)*counts/K
+
+    return counts, bins

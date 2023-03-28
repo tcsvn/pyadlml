@@ -190,7 +190,7 @@ def _create_activity_df(df, res_name):
     df = df_start[[START_TIME, END_TIME, res_name]]
     df = df.sort_values(by=START_TIME)
     df = df.rename(columns={res_name: ACTIVITY})
-    df = df[df[ACTIVITY] != 'Other'] # remove Other activity as it is the same concept as 'idle'
+    df = df[df[ACTIVITY] != 'Other'] # remove Other activity as it is the same concept as 'other'
     return df
 
 

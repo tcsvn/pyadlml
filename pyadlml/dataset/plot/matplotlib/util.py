@@ -1031,6 +1031,28 @@ def add_top_axis_time_format(axis, top_label=None):
     if top_label is not None:
         ax_top.set_xlabel(top_label)
 
+def add_axis_time_format(axis, position='top', scale='linear', label=None):
+    assert position in ['top', 'bottom', 'right', 'left']
+
+    func_formatter = func_formatter_seconds2time if scale == 'linear' else func_formatter_seconds2time_log
+    if position in ['top', 'bottom']:
+        ax_sec = axis.secondary_xaxis(position, functions=(lambda x: x, lambda x: x))
+        ax_sec.xaxis.set_major_formatter(
+            ticker.FuncFormatter(func_formatter))
+        if label is not None:
+                    ax_sec.set_xlabel(label)
+
+
+    else:
+        ax_sec = axis.secondary_yaxis(position, functions=(lambda x: x, lambda x: x))
+        ax_sec.yaxis.set_major_formatter(
+            ticker.FuncFormatter(func_formatter))
+
+        if label is not None:
+            ax_sec.set_ylabel(label)
+
+
+
 
 def plot_hist(ax, bins, counts, color='k'):
     """ plot a histogram given bins and counts for the bins
