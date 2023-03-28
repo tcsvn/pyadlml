@@ -11,10 +11,10 @@ from pyadlml.constants import ACTIVITY, DEVICE, END_TIME, START_TIME, TIME, VALU
 from pyadlml.dataset._core.activities import ActivityDict, create_empty_activity_df
 from pyadlml.dataset.act_assist import read_activities, write_activities, read_devices, write_devices
 from pyadlml.dataset.plot.plotly.acts_and_devs import _determine_start_and_end, _plot_activities_into_fig
-from pyadlml.dataset.plot.plotly.util import dash_get_trigger_element, dash_get_trigger_value
+from pyadlml.dataset.plot.plotly.util import dash_get_trigger_element, dash_get_trigger_value, set_fig_range
 import json
 import numpy as np
-from pyadlml.dataset.util import activity_order_by, df_difference, fetch_by_name, num_to_timestamp, select_timespan
+from pyadlml.dataset.util import activity_order_by, device_order_by, df_difference, fetch_by_name, num_to_timestamp, select_timespan
 from pyadlml.dataset.plot.plotly.activities import _set_compact_title, correction
 from pyadlml.dataset.plot.plotly.util import deserialize_range, serialize_range, range_from_fig
 import dash_bootstrap_components as dbc
@@ -72,7 +72,21 @@ def read_code_and_update(fp_code, fp_code_dev, fp_df_acts, fp_df_devs):
     df_devs = lcls['df_devs']
     return code_str, code_str_devs, df_acts, df_devs
 
-def label_figure(df_acts, df_devs, dev2area, range_store=None, zoomed_range=[], states=False):
+
+def _get_room_y_pos(dev_order, dev2area, area_select):
+
+
+    df = dev2area.copy()
+    df[DEVICE] = df[DEVICE].astype("category")
+    df[DEVICE] = df[DEVICE].cat.set_categories(dev_order)
+    df = df.sort_values(by=DEVICE).reset_index(drop=True).reset_index()
+
+    upper_y = len(dev_order) - df[df['area'] == area_select]['index'].iat[0]
+    lower_y = len(dev_order)-1 - df[df['area'] == area_select]['index'].iat[-1]
+    return lower_y, upper_y
+
+
+def label_figure(df_acts, df_devs, dev2area, range_store=None, zoomed_range=[], states=False, area_select=''):
     if range_store is not None:
         st, et = range_store[0], range_store[1]
     else:
@@ -89,10 +103,34 @@ def label_figure(df_acts, df_devs, dev2area, range_store=None, zoomed_range=[], 
     if et:
         fig.add_vline(x=et, line_width=1, line_color="Grey")
 
+    if area_select:
+        # Get y indicies of device bars/events
+        dev_order = device_order_by(df_devs, rule='area', dev2area=dev2area)
+        lower_y, upper_y = _get_room_y_pos(dev_order, dev2area, area_select)
+        opacity = 0.5
+    else:
+        lower_y, upper_y, opacity = 1, 2, 0.0
+
+    # Add highlight rectangle
+    fig.add_hrect(
+        y0=lower_y - 0.5, y1=upper_y - 0.5,
+        fillcolor="LightSalmon", opacity=opacity,
+        layer="below", line_width=0,
+    )
+    
+
     return fig
 
 
 
+def reset_range_store(df_devs, df_acts):
+    offset = pd.Timedelta('2s')
+    st = min(df_devs.at[df_devs.index[0], TIME],
+                df_acts.at[df_acts.index[0], START_TIME])
+    et = max(df_devs.at[df_devs.index[-1], TIME],
+                df_acts.at[df_acts.index[-1], END_TIME]
+    )
+    return [st - offset, et + offset]
 
 
 if __name__ == '__main__':
@@ -172,9 +210,12 @@ if __name__ == '__main__':
             f.write(code_str_devs)
 
 
-    fig = label_figure(df_acts, df_devs, dev2area)
+    code_str, code_str_devs, df_acts, df_devs = read_code_and_update(fp_code, fp_code_dev, fp_df_acts, fp_df_devs)
+
     (a,b,_,_) = _determine_start_and_end(df_acts, df_devs, st=None, et=None)
     fig_range = a,b
+
+    fig = label_figure(df_acts, df_devs, dev2area, range_store=fig_range)
 
     from pyadlml.dataset.plot.plotly.dashboard.layout import _build_range_slider
 
@@ -186,12 +227,25 @@ if __name__ == '__main__':
             ), className='mb-3'
         ),
         dbc.Row([
-            dcc.RadioItems(['events', 'states'], 'events', id='and-vis'),
-            dbc.Input(id='fig-range-input', placeholder='Paste range from dashboard'),
+            dbc.Col(
+                dcc.RadioItems(['events', 'states'], 'events', id='and-vis'),
+                md=4
+            ),
+            dbc.Col(
+                dbc.Input(id='fig-range-input', placeholder='Paste range from dashboard'),
+                md=4
+            ),
+            dbc.Col(
+                dcc.Dropdown(id='area-select', options=[area for area in dev2area['area'].unique()], value=None),
+                md=4
+            ),
+
+        ]),
+        dbc.Row([
             _build_range_slider(df_acts, df_devs, a, b, b),
             dcc.Store(id='range-store', data=serialize_range(fig_range)),
-            dcc.Store(id='range-slider-t-1', data=[0,1]),       
-        ], className='mb-2'),
+            dcc.Store(id='range-slider-t-1', data=[0, 1]),       
+        ],  className='mb-2'),
         dbc.Row([
             dbc.Col(md=5),
             dbc.Col(
@@ -252,7 +306,7 @@ if __name__ == '__main__':
             className='mb-1',
         ),
 
-    ], style={'width': 1500, 'margin': 'auto'})
+    ], style={'width': 1800, 'margin': 'auto'})
 
     @app.callback(
         Output('device-state', 'options'),
@@ -289,6 +343,7 @@ if __name__ == '__main__':
         Input('submit', 'n_clicks'),
         Input('submit-dev', 'n_clicks'),
         Input('fig-range-input', 'value'),
+        Input('area-select', 'value'),
         State('fig-activity', 'figure'),
         State('range-store', 'data'),
         State('range-slider-t-1', 'data'),
@@ -299,7 +354,7 @@ if __name__ == '__main__':
         State('range-slider', 'value'),
     )
     def display_output(and_vis, times, act_click, btn_set_frame, btn_left, btn_right, btn_submit, btn_submit_dev,
-                       fig_range_input, fig, range_store, rs_tm1, activity, device, device_state, comment, range_select
+                       fig_range_input, area_select, fig, range_store, rs_tm1, activity, device, device_state, comment, range_select
                        #fig, range_store, rs_tm1, df_json, df_del_json, activity
     ):
         def from_01(y, r):
@@ -311,32 +366,25 @@ if __name__ == '__main__':
             mn, mx = r[0], r[1]
             return (x-mn)/(mx-mn)
 
+
         trigger = dash_get_trigger_element()
         if trigger is None or trigger == '':
             raise PreventUpdate
 
-        #df_add = json_to_df(df_json)
-        #df_del = json_to_df(df_del_json)
+        # Check if data has to be reloaded or callback is independent
+        is_data_update = trigger not in ['set-frame', 'set-left', 'set-right', 'fig-range-input', 'area-select']
+        is_figure_reload = trigger not in ['set-frame', 'set-left', 'set-right', 'fig-range-input', 'fig-activity', 'area-select']
 
 
-        code_str, code_str_devs, df_acts, df_devs = read_code_and_update(fp_code, fp_code_dev, fp_df_acts, fp_df_devs)
-        #df_acts = read_activity_csv(fp_df_acts)
-        #df_del = read_activity_csv(fp_df_del)
-        #df_add = read_activity_csv(fp_df_add)
-
-        # Create current activity df 
-        #df_acts = df_acts.merge(df_del, how='outer', indicator=True)
-        #df_acts = df_acts.loc[df_acts[(df_acts['_merge'] == 'left_only')].index, [START_TIME, END_TIME, ACTIVITY]]
-        #df_acts = pd.concat([df_acts, df_add], axis=0).reset_index(drop=True)
-
-        #df_acts2 = df_acts.copy()
-
-
+        if is_data_update:
+            code_str, code_str_devs, df_acts, df_devs = read_code_and_update(fp_code, fp_code_dev, fp_df_acts, fp_df_devs)
 
         fig_range = range_from_fig(fig)
 
         if range_store is not None:
             range_store = deserialize_range(range_store)
+        else:
+            range_store = reset_range_store(df_devs, df_acts)
 
         if trigger == 'set-frame':
             # Get range from outer boundaries
@@ -359,7 +407,7 @@ if __name__ == '__main__':
             fig_range[1] = fig_range[1] + offset
             #rng[0], rng[1] = to_01(range_store[0], fig_range), to_01(range_store[1], fig_range)
             
-        elif trigger == 'submit-dev':
+        if trigger == 'submit-dev':
             data = {
                 START_TIME: range_store[0], 
                 END_TIME: range_store[1], 
@@ -440,7 +488,8 @@ if __name__ == '__main__':
 
 
             # Reset values
-            range_store = None
+
+            range_store = reset_range_store(df_devs, df_acts)
             #rng = [0,1]
             comment = ''
 
@@ -556,7 +605,7 @@ if __name__ == '__main__':
                 code_str += '\n' + add_op2str(act)
 
             # Reset values
-            range_store = None
+            range_store = reset_range_store(df_devs, df_acts)
             #rng = [0,1]
             comment = ''
 
@@ -565,17 +614,9 @@ if __name__ == '__main__':
             exec(code_str, {}, lcls)
             df_acts = lcls['df_acts']
 
-        #elif trigger == 'range': 
-        #    if rs_tm1[0] == rng[0]:
-        #        # case when right lever was altered
-        #        range_store[1] = from_01(rng[1], fig_range)
-
-        #        # Set the right slider and then update right bar
-        #        rng[0] = to_01(range_store[0], fig_range)
-
-        #    elif rs_tm1[1] == rng[1]:
-        #        # case when left lever was altered
-        #        range_store[0] = from_01(rng[0], fig_range)
+        elif trigger == 'times':
+            range_store[0] = str2ts(times[0][START_TIME])
+            range_store[1] = str2ts(times[0][END_TIME])
 
         #        # Set the left slider and then update left bar
         #        rng[1] = to_01(range_store[1], fig_range)
@@ -586,10 +627,6 @@ if __name__ == '__main__':
         #    # grey lines set slider 
         #    rng[0], rng[1] = to_01(range_store[0], fig_range), to_01(range_store[1], fig_range)
         
-        elif trigger == 'times':
-            range_store[0] = str2ts(times[0][START_TIME])
-            range_store[1] = str2ts(times[0][END_TIME])
-
         
         elif trigger == 'fig-activity':
             if not 'Acts: ' in act_click['points'][0]['y']:
@@ -610,24 +647,43 @@ if __name__ == '__main__':
 
             activity = act[ACTIVITY]
 
-            #rng[0], rng[1] = to_01(range_store[0], fig_range), to_01(range_store[1], fig_range)
         elif trigger == 'fig-range-input':
             try:
                 tmp = fig_range_input.split(',')
                 fig_range = [str2ts(tmp[0]), str2ts(tmp[1])]
+                fig = set_fig_range(fig, fig_range)
             except:
                 raise PreventUpdate
 
-        if trigger not in ['update-range']:
-            # Remove df_del activities from df_acts
-            #df_show = df_acts.merge(df_del, how='outer', indicator=True)
-            #df_show = df_show.loc[df_show[(df_show['_merge'] == 'left_only')].index, [START_TIME, END_TIME, ACTIVITY]]
-            #df_show = pd.concat([df_show, df_add], axis=0)\
-            #            .drop_duplicates()\
-            #            .reset_index(drop=True)
+        if trigger in ['set-frame', 'set-left', 'set-right', 'fig-activity']:
+            # Update vlines without recomputing figure
+            try:
+                # Left vline
+                fig['layout']['shapes'][0]['x0'] = str(range_store[0])
+                fig['layout']['shapes'][0]['x1'] = str(range_store[0])
 
-            #fig = label_figure(df_show, df_devs, range_store, fig_range)
+                # Right vline
+                fig['layout']['shapes'][1]['x0'] = str(range_store[1]) 
+                fig['layout']['shapes'][1]['x1'] = str(range_store[1])
 
+                set_fig_range(fig, fig_range)
+            except KeyError:
+                trigger = 'llululul'
+
+        if trigger == 'area-select':
+            try:
+                dev_order = copy(fig['layout']['yaxis']['categoryarray'])
+                dev_order.reverse()
+                y0, y1 = _get_room_y_pos(dev_order, dev2area, area_select)
+                fig['layout']['shapes'][2]['y0'] = y0 - 0.5
+                fig['layout']['shapes'][2]['y1'] = y1 - 0.5
+                fig['layout']['shapes'][2]['opacity'] = 0.5
+            except KeyError or IndexError:
+                trigger = 'llululul'
+
+        if is_figure_reload:
+            import time
+            tic = time.perf_counter()
 
             # Only view a subset of the activities
             dct_acts = ActivityDict.wrap(df_acts)
@@ -640,27 +696,26 @@ if __name__ == '__main__':
             et = num_to_timestamp(range_select[1], start_time=start_time, end_time=end_time)
             curr_df_devs, curr_df_acts = select_timespan(df_acts=df_acts, df_devs=df_devs,
                                                         start_time=st, end_time=et, clip_activities=False)
-            fig = label_figure(curr_df_acts, curr_df_devs, dev2area, range_store, fig_range, states=(and_vis == 'states'))
+            fig = label_figure(curr_df_acts, curr_df_devs, dev2area, range_store, fig_range, states=(and_vis == 'states'), area_select=area_select)
+            toc = time.perf_counter()
+            print(f"Updating figure in: {toc - tic:0.4f} seconds")
 
-        if range_store is not None:
-            times[0][START_TIME] = ts2str(range_store[0])
-            times[0][END_TIME] = ts2str(range_store[1])
-            range_store = serialize_range(range_store)
 
-        # TODO flag for deletion
-        #rs_tm1[0], rs_tm1[1] = np.round(max(rng[0], 0), 3), np.round(min(rng[1], 1), 3)
-        #df_json = df_to_json(df_add)
-        #df_del_json = df_to_json(df_del)
+        # TODO, check if this works
+        times[0][START_TIME] = ts2str(range_store[0])
+        times[0][END_TIME] = ts2str(range_store[1])
+        range_store = serialize_range(range_store)
 
-        #write_activity_csv(fp_df_add, df_add)
-        #write_activity_csv(fp_df_del, df_del)
 
-        with open(fp_code_dev, mode='w') as f:
-            f.write(code_str_devs)
+        vars = [*locals().keys()]
+        if 'code_str_devs' in vars:
+            with open(fp_code_dev, mode='w') as f:
+                f.write(code_str_devs)
 
-        with open(fp_code, mode='w') as f:
-            f.write(code_str)
+        if 'code_str' in vars:
+            with open(fp_code, mode='w') as f:
+                f.write(code_str)
 
-        return fig, times, activity, range_store, rs_tm1, comment#, df_json, df_del_json
+        return fig, times, activity, range_store, rs_tm1, comment
 
     app.run_server(debug=False, host='127.0.0.1', port=args.port)
