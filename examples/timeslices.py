@@ -7,7 +7,7 @@ from pyadlml.dataset import set_data_home, fetch_amsterdam, TIME
 set_data_home('/tmp/pyadlml_data_home')
 data = fetch_amsterdam(keep_original=False, cache=True)
 
-from pyadlml.preprocessing import BinaryEncoder, LabelEncoder, DropTimeIndex, DropSubset, KeepSubset, CVSubset
+from pyadlml.preprocessing import StateVectorEncoder, LabelMatcher, DropTimeIndex, DropSubset, KeepSubset, CrossValSplitter
 from pyadlml.pipeline import Pipeline, TrainOnlyWrapper, EvalOnlyWrapper, TrainOrEvalOnlyWrapper, YTransformer, \
     XAndYTransformer
 from pyadlml.model_selection import train_test_split
@@ -44,7 +44,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 Example: Cross Validation
 """
 
-ts = TimeSeriesSplit(n_splits=5, time_based_split=True, return_timestamp=True)
+ts = TimeSeriesSplit(n_splits=5, temporal_split=True, return_timestamp=True)
 #scores = []
 ## cross validation on train set
 #for train_int, val_int in ts.split(X_train):
@@ -77,10 +77,10 @@ param_grid = {
 }
 
 steps = [
-    ('encode_devices', BinaryEncoder(encode='raw')),
-    ('fit_labels', TrainOrEvalOnlyWrapper(LabelEncoder(idle=True))),
-    ('select_train_set', TrainOnlyWrapper(CVSubset(time_based=True))),
-    ('select_val_set', EvalOnlyWrapper(CVSubset(time_based=True))),
+    ('encode_devices', StateVectorEncoder(encode='raw')),
+    ('fit_labels', TrainOrEvalOnlyWrapper(LabelMatcher(other=True))),
+    ('select_train_set', TrainOnlyWrapper(CrossValSplitter(temporal_split=True))),
+    ('select_val_set', EvalOnlyWrapper(CrossValSplitter(temporal_split=True))),
     ('drop_time_idx', DropTimeIndex()),
     ('classifier', RandomForestClassifier(random_state=42))
 ]

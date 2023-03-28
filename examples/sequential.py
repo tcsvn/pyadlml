@@ -7,7 +7,7 @@ from pyadlml.dataset import set_data_home, fetch_amsterdam, TIME
 set_data_home('/tmp/pyadlml_data_home')
 data = fetch_amsterdam(keep_original=False, cache=True)
 
-from pyadlml.preprocessing import BinaryEncoder, LabelEncoder, DropTimeIndex, DropSubset, KeepSubset, CVSubset
+from pyadlml.preprocessing import StateVectorEncoder, LabelMatcher, DropTimeIndex, DropSubset, KeepSubset, CrossValSplitter
 from pyadlml.pipeline import Pipeline, TrainOnlyWrapper, EvalOnlyWrapper, TrainOrEvalOnlyWrapper, YTransformer, \
     XAndYTransformer
 from pyadlml.model_selection import train_test_split
@@ -48,10 +48,10 @@ scores = []
 # cross validation on train set
 for train_int, val_int in ts.split(X_train):
     steps = [
-        ('enc', BinaryEncoder(encode='raw')),
-        ('lbl', TrainOrEvalOnlyWrapper(LabelEncoder(idle=True))),
-        ('drop_val', TrainOnlyWrapper(CVSubset(train_int))),
-        ('drop_train', EvalOnlyWrapper(CVSubset(val_int))),
+        ('enc', StateVectorEncoder(encode='raw')),
+        ('lbl', TrainOrEvalOnlyWrapper(LabelMatcher(other=True))),
+        ('drop_val', TrainOnlyWrapper(CrossValSplitter(train_int))),
+        ('drop_train', EvalOnlyWrapper(CrossValSplitter(val_int))),
         ('drop_time_idx', DropTimeIndex()),
         ('classifier', RandomForestClassifier(random_state=42))
     ]
@@ -76,10 +76,10 @@ param_grid = {
 }
 
 steps = [
-    ('encode_devices', BinaryEncoder()),
-    ('fit_labels', TrainOrEvalOnlyWrapper(LabelEncoder(idle=True))),
-    ('select_train_set', TrainOnlyWrapper(CVSubset())),
-    ('select_val_set', EvalOnlyWrapper(CVSubset())),
+    ('encode_devices', StateVectorEncoder()),
+    ('fit_labels', TrainOrEvalOnlyWrapper(LabelMatcher(other=True))),
+    ('select_train_set', TrainOnlyWrapper(CrossValSplitter())),
+    ('select_val_set', EvalOnlyWrapper(CrossValSplitter())),
     ('drop_time_idx', DropTimeIndex()),
     ('classifier', RandomForestClassifier(random_state=42))
 ]

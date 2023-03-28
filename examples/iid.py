@@ -1,64 +1,90 @@
-import sys
+from pyadlml.dataset import fetch_amsterdam
+from pyadlml.dataset.io import set_data_home
 
+set_data_home('/tmp/pyadlml/')
 
-from pyadlml.dataset import set_data_home, fetch_amsterdam
-sys.path.append("../")
-set_data_home('/tmp/pyadlml_data_home')
 data = fetch_amsterdam(keep_original=False, cache=True)
 
-from pyadlml.preprocessing import BinaryEncoder, LabelEncoder, DropTimeIndex, DropDuplicates, \
-    CVSubset
+from pyadlml.preprocessing import StateVectorEncoder, LabelMatcher, DropTimeIndex, DropDuplicates, \
+    CrossValSplitter
 from pyadlml.pipeline import Pipeline, FeatureUnion, TrainOnlyWrapper, \
     EvalOnlyWrapper, TrainOrEvalOnlyWrapper, YTransformer
-from pyadlml.model_selection import train_test_split, KFold
+from pyadlml.model_selection import train_test_split
 
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
+df_devs =  data['devices']
+df_acts = data['activities']
 
 print('splitting data in train and test set...')
-X_train, X_test, y_train, y_test = train_test_split(
-    data.df_devices,
-    data.df_activities,
-    split='leave_one_day_out')
+#X_train, X_test, y_train, y_test, init_states = train_test_split(
+#    df_devs, df_acts, split=(0.8, 0.2), 
+#    return_init_states=True
+#)
+X_train, X_val, X_test, y_train, y_val, y_test, init_states = train_test_split(
+    df_devs, df_acts, split=(0.6, 0.2, 0.2), temporal=True,
+    return_init_states=True
+)
+
 
 """
 Example: Set up a simple Pipeline
 """
-#steps = [
-#    ('enc', BinaryEncoder(encode='raw')),
-#    ('lbl', TrainOrEvalOnlyWrapper(LabelEncoder(idle=True))),
-#    ('drop_time_idx', DropTimeIndex()),
-#    ('drop_duplicates', TrainOnlyWrapper(DropDuplicates())),
-#    ('classifier', RandomForestClassifier(random_state=42))
-#]
-#
-#pipe = Pipeline(steps).train()          # create pipeline and set the pipeline into training mode
-#pipe.fit(X_train, y_train)              # fit the pipeline to the training data
-#pipe = pipe.eval()                      # set pipeline into eval mode
-#score = pipe.score(X_train, y_train)      # score pipeline on the test set
-#print('score of the single  pipeline: {:.3f}'.format(score))
-#
-#"""
-#Example: Cross validation
-#"""
-#scores = []
-#for train, val in KFold(n_splits=5).split(X_train, y_train):
-#    steps = [
-#        ('enc', BinaryEncoder(encode='raw')),
-#        ('lbl', TrainOrEvalOnlyWrapper(LabelEncoder(idle=True))),
-#        ('select_train_set', TrainOnlyWrapper(CVSubset(data_range=train))),
-#        ('select_val_set', EvalOnlyWrapper(CVSubset(data_range=val))),
-#        ('drop_time_idx', DropTimeIndex()),
-#        ('drop_duplicates', TrainOnlyWrapper(DropDuplicates())),
-#        ('classifier', RandomForestClassifier(random_state=42))
-#    ]
-#    pipe = Pipeline(steps).train().fit(X_train, y_train)
-#    scores.append(pipe.eval().score(X_train, y_train))
-#
-#scores = np.array(scores)
-#print('scores of the pipeline: {}'.format(scores))
-#print('mean score: {:.3f}'.format(scores.mean()))
+
+sve = StateVectorEncoder(encode='raw')
+lbe = LabelMatcher(other=True)
+X_enc_train = sve.fit_transform(X_train)
+X_enc_val = sve.transform(X_val, initial_states=init_states['init_states_val'])
+X_enc_test = sve.transform(X_test, initial_states=init_states['init_states_test'])
+
+y_enc_train = lbe.fit_transform(y_train, X_enc_train)
+y_enc_val = lbe.transform(y_val, X_enc_val)
+y_enc_test = lbe.transform(y_test, X_enc_test)
+
+print(lbe.transform('get drink'))
+print(lbe.transform(['get drink', 'prepare Dinner']))
+import numpy as np
+
+print(lbe.transform(np.array(['get drink', 'prepare Dinner'])))
+print(lbe.inverse_transform(0))
+print(lbe.inverse_transform([0, 2, 3]))
+print(lbe.inverse_transform(np.array([0, 2, 3])))
+
+steps = [
+    ('enc', StateVectorEncoder(encode='raw')),
+    ('lbl', TrainOrEvalOnlyWrapper(LabelMatcher(other=True))),
+    ('drop_time_idx', DropTimeIndex()),
+    ('drop_duplicates', TrainOnlyWrapper(DropDuplicates())),
+    ('classifier', RandomForestClassifier(random_state=42))
+]
+
+pipe = Pipeline(steps).train()          # create pipeline and set the pipeline into training mode
+pipe.fit(X_train, y_train)              # fit the pipeline to the training data
+pipe = pipe.eval()                      # set pipeline into eval mode
+score = pipe.score(X_train, y_train)      # score pipeline on the test set
+print('score of the single  pipeline: {:.3f}'.format(score))
+
+"""
+Example: Cross validation
+"""
+scores = []
+for train, val in KFold(n_splits=5).split(X_train, y_train):
+    steps = [
+        ('enc', BinaryEncoder(encode='raw')),
+        ('lbl', TrainOrEvalOnlyWrapper(LabelMatcher(other=True))),
+        ('select_train_set', TrainOnlyWrapper(CrossValSplitter(data_range=train))),
+        ('select_val_set', EvalOnlyWrapper(CrossValSplitter(data_range=val))),
+        ('drop_time_idx', DropTimeIndex()),
+        ('drop_duplicates', TrainOnlyWrapper(DropDuplicates())),
+        ('classifier', RandomForestClassifier(random_state=42))
+    ]
+    pipe = Pipeline(steps).train().fit(X_train, y_train)
+    scores.append(pipe.eval().score(X_train, y_train))
+
+scores = np.array(scores)
+print('scores of the pipeline: {}'.format(scores))
+print('mean score: {:.3f}'.format(scores.mean()))
 
 
 #"""
@@ -100,7 +126,7 @@ from pyadlml.model_selection import GridSearchCV
 """
 Complex Example: Grid Search
 """
-from pyadlml.feature_extraction import DayOfWeekExtractor, TimeBinExtractor, TimeDifferenceExtractor
+from pyadlml.feature_extraction import DayOfWeekExtractor, TimeBinExtractor, EventTimeExtractor
 from pyadlml.preprocessing import IdentityTransformer
 from sklearn.utils import estimator_html_repr
 from sklearn import set_config
@@ -114,11 +140,11 @@ feature_extraction = FeatureUnion(
      #('time_diff', TimeDifferenceExtractor())]
 
 steps = [
-    ('encode_devices', BinaryEncoder()),
-    ('fit_labels', TrainOrEvalOnlyWrapper(LabelEncoder())),
+    ('encode_devices', StateVectorEncoder()),
+    ('fit_labels', TrainOrEvalOnlyWrapper(LabelMatcher())),
     ('feature_extraction', feature_extraction),
-    ('select_train_set', TrainOnlyWrapper(CVSubset())),
-    ('select_val_set', EvalOnlyWrapper(CVSubset())),
+    ('select_train_set', TrainOnlyWrapper(CrossValSplitter())),
+    ('select_val_set', EvalOnlyWrapper(CrossValSplitter())),
     ('drop_time_idx', DropTimeIndex()),
     ('drop_duplicates', TrainOnlyWrapper(DropDuplicates())),
     ('classifier', RandomForestClassifier(random_state=42))
