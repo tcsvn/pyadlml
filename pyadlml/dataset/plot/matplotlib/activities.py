@@ -29,7 +29,7 @@ def count(df_acts=None, df_ac=None, scale="linear", other=False,
         :ref:`user guide<activity_dataframe>`.
     other : bool, default: False
         Determines whether gaps between activities should be assigned
-        the activity *idle* or be ignored.
+        the activity *other* or be ignored.
     scale : {"log", "linear"}, default: linear
         The axis scale type to apply.
     figsize : (float, float), default: None
@@ -46,7 +46,7 @@ def count(df_acts=None, df_ac=None, scale="linear", other=False,
     >>> from pyadlml.plot import plot_activities_count
     >>> from pyadlml.dataset import fetch_amsterdam
     >>> data = fetch_amsterdam()
-    >>> plot_activities_count(data.df_activities, idle=True)
+    >>> plot_activities_count(data.df_activities, other=True)
 
     .. image:: ../_static/images/plots/act_bar_cnt.png
        :height: 300px
@@ -179,7 +179,7 @@ def boxplot(df_acts, scale='linear', other=False, figsize=None,
 
 
 @save_fig
-def duration(df_acts=None, df_dur=None, scale='linear', idle=False,
+def duration(df_acts=None, df_dur=None, scale='linear', other=False,
              figsize=None, color=None, file_path=None):
     """
     Plots the cumulative duration for each activity in a bar plot.
@@ -194,9 +194,9 @@ def duration(df_acts=None, df_dur=None, scale='linear', idle=False,
         subset of the recorded activities or contain activities that are not recorded.
     scale : {"log", "linear"}, default: None
         The axis scale type to apply.
-    idle : bool, default: False
+    other : bool, default: False
         Determines whether gaps between activities should be assigned
-        the activity *idle* or be ignored.
+        the activity *other* or be ignored.
     figsize : (float, float), default: None
         width, height in inches. If not provided, the figsize is inferred by automatically.
     color : str, optional
@@ -232,7 +232,7 @@ def duration(df_acts=None, df_dur=None, scale='linear', idle=False,
     color = (get_primary_color() if color is None else color)
 
     if df_dur is None:
-        if idle:
+        if other:
             df_acts = add_other_activity(df_acts.copy())
         df = activity_duration(df_acts, time_unit=freq)
     else:
@@ -262,7 +262,7 @@ def duration(df_acts=None, df_dur=None, scale='linear', idle=False,
 
 @save_fig
 def transitions(df_acts=None, df_trans=None, scale="linear",
-                figsize=None, idle=False, numbers=True, grid=True,
+                figsize=None, other=False, numbers=True, grid=True,
                 cmap=None, file_path=None):
     """
     Parameters
@@ -280,9 +280,9 @@ def transitions(df_acts=None, df_trans=None, scale="linear",
         The axis scale type to apply.
     numbers : bool, default: True
         Whether to display numbers inside the heatmaps fields or not.
-    idle : bool, default: False
+    other : bool, default: False
         Determines whether gaps between activities should be assigned
-        the activity *idle* or be ignored.
+        the activity *other* or be ignored.
     cmap : str or Colormap, optional
         The Colormap instance or registered colormap name used to map scalar
         data to colors. This parameter is ignored for RGB(A) data.
@@ -318,7 +318,7 @@ def transitions(df_acts=None, df_trans=None, scale="linear",
     z_label = 'count'
 
     if df_trans is None:
-        df_acts = add_other_activity(df_acts) if idle else df_acts
+        df_acts = add_other_activity(df_acts) if other else df_acts
         df = activities_transitions(df_acts)
     else:
         df = df_trans
@@ -349,7 +349,7 @@ def transitions(df_acts=None, df_trans=None, scale="linear",
 
 
 @save_fig
-def density(df_acts=None, df_act_dist=None, idle=False, dt=None,
+def density(df_acts=None, df_act_dist=None, other=False, dt=None,
             n=1000, ylim_upper=None, color=None, figsize=None, file_path=None):
     """
     Plots the activity density distribution over one day.
@@ -376,9 +376,9 @@ def density(df_acts=None, df_act_dist=None, idle=False, dt=None,
     color : str, optional
         sets the color of the plot. When not set, the primary theming color is used.
         Learn more about theming in the :ref:`user guide <theming>`
-    idle : bool, default: False
+    other : bool, default: False
         Determines whether gaps between activities should be assigned
-        the activity *idle* or be ignored.
+        the activity *other* or be ignored.
     file_path : str, optional
         If set, saves the plot under the given file path and return *None* instead
         of returning the figure.
@@ -408,7 +408,7 @@ def density(df_acts=None, df_act_dist=None, idle=False, dt=None,
 
 
     if df_act_dist is None:
-        if idle:
+        if other:
             df_acts = add_other_activity(df_acts)
         df = activities_dist(df_acts.copy(), n=n, dt=dt, relative=True)
         if df.empty:

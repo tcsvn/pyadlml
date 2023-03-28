@@ -45,8 +45,8 @@ def read_activities(path: Path, act_map: dict = None):
     if act_map is not None:
         df_acts[ACTIVITY] = df_acts[ACTIVITY].map(act_map)
 
-    df_acts[START_TIME] = pd.to_datetime(df_acts[START_TIME], dayfirst=True)
-    df_acts[END_TIME] = pd.to_datetime(df_acts[END_TIME], dayfirst=True)
+    df_acts[START_TIME] = pd.to_datetime(df_acts[START_TIME], format=STRFTIME_PRECISE)
+    df_acts[END_TIME] = pd.to_datetime(df_acts[END_TIME], format=STRFTIME_PRECISE)
     return df_acts
 
 @_folder2filename(ACT_NAME)
@@ -80,7 +80,7 @@ def read_devices(path: Path, dev_map: dict = None):
         "True":True, "False": False,
         "true":True, "false": False,
     })
-    df_devs[TIME] = pd.to_datetime(df_devs[TIME], dayfirst=True)
+    df_devs[TIME] = pd.to_datetime(df_devs[TIME], format=STRFTIME_PRECISE)
     df_devs = df_devs.reset_index(drop=True)
     return df_devs
 

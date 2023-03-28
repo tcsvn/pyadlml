@@ -4,7 +4,7 @@ import plotly.express as px
 from pyadlml.dataset.stats.activities import _get_freq_func
 
 from pyadlml.dataset.stats.devices import event_cross_correlogram3
-from .util import _dyn_marker_size, legend_current_items, _style_colorbar, _dyn_y_label_size, remove_whitespace_around_fig
+from .util import dyn_event_marker_size, legend_current_items, _style_colorbar, dyn_y_label_size, remove_whitespace_around_fig
 import plotly
 import pandas as pd
 import numpy as np
@@ -93,37 +93,7 @@ def _plot_device_states_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs
     # A mapping from device to data index
     #data_dict = {}
     j = 0
-    #first_bool = True
     set_legendgroup_title = 'States'
-
-    #def create_trace_boolean(df, state):
-    #    nonlocal set_legendgroup_title
-
-    #    df['diff'] = (df[END_TIME] - df[START_TIME]).astype(str)
-    #    cd = df[['diff', END_TIME]].values
-    #    # Add state information to custom_data
-    #    vals = np.expand_dims(np.full(cd.shape[0], state), axis=1)
-    #    cd = np.hstack([cd, vals])
-    #    marker_color = COL_ON if state == ON else COL_OFF
-
-    #    trace = go.Bar(name=state,
-    #                    base=df[START_TIME],
-    #                    meta=dev,
-    #                    x=df['offset'],
-    #                    y=df[DEVICE],
-    #                    legendgrouptitle_text=set_legendgroup_title,
-    #                    marker_color=marker_color,
-    #                    customdata=cd,
-    #                    legendgroup=state,
-    #                    orientation='h',
-    #                    width=0.3,
-    #                    textposition='auto',
-    #                    showlegend=first_bool,
-    #                    hovertemplate=hover_template,
-    #    )
-    #    # The very first time create the states for the categorical legend group titles
-    #    set_legendgroup_title = None 
-    #    return trace
 
     def create_traces_categorical(df):
         """ df [TIME, DEVICE, VALUE] of only one device
@@ -212,47 +182,53 @@ def _plot_device_states_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs
 
             traces = create_traces_categorical(df)
             fig.add_traces(traces)
-            #trace_on = create_trace_boolean(df_on, ON)
-            #trace_off = create_trace_boolean(df_off, OFF)
-            #data_dict[dev] = [len(fig.data), len(fig.data)+1]
-            #fig.add_traces([trace_on, trace_off])
 
-            #first_bool = False
         elif dev in dtypes[CAT]:
             traces = create_traces_categorical(df)
             fig.add_traces(traces)
             j += 1
 
-        #elif dev in dtypes[NUM]:
-        elif False:
+        elif dev in dtypes[NUM]:
             values = pd.to_numeric(df[VALUE])
             # [min, max] scaling -> [0, 1]
-            values_norm = (values-values.min())/(values.max()-values.min())
+            values_norm = (values-values.min())/(values.max()-values.min())*0.5
             #values_norm = values_norm + i - 0.25
-            print(values_norm)
+            cd = np.stack([values, df[START_TIME].apply(str)], dtype=object).T
             trace = go.Scatter(
                 name=dev,
                 meta=dev,
                 mode='lines',
                 x=df[START_TIME],
                 y=values_norm,
+                customdata=cd,
+                hovertemplate=f'{dev}' + '<br>time:%{customdata[1]}<br>value:%{customdata[0]}<extra></extra>'
             )
+
             trace._subplot_row = 1
             trace._subplot_col = 1
-            
 
-            fig = make_subplots(
-                #rows=1,
-                #cols=1,
-                row_heights=[1.0],
-                horizontal_spacing=0.02,
-                vertical_spacing=0.03,
-                shared_xaxes='all',
-                shared_yaxes='all',
-                column_widths=[1.0],
-                specs=[[{"type":"xy", "secondary_y": True}]], 
-                figure=fig,
-            )
+            # Enable to secondary y axis if necessary
+            from _plotly_utils.exceptions import PlotlyKeyError
+            try:
+                fig.layout['yaxis2']
+            except PlotlyKeyError:
+                fig = make_subplots(figure=fig, 
+                                    specs=[[{"secondary_y": True}]]
+                ) 
+                # TODO critical, +1 for activity 
+                fig.update_yaxes(range=[0, len(devs) + 1], secondary_y=True) 
+            #fig = make_subplots(
+            #    #rows=1,
+            #    #cols=1,
+            #    row_heights=[1.0],
+            #    horizontal_spacing=0.02,
+            #    vertical_spacing=0.03,
+            #    shared_xaxes='all',
+            #    shared_yaxes='all',
+            #    column_widths=[1.0],
+            #    specs=[[{"type":"xy", "secondary_y": True}]], 
+            #    figure=fig,
+            #)
             #fig = make_subplots(
 
             #    shared_xaxes='all',
@@ -266,15 +242,18 @@ def _plot_device_states_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs
             #    specs=[[{'type': 'xy'}]],
             #    figure=fig)
             #trace.update({'xaxis': 'x', 'yaxis': 'y'})
+
+            # Add dummy bar plot as placeholder
             fig.add_trace(go.Bar(
                             name=dev,
-                            base=df[START_TIME],
-                            x=df['offset'],
-                            y=df[DEVICE],
-                            orientation='h'
+                            base=[df[START_TIME].iat[0]],
+                            x=[df['offset'].iat[0]],
+                            y=[df[DEVICE].iat[0]],
+                            orientation='h',
+                            showlegend=False
             ))
+
             fig.add_trace(trace, secondary_y=True)
-            fig.update_yaxes(range=[0, len(devs)], secondary_y=True) 
 
 
         # Create user_selection for each trace
@@ -300,6 +279,16 @@ def _plot_device_states_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs
 
     fig.update_layout(yaxis_type='category')
     fig.update_yaxes(categoryorder='array', categoryarray=np.flip(dev_order))
+
+    if dtypes[NUM]:
+        # Reorder categorical devices
+        for dev in dtypes[NUM]:
+            dev_idx = np.where(fig.layout['yaxis1']['categoryarray'] == dev)[0][0]
+            y = list(fig.select_traces(selector=dict(name=dev, type='scatter')))[0]['y']
+            # Since data is scaled to 0.5 add 0.25 to center around dev_idx
+            y = y + dev_idx + 0.25
+            fig.update_traces(dict(y=y), selector=dict(type='scatter', name=dev))
+
     return fig
 
 def _abbreviate_long_names(arr: np.ndarray) -> np.ndarray:
@@ -578,8 +567,8 @@ def activities_and_devices(df_devs, df_acts, states=False, st=None, et=None,
     nr_devs = len(dev_order)
     nr_subjs = len(dct_acts)
     height = _dynamic_and_height(nr_devs, nr_subjs) if height is None else height
-    marker_height = _dyn_marker_size(height, nr_devs)
-    y_label_size = _dyn_y_label_size(height, nr_devs)
+    marker_height = dyn_event_marker_size(height, nr_devs)
+    y_label_size = dyn_y_label_size(height, nr_devs)
 
     # Reconstruct outside parts
     df_devs_outside = df_difference(df_devs_sel, df_devs)

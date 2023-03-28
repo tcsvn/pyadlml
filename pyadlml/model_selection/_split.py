@@ -13,27 +13,29 @@ from pyadlml.dataset.cleaning.misc import remove_days
 from pyadlml.pipeline import XAndYTransformer, XOrYTransformer
 
 
-def train_test_split(df_devs, df_acts, split='leave_one_day_out', temporal=False,
-                     return_day=False, return_init_states=False):
-    """
-    Splits the data into training and test set.
+def train_test_split(df_devs: pd.DataFrame, df_acts: pd.DataFrame, split: str ='leave_one_day_out', temporal: bool =False,
+                     return_day: bool =False, return_init_states: bool =False) -> tuple:
+    """ Splits the data into training and test set.
 
     Parameters
     ----------
     df_devs : pd.DataFrame
         todo
     df_acts : pd.DataFrame
-        todo
+        todo 
     split : one of {'leave_one_day_out', (float, float), (float, float, float)}, default='leave_one_day_out'
         Determines the way the data is split into train and test set.
         leave_one_day_out
             one day is selected at random and used as test set. The emerging gap is closed by moving all
             succeeding events by one day into the past.
+
         tuple 
             First float is the train set ratio, second the ratio for the test set. All floats have to sum to one.
+
         triplet
             First is the ratio for the train set, second the ratio for the validation set, the 
             third is the ratio for the test. All floats have to sum to one.
+
     temporal : bool, default=False
         If true the split using the ratio is done with respect to time rather then to datapoints.
     return_day : bool, default=False
@@ -45,7 +47,9 @@ def train_test_split(df_devs, df_acts, split='leave_one_day_out', temporal=False
 
     Examples
     --------
+
     .. code python:
+
         from pyadlml.dataset import fetch_amsterdam
         from pyadlml.model_selection import train_test_split
 

@@ -24,6 +24,25 @@ LabelMatcher
 .. autoclass:: pyadlml.preprocessing.LabelMatcher
 
 
+Windows
+=======
+
+ExplicitWindow
+~~~~~~~~~~~~~~
+
+.. autoclass:: pyadlml.preprocessing.ExplicitWindow
+
+EventWindow
+~~~~~~~~~~~
+
+.. autoclass:: pyadlml.preprocessing.EventWindow
+
+TimeWindow
+~~~~~~~~~~
+
+.. autoclass:: pyadlml.preprocessing.TimeWindow
+
+
 Transformer
 ===========
 
@@ -65,4 +84,5 @@ Timestamp2Seqtime
 ~~~~~~~~~~~~~~~~~
 
 .. autoclass:: pyadlml.preprocessing.Timestamp2Seqtime
+
 

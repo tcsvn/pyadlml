@@ -97,12 +97,12 @@ def coverage(df_activities, df_devices, datapoints=False):
         nr_nans = lbl_devs[ACTIVITY].isna().sum()
         return 1 - nr_nans/len(lbl_devs)
     else:
-        durations = activity_duration(df_activities, idle=True)
+        durations = activity_duration(df_activities, other=True).set_index('activity')
         total = durations['minutes'].sum()
-        amount_idle = durations.loc[(durations[ACTIVITY] == 'idle'), 'minutes'].values[0]
-        return 1 - amount_idle/total
+        amount_other = durations.at['other', 'minutes']
+        return 1 - amount_other/total
 
-def activities_duration_dist(df_acts, lst_acts=None, freq='minutes', idle=False):
+def activities_duration_dist(df_acts, lst_acts=None, freq='minutes', other=False):
     """ Computes the activity distribution.
 
     Parameters
@@ -116,8 +116,8 @@ def activities_duration_dist(df_acts, lst_acts=None, freq='minutes', idle=False)
     freq : str, optional
         Defaults to 1000.
         Can be one of 'minutes', 'seconds', 'hours', 'm', 'h', 's'.
-    idle : bool, default=False
-        Whether to include the idle activity. More in user guide
+    other : bool, default=False
+        Whether to include the other activity. More in user guide
 
     Returns
     -------
@@ -131,7 +131,7 @@ def activities_duration_dist(df_acts, lst_acts=None, freq='minutes', idle=False)
 
     """
     df = df_acts.copy()
-    if idle:
+    if other:
         df = add_other_activity(df)
 
     # integrate the time difference for activities
@@ -149,7 +149,7 @@ def activities_duration_dist(df_acts, lst_acts=None, freq='minutes', idle=False)
     df[freq] = df[diff].apply(_get_freq_func(freq))
     return df.sort_values(by=ACTIVITY)
 
-def activity_duration(df_acts, time_unit='minutes', normalize=False, idle=False):
+def activity_duration(df_acts, time_unit='minutes', normalize=False, other=False):
     """ Compute how much time an inhabitant spent performing an activity
 
     Parameters
@@ -183,7 +183,7 @@ def activity_duration(df_acts, time_unit='minutes', normalize=False, idle=False)
     6         use toilet    195.249567
 
     """
-    df = activities_duration_dist(df_acts, freq=time_unit, idle=idle)
+    df = activities_duration_dist(df_acts, freq=time_unit, other=other)
     if df.empty:
         raise ValueError("no activity was recorded")
     df = df.groupby(ACTIVITY).sum().reset_index()
@@ -403,7 +403,7 @@ def _sample_ts(df, n):
 
         # sample uniform and convert back to timestamp
         try:
-            unx_sample = np.random.randint(unx_min, unx_max)
+            unx_sample = np.random.uniform(low=unx_min, high=unx_max)
         except ValueError:
             if unx_min == unx_max:
                 unx_sample = unx_min

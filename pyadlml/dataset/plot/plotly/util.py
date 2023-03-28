@@ -22,27 +22,27 @@ def _style_colorbar(fig, label):
         thickness=10,
     ))
 
-def _dyn_y_label_size(plot_height, nr_devs):
+def dyn_y_label_size(plot_height, nr_devs):
     """Maps bar heights to visually pleasing size for different nr. of labels"""
-    mp = np.array([[15, 9],     # val < 15  -> 9
-                   [20, 11],
-                   [30, 11],
-                   [40, 11],
-                   [80, 11],
-                  [100, 11],
+    mp = np.array([[15, 11],     # val < 15  -> 9
+                   [20, 9],
+                   [30, 9],
+                   [40, 8],
+                   [80, 8],
+                  [100, 8],
     ])
-    return range2value(mp, nr_devs)
+    return _range2value(mp, nr_devs)
 
 
-def _dyn_marker_size(plot_height, nr_devs):
+def dyn_event_marker_size(plot_height, nr_devs):
     """Maps bar heights to visually pleasing size for different nr. of labels"""
     mp = np.array([[15, 3],  # val < 15 -> 3
                    [50, 5],
                   [100, 10]])
-    return range2value(mp, nr_devs)
+    return _range2value(mp, nr_devs)
 
-def range2value(mp, val):
-    index = min(max(0, bisect.bisect_right(mp[:,0], val)-1), len(mp[:,0])-1)
+def _range2value(mp, val):
+    index = min(max(0, bisect.bisect_right(mp[:, 0], val)-1), len(mp[:, 0])-1)
     return mp[:,1][index]
 
 import pandas as pd
@@ -333,5 +333,9 @@ def dash_get_trigger_element(ctx=None):
 
 deserialize_range = lambda x: [pd.Timestamp(ts) for ts in json.loads(x)] 
 serialize_range = lambda x: json.dumps([ts.isoformat() for ts in x])
-range_from_fig = lambda f: [pd.Timestamp(ts) for ts in f['layout']['xaxis']['range']]
+range_from_fig = lambda fig: [pd.Timestamp(ts) for ts in fig['layout']['xaxis']['range']]
 
+def set_fig_range(fig, range):
+    assert len(range) == 2 and range[0] < range[1]
+    fig['layout']['xaxis']['range'] = [str(range[0]), str(range[1])]
+    return fig

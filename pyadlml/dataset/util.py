@@ -195,7 +195,7 @@ def infer_dtypes(df_devices):
                 dev_cat.append(dev)
         elif inf == 'boolean':
             dev_bool.append(dev)
-        elif inf == 'floating':
+        elif inf == 'floating' or 'integer':
             dev_num.append(dev)
         else:
             raise ValueError('could not infer correct dtype for device {}'.format(dev))

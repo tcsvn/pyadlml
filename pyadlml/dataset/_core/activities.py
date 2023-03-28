@@ -61,10 +61,13 @@ def is_activity_df(df):
         ----------------------------------
         timestamp   | timestamp | act_name
     """
-    return START_TIME in df.columns \
-        and END_TIME in df.columns \
-        and ACTIVITY in df.columns \
-        and len(df.columns) == 3
+    try:
+        return START_TIME in df.columns \
+            and END_TIME in df.columns \
+            and ACTIVITY in df.columns \
+            and len(df.columns) == 3
+    except:
+        return False
 
 
 def check_activity_df(df):
@@ -113,7 +116,7 @@ def create_empty_activity_df():
 
 
 def add_other_activity(acts, min_diff=pd.Timedelta('5s')):
-    """ adds a dummy Idle activity for gaps between activities greater than min_diff
+    """ adds a dummy "other" activity for gaps between activities greater than min_diff
     Parameters
     ----------
     acts: pd.DataFrame
@@ -466,7 +469,11 @@ def _first_non_overlapped_int_after_idx(df, idx):
     res : int
         index of a row
     """
-    return list(df[df[START_TIME] > df.iloc[idx, :].end_time].index)[0]
+    try:
+        return list(df[df[START_TIME] > df.iloc[idx, :].end_time].index)[0]
+    except IndexError:
+        # The intervals overlap the whole dataframe including the last row
+        return len(df)
 
 
 def _correct_overlapping_segment(area_to_correct, strats, excepts=[]):
@@ -612,6 +619,19 @@ def correct_activities(df, strats=[], excepts=[], retain_corrections=False):
 class ActivityDict(dict):
     """ Dictionary with activity pd.DataFrames as values and subject names as keys.
     """
+
+    def __init__(self, obj=None):
+
+        if isinstance(obj, pd.DataFrame): 
+            obj = obj.copy().reset_index(drop=True)
+            super().__init__({'subject':obj})
+        elif isinstance(obj, list):
+            super().__init__({f'subject_{i}':df for i, df in enumerate(obj)})
+        elif isinstance(obj, ActivityDict) or isinstance(obj, dict):
+            super().__init__(obj)
+        else:
+            super().__init__()
+
 
     def subjects(self) -> list:
         return list(self.keys())

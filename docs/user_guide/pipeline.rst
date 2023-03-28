@@ -1,4 +1,4 @@
-6. Pipelines
+7. Pipelines
 ============
 
 One of the primary goals of pyadlml is enabling users to develop production-ready 
@@ -215,7 +215,7 @@ only during *training* mode but not in *evaluation* or in *production* mode.
     # Define pipeline steps
     steps = [
         ('sve', StateVectorEncoder(encode='raw')),
-        ('le', TrainOrEvalOnlyWrapper(LabelMatcher(idle=True))),
+        ('le', TrainOrEvalOnlyWrapper(LabelMatcher(other=True))),
         ('drop_time_idx', DropTimeIndex()),
         ('drop_duplicates', TrainOnlyWrapper(DropDuplicates())),
         ('clf', DecisionTreeClassifier(random_state=42))

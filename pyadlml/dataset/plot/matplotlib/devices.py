@@ -886,7 +886,7 @@ def _plot_device_states(ax, df_devs: pd.DataFrame, devs: list, start_time, end_t
             values = pd.to_numeric(df[VALUE])
             values = (values-values.min())/(values.max() - values.min())*0.5
             values = values + i - 0.25
-            ax.plot(df['num_st'], values, color=color_num, linestyle='--', marker='o')
+            ax.plot(df['num_st'], values, color=color_num, linestyle='--', marker='o', markersize=1)
 
     if return_nr_categories_used:
         return j

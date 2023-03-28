@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from copy import copy
 
 from sklearn.utils.metaestimators import _safe_split
 import sklearn.preprocessing as preprocessing
@@ -243,8 +244,10 @@ class DropDuplicates(TransformerMixin, XOrYTransformer):
             X = X.drop_duplicates()
         return X, y
 
+class FinalTimeTransformer():
+    pass
 
-class DropTimeIndex(TransformerMixin, XOrYTransformer):
+class DropTimeIndex(TransformerMixin, XOrYTransformer, FinalTimeTransformer):
     def __init__(self, only_y=False):
         XOrYTransformer.__init__(self)
         self.only_y = only_y
@@ -263,10 +266,18 @@ class DropTimeIndex(TransformerMixin, XOrYTransformer):
     @XOrYTransformer.x_or_y_transform
     def transform(self, X=None, y=None):
         if X is not None and not self.only_y:
+            self.times_ = X[TIME]
             X = X.loc[:, X.columns != TIME]
         if y is not None:
             y = y.loc[:, y.columns != TIME]
         return X, y
+
+class Encoder():
+    features_ = None
+
+    def to_dataframe(self, X, onehot=False):
+        print()
+        raise NotImplementedError
 
 
 class IndexEncoder():
@@ -275,6 +286,7 @@ class IndexEncoder():
         return f'{self.__class__.__name__}()'
 
     def fit(self, X, y=None):
+        self.n_features_in_ = 3
         self.lbl_enc = preprocessing.LabelEncoder()
         self.lbl_enc.fit(X[DEVICE])
 
@@ -288,6 +300,20 @@ class IndexEncoder():
     def fit_transform(self, X, y=None):
         self.fit(X, y=None)
         return self.transform(X, y)
+
+
+    def onehot(self, X: np.ndarray):
+        """ Create one-hot encoding for given array of indices with
+            correct feature labels assigned
+        """
+        n_values = np.max(X) + 1
+        values = list(X)
+        onehot = np.eye(n_values)[values]
+        columns = self.inverse_transform(np.arange(n_values))
+        onehot = pd.DataFrame(onehot, columns=columns)
+        return onehot
+
+
 
 
 class DropColumn():
@@ -305,7 +331,7 @@ class DropColumn():
     def fit_transform(self, X, y=None):
         return self.transform(X, y)
 
-class StateVectorEncoder(BaseEstimator, TransformerMixin):
+class StateVectorEncoder(Encoder, BaseEstimator, TransformerMixin):
     """
     Create a State-vector sequence from a device event stream.
     Read more in the :ref:`User Guide <preprocessing_discretization>`.
@@ -360,10 +386,10 @@ class StateVectorEncoder(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, encode=ENC_RAW, dt=None):
+        super().__init__()
         self.encode = encode
         self.dt = dt
-        self.data_info_ = None
-        self.classes_ = []
+
 
     @classmethod
     def _is_valid_encoding(cls, encoding):
@@ -393,13 +419,16 @@ class StateVectorEncoder(BaseEstimator, TransformerMixin):
         self
         """
         assert StateVectorEncoder._is_valid_encoding(self.encode)
+        self.n_features_in_ = 3
 
         # create hashmap off all input features with mean for numerical
         # and most common value for binary or categorical features
         self.data_info_ = create_device_info_dict(df_devs)
-        self.classes_ = self.data_info_.keys()
-        return self
+        self.classes_ = [TIME] + list(self.data_info_.keys())
 
+        self.n_features_out =  copy(self.classes_)
+
+        return self
     def transform(self, df_devs=None,y=None, initial_states={}):
         """
         Discretize the data.
@@ -476,7 +505,9 @@ class StateVectorEncoder(BaseEstimator, TransformerMixin):
             data = data.set_index(TIME)
             df_lst.append(data)
 
-        return pd.concat(df_lst, axis=1).reset_index()
+        df_res = pd.concat(df_lst, axis=1).reset_index()
+        # Ensure to always return feature columns in order
+        return df_res[self.classes_]
 
 
     def fit_transform(self, df_devs, y=None):
@@ -501,7 +532,7 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
 
     Attributes
     ----------
-    idle : bool, default=False
+    other : bool, default=False
         If true items that are not
 
     """
@@ -533,7 +564,8 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
         self : returns an instance of self
         """
         self.df_acts_ = y
-        self.classes_ = list(y[ACTIVITY].values)
+        self.classes_ = list(y[ACTIVITY].unique())
+
         if self.other:
             self.classes_.append(OTHER)
 
@@ -711,7 +743,7 @@ class KeepOnlyDevices(BaseEstimator, XAndYTransformer, TransformerMixin):
         return X.loc[idxs,:], y
 
 
-class Timestamp2Seqtime(BaseEstimator, TransformerMixin, XOrYTransformer):
+class Timestamp2Seqtime(BaseEstimator, TransformerMixin, XOrYTransformer, FinalTimeTransformer):
     def __init__(self, dt='s'):
         super().__init__()
         self.dt = dt
@@ -730,6 +762,7 @@ class Timestamp2Seqtime(BaseEstimator, TransformerMixin, XOrYTransformer):
         """ Change every timestamp into unit i.e. seconds relative
             to the first timestamp in the sequence.
         """
+        self.time = X[TIME]
         X[TIME] -= X[TIME].iloc[0]
         if self.dt == 'ms':
             X[TIME] = X[TIME]/pd.Timedelta('1milli')
@@ -740,3 +773,23 @@ class Timestamp2Seqtime(BaseEstimator, TransformerMixin, XOrYTransformer):
         elif self.dt == 'h':
             X[TIME] = X[TIME]/pd.Timedelta('1hr')
         return X, y
+
+
+
+class SkTime(BaseEstimator, XAndYTransformer):
+
+    def __init__(self, rep='nested_univ'):
+        self.rep = rep
+
+
+    def fit(self, X, y):
+        assert self.rep in ['nested_univ', 'numpy3d']
+
+    def fit_transform(self, X, y):
+        self.fit(X, y)
+        return self.transform(X, y)
+
+    def transform(self, X, y):
+        from pyadlml.dataset.util import to_sktime2        
+        Xt, yt = to_sktime2(X, y, return_X_y=True)
+        return Xt, yt

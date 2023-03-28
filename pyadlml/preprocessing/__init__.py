@@ -9,4 +9,5 @@ from .preprocessing import \
     Timestamp2Seqtime, \
     KeepOnlyDevices, \
     DropDevices, \
-    Identity
+    Identity, \
+    SkTime

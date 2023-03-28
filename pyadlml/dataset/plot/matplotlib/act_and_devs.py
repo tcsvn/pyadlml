@@ -120,7 +120,7 @@ def contingency_events(df_devs=None, df_acts=None, df_con_tab=None, other=False,
     valfmt = (None if log else "{x:.0f}")
 
     if df_con_tab is None:
-        ct = stat_cont_ev(df_devs, df_acts, idle=other, per_state=per_state, n_jobs=n_jobs)
+        ct = stat_cont_ev(df_devs, df_acts, other=other, per_state=per_state, n_jobs=n_jobs)
     else:
         ct = df_con_tab.copy()
 
@@ -149,7 +149,7 @@ def contingency_events(df_devs=None, df_acts=None, df_con_tab=None, other=False,
 
 @save_fig
 def plot_contingency_states(df_devs: pd.DataFrame = None, df_acts: pd.DataFrame = None, df_con_tab: pd.DataFrame = None,
-                            figsize: tuple = None, z_scale: str = 'log', idle: bool = False, numbers: bool = True,
+                            figsize: tuple = None, z_scale: str = 'log', other: bool = False, numbers: bool = True,
                             file_path: str = "") -> object:
     """
     Plots a heatmap the device on and off intervals are measured against
@@ -175,9 +175,9 @@ def plot_contingency_states(df_devs: pd.DataFrame = None, df_acts: pd.DataFrame 
         The axis scale type to apply.
     numbers : bool, default: True
         Whether to display numbers inside the heatmaps fields or not.
-    idle : bool, default: False
+    other : bool, default: False
         Determines whether gaps between activities should be assigned
-        the activity *idle* or be ignored.
+        the activity *other* or be ignored.
     file_path : str, optional
         If set, saves the plot under the given file path and return *None* instead
         of returning the figure.
@@ -210,7 +210,7 @@ def plot_contingency_states(df_devs: pd.DataFrame = None, df_acts: pd.DataFrame 
     cbarlabel = 'time in seconds'
 
     if df_con_tab is None:
-        if idle:
+        if other:
             df_acts = add_other_activity(df_acts.copy())
         df_con = stat_cont_st(df_devs, df_acts)
     else:
