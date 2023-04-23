@@ -85,8 +85,13 @@ def _get_room_y_pos(dev_order, dev2area, area_select):
     lower_y = len(dev_order)-1 - df[df['area'] == area_select]['index'].iat[-1]
     return lower_y, upper_y
 
+def _get_dev_y_pos(dev_order, dev):
+    upper_y = len(dev_order) - dev_order.index(dev)
+    lower_y = upper_y - 1 
+    return lower_y, upper_y
 
-def label_figure(df_acts, df_devs, dev2area, range_store=None, zoomed_range=[], states=False, area_select=''):
+
+def label_figure(df_acts, df_devs, dev2area, range_store=None, zoomed_range=[], states=False, area_select='', device_select=[]):
     if range_store is not None:
         st, et = range_store[0], range_store[1]
     else:
@@ -103,9 +108,11 @@ def label_figure(df_acts, df_devs, dev2area, range_store=None, zoomed_range=[], 
     if et:
         fig.add_vline(x=et, line_width=1, line_color="Grey")
 
+    #if area_select or 
+    dev_order = device_order_by(df_devs, rule='area', dev2area=dev2area)
+
     if area_select:
         # Get y indicies of device bars/events
-        dev_order = device_order_by(df_devs, rule='area', dev2area=dev2area)
         lower_y, upper_y = _get_room_y_pos(dev_order, dev2area, area_select)
         opacity = 0.5
     else:
@@ -118,6 +125,16 @@ def label_figure(df_acts, df_devs, dev2area, range_store=None, zoomed_range=[], 
         layer="below", line_width=0,
     )
     
+    for dev in dev_order: 
+        lower_y, upper_y = _get_dev_y_pos(dev_order, dev)
+        fig.add_hrect(
+            y0=lower_y - 0.5, y1=upper_y - 0.5,
+            fillcolor="Green", opacity=0.0,
+            layer="below", line_width=0,
+    )
+
+    for dev in device_select:
+        fig['layout']['shapes'][3 + dev_order.index(dev)]['opacity'] = 0.3
 
     return fig
 
@@ -139,6 +156,7 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--identifier', type=str)
     parser.add_argument('-p', '--port', type=str, default='8050')
     parser.add_argument('-o', '--out-folder', type=str, default='/tmp/pyadlml/label_activities')
+    parser.add_argument('--out-act-file', type=str, default='relabel_activities.py')
     parser.add_argument('-dh', '--data-home', type=str, default='/tmp/pyadlml/')
     args = parser.parse_args()
 
@@ -160,7 +178,8 @@ if __name__ == '__main__':
 
     #fp_df_del = out_folder.joinpath('removed_activities.csv')
     #fp_df_add = out_folder.joinpath('new_activities.csv')
-    fp_code = out_folder.joinpath('relabel_activities.py')
+    fp_code = out_folder.joinpath(args.out_act_file)
+    #fp_code = out_folder.joinpath('relabel_activities_pre.py')
     fp_code_dev = out_folder.joinpath('relabel_devices.py')
 
     # Setup data
@@ -174,9 +193,13 @@ if __name__ == '__main__':
         dev2area = data['dev2area']
     except:
         dev2area = None
-    
+
     activities = df_acts[ACTIVITY].unique()
     devices = df_devs[DEVICE].unique()
+
+    # Create device to category mapping
+    dev2cat =  lambda x: df_devs.groupby([DEVICE, VALUE])\
+                                .count().loc[x].index.tolist()
 
     app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
@@ -218,14 +241,15 @@ if __name__ == '__main__':
     fig = label_figure(df_acts, df_devs, dev2area, range_store=fig_range)
 
     from pyadlml.dataset.plot.plotly.dashboard.layout import _build_range_slider
+    #from dash_extensions import EventListener
 
     app.layout = dbc.Container([
-        dbc.Row(
-            dcc.Graph(
-                id='fig-activity',
-                figure=fig,
-            ), className='mb-3'
-        ),
+            dbc.Row(
+                dcc.Graph(
+                    id='fig-activity',
+                    figure=fig,
+                ), className='mb-3', 
+            ),
         dbc.Row([
             dbc.Col(
                 dcc.RadioItems(['events', 'states'], 'events', id='and-vis'),
@@ -272,31 +296,36 @@ if __name__ == '__main__':
             ),
             dbc.Col(
                 dbc.Row([
-                    dbc.Col(
-                        dbc.Row([
-                            dbc.Select(id='activity',
-                                        options=[ {"label": act, "value": act} for act in [*activities, DEL_KEY, JOIN_KEY]],
-                            ),
-                            dbc.Button(id="submit", children="Submit", color="primary")
-                        ]), 
-                    md=6),
-                    dbc.Col(
-                        dbc.Row([
-                            dbc.Select(id='device',
-                                        options=[ {"label": dev, "value": dev} for dev in devices],
-                            ),
-                            dcc.Dropdown(id='device-state',
-                                        searchable=False, clearable=False, 
-                                        options=[ {"label": cat, "value": cat} for cat in ['initial']],
-                            ),
-                            dbc.Button(id="submit-dev", children="Submit", color="primary")
-                        ]),
-                    md=6),
-                ]),
+                    dbc.Select(id='activity',
+                                options=[ {"label": act, "value": act} for act in [*activities, DEL_KEY, JOIN_KEY]],
+                    ),
+                    dbc.Button(id="submit", children="Submit", color="primary")
+                ]), 
             md=4,
-            align='center', 
-            className='mb-2')]
-        ),
+            ),
+            #align='center', 
+            #className='mb-2')
+            #]
+        ]),
+        dbc.Row([
+            dbc.Col(
+                dbc.Row([
+                    dcc.Dropdown(id='device',
+                                multi=True,
+                                options=[ {"label": dev, "value": dev} for dev in devices],
+                    ),
+                ]),
+            md=8),
+            dbc.Col(
+                dbc.Row([
+                    dcc.Dropdown(id='device-state',
+                                searchable=False, clearable=False, 
+                                options=[ {"label": cat, "value": cat} for cat in ['']],
+                    ),
+                    dbc.Button(id="submit-dev", children="Submit", color="primary")
+                ]),
+            md=4),
+        ]),
         dbc.Row(
             dbc.Textarea(id='comment', value='', readOnly=False, 
                         style={'height': '100px'}
@@ -308,24 +337,38 @@ if __name__ == '__main__':
 
     ], style={'width': 1800, 'margin': 'auto'})
 
-    @app.callback(
-        Output('device-state', 'options'),
-        Output('device-state', 'value'),
-        Input('device', 'value'),
-    )
-    def cat_select(value):
-        trigger = dash_get_trigger_element()
-        if trigger is None or trigger == '':
-            raise PreventUpdate
+    #app.layout = EventListener(
+    #        layout,
+    #        id='key-listener',
+    #        events =[{'event': 'keydown', 'props': ['key', 'srcElement.className']}]
+    #)
 
-        cats = df_devs.loc[df_devs[DEVICE] == value, VALUE].unique().tolist()
+    #@app.callback(
+    #    Output('device-state', 'options'),
+    #    Output('device-state', 'value'),
+    #    Input('device', 'value'),
+    #)
+    #def cat_select(values: list):
+    #    trigger = dash_get_trigger_element()
+    #    if trigger is None or trigger == '':
+    #        raise PreventUpdate
 
-        if True in cats and False in cats and len(cats) == 2:
-            cats = ['off', 'on']
+    #    # Get the intersection of categories shared between all selected devices
+    #    all_cats = []
+    #    for dev in values:
+    #        dev_cats = df_devs.loc[df_devs[DEVICE] == dev, VALUE] \
+    #                          .unique() \
+    #                          .tolist()
+    #        all_cats.append({*dev_cats})
+    #    cats = {*dev_cats}.intersection(*all_cats)
 
-        res = [{"label": str(cat), "value": cat} for cat in cats + ['del events']]
+    #    # Pretty formating for on and off values
+    #    cats = {'on' if x == True else x for x in cats}
+    #    cats = {'off' if x == False else x for x in cats}
 
-        return res, res[0]["label"]
+    #    res = [{"label": str(cat), "value": cat} for cat in list(cats) + ['del events']]
+
+    #    return res, res[0]["label"]
 
     @app.callback(
         Output('fig-activity', 'figure'),
@@ -334,27 +377,33 @@ if __name__ == '__main__':
         Output('range-store', 'data'),
         Output('range-slider-t-1', 'data'),
         Output('comment', 'value'),
+        Output('device-state', 'options'),
+        Output('device-state', 'value'),
+        Output('device', 'value'),
         Input('and-vis', 'value'),
         Input('times', 'data'),
+        #Input('key-listener', 'event'),
         Input('fig-activity', 'clickData'),
         Input('set-frame', 'n_clicks'),
         Input('set-left', 'n_clicks'),
         Input('set-right', 'n_clicks'),
         Input('submit', 'n_clicks'),
         Input('submit-dev', 'n_clicks'),
+        Input('device', 'value'),
         Input('fig-range-input', 'value'),
         Input('area-select', 'value'),
         State('fig-activity', 'figure'),
         State('range-store', 'data'),
         State('range-slider-t-1', 'data'),
         State('activity', 'value'),
-        State('device', 'value'),
         State('device-state', 'value'),
+        State('device-state', 'options'),
         State('comment', 'value'),
         State('range-slider', 'value'),
     )
-    def display_output(and_vis, times, act_click, btn_set_frame, btn_left, btn_right, btn_submit, btn_submit_dev,
-                       fig_range_input, area_select, fig, range_store, rs_tm1, activity, device, device_state, comment, range_select
+    def display_output(and_vis, times, act_click, btn_set_frame, btn_left, btn_right, btn_submit, btn_submit_dev, 
+                       sel_devices, fig_range_input, area_select, fig, range_store, rs_tm1, activity, 
+                       sel_device_state, device_options, comment, range_select
                        #fig, range_store, rs_tm1, df_json, df_del_json, activity
     ):
         def from_01(y, r):
@@ -371,13 +420,31 @@ if __name__ == '__main__':
         if trigger is None or trigger == '':
             raise PreventUpdate
 
+        #if trigger == 'key-listener':
+        #    key_pressed = dash_get_trigger_value()['key']
+        #    if key_pressed not in ['a', 's', 'd']:
+        #        raise PreventUpdate
+        #    if key_pressed == 'a':
+        #        trigger = 'set-left'
+        #    elif key_pressed == 's':
+        #        trigger = 'set-frame' 
+        #    elif key_pressed == 'd':
+        #        trigger =  'set-right'
+
         # Check if data has to be reloaded or callback is independent
-        is_data_update = trigger not in ['set-frame', 'set-left', 'set-right', 'fig-range-input', 'area-select']
-        is_figure_reload = trigger not in ['set-frame', 'set-left', 'set-right', 'fig-range-input', 'fig-activity', 'area-select']
+        is_data_update = trigger not in [
+            'set-frame', 'set-left', 'set-right', 'fig-range-input',
+            'area-select', 'device'
+        ]
+        is_figure_reload = trigger not in [
+            'set-frame', 'set-left', 'set-right', 'fig-range-input', 
+            'fig-activity', 'area-select', 'device'
+        ]
 
 
         if is_data_update:
-            code_str, code_str_devs, df_acts, df_devs = read_code_and_update(fp_code, fp_code_dev, fp_df_acts, fp_df_devs)
+            code_str, code_str_devs, df_acts, df_devs = \
+                read_code_and_update(fp_code, fp_code_dev, fp_df_acts, fp_df_devs)
 
         fig_range = range_from_fig(fig)
 
@@ -411,11 +478,14 @@ if __name__ == '__main__':
             data = {
                 START_TIME: range_store[0], 
                 END_TIME: range_store[1], 
-                DEVICE:device,
-                VALUE: device_state
+                DEVICE: sel_devices,
+                VALUE: sel_device_state
             }
             if data[VALUE] in ['on', 'off']:
                 data[VALUE] = {'on':True, 'off':False}[data[VALUE]]
+
+            if isinstance(data[DEVICE], list):
+                data[DEVICE] = data[DEVICE]
 
             code_str_devs += "\n#" + "-"*40 + '\n'
             code_str_devs += '\n'.join(['# ' + s for s in comment.split('\n')]) + '\n\n'
@@ -437,54 +507,79 @@ if __name__ == '__main__':
                 s += "})\ndf_devs = pd.concat([df_devs, new_row.to_frame().T], axis=0).sort_values(by=TIME).reset_index(drop=True)\n"
                 return s
 
-            def del_bulk_op2str(st, et, dev):
-                s =  f"mask = (df_devs[DEVICE] == '{dev}')\\\n"
+            def add_bulk_op2str(df_rows: pd.DataFrame):
+                s =   "new_rows=pd.DataFrame({\n"
+                s += f"      '{TIME}': [" + str(','.join([f" pd.Timestamp('{t}')" for t in df_rows[TIME]])) + "],\n"
+                s += f"      '{DEVICE}': [" + str(','.join([f"'{t}' " for t in df_rows[DEVICE]])) + "],\n"
+                s += f"      '{VALUE}': [" + str(','.join([f"'{t}' " if isinstance(t, str) else f"{t}" for t in df_rows[VALUE]])) + "],\n"
+                s +=  "})\n"
+                s +=  "\ndf_devs = pd.concat([df_devs, new_rows], axis=0).sort_values(by=TIME).reset_index(drop=True)\n"
+                return s
+
+            def del_bulk_op2str(st, et, devs: list):
+                assert isinstance(devs, list)
+                s =  f"mask = (df_devs[DEVICE].isin({devs}))\\\n"
                 s += f"     & ('{st}' < df_devs[TIME])\\\n"
                 s += f"     & (df_devs[TIME] < '{et}')\n"
                 s += f"df_devs = df_devs[~mask].sort_values(by=TIME).reset_index(drop=True)\n\n"
                 return s
 
-            df = df_devs[df_devs[DEVICE] == data[DEVICE]].copy().reset_index(drop=True)
+            # Get selected devices
+            df = df_devs[df_devs[DEVICE].isin(data[DEVICE])].copy().reset_index(drop=True)
+
+            # Get affected events
             mask = (data[START_TIME] < df[TIME])\
                  & (df[TIME] < data[END_TIME])
-            df_tmp = df[mask]
+            df_rem_evs = df[mask].copy()
 
-            if len(df_tmp) == len(df):
+            if len(df_rem_evs) == len(df):
                 print('Warning! Select a range before submitting.')
                 raise PreventUpdate
 
-            if not df_tmp.empty and data[VALUE]  == 'del events':
+            if not df_rem_evs.empty and data[VALUE]  == 'del events':
+                # Bulk removal of events
                 code_str_devs += del_bulk_op2str(data[START_TIME], data[END_TIME], data[DEVICE])
-
-            # Delete enveloped events and get index of preceeding event
-            # and the last enveloped event
-            elif not df_tmp.empty:
-                for _, row in df_tmp.iterrows():
-                    code_str_devs += del_op2str(row) + '\n'
-                last_event = df_tmp.iloc[-1]
-                prec_idx = df_tmp.index[0] - 1
-
-                if last_event[VALUE] != data[VALUE]:
-                    last_event[TIME] = data[END_TIME]
-                    code_str_devs += add_op2str(last_event)
-
-                if prec_idx >= 0:
-                    prec_event = df.loc[prec_idx, ]
-
-                if prec_idx < 0 or prec_event[VALUE] != data[VALUE]:
-                    code_str_devs += add_op2str(
-                        pd.Series({TIME:data[START_TIME], DEVICE:data[DEVICE], VALUE: data[VALUE]})
-                    )
             else:
-                prec_events = df[df[TIME] < data[START_TIME]]
-                if not prec_events.empty:
-                    prec_event = prec_events.iloc[-1]
-                    prec_event[TIME] = data[END_TIME]
-                    code_str_devs += add_op2str(prec_event)
-
-                code_str_devs += add_op2str(
-                    pd.Series({TIME:data[START_TIME], DEVICE:data[DEVICE], VALUE: data[VALUE]})
+                # Bulk removal of events
+                code_str_devs += del_bulk_op2str(
+                    data[START_TIME], data[END_TIME], data[DEVICE]
                 )
+
+                # Get last events in and last events right before edited timeframe 
+                last_evs_in = df_rem_evs.groupby([DEVICE], as_index=False).last()
+                last_evs_before = df[df[TIME] < data[START_TIME]].groupby(DEVICE, as_index=False).last()
+                devs_not_in_tf_with_prcdng_ev = set(last_evs_before[DEVICE].unique()).difference(last_evs_in[DEVICE].unique())
+                relevant_last_events = pd.concat([
+                    last_evs_in, 
+                    last_evs_before[last_evs_before[DEVICE].isin(devs_not_in_tf_with_prcdng_ev)]
+                ])
+
+                # Correct device states post edited timeframe
+                devs_to_correct = relevant_last_events[(relevant_last_events[VALUE] != data[VALUE])].copy()
+                if not devs_to_correct.empty:
+                    # When the devices state after the removed section
+                    # is different to the new state, the new state has set
+                    # to be at the end_time
+                    eps = pd.Timedelta('1ms')
+                    devs_to_correct[TIME] = data[END_TIME]
+                    devs_to_correct[TIME] += pd.Series(eps, index=range(len(devs_to_correct))).cumsum()
+                    code_str_devs += add_bulk_op2str(devs_to_correct)
+
+
+                # Case where no preceeding events exist for the device 
+                # or the event before has different state -> manually add event at start_time
+                devs_without_prcdng_evs = set(df[DEVICE].unique()).difference(last_evs_before[DEVICE])
+                devs_with_diff_prcdng_ev = last_evs_before.loc[last_evs_before[VALUE] != data[VALUE], DEVICE].tolist()
+                devs_to_correct = list(devs_without_prcdng_evs) + devs_with_diff_prcdng_ev
+                if devs_to_correct:
+                    devs_to_correct = pd.DataFrame({
+                        TIME: [data[START_TIME]]*len(devs_to_correct),
+                        DEVICE:devs_to_correct,
+                        VALUE:[data[VALUE]]*len(devs_to_correct)
+                    })
+                    eps = pd.Timedelta('1ms')
+                    devs_to_correct[TIME] += pd.Series(eps, index=range(len(devs_to_correct))).cumsum()
+                    code_str_devs += add_bulk_op2str(devs_to_correct)
 
 
             # Reset values
@@ -629,23 +724,32 @@ if __name__ == '__main__':
         
         
         elif trigger == 'fig-activity':
-            if not 'Acts: ' in act_click['points'][0]['y']:
-                raise PreventUpdate
+            y_label =  act_click['points'][0]['y']
 
-            st = pd.Timestamp(act_click['points'][0]['base'])
-            #et = str2ts(act_click['points'][0]['x'])
-            act = df_acts[(df_acts[START_TIME]-pd.Timedelta('1us') < st)
-                        & (st < df_acts[START_TIME]+pd.Timedelta('1us'))]
-            # & (df_acts[END_TIME] == et)]
-            if act.empty and len(act) == 1:
-                raise PreventUpdate
-            act = act.iloc[0]
-            # Update ranges
-            range_store = [act[START_TIME], act[END_TIME]]
-            times[0][START_TIME] = ts2str(range_store[0])
-            times[0][END_TIME] = ts2str(range_store[1])
+            if y_label not in devices:
+                if not 'Acts: ' in y_label:
+                    raise PreventUpdate
 
-            activity = act[ACTIVITY]
+                st = pd.Timestamp(act_click['points'][0]['base'])
+                #et = str2ts(act_click['points'][0]['x'])
+                act = df_acts[(df_acts[START_TIME]-pd.Timedelta('1us') < st)
+                            & (st < df_acts[START_TIME]+pd.Timedelta('1us'))]
+                # & (df_acts[END_TIME] == et)]
+                if act.empty and len(act) == 1:
+                    raise PreventUpdate
+                act = act.iloc[0]
+                # Update ranges
+                range_store = [act[START_TIME], act[END_TIME]]
+                times[0][START_TIME] = ts2str(range_store[0])
+                times[0][END_TIME] = ts2str(range_store[1])
+
+                activity = act[ACTIVITY]
+            else:
+                trigger = 'device'
+                if y_label in sel_devices:
+                    sel_devices.remove(y_label)
+                else:
+                    sel_devices.append(y_label)
 
         elif trigger == 'fig-range-input':
             try:
@@ -654,6 +758,22 @@ if __name__ == '__main__':
                 fig = set_fig_range(fig, fig_range)
             except:
                 raise PreventUpdate
+
+        if trigger == 'device':
+            all_cats = [{*dev2cat(dev)} for dev in sel_devices]
+            if all_cats:
+                cats = {*all_cats[0]}.intersection(*all_cats)
+
+                # Pretty formating for on and off values
+                cats = {'on' if x == True else x for x in cats}
+                cats = {'off' if x == False else x for x in cats}
+
+                res = [{"label": str(cat), "value": cat} for cat in list(cats) + ['del events']]
+                device_options = res
+                sel_device_state = res[0]["label"]
+            else:
+                device_options = []
+                sel_device_state = None
 
         if trigger in ['set-frame', 'set-left', 'set-right', 'fig-activity']:
             # Update vlines without recomputing figure
@@ -670,16 +790,31 @@ if __name__ == '__main__':
             except KeyError:
                 trigger = 'llululul'
 
+        dev_order = copy(fig['layout']['yaxis']['categoryarray'])
+        dev_order.reverse()
+
         if trigger == 'area-select':
-            try:
-                dev_order = copy(fig['layout']['yaxis']['categoryarray'])
-                dev_order.reverse()
-                y0, y1 = _get_room_y_pos(dev_order, dev2area, area_select)
-                fig['layout']['shapes'][2]['y0'] = y0 - 0.5
-                fig['layout']['shapes'][2]['y1'] = y1 - 0.5
-                fig['layout']['shapes'][2]['opacity'] = 0.5
-            except KeyError or IndexError:
-                trigger = 'llululul'
+            if area_select is None:
+                fig['layout']['shapes'][2]['opacity'] = 0.0
+            else:
+                try:
+                    y0, y1 = _get_room_y_pos(dev_order, dev2area, area_select)
+                    fig['layout']['shapes'][2]['y0'] = y0 - 0.5
+                    fig['layout']['shapes'][2]['y1'] = y1 - 0.5
+                    fig['layout']['shapes'][2]['opacity'] = 0.5
+                except KeyError or IndexError:
+                    trigger = 'llululul'
+
+
+        # Turn on or off opacity
+        # TODO make optional parameter
+        sel_devices = [] if sel_devices is None else sel_devices
+        for dev in sel_devices:
+            fig['layout']['shapes'][3 + dev_order.index(dev)]['opacity'] = 0.3
+
+        for dev in {*dev_order}.difference(sel_devices): 
+            fig['layout']['shapes'][3 + dev_order.index(dev)]['opacity'] = 0.0
+
 
         if is_figure_reload:
             import time
@@ -696,7 +831,10 @@ if __name__ == '__main__':
             et = num_to_timestamp(range_select[1], start_time=start_time, end_time=end_time)
             curr_df_devs, curr_df_acts = select_timespan(df_acts=df_acts, df_devs=df_devs,
                                                         start_time=st, end_time=et, clip_activities=False)
-            fig = label_figure(curr_df_acts, curr_df_devs, dev2area, range_store, fig_range, states=(and_vis == 'states'), area_select=area_select)
+            fig = label_figure(curr_df_acts, curr_df_devs, dev2area, range_store, 
+                               fig_range, states=(and_vis == 'states'), 
+                               area_select=area_select, device_select=sel_devices
+            )
             toc = time.perf_counter()
             print(f"Updating figure in: {toc - tic:0.4f} seconds")
 
@@ -716,6 +854,7 @@ if __name__ == '__main__':
             with open(fp_code, mode='w') as f:
                 f.write(code_str)
 
-        return fig, times, activity, range_store, rs_tm1, comment
+        return fig, times, activity, range_store, rs_tm1, comment, \
+               device_options, sel_device_state, sel_devices
 
     app.run_server(debug=False, host='127.0.0.1', port=args.port)

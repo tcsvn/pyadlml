@@ -100,10 +100,15 @@ def _is_activity_overlapping(df):
     assert df.shape[1] == 3, "Activity dataframes must have 3 columns."
 
     df = df.sort_values(by=START_TIME).reset_index(drop=True)
-    mask = (df[END_TIME].shift()-df[START_TIME]) >= pd.Timedelta('0ms')
+    mask = (df[END_TIME].shift() - df[START_TIME]) >= pd.Timedelta('0ms')
     overlapping = df[mask]
     return not overlapping.empty
 
+def _get_overlapping_activities(df):
+    df = df.sort_values(by=START_TIME).reset_index(drop=True)
+    mask = (df[END_TIME].shift()-df[START_TIME]) >= pd.Timedelta('0ms')
+    overlapping = df[mask]
+    return overlapping
 
 def create_empty_activity_df():
     """
