@@ -14,7 +14,8 @@ class TorchDataset(Dataset):
         rand_str = self._get_rand_rep(transforms)
         sub_folder = 'train' if transforms.is_in_train_mode() else 'eval'
 
-        self.fp_tmp = Path(f'/mnt/ssd256/tmp/{rand_str}/{sub_folder}/')
+        #self.fp_tmp = Path(f'/mnt/ssd256/tmp/{rand_str}/{sub_folder}/')
+        self.fp_tmp = Path(f"/home/chris/master_thesis/trainings_cache/{rand_str}/{sub_folder}/")
         self.hdf5 = hdf5
 
         if use_cached and self.fp_tmp.exists(): 
@@ -23,7 +24,7 @@ class TorchDataset(Dataset):
 
             self.classes_ = tmp_dict['classes']
             self.class_weights_ = tmp_dict['class_weights']
-            self.step = tmp_dict['step']
+            self.nr_steps = tmp_dict['step']
             self.chunk_size = tmp_dict['chunk_size']
             self.shape = tmp_dict['shape']
 
@@ -81,22 +82,21 @@ class TorchDataset(Dataset):
             if X_t.nbytes > psutil.virtual_memory().available*mem_frac or use_cached:
                 self.fp_tmp.mkdir(exist_ok=True, parents=True)
                 self.chunk_size = 100
-                step = self.N//self.chunk_size
-                self.step = step
-                for c in range(self.chunk_size+1):
+                self.nr_steps = self.N//self.chunk_size
+                for c in range(self.nr_steps+1):
                     torch.save(
-                        torch.tensor(X_t[step*c:step*c+step]).to(torch.float32),
+                        torch.tensor(X_t[self.chunk_size*c:self.chunk_size*c+self.chunk_size]).to(torch.float32),
                         self.fp_tmp.joinpath(f'Xt_chunk_{c}.pt')
                     )
                     torch.save(
-                        torch.tensor(Y_t[step*c:step*c+step]).long(), 
+                        torch.tensor(Y_t[self.chunk_size*c:self.chunk_size*c+self.chunk_size]).long(), 
                         self.fp_tmp.joinpath(f'Yt_chunk_{c}.pt')
                     )
 
                 # 
                 tmp_dict = {}
                 tmp_dict['classes'] = self.classes_
-                tmp_dict['step'] = self.step
+                tmp_dict['step'] = self.nr_steps
                 tmp_dict['chunk_size'] = self.chunk_size
                 tmp_dict['shape'] = self.shape
                 tmp_dict['class_weights'] = self.class_weights_
@@ -140,10 +140,13 @@ class TorchDataset(Dataset):
         if self.hdf5:
             print()
         if hasattr(self, 'chunk_size'):
-            c = int(np.floor(idx//self.step))
-            Xtr = torch.load(self.fp_tmp.joinpath(f'Xt_chunk_{c}.pt'))
-            Ytr = torch.load(self.fp_tmp.joinpath(f'Yt_chunk_{c}.pt'))
-            new_idx = idx - c*self.step
+            c = idx//self.chunk_size
+            try:
+                Xtr = torch.load(self.fp_tmp.joinpath(f'Xt_chunk_{c}.pt'))
+                Ytr = torch.load(self.fp_tmp.joinpath(f'Yt_chunk_{c}.pt'))
+            except FileNotFoundError:
+                print()
+            new_idx = idx - c*self.chunk_size
             return Xtr[new_idx], Ytr[new_idx]
         else:
             return self.Xtr[idx], self.Ytr[idx]
