@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torch.nn.parameter import Parameter
 import numpy as np
+import torch.functional as F
 
 
 class FlattenConsecutive(nn.Module):
@@ -79,6 +80,8 @@ class Time2Vec(nn.Module):
     def __init__(self, k):
         pass
         # TODO Implement
+
+    
         
 class RelativePositionalEncoding(nn.Module):
     def __init__(self, emb_dim):
@@ -95,10 +98,10 @@ class PositionalEmbedding(nn.Module):
         pe.require_grad = False
 
         position = torch.arange(0, max_len).float().unsqueeze(1)
-        div_term = (torch.arange(0, d_model, 2).float() * -(math.log(10000.0) / d_model)).exp()
+        angle = (torch.arange(0, d_model, 2).float() * -(math.log(10000.0) / d_model)).exp()
 
-        pe[:, 0::2] = torch.sin(position * div_term)
-        pe[:, 1::2] = torch.cos(position * div_term)
+        pe[:, 0::2] = torch.sin(position * angle)
+        pe[:, 1::2] = torch.cos(position * angle)
 
         pe = pe.unsqueeze(0)
         self.register_buffer('pe', pe)
@@ -161,3 +164,62 @@ class LayerNorm(nn.Module):
 
     def forward(self, input):
         return F.layer_norm(input, self.weight.shape, self.weight, self.bias, 1e-5)
+
+
+class DilatedConv1d(torch.nn.Conv1d):
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 kernel_size,
+                 stride=1,
+                 dilation=1,
+                 groups=1,
+                 bias=True):
+        self.__padding = (kernel_size - 1) * dilation
+
+        super(DilatedConv1d, self).__init__(
+            in_channels,
+            out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=self.__padding,
+            dilation=dilation,
+            groups=groups,
+            bias=bias)
+
+    def forward(self, input):
+        result = super(DilatedConv1d, self).forward(input)
+        # Allow padded computation on the left for x_0
+        # but clip on the right to sequence length T
+        if self.__padding != 0:
+            return result[:, :, :-self.__padding]
+        return result
+
+class CausalConv1d(torch.nn.Conv1d):
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 kernel_size,
+                 stride=1,
+                 dilation=1,
+                 groups=1,
+                 bias=True):
+        self.__padding = (kernel_size - 1) * dilation
+
+        super(CausalConv1d, self).__init__(
+            in_channels,
+            out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=self.__padding,
+            dilation=dilation,
+            groups=groups,
+            bias=bias)
+
+    def forward(self, input):
+        result = super(CausalConv1d, self).forward(input)
+        # Allow padded computation on the left for x_0
+        # but clip on the right to sequence length T
+        if self.__padding != 0:
+            return result[:, :, :-self.__padding]
+        return result

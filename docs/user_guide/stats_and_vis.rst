@@ -340,10 +340,15 @@ Events
    :alt: alternate text
    :align: center
 
-One effective approach to analyse the device data is to represent it as event trains, 
-in which only the time of the event and the device responsible are taken into account, 
-while the value generated at that event is ignored. To provide an illustration of 
-all the events that occured throughout the entire duration of the experiment use
+A useful approach to view device data is to analyse the states first derivative as event trains, 
+wherein only the time of the event and the responsible device are considered, 
+while disregarding the generated value. Events can be characterized solely by their timestamp :math:`t^{f}` where :math:`f` enumerates the
+events. Thus a spike train is defined as a sum of dirac :math:`delta`-functions:
+
+.. math::
+    E(t) = \sum_f\delta(t-t^{f})
+
+To provide an illustration of all events that occur throughout the entire duration of the experiment use
 
 .. code:: python
 
@@ -483,6 +488,24 @@ Peaks in the correlogram are typically regarded as indications of event time syn
    :scale: 90 %
    :alt: alternate text
    :align: center
+
+
+Firing rate
+~~~~~~~~~~~
+
+temporal average
+
+
+
+
+
+Instantaneous firing rate
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The instantaneous firing rate is an expectation over different trials of event rates
+
+.. math:: `v(t)=\doubleE (t)`
+
 
 
 Activites and devices
@@ -663,6 +686,39 @@ Fore more details, please refer to the cross-correlgram for devices (TODO link)
    :scale: 100 %
    :alt: alternate text
    :align: center
+
+Mutual-information
+^^^^^^^^^^^^^^^^^^
+
+The mutual information measures how much the uncertainty about a specific 
+activity is on average reduced when observing an event. 
+
+
+
+.. code:: python
+
+    >>> from pyadlml.stats import mutual_information_events
+
+    >>> cross_correlogram(df_devices, df_activities, loi='1m')
+    activity                     get drink ...             use toilet
+    Hall-Bedroom door Off  0 days 00:01:54 ... 0 days 00:12:24.990000
+    Hall-Bedroom door On   0 days 00:14:48 ... 0 days 03:02:49.984000
+    ...                                ...
+    Washingmachine On      0 days 00:00:00 ...        0 days 00:00:00
+    [28 rows x 7 columns]
+
+    >>> from pyadlml.plot import plot_cross_correlogram
+    >>> plot_cross_correlogram(df_devices, df_activities)
+
+.. image:: ../_static/images/plots/dev_event_cc.png
+   :height: 300px
+   :width: 500 px
+   :scale: 100 %
+   :alt: alternate text
+   :align: center
+
+
+
 
 Dashboard
 =========

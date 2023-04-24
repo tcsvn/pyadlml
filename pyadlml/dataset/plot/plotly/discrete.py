@@ -279,7 +279,7 @@ def _plot_devices_into(fig, X, cat_col_map, row, col, time):
     return fig
 
 @remove_whitespace_around_fig
-def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, time=None):
+def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, times=None):
     """ Plot activities and devices for already 
 
     """
@@ -291,7 +291,13 @@ def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, time
        and (y_pred is None or isinstance(y_pred, np.ndarray))\
        and (y_conf is None or isinstance(y_conf, np.ndarray))
 
-    time = pd.Series(time) if isinstance(time, np.ndarray) else time
+    if isinstance(X, np.ndarray):
+        raise
+    #N = y_true.shape[0]
+    #assert y_pred.shape[0] == N and y_conf.shape[0] == N and times.shape[0] == N and X.shape[0] == N
+
+
+    times = pd.Series(times) if isinstance(times, np.ndarray) else times
 
     error_text = 'parameter act_order has to be set if y_conf is given'
     assert y_conf is None or act_order is not None, error_text
@@ -310,15 +316,15 @@ def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, time
         shared_xaxes=True, vertical_spacing=0.02,
     )
 
-    fig = _plot_devices_into(fig, X, cat_col_map, row=rows, col=cols, time=time)
+    fig = _plot_devices_into(fig, X, cat_col_map, row=rows, col=cols, time=times)
 
     if y_true is not None:
-        fig = _plot_activities_into(fig, y_true, 'y_true', cat_col_map, row=rows, col=cols, time=time, activities=act_order)
+        fig = _plot_activities_into(fig, y_true, 'y_true', cat_col_map, row=rows, col=cols, time=times, activities=act_order)
     if y_pred is not None:
-        fig = _plot_activities_into(fig, y_pred, 'y_pred', cat_col_map, row=rows, col=cols, time=time)
+        fig = _plot_activities_into(fig, y_pred, 'y_pred', cat_col_map, row=rows, col=cols, time=times)
     if y_conf is not None:
         fig = _plot_confidences_into(fig, 1, 1, y_conf, act_order,
-                                     cat_col_map,  time)
+                                     cat_col_map,  times)
 
     return fig
 

@@ -2,7 +2,7 @@ from pyadlml.constants import TIME, VALUE
 import numpy as np
 import pandas as pd
 
-from pyadlml.preprocessing import EventWindows
+from pyadlml.preprocessing import EventWindow
 
 
 def get_tds_per_batch(X, window_size, stride, seq_type):
@@ -30,7 +30,7 @@ def get_tds_per_batch(X, window_size, stride, seq_type):
 
     # print(index.shape)
     # slice and dice data
-    ss = EventWindows(rep=seq_type, window_size=window_size, stride=stride)
+    ss = EventWindow(rep=seq_type, window_size=window_size, stride=stride)
     tmp, _ = ss.fit_transform(index)
 
     diffs = []

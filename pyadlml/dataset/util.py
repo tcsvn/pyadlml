@@ -537,7 +537,7 @@ def check_scale(func):
     return wrapper
 
 
-def device_order_by(df_devs: pd.DataFrame, rule='alphabetical', dev2area=None) -> list:
+def device_order_by(df_devs: pd.DataFrame, rule='alphabetical', dev2area=None, only_keep_existing=True) -> list:
     """Create a list of devices ordered by some rule
 
     Returns
@@ -574,6 +574,8 @@ def device_order_by(df_devs: pd.DataFrame, rule='alphabetical', dev2area=None) -
             dev_order = dev2area.groupby('area')\
                                 .apply(lambda x: x.sort_values(by='count'))\
                                 .reset_index(drop=True)[DEVICE].to_list()
+        if only_keep_existing:
+            dev_order = [d for d in dev_order if d in df_devs[DEVICE].unique()]
 
     return dev_order
 

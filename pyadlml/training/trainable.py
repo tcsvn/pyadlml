@@ -1,6 +1,11 @@
 import tempfile
+from torchmetrics.classification import MulticlassAccuracy
+from sklearn.preprocessing import LabelEncoder
 from pyadlml.dataset._core.activities import ActivityDict
+import torch
+from pyadlml.dataset.plot.plotly.discrete import acts_and_devs
 from pyadlml.dataset.util import fetch_by_name
+from pyadlml.metrics import online_accuracy
 from pyadlml.plot import plotly_activities_and_devices
 from pathlib import Path
 from matplotlib import pyplot as plt
@@ -8,11 +13,10 @@ from matplotlib import pyplot as plt
 from sklearn.tree import export_graphviz
 from pyadlml.dataset import *
 from pyadlml.dataset.io import set_data_home
-from pyadlml.preprocessing import StateVectorEncoder, LabelMatcher, DropTimeIndex, DropDuplicates, \
-    CrossValSplitter
+from pyadlml.preprocessing import StateVectorEncoder, LabelMatcher, DropTimeIndex, DropDuplicates
 from pyadlml.pipeline import Pipeline, FeatureUnion, TrainOnlyWrapper, \
     EvalOnlyWrapper, TrainOrEvalOnlyWrapper, YTransformer
-from pyadlml.model_selection import train_test_split
+from pyadlml.model_selection import train_test_split, CrossValSelector
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
@@ -32,9 +36,10 @@ def _mpl_clear():
 class Trainable():
 
 
-    def __init__(self, exp_name, ds_name, use_tune=False):
+    def __init__(self, exp_name, ds_name, ds_ident=None, use_tune=False):
         self._exp_name = exp_name
         self.ds_name = ds_name
+        self.ds_ident = ds_ident
         self.exp = mlflow.set_experiment(exp_name)
         self.use_tune = use_tune
 
@@ -50,7 +55,9 @@ class Trainable():
 
     def _fetch_dataset(self):
         set_data_home('/tmp/pyadlml/')
-        data = fetch_by_name(self.ds_name, load_cleaned=True)
+        # TODO debug
+        #data = fetch_by_name(self.ds_name, load_cleaned=True)
+        data = fetch_by_name(self.ds_name, identifier=self.ds_ident)
         if isinstance(data['activities'], ActivityDict):
             subjects = list(data['activities'].keys())
             key = subjects[0]
@@ -203,7 +210,7 @@ class Trainable():
         df_runs = mlflow.search_runs(experiment_ids=[self.exp.experiment_id])
         try:
             # Get parent run id from subtrials since an outer trial has no params, ... way to identify
-            return df_runs[df_runs['params.model'] == model_name].reset_index()\
+            return df_runs[df_runs['params.clf__name'] == model_name].reset_index()\
                                                                  .at[0, 'tags.mlflow.parentRunId']
         except:
             return None
@@ -216,7 +223,15 @@ class Trainable():
             nr_sub_runs = 0
         return f'trial_{nr_sub_runs}'
 
-
+    def _sample_from_params(self, param_dict):
+        for key, value in param_dict.items():
+            if isinstance(value, dict):
+                self._sample_from_params(value)
+            try:
+                if value.__module__ == 'ray.tune.search.sample':
+                    param_dict[key] = value.sample()
+            except AttributeError:
+                pass
 
     def __call__(self, hparam_dict):
         """
@@ -224,9 +239,15 @@ class Trainable():
         from sklearn.base import clone
 
         # Clone pipe and initialize with values
+        mlflow_params = hparam_dict.pop('mlflow')
         pipe_params = hparam_dict.pop('pipe_params')
+
+        self._sample_from_params(pipe_params)
+
         pipe = clone(self.pipe)
         pipe.set_params(**pipe_params)
+
+        mlflow.set_tracking_uri(mlflow_params['tracking_uri'])
 
         with tempfile.TemporaryDirectory() as workdir:
             workdir = Path(workdir)
@@ -234,13 +255,17 @@ class Trainable():
             run_id = self._get_run_id_of(model_name)
 
             with mlflow.start_run(run_id, self.exp.experiment_id, model_name) as run:
+                if self.use_tune:
+                    sub_run_name = session.get_trial_name()
+                else:
+                    sub_run_name = self._create_trial_name(run.info.run_id)
                 # Create new trial
-                with mlflow.start_run(None, run.info.experiment_id, self._create_trial_name(run.info.run_id), True) as sub_run:
+                with mlflow.start_run(None, run.info.experiment_id, sub_run_name, True) as sub_run:
                     
                     # Log parameters to mlflow
                     mlflow.log_params(hparam_dict)
                     mlflow.log_params(pipe_params)
-                    mlflow.set_tags({'dataset': self.ds_name})
+                    mlflow.set_tags({'dataset': self.ds_name,'debugging': True})
 
                     # Fetch data and do train test split
                     df_devs, df_acts = self._fetch_dataset()
@@ -272,29 +297,26 @@ class Trainable():
                     mlflow.log_artifact(estim_html_fp, artifact_path='pipe')
 
 
-
                     # Train pipeline
+                    pipe.train()
                     pipe.fit(X_train, y_train)
-                    self._create_train_visualizations(pipe, X_train, y_train, workdir)
+                    #self._create_train_visualizations(pipe, X_train, y_train, workdir)
 
-                    # Set into eval mode
-                    pipe.eval()
 
                     # Log model
                     model_info = mlflow.sklearn.log_model(pipe[-1], 'model')
                     model_uri = model_info._model_uri
 
 
-
                     # Validate pipeline
+                    pipe.eval()
                     Xt_val, y_true = pipe[:-1].transform(X_val, y_val, 
-                                         enc__initial_states=init_states['init_states_val'])
-                    # TODO refactor, code smell; extracting last valid time series
-                    #                from pipe should be done consistent
-                    time_val = pipe.transform(X_val, y_val, 
-                                          enc__initial_states=init_states['init_states_val'], 
-                                          retrieve_last_time=True
-                    )
+                                        enc__initial_states=init_states['init_states_val'])
+                    try:
+                        y_true = y_true.values
+                    except:
+                        pass
+
                     y_pred = pipe[-1].predict(Xt_val) 
                     y_conf = pipe[-1].predict_proba(Xt_val)
 
@@ -317,25 +339,42 @@ class Trainable():
                     mlflow.log_artifact(fp_ycv, artifact_path='eval')
 
 
+                    # Compute multiclass accuracy
+                    n_classes = len(pipe['lbl'].classes_)
+                    classes_ = pipe['lbl'].classes_
 
-                    # TODO plot roc curve, precision recall curve, confusion matrix, and per class metrics
-                    self._create_validation_visualizations(pipe[-1], Xt_val, y_true, y_pred, y_conf, time_val)
+                    val_acc_macro = MulticlassAccuracy(num_classes=n_classes, average='macro')
+                    val_acc_micro = MulticlassAccuracy(num_classes=n_classes, average='micro')
+                    lbl_enc = LabelEncoder().fit(y_true)
+                    y_true_enc, y_pred_enc = lbl_enc.transform(y_true), lbl_enc.transform(y_pred)
+                    acc_mi = val_acc_micro(torch.tensor(y_true_enc), torch.tensor(y_pred_enc))
+                    acc_ma = val_acc_macro(torch.tensor(y_true_enc), torch.tensor(y_pred_enc))
+                    mlflow.log_metric('val_acc_micro', acc_mi.item())
+                    mlflow.log_metric('val_acc_macro', acc_ma.item())
 
+                    # Compute confusion matrix
+                    from pyadlml.ml_viz import plotly_confusion_matrix
+                    fig = plotly_confusion_matrix(y_pred, y_true, classes_)
+                    mlflow.log_figure(fig, 'eval/cm.html')
+
+
+                    # Compute val visualization 
+                    y_times, Xt_val_at_times = pipe.construct_y_times_and_X(X_val, y_val)
                     try:
-                        # TODO labels from training that do not occur during prediction raise a mismatch error ...
-                        self._mlflow_eval(model_uri, Xt_val, y_true) 
+                        Xt_val_at_times = pd.DataFrame(Xt_val_at_times, columns=pipe['ev_win'].feature_names_in_)
                     except:
-                        print('Could not evalute mflow.')
+                        Xt_val_at_times = pd.DataFrame(Xt_val_at_times, columns=[f'dim_{i}' for i in range(Xt_val_at_times.shape[1])])
+                    
+                    f_and = acts_and_devs(Xt_val_at_times, y_true, y_pred, y_conf, classes_)
+                    mlflow.log_figure(f_and, artifact_file='eval/val_predictions.html')
 
+                    f_and = acts_and_devs(Xt_val_at_times, y_true, y_pred, y_conf, classes_, y_times)
+                    mlflow.log_figure(f_and, artifact_file='eval/val_predictions_time.html')
 
-                    # TODO create general way 
-                    #p1 = str(workdir.joinpath('estim_0.tree.dot'))
-                    #p2 = str(workdir.joinpath('estim_0.tree.png'))
-                    #export_graphviz(pipe[-1].estimators_[0], out_file=p1, 
-                    #                feature_names = feature_names, class_names=pipe[-1].classes_, filled=True)
-                    #from subprocess import call
-                    #call(['dot', '-Tpng', p1, '-o', p2, '-Gdpi=600'])
-                    #mlflow.log_artifact(p2, artifact_path='model')
-
+                    ## Compute additional online accuracies
+                    online_acc_macro = online_accuracy(y_true, y_pred, y_times, n_classes=len(classes_), average='macro')
+                    online_acc_micro = online_accuracy(y_true, y_pred, y_times, n_classes=len(classes_), average='micro')
+                    mlflow.log_metric('val_online_acc_micro', online_acc_micro)
+                    mlflow.log_metric('val_online_acc_macro', online_acc_macro)
 
 

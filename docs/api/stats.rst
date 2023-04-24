@@ -88,3 +88,15 @@ contingency_states
 
 .. autofunction:: pyadlml.stats.contingency_table_states
 
+mutual_info_events
+------------------
+
+.. autofunction:: pyadlml.stats.mutual_info_events
+
+
+mutual_info_states
+------------------
+
+.. autofunction:: pyadlml.stats.mutual_info_states
+
+

@@ -8,23 +8,30 @@ import plotly.graph_objects as go
 
 
 
-def plotly_confusion_matrix(y_pred, y_true, labels, per_step=False):
-
+def plotly_confusion_matrix(y_pred, y_true, labels, per_step=False, scale='linear') -> go.Figure:
+    """
+    """
+    cbarlabel = 'counts' if scale == 'linear' else 'log counts'
     if not per_step:
         if isinstance(y_pred, torch.Tensor):
             y_pred = y_pred.detach().cpu().numpy()
 
         if isinstance(y_true, torch.Tensor):
             y_true = y_true.detach().cpu().numpy()
-
-        cm = confusion_matrix(y_true=y_true, y_pred=y_pred).astype(int)
+        
+        # Row = true, column = prediction
+        cm = confusion_matrix(y_true=y_true, y_pred=y_pred, labels=labels).astype(int)
+        z = np.log(cm) if scale == 'log' else cm
 
 
         fig = go.Figure(
             data=go.Heatmap(
-                z=cm,
+                z=z.T,
                 x=labels,
                 y=labels,
+                customdata=cm.T,
+                colorscale='Viridis',
+                hovertemplate='Truth: %{y}<br>Pred: %{x}<br>Times: %{customdata} <extra></extra>',
                 hoverongaps=False),
         )
         fig.update_layout(
@@ -35,7 +42,6 @@ def plotly_confusion_matrix(y_pred, y_true, labels, per_step=False):
 
         return fig
     else:
-
 
         nr_steps = len(y_pred)
 

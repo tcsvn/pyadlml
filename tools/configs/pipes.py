@@ -15,7 +15,7 @@ from pyadlml.constants import VALUE
 from pyadlml.pipeline import Pipeline, TrainOnlyWrapper
 from sklearn import RandomForestClassifier
 from pyadlml.preprocessing import StateVectorEncoder, IndexEncoder, DropColumn, \
-    LabelMatcher, DropTimeIndex, EventWindows, DropDuplicates
+    LabelMatcher, DropTimeIndex, EventWindow, DropDuplicates
 
 
 
@@ -24,7 +24,7 @@ uci_torch_pipe = Pipeline([
     ('drop_obs', DropColumn(VALUE)),
     ('lbl', LabelMatcher()),
     ('drop_time_idx', DropTimeIndex()),
-    ('time_windows', EventWindows()),
+    ('time_windows', EventWindow()),
     ('passthrough', 'passthrough'),
 ])
 

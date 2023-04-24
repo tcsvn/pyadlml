@@ -1,20 +1,22 @@
 from pathlib import Path
+import pandas as pd
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
 from pyadlml.constants import DEVICE, TIME, VALUE
 from torch.utils.data import DataLoader
+from pyadlml.metrics import online_accuracy
 from pyadlml.model.plot.mp import plot_activation_dist, plot_gradient_dist, plot_weight_gradient_dist
 from pyadlml.model.transformer.vanilla import VanillaTransformer
 
 from pyadlml.model_selection import train_test_split
 from pyadlml.dataset import *
 from pyadlml.preprocessing import IndexEncoder, DropColumn, StateVectorEncoder, LabelMatcher, DropTimeIndex, \
-    DropDuplicates, EventWindows
+    DropDuplicates, EventWindow
 from pyadlml.pipeline import EvalOnlyWrapper, Pipeline, TrainOnlyWrapper
 from sklearn.ensemble import RandomForestClassifier
 from ray import tune
-from pyadlml.model import MLP, WaveNet
-from pyadlml.dataset import TorchDataset
+from pyadlml.model import MLP, DilatedModel, WaveNetModel
+from pyadlml.dataset.torch import TorchDataset
 from pyadlml.preprocessing.preprocessing import KeepOnlyDevices
 from pyadlml.training.trainable import Trainable 
 import mlflow
@@ -47,10 +49,12 @@ n    'kasteren_C',
 
 def main():
     parser=argparse.ArgumentParser(description="train_debug tool")
-    parser.add_argument("dataset", type=str)
+    parser.add_argument('-d', '--dataset', type=str, default='amsterdam')
+    parser.add_argument('-i', '--identifier', type=str)
     args=parser.parse_args()
 
     seed = 1
+    # TODO debug
     dataset =  args.dataset
 
 
@@ -74,7 +78,9 @@ def main():
 
             with tempfile.TemporaryDirectory() as workdir:
                 workdir = Path(workdir)
-                model_name = hparam_dict['model']
+                model_name = hparam_dict['model_params']['clf__name']
+                model_params = hparam_dict.pop('model_params')
+
                 run_id = self._get_run_id_of(model_name)
 
                 with mlflow.start_run(run_id, self.exp.experiment_id, model_name) as run:
@@ -83,6 +89,7 @@ def main():
                         
                         mlflow.log_params(hparam_dict)
                         mlflow.log_params(pipe_params)
+                        mlflow.log_params(model_params)
                         mlflow.set_tags({'dataset': self.ds_name,'debugging': True})
 
                         # Fetch data and do train test split
@@ -107,6 +114,7 @@ def main():
                         mlflow.log_figure(plotly_activities_and_devices(X_test, y_test), artifact_file='data/Xy_test.html')
 
 
+                        pipe.train()
                         train_loader = DataLoader(
                             dataset=TorchDataset(X_train, y_train, transforms=pipe),
                             batch_size=hparam_dict['batch_size'],
@@ -114,6 +122,7 @@ def main():
                             drop_last=True      # BatchNorm1d not working otherwise
                         )
 
+                        pipe.eval()
                         # Validate pipeline
                         val_loader = DataLoader(
                             dataset=TorchDataset(X_val, y_val, transforms=pipe, 
@@ -133,13 +142,24 @@ def main():
                         #    n_embed=hparam_dict['dim_emb'],
                         #    n_classes= len(train_loader.dataset.classes_),
                         #)
-                        #model = WaveNet(
-                        #    n_features=12, 
-                        #    n_emb=hparam_dict['dim_emb'],
-                        #    n_hidden=hparam_dict['dim_hidden'],
-                        #    n_classes=len(train_loader.dataset.classes_),
-                        #    dilation_factor=hparam_dict['dilation_factor']
-                        #)
+                        model = DilatedModel(
+                            n_features=12, 
+                            n_emb=hparam_dict['dim_emb'],
+                            n_hidden=hparam_dict['dim_hidden'],
+                            n_classes=len(train_loader.dataset.classes_),
+                            dilation_factor=hparam_dict['dilation_factor']
+                        ).to(DEVICE)
+                        #model = WaveNetModel(
+                        #    n_layers=model_params['clf__n_layers'],
+                        #    n_blocks=model_params['clf__n_blocks'],
+                        #    in_channels=model_params['clf__in_channels'],
+                        #    res_channels=model_params['clf__res_channels'],
+                        #    end_channels=model_params['clf__end_channels'],
+                        #    skip_channels=model_params['clf__skip_channels'],
+                        #    n_features=12,
+                        #    n_classes=len(train_loader.dataset.classes_)
+
+                        #).to(DEVICE)
                         #from pyadlml.model.transformer.vanilla import VanillaTransformer
                         #model = VanillaTransformer(
                         #    n_embd=hparam_dict['dim_embd'],
@@ -151,17 +171,17 @@ def main():
                         #    n_layer=hparam_dict['n_layer'],      # Sequential attention layers
                         #    n_head=hparam_dict['n_heads'],       # Parallel attention blocks attn layers
                         #)
-                        from pyadlml.model.tpp import SAHP
-                        model = SAHP(
-                            nLayers=hparam_dict['n_layer'],     # Successive attention blocks
-                            d_model=hparam_dict['dim_embd'],     # Embedding dimensions
-                            atten_heads=hparam_dict['n_heads'], # Parallel attention heads per block
-                            dropout=hparam_dict['dropout'],
-                            process_dim=1,                      # Nr devices
-                            device=DEVICE,
-                            max_seq_len=pipe_params['windows__window_size'],
+                        #from pyadlml.model.tpp import SAHP
+                        #model = SAHP(
+                        #    nLayers=hparam_dict['n_layer'],     # Successive attention blocks
+                        #    d_model=hparam_dict['dim_embd'],     # Embedding dimensions
+                        #    atten_heads=hparam_dict['n_heads'], # Parallel attention heads per block
+                        #    dropout=hparam_dict['dropout'],
+                        #    process_dim=1,                      # Nr devices
+                        #    device=DEVICE,
+                        #    max_seq_len=pipe_params['windows__window_size'],
 
-                        ).to(DEVICE)
+                        #).to(DEVICE)
 
                         parameters = model.parameters()
                         optimizer = torch.optim.Adam(parameters, 
@@ -177,8 +197,7 @@ def main():
                         B, T, window_type = hparam_dict['batch_size'], pipe_params['windows__window_size'], pipe_params['windows__rep']
 
                         # Simple training routine
-                        max_epochs = 500
-                        from torch.nn import functional as F
+                        max_epochs = hparam_dict['max_epochs']
                         class_weights = train_loader.dataset.class_weights.to(DEVICE)
 
                         # Initialize metrics
@@ -195,28 +214,38 @@ def main():
                                 model.train()
 
                                 for (Xb, yb) in t_epoch:
-                                    Xb, yb = Xb.to(DEVICE), yb.to(DEVICE)
-                                    t_epoch.set_description(f"Epoch {epoch}")
+                                    with torch.autograd.set_detect_anomaly(True):
+                                        Xb, yb = Xb.to(DEVICE), yb.to(DEVICE)
+                                        t_epoch.set_description(f"Epoch {epoch}")
 
-                                    optimizer.zero_grad()
+                                        optimizer.zero_grad()
 
-                                    # forward pass
-                                    logits = model(Xb)
-                                    loss = model.compute_loss(Xb, n_mc_samples=100)
-                                    # Case classification
-                                    #loss = model.compute_loss(
-                                    #    logits.view(-1, logits.shape[-1]),
-                                    #    yb.view(-1),
-                                    #    weight=class_weights
-                                    #)
-                                    
-                                    loss.backward()
-                                    optimizer.step()
-                                    
+                                        # (B,T,C) -> (B,T,C)
+                                        # TODO critical, hacky way for sequence to take
+                                        # only into account the predictions for the first to 
+                                        # MOVE THIS INTO PIPELINE
+                                        yb_next_item = torch.argmax(Xb[:, 1:, :].detach().clone(), dim=2)
+                                        logits_next_dev, logits_cls = model(Xb)
+                                        logits_next_dev = logits_next_dev[:, :-1, :]
+                                        loss = model.compute_loss(logits_next_dev, yb_next_item, 
+                                                                logits_cls, yb, 
+                                                                weight=class_weights
+                                        )
 
-                                    t_epoch.set_postfix(train_loss=loss.item())
-                                    mlflow.log_metric('train_loss', loss.item())
-                                continue
+                                        # loss = model.compute_loss(Xb, n_mc_samples=100)
+                                        # Case classification
+                                        # loss = model.compute_loss(
+                                        #    logits.view(-1, logits.shape[-1]),
+                                        #    yb.view(-1),
+                                        #    weight=class_weights
+                                        #)
+                                        
+                                        loss.backward()
+                                        optimizer.step()
+                                        
+
+                                        t_epoch.set_postfix(train_loss=loss.item())
+                                        mlflow.log_metric('train_loss', loss.item())
 
                                 Y_true = []
                                 Y_conf = []
@@ -225,16 +254,21 @@ def main():
                                     model.eval()
                                     for (Xb, yb) in val_loader:
                                         Xb, yb = Xb.to(DEVICE), yb.to(DEVICE)
-                                        logits = model(Xb)  # B, T, C
-                                        
-                                        # Expects N, C, therefore flatten logits 
-                                        loss = F.cross_entropy(logits.view(-1, logits.shape[-1]), yb.view(-1)) 
+                                        logits_next_dev, logits_cls = model(Xb)  # B, T, C
 
-                                        # (B, T, C) -> (B, T)
-                                        y_pred = torch.argmax(logits, dim=-1).detach().cpu()
-                                        # (B, T, C) -> (B, T, C)
-                                        y_conf = softmax(logits, dim=-1).detach().cpu()
-                                        # (B, T) -> (B, T)
+                                        yb_next_item = torch.argmax(Xb[:, 1:, :].detach().clone(), dim=2)
+                                        logits_next_dev = logits_next_dev[:, :-1, :]
+
+                                        loss = model.compute_loss(logits_next_dev, yb_next_item, 
+                                                                logits_cls, yb, 
+                                                                weight=class_weights
+                                        )
+
+                                        # (B,T,C) -> (B,T)
+                                        y_pred = torch.argmax(logits_cls, dim=-1).detach().cpu()
+                                        # (B,T,C) -> (B,T,C)
+                                        y_conf = softmax(logits_cls, dim=-1).detach().cpu()
+                                        # (B,T) -> (B,T)
                                         y_true = yb.detach().cpu()
 
                                         Y_true.append(y_true)
@@ -258,7 +292,7 @@ def main():
                                 Y_pred = torch.cat(Y_pred, dim=0)
                                 if window_type == 'many-to-many':
                                     # TODO refactor do without if
-                                    #Y_true has shape (B*n, T) -> flatten
+                                    #Y_true has shape (B*n,T) -> flatten
                                     Y_true = Y_true.flatten()
                                     Y_pred = Y_pred.flatten()
                                 Y_conf = torch.cat(Y_conf, dim=0)
@@ -278,35 +312,31 @@ def main():
                         mlflow.log_figure(fig, 'eval/cm.html')
 
                         # Retrieve time points where y is predicted from pipe
-                        Xt_val, _ = pipe[:-3].transform(X_val, y_val)
-                        Xt_val = pipe[-2:].transform(Xt_val, _)[0][:-1]
-                        times = Xt_val[:, -1, 0]
+                        times_prae_win = pipe.get_times()
+                        y_true_times = pipe['windows'].construct_target_times(times_prae_win)
 
                         # Recreate according 
-                        devs = Xt_val[:, -1, 1]
-                        # One hot encode
-                        n_values = np.max(devs) + 1
-                        values = list(devs)
-                        onehot = np.eye(n_values)[values]
-                        import pandas as pd
-                        columns = pipe['enc'].inverse_transform(np.arange(n_values))
-                        onehot = pd.DataFrame(onehot, columns=columns)
+                        Xt_prae_win, _ = pipe[:-2].transform(X_val, y_val)
+
+                        y_times, Xt_val_at_times = pipe.construct_y_times_and_X(X_val, y_val)
+                        Xt_val_at_times = pd.DataFrame(Xt_val_at_times, columns=pipe['windows'].feature_names_in_)
+
 
                         if window_type == 'many-to-many':
                             # Restore sequence length dimension since (B,T) -> (n*B,T) -> (n*B*T) where n is val-loader steps
                             # (n*B*T) -> (n*B,T) -> (n*B, 1) -> (n*B)Then get last elemnt of sequence1
                             Y_true = Y_true.view(-1, T)[:, [-1]].squeeze()
                             Y_pred = Y_pred.view(-1, T)[:, [-1]].squeeze()
-                            # (B, T, C) -> (B, 1, C)
+                            # (B,T,C) -> (B,1,C)
                             Y_conf = Y_conf[:, [-1], :].squeeze(1)
 
                         # Correct for last batch dropped 
-                        if len(times) > Y_true.shape[0]:
-                            offset = -(len(times) - Y_true.shape[0])
-                            times = times[:offset]
-                            onehot = onehot[:offset]
+                        if len(y_true_times) > Y_true.shape[0]:
+                            offset = -(len(y_true_times) - Y_true.shape[0])
+                            y_true_times = y_true_times[:offset]
+                            Xt_val_at_times = Xt_val_at_times[:offset]
 
-                        assert times.shape[0] == onehot.shape[0]
+                        assert y_true_times.shape[0] == Xt_val_at_times.shape[0]
 
 
                         y_conf = Y_conf.detach().numpy()
@@ -317,15 +347,19 @@ def main():
                         classes_ = val_loader.dataset.classes_
 
                         from pyadlml.dataset.plot.plotly.discrete import acts_and_devs
-                        f_and = acts_and_devs(onehot, y_true, y_pred, y_conf, classes_)
+                        f_and = acts_and_devs(Xt_val_at_times, y_true, y_pred, y_conf, classes_)
                         mlflow.log_figure(f_and, artifact_file='eval/val_predictions.html')
-                        f_and = acts_and_devs(onehot, y_true, y_pred, y_conf, classes_, times)
+                        f_and = acts_and_devs(Xt_val_at_times, y_true, y_pred, y_conf, classes_, y_true_times)
                         mlflow.log_figure(f_and, artifact_file='eval/val_predictions_time.html')
 
 
-                        print()
+                        # Compute additional online accuracies
+                        online_acc_macro = online_accuracy(y_true, y_pred, y_true_times, n_classes=len(classes_), average='macro')
+                        online_acc_micro = online_accuracy(y_true, y_pred, y_true_times, n_classes=len(classes_), average='micro')
+                        mlflow.log_metric('val_online_acc_micro', online_acc_micro)
+                        mlflow.log_metric('val_online_acc_macro', online_acc_macro)
 
-                        # TODO compute online accuracy
+
 
 
 
@@ -335,42 +369,81 @@ def main():
     trainable = TrainableDebug(exp_name='masterarbeit', ds_name=dataset)
 
 
+    #    model='Self Attentive Hawkes Process',
+    hp_pipe = Pipeline([
+            ('enc', IndexEncoder()),
+            ('drop_obs', DropColumn(VALUE)),
+            ('lbl', LabelMatcher()),
+            ('drop_time', DropTimeIndex(only_y=True)),
+            ('ts2seq', Timestamp2Seqtime()),
+            ('windows', EventWindow()),
+            ('passthrough', 'passthrough')
+            ]
+        )
+    #hparam_dict = dict(
+    #    #model='MLP',
+    #    model='Self Attentive Hawkes Process',
+    #    dim_embd=16,
+    #    batch_size=32,
+    #    #initial_lr=5e-5,
+    #    initial_lr=6e-5,
+    #    bias=False,
+    #    n_heads=8,
+    #    n_layer=4,
+    #    dropout=0.1,
+    #    pipe_params=dict(
+    #        lbl__other=True,
+    #        windows__rep = 'many-to-many',
+    #        windows__window_size = 100,
+    #    )
+    #)
+
+
+
     # Define Hyperparameter and parameters for mlflow
     # 4 layers -> dilation 2 -> 2^4=16
     # 4 layers -> dilation 3 -> 3^4=81
     # (dim, win, h) -> (2, 16, 68)
     # (dim, win, h) -> (3, 27, 68)
     hparam_dict = dict(
-        #model='MLP',
-        model='Self Attentive Hawkes Process',
-        dim_embd=16,
-        batch_size=32,
-        #initial_lr=5e-5,
-        initial_lr=6e-5,
-        bias=False,
-        n_heads=8,
-        n_layer=4,
-        dropout=0.1,
+        max_epochs=5, 
+        batch_size=10,
+        initial_lr=1e-4,
+
+        model_params=dict(
+            clf__name='DilatedNet',
+            dim_emb=20,
+            dim_hidden=100,
+            dilation_factor=2
+        ),
+
+        #model_params=dict(
+        #    clf__name='WaveNetModel',
+        #    clf__n_layers=5,
+        #    clf__n_blocks=2,
+        #    clf__in_channels=12,
+        #    clf__res_channels=32,
+        #    clf__end_channels=64,
+        #    clf__skip_channels=256,
+        #    clf__n_features=12,
+        #),
+
         pipe_params=dict(
             lbl__other=True,
-            windows__rep = 'many-to-many',
-            windows__window_size = 100,
+            windows__rep='many-to-one',
+            windows__window_size=100,
         )
     )
-
-    trainable.set_pipe(
-        Pipeline([
-            #('enc', StateVectorEncoder()),
-            #('tmp', KeepOnlyDevices(["Kitchen Door PIR"], ignore_y=True)),
-            ('enc', IndexEncoder()),
-            ('drop_obs', DropColumn(VALUE)),
-            ('lbl', LabelMatcher()),
-            ('drop_time', DropTimeIndex(only_y=True)),
-            ('ts2seq', Timestamp2Seqtime()),
-            ('windows', EventWindows()),
+    pipe_wvn2 = Pipeline([
+            ('enc', StateVectorEncoder(encode='changepoint')),
+            ('lbl', LabelMatcher(other=True)),
+            ('drop_time', DropTimeIndex()),
+            ('windows', EventWindow()),
             ('passthrough', 'passthrough')
             ]
         )
+    trainable.set_pipe(
+        pipe_wvn2
     )
 
     torch.backends.cudnn.allow_tf32 = True # allow tf32 on cudnn

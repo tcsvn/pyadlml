@@ -153,7 +153,7 @@ one activity is followed by another. There is no magic happening there. Pyadlml 
     # define pipeline
     steps = [
         ('sve', StateVectorEncoder(encode='raw')),      # encode device dataframe into state vectors
-        ('le', LabelEncoder(idle=True)),                # generate encoded labels
+        ('le', LabelEncoder(other=True)),                # generate encoded labels
         ('cast', DfCaster('df->np', 'df->np')),         # cast labels and raw representation to numpy arrays
         ('classifier', BernoulliHMM())                  # apply classifier to data
     ]
@@ -357,7 +357,7 @@ of different vector encodings.
     X = .fit_transform(data.df_devices)
 
     steps = [('sve', StateVectorEncoder()),
-            ('le', LabelEncoder(idle=True)),
+            ('le', LabelEncoder(other=True)),
             ('classifier', NODE()),
         ]
 

@@ -2,4 +2,4 @@
 #from pyadlml.model.hmm.hmm import BernoulliHMM
 
 from .mlp import MLP
-from .WaveNet import WaveNet
+from .WaveNet import DilatedModel, WaveNetModel

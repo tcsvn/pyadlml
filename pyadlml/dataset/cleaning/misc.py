@@ -1,5 +1,5 @@
 
-
+from copy import copy
 import numpy as np
 import pandas as pd
 from pyadlml.constants import ACTIVITY, BOOL, CAT, DEVICE, END_TIME, START_TIME, TIME, VALUE
@@ -14,10 +14,11 @@ def remove_days(df_devices, df_activities, days=[], offsets=[], shift='right', r
     ----------
     df_devices : pd.DataFrame
     df_activities : pd.DataFrame
-    days : list
-        List of strings
-    offsets : list
-        Offsets that are added to the corresponding days.
+    days : list of str, default=[]
+        List of strings with day-first format i.e. ['21.03.2023', '28.03.2023']. Also
+        accepts dateranges ['21.03.2023-25.03.2023', '29.03.2023']
+    offsets : list of str, default=[]
+        Offsets that are added to the days with the same index in the days parameter.
     shift : str, one of ['right', 'left']
         The set of devices/activities that is shifted. Is either the set 'right' to 
         the removed day, meaning days from the future are shifted to the past. Contrary,
@@ -34,11 +35,19 @@ def remove_days(df_devices, df_activities, days=[], offsets=[], shift='right', r
 
     assert shift in ['right', 'left']
 
-    # Add offsets to the days specified
-    for i in range(len(days)):
-        days[i] = str_to_timestamp(days[i])
-        if i < len(offsets):
-            days[i] = days[i] + pd.Timedelta(offsets[i])
+    # Pad offsets to the days specified
+    for _ in range(len(offsets), len(days)): 
+        offsets.append(pd.Timedelta('0s'))
+    new_days = []
+    for day, offset in zip(days, offsets):
+        if '-' in day:
+            rng = list(map(str_to_timestamp, day.split('-')))
+            tmp_days = pd.date_range(start=rng[0], end=rng[1])
+        else:
+            tmp_days = [str_to_timestamp(day)]
+        for d in tmp_days:
+            new_days.append(d + pd.Timedelta(offset))
+    days = new_days
 
     if shift == 'right':
         # Sort days from last to first
@@ -48,14 +57,28 @@ def remove_days(df_devices, df_activities, days=[], offsets=[], shift='right', r
         days = np.array(days)[np.argsort(days)]
     dtypes = infer_dtypes(df_devs)
 
-    from pyadlml.plot import plotly_activities_and_devices
+
+    new_days = []
+    td = pd.Timedelta('1D')
+    j = 0
+    for i in range(0,len(days)-1):
+        if days[i] + pd.Timedelta('1D') == days[i+1]:
+            td += pd.Timedelta('1D') 
+        else:
+            new_days.append((days[j], td))
+            j = i + 1
+            td = pd.Timedelta('1D')
+        if i == len(days)-2 and j == 0:
+            new_days = [(days[0], td)]
+    days = new_days
+
 
     # 1. remove iteratively the latest day and shift the succeeding part accordingly
-    for day_lwr_bnd in days:
+    for day_lwr_bnd, td in days:
 
         # when day is i.e. 2008-03.23 00:00:00 then day after will be 2008-03-24 00:00:00
         # these variables have to be used as only timepoints can be compared as seen below
-        day_uppr_bnd = day_lwr_bnd + pd.Timedelta('1D')
+        day_uppr_bnd = day_lwr_bnd + td
 
         # Remove devices events within the selected day
         mask_inside_day = (day_lwr_bnd < df_devs[TIME]) \
@@ -70,9 +93,9 @@ def remove_days(df_devices, df_activities, days=[], offsets=[], shift='right', r
         succeeding_devs = df_devs[succeeding_days].copy()
 
         if shift == 'right':
-            df_devs.loc[succeeding_days, TIME] = df_devs[TIME] - pd.Timedelta('1D')
+            df_devs.loc[succeeding_days, TIME] = df_devs[TIME] - td
         else:
-            df_devs.loc[preceeding_days, TIME] = df_devs[TIME] + pd.Timedelta('1D')
+            df_devs.loc[preceeding_days, TIME] = df_devs[TIME] + td
 
 
         # Get first device states from after and last device states from earlier
@@ -109,41 +132,34 @@ def remove_days(df_devices, df_activities, days=[], offsets=[], shift='right', r
         mask_special = (df_acts[START_TIME] < day_lwr_bnd) & (day_uppr_bnd < df_acts[END_TIME])
         if mask_special.any():
             if shift == 'right':
-                df_acts.loc[mask_special, END_TIME] = df_acts[END_TIME] - pd.Timedelta('1D')
+                df_acts.loc[mask_special, END_TIME] = df_acts[END_TIME] - td
             else:
-                df_acts.loc[mask_special, START_TIME] = df_acts[START_TIME] + pd.Timedelta('1D')
+                df_acts.loc[mask_special, START_TIME] = df_acts[START_TIME] + td
 
 
         df_acts['shifted'] = False
         if shift == 'right':
             # Shift Activities that start in or after the selected day by one day
             succeeding_days = (day_lwr_bnd <= df_acts[START_TIME]) & (day_uppr_bnd < df_acts[END_TIME])
-            df_acts.loc[succeeding_days, START_TIME] = df_acts[START_TIME] - pd.Timedelta('1D')
-            df_acts.loc[succeeding_days, END_TIME] = df_acts[END_TIME] - pd.Timedelta('1D')
+            df_acts.loc[succeeding_days, START_TIME] = df_acts[START_TIME] - td
+            df_acts.loc[succeeding_days, END_TIME] = df_acts[END_TIME] - td
             df_acts.loc[succeeding_days, 'shifted'] = True
         else:
             # Shift Activities that end in or prior the selected day by one day
             preceeding_days = (df_acts[START_TIME] <= day_lwr_bnd) & (df_acts[END_TIME] < day_uppr_bnd)
-            df_acts.loc[preceeding_days, START_TIME] = df_acts[START_TIME] + pd.Timedelta('1D')
-            df_acts.loc[preceeding_days, END_TIME] = df_acts[END_TIME] + pd.Timedelta('1D')
+            df_acts.loc[preceeding_days, START_TIME] = df_acts[START_TIME] + td
+            df_acts.loc[preceeding_days, END_TIME] = df_acts[END_TIME] + td
             df_acts.loc[preceeding_days, 'shifted'] = True
 
-        # Special case where one activity starts before the selected day and ends inside the selected day
-        # and there is no activity after the selected day
-        #  | day_before | Sel day      | day after
-        #     |-------------|
-        #    I can't just move the ending one day before as this would reverse START_TIME and END_TIME order
-        # -> The last activity ending is clipped to the start of the selected day
-        # TODO has to be done before any activity is shifted
-        #mask_last_true = pd.Series(np.zeros(len(df_acts), dtype=np.bool_))
-        #mask_last_true.iat[-1] = True
-        #mask_special = (df_acts[START_TIME] < day) & (df_acts[END_TIME] <= day_after) & mask_last_true
-        #if mask_special.any():
-        #    assert mask_special.sum() == 1
-        #    df_acts.loc[mask_special, END_TIME] = day
+        # Get such that day_lower bound marks the boundary where the shifted activities meet the
+        # rest and day_upper_bnd is the next day
         if shift == 'left':
-            day_lwr_bnd += pd.Timedelta('1D')
+            # Shift the past by one day 
+            day_lwr_bnd = copy(day_uppr_bnd)
             day_uppr_bnd += pd.Timedelta('1D')
+        else:
+            day_uppr_bnd = day_lwr_bnd + pd.Timedelta('1D')
+
 
         df_acts = df_acts.sort_values(by=START_TIME).reset_index(drop=True)
         # Merge activities from the day_before that overlap with the shifted activities from day after
@@ -179,11 +195,17 @@ def remove_days(df_devices, df_activities, days=[], offsets=[], shift='right', r
                 # if activities are the same, join them and remove second activity
                 # When activity is shifted from past, replace its end_time with the end_time 
                 # from the unmoved otherwise the start_time
-                replace_time = 1 if shift == 'right' else 0
-                df_acts.iat[idx_shifted, replace_time] = df_acts.iat[idx_other, replace_time]
+                if shift == 'left':
+                    st = df_acts.at[idx_shifted, START_TIME] 
+                    et = df_acts.at[idx_other, END_TIME] 
+                else:
+                    st = df_acts.at[idx_other, START_TIME]
+                    et = df_acts.at[idx_shifted, END_TIME]
+
+                df_acts.at[idx_shifted, START_TIME] = st
+                df_acts.at[idx_shifted, END_TIME] = et
                 df_acts = df_acts.drop(idx_other)
             else:
-                # Clip  both to midnight [!]
                 if shift == 'right':
                     # TODO refactor just swap indices (is it not verbose enough??)
                     df_acts.iat[idx_shifted, 0] = day_lwr_bnd
@@ -194,33 +216,49 @@ def remove_days(df_devices, df_activities, days=[], offsets=[], shift='right', r
 
 
         elif len(idxs) == 1:
+            from pyadlml.dataset._core.activities import _get_overlapping_activities
             # TODO, do i want this??? or only clip at midnight and not extending into the different days
             idx_overlapping = idxs[0]
 
-            # Check if the overlapping activity is part of the shifted or not
-            if df_acts.iat[idx_overlapping, 3]:
-                # Case when the shifted activities extend into the day before the selected day
-                last_unshifted_act = df_acts.loc[(df_acts[END_TIME] < day_lwr_bnd), :]\
-                                .copy().sort_values(by=END_TIME, ascending=True)\
-                                .iloc[-1, :]
-
-                # clip extending activities start_time to the end_time of the first shifted activity
-                df_acts.iat[idx_overlapping, 0] = last_unshifted_act[END_TIME] + pd.Timedelta('1ms')
+            ovs = _get_overlapping_activities(df_acts).index
+            if len(ovs) > 1 and df_acts.loc[ovs[1], ACTIVITY] == df_acts.loc[idx_overlapping, ACTIVITY]:
+                # Activity extends into day + are the same -> merge activity
+                # such that
+                df_acts.iat[ovs[1], 0] = df_acts.iat[idx_overlapping, 0]
+                df_acts = df_acts.drop(idx_overlapping)
             else:
-                # Case when the previous activities extends into the selected day
-                first_shifted_act = df_acts.loc[(df_acts[START_TIME] > day_lwr_bnd) & (df_acts[END_TIME] < day_uppr_bnd), :]\
-                                            .copy().sort_values(by=START_TIME, ascending=True)\
-                                            .iloc[0, :]
+                tmp = (df_acts['shifted'] != df_acts['shifted'].shift(1)) \
+                    | (df_acts['shifted'] != df_acts['shifted'].shift(-1))
+                tmp.iat[0], tmp.iat[-1] = False, False
+                df_acts.at[df_acts[tmp].index[0], END_TIME] = day_lwr_bnd
+                df_acts = df_acts.drop(df_acts[tmp].index[1])
+                # Check if the overlapping activity is part of the shifted or not
+                #if df_acts.iat[idx_overlapping, 3] and shift == 'right':
+                #    # Case when the shifted activities extend into the day before the selected day
+                #    last_unshifted_act = df_acts.loc[(df_acts[END_TIME] < day_lwr_bnd), :]\
+                #                    .copy().sort_values(by=END_TIME, ascending=True)\
+                #                    .iloc[-1, :]
 
-                # clip extending activities end_time to the start of the first shifted activity
-                df_acts.iat[idx_overlapping, 1] = first_shifted_act[START_TIME] - pd.Timedelta('1ms')
+                #    # clip extending activities start_time to the end_time of the first shifted activity
+                #    df_acts.iat[idx_overlapping, 0] = last_unshifted_act[END_TIME] + pd.Timedelta('1ms')
+                #else:
+                #    # Case when the previous activities extends into the selected day
+                #    first_shifted_act = df_acts.loc[(df_acts[START_TIME] > day_lwr_bnd) & (df_acts[END_TIME] < day_uppr_bnd), :]\
+                #                                .copy().sort_values(by=START_TIME, ascending=True)\
+                #                                .iloc[0, :]
 
-        df_acts = df_acts.drop(columns='shifted')
+                #    # clip extending activities end_time to the start of the first shifted activity
+                #    df_acts.iat[idx_overlapping, 1] = first_shifted_act[START_TIME] - pd.Timedelta('1ms')
+
+        df_acts = df_acts.drop(columns='shifted')\
+                         .sort_values(by=START_TIME)\
+                         .reset_index(drop=True)
+        from pyadlml.dataset._core.activities import _is_activity_overlapping
+        assert not _is_activity_overlapping(df_acts)
 
         from pyadlml.dataset._core.devices import correct_devices
         df_devs, corrections_dev = correct_devices(df_devs, retain_corrections)
 
-        #assert not _is_activity_overlapping(df_acts)
 
     if retain_corrections:
         try:

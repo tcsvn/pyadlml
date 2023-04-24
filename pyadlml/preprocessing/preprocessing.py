@@ -536,18 +536,22 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
         If true items that are not
 
     """
-    def __init__(self, other : bool = False):
+    def __init__(self, other : bool = False, use_dask=False):
         """
         Parameters
         ----------
         other : bool, default=False
             The other activity TODO
+        
+        dask : bool, default=False
+            Whether to para
 
         Returns
         -------
         self
         """
         self.other = other
+        self.use_dask = use_dask
 
     def fit(self, y, X):
         """
@@ -691,7 +695,7 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
             TODO asdf
         """
         # normal case where X an y are provided
-        return label_data(X, y, self.other)[[TIME, ACTIVITY]].copy()
+        return label_data(X, y, self.other, n_jobs=1000)[[TIME, ACTIVITY]].copy()
 
             # remove Nans before encoding the labels and then concatenate again
             #if not self.other:

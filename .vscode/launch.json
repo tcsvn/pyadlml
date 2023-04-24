@@ -1,0 +1,189 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "test",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/tmp4.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
+        {
+            "name": "train_debug.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/tools/train_debug.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                //"uci_ordonezB",
+                "joblib",
+                "-i",
+                "/media/data/code/adlml/pyadlml/data_cleansing/tuebingen_2023/df_dump.joblib",
+            ]
+        },
+        {
+            "name": "train_debug_sktime.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/tools/train_debug_sktime.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "uci_ordonezB",
+            ]
+        },
+        {
+            "name": "data_cleansing",
+            "type": "python",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/data_cleansing/tuebingen_2023",
+            "program": "${workspaceFolder}/data_cleansing/tuebingen_2023/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": []
+        },
+        {
+            "name": "dashboard",
+            "type": "python",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/tools/",
+            "program": "${workspaceFolder}/tools/dashboard.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                //"-d",
+                //"casas_tulum",
+                "-p",
+                "8070",
+                "-d",
+                "joblib",
+                "-i",
+                "/media/data/code/adlml/pyadlml/data_cleansing/tuebingen_2023/df_dump.joblib"
+            ]
+        },
+        {
+            "name": "label_data.py pre merge",
+            "type": "python",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/tools/",
+            "program": "${workspaceFolder}/tools/label_data.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "-p",
+                "8060",
+                "-d",
+                "joblib",
+                "-i",
+                "/media/data/code/adlml/pyadlml/data_cleansing/tuebingen_2023/df_dump_pre_act_relabel.joblib",
+                "-o",
+                "/media/data/code/adlml/pyadlml/data_cleansing/tuebingen_2023/",
+                "--out-act-file",
+                "relabel_activities_pre.py"
+            ]
+        },
+        {
+            "name": "label_data.py",
+            "type": "python",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/tools/",
+            "program": "${workspaceFolder}/tools/label_data.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "-p",
+                "8060",
+                "-d",
+                "joblib",
+                "-i",
+                "/media/data/code/adlml/pyadlml/data_cleansing/tuebingen_2023/df_dump_post_merge.joblib",
+                "-o",
+                "/media/data/code/adlml/pyadlml/data_cleansing/tuebingen_2023/"
+            ]
+        },
+        {
+            "name": "correct_activities.py",
+            "type": "python",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/tools/",
+            "program": "${workspaceFolder}/tools/correct_activities.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "-d",
+                "kasteren_C",
+                "-o",
+                "/tmp/pyadlml/"
+                //"/media/data/code/adlml/pyadlml/data_cleansing/uci_adl_binary_ordonezA/"
+            ]
+        },
+        {
+            "name": "clean_device_signals.py",
+            "type": "python",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/tools/",
+            "program": "${workspaceFolder}/tools/clean_device_signals.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "-p",
+                "8090",
+                "--dataset",
+                "kasteren_A",
+                //"--dataset",
+                //"joblib",
+                //"-i",
+                //"/media/data/code/adlml/pyadlml/data_cleansing/kasteren_2010_houseA/df_dump_pre_relabel.joblib",
+                "--device",
+                "Hall-Toilet door"
+            ]
+        },
+        {
+            "name": "example/iid",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/iid.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
+        {
+            "name": "train.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/tools/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "kasteren_A",
+            ]
+        },
+        {
+            "name": "hparam_sweep.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/tools/hparam_sweep.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "uci_ordonezB",
+            ]
+        },
+        {
+            "name": "create_dataset_info.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/generate_dataset_info.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "-d",
+                "aras",
+            ]
+        }
+    ]
+}
