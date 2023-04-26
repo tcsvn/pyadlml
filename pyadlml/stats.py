@@ -1,6 +1,8 @@
 from pyadlml.dataset.stats.acts_and_devs import (
     contingency_table_events as contingency_table_events,
-    contingency_table_states as contingency_table_states
+    contingency_table_states as contingency_table_states,
+    mutual_info_events as mutual_info_events,
+    mutual_info_states as mutual_info_states,
 )
 
 from pyadlml.dataset.stats.activities import (
@@ -20,4 +22,5 @@ from pyadlml.dataset.stats.devices import (
     events_one_day as device_events_one_day,
     event_count as device_event_count,
     state_cross_correlation as device_state_similarity,
+    firing_rate as device_firing_rate
 )

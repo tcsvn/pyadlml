@@ -36,7 +36,7 @@ _extras_all = [
 
 setup_args = dict(
     name="pyadlml",
-    version="0.0.7.20-alpha",
+    version="0.0.7.24alpha",
     url="https://github.com/tcsvn/pyadlml",
     author="Christian Meier",
     description="Sklearn flavored library containing numerous Activity of Daily Livings datasets, preprocessing methods, visualizations and models.",

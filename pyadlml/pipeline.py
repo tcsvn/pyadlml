@@ -22,6 +22,7 @@ from sklearn.pipeline import Pipeline as SklearnPipeline, _fit_one, _transform_o
 import numpy as np
 import pandas as pd
 
+
 __all__ = ['Pipeline', 'YTransformer', 'XAndYTransformer', 'XOrYTransformer',
            'EvalOnlyWrapper', 'TrainOnlyWrapper']
 
@@ -137,12 +138,17 @@ class Wrapper(object):
         return out
 
 
+    def __repr__(self) -> str:
+        return f"Wrapped({self.wr.__repr__()})"
+
+
 class TrainOrEvalOnlyWrapper(Wrapper):
     def __init__(self, wr):
         Wrapper.__init__(self, wr)
 
 
 class TrainOnlyWrapper(Wrapper):
+
     def __init__(self, wr):
         Wrapper.__init__(self, wr)
 
@@ -264,6 +270,43 @@ class Pipeline(SklearnPipeline):
 
     def is_in_prod_mode(self):
         return self._prod
+
+    def get_times(self):
+        from pyadlml.preprocessing.preprocessing import FinalTimeTransformer
+        for _, name, transform in self._iter():
+            if isinstance(transform, FinalTimeTransformer):
+                return transform.times_
+
+        raise ValueError('No transformer saved the forwarded times. Readjust the pipeline')
+
+
+    def construct_y_times_and_X(self, X_val, y_val):
+        from pyadlml.preprocessing.preprocessing import FinalTimeTransformer
+        from pyadlml.preprocessing.windows import Windows
+
+        final_time_name, win_name, win_pos = None, None, -1
+
+        for i, name, transform in self._iter():
+            if isinstance(transform, FinalTimeTransformer):
+                final_time_name = name
+            if isinstance(transform, Windows):
+                win_name = name
+                win_pos = i
+
+        assert final_time_name is not None, 'No final time transformer specified'
+
+        y_times = self[final_time_name].times_
+
+        if win_name is not None:
+            y_times = self[win_name].construct_target_times(y_times)
+            Xt_prae_win, _ = self[:win_pos-len(self)].transform(X_val, y_val)
+            X_at_times = self[win_name].construct_X_at_target(Xt_prae_win)
+        else:
+            X_at_times, _ = self[:-1].transform(X_val, y_val)
+
+        return y_times, X_at_times
+                        
+
 
     def __getitem__(self, ind):
         """Returns a sub-pipeline or a single esimtator in the pipeline
