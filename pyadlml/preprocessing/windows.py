@@ -643,7 +643,7 @@ class EventWindow(Windows, XOrYTransformer):
                .fit_transform(X, y)
 
     """
-    def __init__(self, rep: str ='many-to-many', window_size: int =10, stride: int=1):
+    def __init__(self, rep: str ='many-to-many', window_size: int =10, stride: int=1, use_stride_trick=False, dtype=None):
         """
         Parameters
         ----------
@@ -656,9 +656,12 @@ class EventWindow(Windows, XOrYTransformer):
         TransformerMixin.__init__(self)
         XOrYTransformer.__init__(self)
         Windows.__init__(self, rep, window_size, stride)
+        self.use_stride_trick = use_stride_trick
+        self.dtype = dtype
     
     def fit(self, X, y=None):
         self.feature_names_in_ = X.columns if isinstance(X, pd.DataFrame) else None
+        self.X_shape_ =(self._calc_new_N(X.shape[0]), self.window_size, *X.shape[1:])
         return self
 
 
@@ -711,15 +714,30 @@ class EventWindow(Windows, XOrYTransformer):
             X = X.to_numpy()
 
         n_prime = self._calc_new_N(X.shape[0])
-        new_shape =[n_prime, self.window_size, *X.shape[1:]]
+        new_shape =(n_prime, self.window_size, *X.shape[1:])
 
-        res = np.zeros(shape=new_shape, dtype=X.dtype)
+        dtype = X.dtype if self.dtype is None else self.dtype
+        from numpy.core._exceptions import _ArrayMemoryError
+        if self.use_stride_trick:
+            new_shape = (X.shape[0] - self.window_size + 1, self.window_size, *X.shape[1:])
+            strides = (X.strides[0],) + X.strides 
+            res = np.lib.stride_tricks.as_strided(X, shape=new_shape, strides=strides, 
+                                                  writeable=False)
+            return res
+        else:
+            try:
+                res = np.zeros(shape=new_shape, dtype=dtype)
+            except _ArrayMemoryError:
+                from pathlib import Path
+                self.fp_memmap_ = Path("/tmp/mmemap.dat")
+                print('Warning! memcache boolean dtype used. This may be wrong')
+                res = np.memmap(self.fp_memmap_, mode='w+', shape=new_shape, dtype=np.bool_)
 
-        for r, i in enumerate(range(0, n_prime*self.stride, self.stride)):
-            res[r] = X[i:i+self.window_size]
-            #res[r, :, :] = X[i:i+self.window_size, :]
+            for r, i in enumerate(range(0, n_prime*self.stride, self.stride)):
+                res[r] = X[i:i+self.window_size]
+                #res[r, :, :] = X[i:i+self.window_size, :]
 
-        return res.squeeze()
+            return res.squeeze()
 
     def _transform_Y(self, y):
         """
@@ -732,11 +750,12 @@ class EventWindow(Windows, XOrYTransformer):
         elif isinstance(y, pd.Series):
             y = y.to_numpy()
 
+        dtype = y.dtype if self.dtype is None else self.dtype
         if self.rep == self.REP_M2M:
             n_prime = self._calc_new_N(y.shape[0])
             new_shape = [n_prime, self.window_size, *y.shape[1:]]
 
-            res = np.zeros(shape=new_shape, dtype=y.dtype)
+            res = np.zeros(shape=new_shape, dtype=dtype)
 
             for r, i in enumerate(range(0, n_prime*self.stride, self.stride)):
                 res[r, :] = y[i: i+self.window_size]
@@ -745,7 +764,7 @@ class EventWindow(Windows, XOrYTransformer):
 
         elif self.rep == self.REP_M2O:
             res = y[np.arange(self.window_size-1, y.shape[0], self.stride)]
-            return res.squeeze()
+            return res.squeeze().astype(dtype)
 
     def nr_activities_per_win(self, y):
         """ How many different activities are present in a window
