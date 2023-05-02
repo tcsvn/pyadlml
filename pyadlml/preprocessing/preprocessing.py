@@ -9,14 +9,15 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from pyadlml.dataset._representations.raw import create_raw, resample_raw
 from pyadlml.dataset._representations.changepoint import create_changepoint, resample_changepoint
 from pyadlml.dataset._representations.lastfired import create_lastfired, resample_last_fired
-from pyadlml.dataset._core.acts_and_devs import label_data
+from pyadlml.dataset._core.acts_and_devs import label_data, label_data2
 from pyadlml.constants import ACTIVITY, TIME, DEVICE, VALUE, END_TIME, START_TIME, \
-                              ENC_RAW, ENC_LF, ENC_CP, REPS
+    ENC_RAW, ENC_LF, ENC_CP, REPS
 from pyadlml.dataset._core.devices import create_device_info_dict
 from pyadlml.pipeline import XOrYTransformer, XAndYTransformer, YTransformer
 from pyadlml.constants import OTHER
 
 __all__ = []
+
 
 class Df2Numpy(TransformerMixin, XOrYTransformer):
     """ Transforms dataframes to numpy arrays by respecting
@@ -33,10 +34,9 @@ class Df2Numpy(TransformerMixin, XOrYTransformer):
         if y is not None:
             self._y_columns = y.columns
 
-
     def fit_transform(self, X, y):
-        self.fit(X,y)
-        return self.transform(X,y)
+        self.fit(X, y)
+        return self.transform(X, y)
 
     def transform(self, X, y):
         # reorder columns
@@ -69,7 +69,6 @@ class DfCaster(TransformerMixin, XOrYTransformer):
         self._x_columns = X.columns
         if y is not None:
             self._y_columns = y.columns
-
 
     def fit_transform(self, X, y=None):
         self.fit(X, y=y)
@@ -121,10 +120,9 @@ class Df2Torch(TransformerMixin, XOrYTransformer):
         if y is not None:
             self._y_columns = y.columns
 
-
     def fit_transform(self, X, y):
-        self.fit(X,y)
-        return self.transform(X,y)
+        self.fit(X, y)
+        return self.transform(X, y)
 
     def transform(self, X, y):
         """
@@ -172,14 +170,15 @@ class RandomUnderSampler(TransformerMixin, XAndYTransformer):
         return self.transform(X, y)
 
     def transform(self, X, y):
-        return self.rus_.fit_resample(X,y)
+        return self.rus_.fit_resample(X, y)
 
 
 class DropNanRows(XOrYTransformer):
     """
     Drops all rows where the label or the data has a nan-value
     """
-    def fit(self, X,y=None):
+
+    def fit(self, X, y=None):
         return self
 
     def fit_transform(self, X, y=None):
@@ -206,7 +205,8 @@ class DropDuplicates(TransformerMixin, XOrYTransformer):
         BaseEstimator.__init__(self)
         XOrYTransformer.__init__(self)
 
-        self.ignore_columns = [ignore_columns] if not isinstance(ignore_columns, list) else ignore_columns
+        self.ignore_columns = [ignore_columns] if not isinstance(
+            ignore_columns, list) else ignore_columns
         self.merge_on = merge_on
 
     def fit(self, X, y=None):
@@ -244,8 +244,10 @@ class DropDuplicates(TransformerMixin, XOrYTransformer):
             X = X.drop_duplicates()
         return X, y
 
+
 class FinalTimeTransformer():
     pass
+
 
 class DropTimeIndex(TransformerMixin, XOrYTransformer, FinalTimeTransformer):
     def __init__(self, only_y=False):
@@ -272,6 +274,7 @@ class DropTimeIndex(TransformerMixin, XOrYTransformer, FinalTimeTransformer):
             y = y.loc[:, y.columns != TIME]
         return X, y
 
+
 class Encoder():
     features_ = None
 
@@ -293,14 +296,13 @@ class IndexEncoder():
     def transform(self, X, y=None):
         X[DEVICE] = self.lbl_enc.transform(X[DEVICE])
         return X
-    
+
     def inverse_transform(self, X):
-        return self.lbl_enc.inverse_transform(X) 
+        return self.lbl_enc.inverse_transform(X)
 
     def fit_transform(self, X, y=None):
         self.fit(X, y=None)
         return self.transform(X, y)
-
 
     def onehot(self, X: np.ndarray):
         """ Create one-hot encoding for given array of indices with
@@ -314,8 +316,6 @@ class IndexEncoder():
         return onehot
 
 
-
-
 class DropColumn():
 
     def __repr__(self):
@@ -325,11 +325,12 @@ class DropColumn():
         self.column_name = column_name
 
     def transform(self, X, y=None):
-        X = X.drop(columns=self.column_name) 
+        X = X.drop(columns=self.column_name)
         return X
 
     def fit_transform(self, X, y=None):
         return self.transform(X, y)
+
 
 class StateVectorEncoder(Encoder, BaseEstimator, TransformerMixin):
     """
@@ -390,10 +391,10 @@ class StateVectorEncoder(Encoder, BaseEstimator, TransformerMixin):
         self.encode = encode
         self.dt = dt
 
-
     @classmethod
     def _is_valid_encoding(cls, encoding):
         from itertools import chain, permutations
+
         def helper(iterable):
             s = list(iterable)
             return chain.from_iterable(permutations(s, r) for r in range(len(s)+1))
@@ -419,17 +420,18 @@ class StateVectorEncoder(Encoder, BaseEstimator, TransformerMixin):
         self
         """
         assert StateVectorEncoder._is_valid_encoding(self.encode)
-        self.n_features_in_ = 3
 
-        # create hashmap off all input features with mean for numerical
+        # Create dict off all input features with mean for numerical
         # and most common value for binary or categorical features
         self.data_info_ = create_device_info_dict(df_devs)
-        self.classes_ = [TIME] + list(self.data_info_.keys())
-
-        self.n_features_out =  copy(self.classes_)
+        self.n_features_in_ = 3
+        self.features_in_ = [TIME, DEVICE, VALUE]
+        self.feature_names_out_ = [TIME] + list(self.data_info_.keys())
+        self.n_features_out = len(self.feature_names_out_)
 
         return self
-    def transform(self, df_devs=None,y=None, initial_states={}):
+
+    def transform(self, df_devs=None, y=None, initial_states={}):
         """
         Discretize the data.
 
@@ -454,19 +456,20 @@ class StateVectorEncoder(Encoder, BaseEstimator, TransformerMixin):
         PRAEFIX_LF = 'lf_'
         PRAEFIX_CP = 'cp_'
 
-
         df_lst = []
         iters = self.encode.split('+')
         for enc in iters:
             if enc == ENC_RAW:
-                data = create_raw(df_devs, self.data_info_, dev_pre_values=initial_states)
+                data = create_raw(df_devs, self.data_info_,
+                                  dev_pre_values=initial_states)
                 if self.dt is not None:
                     data = resample_raw(data, df_dev=df_devs, dt=self.dt,
                                         most_likely_values=self.data_info_
                                         )
 
                 # convert boolean data into integers (1,0)
-                dev_bool = [dev for dev in self.data_info_.keys() if self.data_info_[dev]['dtype'] == 'boolean']
+                dev_bool = [dev for dev in self.data_info_.keys() if self.data_info_[
+                    dev]['dtype'] == 'boolean']
                 data[dev_bool] = data[dev_bool].astype(int)
 
             elif enc == ENC_CP:
@@ -475,15 +478,15 @@ class StateVectorEncoder(Encoder, BaseEstimator, TransformerMixin):
                     data = resample_changepoint(data, self.dt)
 
                 # set values that are missing in transform but were present when fitting to 0
-                dev_diff = set(self.classes_) - set(data.columns)
+                dev_diff = set(self.feature_names_out_) - set(data.columns)
                 if len(dev_diff) > 0:
                     for dev in dev_diff:
                         data[dev] = 0
 
                 # add prefix to make column names unique
                 if len(iters) > 1:
-                    data.columns = [TIME] + list(map(PRAEFIX_CP.__add__, data.columns[1:]))
-
+                    data.columns = [
+                        TIME] + list(map(PRAEFIX_CP.__add__, data.columns[1:]))
 
             elif enc == ENC_LF:
                 data = create_lastfired(df_devs)
@@ -491,14 +494,15 @@ class StateVectorEncoder(Encoder, BaseEstimator, TransformerMixin):
                     data = resample_last_fired(data, self.dt)
 
                 # set values that are missing in transform but were present when fitting to 0
-                dev_diff = set(self.classes_) - set(data.columns)
+                dev_diff = set(self.feature_names_out_) - set(data.columns)
                 if len(dev_diff) > 0:
                     for dev in dev_diff:
                         data[dev] = 0
 
                 # add prefix to make column names unique
                 if len(iters) > 1:
-                    data.columns = [TIME] + list(map(PRAEFIX_LF.__add__, data.columns[1:]))
+                    data.columns = [
+                        TIME] + list(map(PRAEFIX_LF.__add__, data.columns[1:]))
 
             else:
                 raise ValueError
@@ -507,8 +511,7 @@ class StateVectorEncoder(Encoder, BaseEstimator, TransformerMixin):
 
         df_res = pd.concat(df_lst, axis=1).reset_index()
         # Ensure to always return feature columns in order
-        return df_res[self.classes_]
-
+        return df_res[self.feature_names_out_]
 
     def fit_transform(self, df_devs, y=None):
         """
@@ -536,13 +539,16 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
         If true items that are not
 
     """
-    def __init__(self, other : bool = False, use_dask=False):
+
+    def __init__(self, other: bool = False, encode_labels=False, use_dask=False):
         """
         Parameters
         ----------
         other : bool, default=False
             The other activity TODO
-        
+
+        encode_labels : bool, default=False        
+
         dask : bool, default=False
             Whether to para
 
@@ -552,6 +558,7 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
         """
         self.other = other
         self.use_dask = use_dask
+        self.encode_labels = encode_labels
 
     def fit(self, y, X):
         """
@@ -573,8 +580,11 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
         if self.other:
             self.classes_.append(OTHER)
 
-        return self
+        if self.encode_labels: 
+            self.class2int_ = lambda x: {v:k for k, v in enumerate(self.classes_)}.get(x)
+            self.int2class_ = lambda x: {k:v for k, v in enumerate(self.classes_)}.get(x)
 
+        return self
 
     def fit_transform(self, y, X):
         """
@@ -597,7 +607,7 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
         return self.transform(y, X)
 
     # TODO mark for removal
-    #def inverse_transform(self, y, retain_index=False):
+    # def inverse_transform(self, y, retain_index=False):
     #    """
     #    Transform labels back to original encoding.
 
@@ -636,30 +646,27 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
     #    #    raise ValueError
 
     # TODO mark for removal
-    #def id2class(self, y: int) -> str:
+    # def id2class(self, y: int) -> str:
     #    """ Get class label corresponding to the numeric label.
     #    """
     #    raise NotImplementedError
-    #    if isinstance(y, int):        
+    #    if isinstance(y, int):
     #        return self.classes_[y]
     #    elif isinstance(y, np.ndarray):
     #        return np.vectorize(self.classes_.__getitem__)(y)
 
-
     # TODO mark for removal
-    #def class2id(self, y: str) -> int:
+    # def class2id(self, y: str) -> int:
     #    """ Get numeric label from class label.
     #    """
     #    raise NotImplementedError
 
-        
     def _is_iterable(self, z):
         try:
             iter(z)
             return True
         except:
             return False
-
 
     def _wrap_iterable(self, lst, iter):
         """ list 
@@ -676,6 +683,7 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
             return tmp
         else:
             raise NotImplementedError
+
 
 
     def transform(self, y: pd.DataFrame, X: pd.DataFrame = None) -> pd.DataFrame:
@@ -695,20 +703,24 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
             TODO asdf
         """
         # normal case where X an y are provided
-        return label_data(X, y, self.other, n_jobs=1000)[[TIME, ACTIVITY]].copy()
-
-            # remove Nans before encoding the labels and then concatenate again
-            #if not self.other:
-                #nan_mask = df[ACTIVITY].isna()
-                #df_san_nan = df[~nan_mask]
-                #encoded_labels = self.lbl_enc_.transform(df_san_nan[ACTIVITY].values)
-                #new_san_nan = pd.DataFrame(data={TIME: df_san_nan[TIME].values, ACTIVITY: encoded_labels})
-                #new_nans = pd.DataFrame(data={TIME: df[nan_mask][TIME].values, ACTIVITY: np.nan})
-                #return pd.concat([new_nans, new_san_nan]).sort_values(by=TIME)
-            #else:
-                #encoded_labels = self.lbl_enc_.transform(df[ACTIVITY].values)
-                #return pd.DataFrame(data={TIME: df[TIME].values, ACTIVITY: encoded_labels})
-        #else:
+        n_jobs = 1000 if self.use_dask else 1
+        df = label_data2(X, y, self.other)[
+            [TIME, ACTIVITY]].copy()
+        if self.encode_labels:
+            df[ACTIVITY] = df[ACTIVITY].map(self.class2int_)
+        return df
+        # remove Nans before encoding the labels and then concatenate again
+        # if not self.other:
+        # nan_mask = df[ACTIVITY].isna()
+        # df_san_nan = df[~nan_mask]
+        # encoded_labels = self.lbl_enc_.transform(df_san_nan[ACTIVITY].values)
+        # new_san_nan = pd.DataFrame(data={TIME: df_san_nan[TIME].values, ACTIVITY: encoded_labels})
+        # new_nans = pd.DataFrame(data={TIME: df[nan_mask][TIME].values, ACTIVITY: np.nan})
+        # return pd.concat([new_nans, new_san_nan]).sort_values(by=TIME)
+        # else:
+        # encoded_labels = self.lbl_enc_.transform(df[ACTIVITY].values)
+        # return pd.DataFrame(data={TIME: df[TIME].values, ACTIVITY: encoded_labels})
+        # else:
 
         #    if isinstance(y, str):
         #        # Case when a string is passed
@@ -720,6 +732,7 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
         #        return self._wrap_iterable(list(map(self.class2id, y)), y)
         #    else:
         #        raise ValueError('Passed weird argument!!!')
+
 
 class DropDevices(BaseEstimator, XAndYTransformer, TransformerMixin):
     def __init__(self, devices=[]):
@@ -734,7 +747,7 @@ class DropDevices(BaseEstimator, XAndYTransformer, TransformerMixin):
 
 
 class KeepOnlyDevices(BaseEstimator, XAndYTransformer, TransformerMixin):
-    def __init__(self, devices=[], ignore_y = False):
+    def __init__(self, devices=[], ignore_y=False):
         self.devices = devices
         self.ignore_y = ignore_y
 
@@ -744,14 +757,14 @@ class KeepOnlyDevices(BaseEstimator, XAndYTransformer, TransformerMixin):
     def transform(self, X, y):
         idxs = X[X[DEVICE].isin(self.devices)].index.values
         y = y[idxs] if not self.ignore_y else y
-        return X.loc[idxs,:], y
+        return X.loc[idxs, :], y
 
 
 class Timestamp2Seqtime(BaseEstimator, TransformerMixin, XOrYTransformer, FinalTimeTransformer):
     def __init__(self, dt='s'):
         super().__init__()
         self.dt = dt
-    
+
     @XOrYTransformer.x_or_y_transform
     def fit_transform(self, X, y=None):
         X, y = self.fit(X, y)
@@ -760,7 +773,6 @@ class Timestamp2Seqtime(BaseEstimator, TransformerMixin, XOrYTransformer, FinalT
     def fit(self, X, y=None):
         assert self.dt in ['ms', 's', 'm', 'h']
         return X, y
-
 
     def transform(self, X, y=None):
         """ Change every timestamp into unit i.e. seconds relative
@@ -779,12 +791,10 @@ class Timestamp2Seqtime(BaseEstimator, TransformerMixin, XOrYTransformer, FinalT
         return X, y
 
 
-
 class SkTime(BaseEstimator, XAndYTransformer):
 
     def __init__(self, rep='nested_univ'):
         self.rep = rep
-
 
     def fit(self, X, y):
         assert self.rep in ['nested_univ', 'numpy3d']
@@ -794,6 +804,6 @@ class SkTime(BaseEstimator, XAndYTransformer):
         return self.transform(X, y)
 
     def transform(self, X, y):
-        from pyadlml.dataset.util import to_sktime2        
+        from pyadlml.dataset.util import to_sktime2
         Xt, yt = to_sktime2(X, y, return_X_y=True)
         return Xt, yt

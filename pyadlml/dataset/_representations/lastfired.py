@@ -1,7 +1,6 @@
 import pandas as pd
 from pyadlml.constants import TIME, DEVICE, VALUE
 from pyadlml.dataset._representations.changepoint import create_changepoint
-from pyadlml.dataset._core.acts_and_devs import label_data
 
 
 def create_lastfired(df_devs):

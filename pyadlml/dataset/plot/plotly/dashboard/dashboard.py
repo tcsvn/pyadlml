@@ -12,7 +12,7 @@ from dask.delayed import delayed
 import numpy as np
 from pyadlml.constants import (ACTIVITY, DEVICE, END_TIME, START_TIME, TIME,
                                VALUE)
-from pyadlml.dataset._core.acts_and_devs import label_data
+from pyadlml.dataset._core.acts_and_devs import label_data, label_data2
 from pyadlml.dataset._core.activities import add_other_activity, create_empty_activity_df
 from pyadlml.dataset._datasets.aras import _create_device_df
 from pyadlml.dataset.plot.plotly.util import dash_get_trigger_element, dash_get_trigger_value
@@ -186,7 +186,7 @@ def _sel_avd_event_click(avd_event_select, curr_df_acts, curr_df_devs):
     df_acts = curr_df_acts[curr_df_acts[ACTIVITY] == activity].copy()
 
     # Select devices
-    sel_devices = label_data(df_devs, df_acts).dropna()
+    sel_devices = label_data2(df_devs, df_acts).dropna()
     sel_devices = sel_devices[[TIME, DEVICE, VALUE]]
 
     # Select activities

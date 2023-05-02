@@ -91,9 +91,9 @@ def coverage(df_activities, df_devices, datapoints=False):
         The percentage covered by activities
     """
     if datapoints:
-        from pyadlml.dataset._core.acts_and_devs import label_data
+        from pyadlml.dataset._core.acts_and_devs import label_data2
         df_acts = df_activities.copy()
-        lbl_devs = label_data(df_devices, df_acts)
+        lbl_devs = label_data2(df_devices, df_acts)
         nr_nans = lbl_devs[ACTIVITY].isna().sum()
         return 1 - nr_nans/len(lbl_devs)
     else:
