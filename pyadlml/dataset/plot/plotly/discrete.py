@@ -3,7 +3,8 @@ import numpy as np
 from plotly.subplots import make_subplots
 import pandas as pd
 
-from pyadlml.constants import ACTIVITY, STRFTIME_DATE
+from pyadlml.constants import ACTIVITY, END_TIME, START_TIME, STRFTIME_DATE
+from pyadlml.dataset._core.activities import is_activity_df
 from pyadlml.dataset.plot.plotly.acts_and_devs import legend_current_items
 from pyadlml.dataset.plot.plotly.util import remove_whitespace_around_fig, CatColMap
 
@@ -136,17 +137,24 @@ def _plot_confidences_into(fig, row, col, y_conf, activities, cat_col_map,
 def _plot_activities_into(fig, y, y_label, cat_col_map, row=1, col=1, time=None, activities=None):
         trace_lst = []
 
-        if activities is None:
-            activities = np.unique(y)
+        if is_activity_df(y):
+            df = y.copy()
+            df = df.rename(columns={START_TIME:'start', END_TIME:'end'})
+            df['lengths'] = (df['end'] - df['start'])/pd.Timedelta('1ms')
+            df['y_label'] = y_label
+        else:
 
-        df = pd.DataFrame(data=zip(*rlencode(y)), columns=['start', 'lengths', ACTIVITY])
-        df['y_label'] = y_label
-        if time is not None:
-            df = discreteRle2timeRle(df, time)
+            if activities is None:
+                activities = np.unique(y)
 
-        df['end'] = df['start'] + df['lengths']
-        if time is not None:
-            df['lengths' ] = df['lengths'].astype("timedelta64[ms]")
+            df = pd.DataFrame(data=zip(*rlencode(y)), columns=['start', 'lengths', ACTIVITY])
+            df['y_label'] = y_label
+            if time is not None:
+                df = discreteRle2timeRle(df, time)
+
+            df['end'] = df['start'] + df['lengths']
+            if time is not None:
+                df['lengths' ] = df['lengths'].astype("timedelta64[ms]")
 
         set_legendgroup_title = 'Activities'
         for act_name in activities:
@@ -283,12 +291,11 @@ def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, time
     """ Plot activities and devices for already 
 
     """
-    if isinstance(y_true, pd.Series)\
-        or isinstance(y_true, pd.DataFrame):
+    if (isinstance(y_true, pd.Series)\
+        or isinstance(y_true, pd.DataFrame)) and not is_activity_df(y_true):
         y_true = y_true.to_numpy().squeeze()
     
-    assert (y_true is None or isinstance(y_true, np.ndarray))\
-       and (y_pred is None or isinstance(y_pred, np.ndarray))\
+    assert (y_pred is None or isinstance(y_pred, np.ndarray))\
        and (y_conf is None or isinstance(y_conf, np.ndarray))
 
     if isinstance(X, np.ndarray):
