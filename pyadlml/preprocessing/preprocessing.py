@@ -1,6 +1,11 @@
 import pandas as pd
 import numpy as np
 from copy import copy
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.preprocessing import OneHotEncoder as SkOneHotEncoder
+from sklearn.compose import ColumnTransformer
+import pandas as pd
+
 
 from sklearn.utils.metaestimators import _safe_split
 import sklearn.preprocessing as preprocessing
@@ -580,9 +585,11 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
         if self.other:
             self.classes_.append(OTHER)
 
-        if self.encode_labels: 
-            self.class2int_ = lambda x: {v:k for k, v in enumerate(self.classes_)}.get(x)
-            self.int2class_ = lambda x: {k:v for k, v in enumerate(self.classes_)}.get(x)
+        if self.encode_labels:
+            self.class2int_ = lambda x: {
+                v: k for k, v in enumerate(self.classes_)}.get(x)
+            self.int2class_ = lambda x: {
+                k: v for k, v in enumerate(self.classes_)}.get(x)
 
         return self
 
@@ -683,8 +690,6 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
             return tmp
         else:
             raise NotImplementedError
-
-
 
     def transform(self, y: pd.DataFrame, X: pd.DataFrame = None) -> pd.DataFrame:
         """
@@ -807,3 +812,42 @@ class SkTime(BaseEstimator, XAndYTransformer):
         from pyadlml.dataset.util import to_sktime2
         Xt, yt = to_sktime2(X, y, return_X_y=True)
         return Xt, yt
+
+
+class OneHotEncoder(BaseEstimator, TransformerMixin):
+    def __init__(self, column_name, inplace=True, as_bool=False):
+        self.column_name = column_name
+        self.inplace = inplace
+        self.as_bool=as_bool
+
+    def fit(self, X, y=None):
+        self.one_hot_encoder_ = SkOneHotEncoder()
+        self.one_hot_encoder_.fit(
+            X[self.column_name].values.reshape(-1, 1))
+
+        self.categories = self.column_name + ':' + \
+            self.one_hot_encoder_.categories_[0]
+        return self
+
+    def fit_transform(self, X, y=None):
+        self.fit(X, y)
+        return self.transform(X, y)
+
+    def transform(self, X, y=None):
+        is_df = isinstance(X, pd.DataFrame)
+        assert is_df or isinstance(X, pd.Series)
+
+        if is_df:
+            ser = X[self.column_name]
+        else:
+            ser = X
+
+        encoded = self.one_hot_encoder_.transform(
+            ser.values.reshape(-1, 1)).toarray()
+        df_encoded = pd.DataFrame(encoded, columns=self.categories, 
+                                  dtype=bool if self.as_bool else int)
+
+        if self.inplace and is_df:
+            X = X.drop(columns=self.column_name)
+            X = pd.concat([X, df_encoded], axis=1)
+        return X

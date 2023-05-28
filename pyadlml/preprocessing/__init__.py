@@ -10,4 +10,5 @@ from .preprocessing import \
     KeepOnlyDevices, \
     DropDevices, \
     Identity, \
-    SkTime
+    SkTime, \
+    OneHotEncoder
