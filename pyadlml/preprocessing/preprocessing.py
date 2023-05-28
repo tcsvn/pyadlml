@@ -20,6 +20,12 @@ from pyadlml.constants import ACTIVITY, TIME, DEVICE, VALUE, END_TIME, START_TIM
 from pyadlml.dataset._core.devices import create_device_info_dict
 from pyadlml.pipeline import XOrYTransformer, XAndYTransformer, YTransformer
 from pyadlml.constants import OTHER
+from sklearn.base import BaseEstimator, TransformerMixin
+import numpy as np
+import pandas as pd
+from plotly import graph_objects as go
+from pyadlml.constants import *
+import matplotlib.pyplot as plt
 
 __all__ = []
 
@@ -851,3 +857,271 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             X = X.drop(columns=self.column_name)
             X = pd.concat([X, df_encoded], axis=1)
         return X
+class TimeEncoder(BaseEstimator, TransformerMixin):
+
+    @classmethod
+    def period_length(cls, res):
+        return int(pd.Timedelta('24h')/pd.Timedelta(res))
+    @classmethod
+    def time2res(cls, Xt, res):
+        if isinstance(Xt, pd.DataFrame):
+            ser = Xt[TIME]
+        else: 
+            ser = Xt
+        return (ser - ser.dt.floor('D'))/pd.Timedelta(res)
+
+class SineCosEncoder(TimeEncoder):
+    def __init__(self, res='100ms'):
+        super().__init__()
+        self.res = res
+
+    def fit(self, X=None, y=None):
+        self.res = pd.Timedelta(self.res)
+        self.lmbd_ = int(pd.Timedelta('24h')/self.res)
+        # Calc angular frequency
+        self.w_ = (2*np.pi)/self.lmbd_
+        return self
+
+    def transform(self, X, y=None):
+        assert 'time' in X.columns, "The DataFrame must include a 'time' column"
+        # Create a copy of the DataFrame to avoid changes to the original one
+        print('went here')
+        Xt = X.copy()
+
+        # We assume the time range represents a full day
+        Xt['time_in_res'] = (Xt[TIME] - Xt[TIME].dt.floor('D'))/self.res
+
+        # Add sin_emb and cos_emb columns to the DataFrame
+        Xt['time_sin'] = np.sin(self.w_*Xt['time_in_res'])
+        Xt['time_cos'] = np.cos(self.w_*Xt['time_in_res'])
+        
+        # Drop the temporary 'x' column
+        Xt = Xt.drop(columns=['time_in_res'])
+        
+        return Xt
+
+    def plotly(self, X):
+        assert hasattr(self, 'w_'), 'Fit the transformer before plotting.'
+        df = self.transform(X)
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=df[TIME], y=df['time_sin'], name='sin'))
+        fig.add_trace(go.Scatter(x=df[TIME], y=df['time_cos'], name='cos'))
+        fig.update_layout(yaxis=dict(scaleanchor="x", scaleratio=1))
+        return fig
+
+    def plotly_sin_vs_cos(self, X):
+        df = self.transform(X)
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=df['sin_emb'].values,
+            y=df['cos_emb'].values,
+            hovertemplate='Sin: %{x}<br>Cos %{y}<br>Time: %{customdata}',
+            mode='markers',
+            customdata=df.index.values)
+        )
+        fig.update_layout(
+            xaxis=dict(scaleanchor="y", scaleratio=1),
+            yaxis=dict(scaleanchor="x", scaleratio=1)
+        )
+        fig.show()
+
+class HalfSineEncoder(BaseEstimator, TransformerMixin):
+    def __init__(self, res='100ms'):
+        self.res = res
+
+    def fit(self, X=None, y=None):
+        self.res = pd.Timedelta(self.res)
+        self.lmbd_ = int(pd.Timedelta('24h')/self.res)
+        # Calc angular frequency
+        self.w_ = (np.pi)/self.lmbd_
+        return self
+
+    def transform(self, X, y=None):
+        assert 'time' in X.columns, "The DataFrame must include a 'time' column"
+        # Create a copy of the DataFrame to avoid changes to the original one
+        Xt = X.copy()
+
+        # We assume the time range represents a full day
+        Xt['time_in_res'] = (Xt[TIME] - Xt[TIME].dt.floor('D'))/self.res
+
+        # Add sin_emb and cos_emb columns to the DataFrame
+        Xt['time_sin'] = np.sin(self.w_*Xt['time_in_res'])
+        
+        # Drop the temporary 'x' column
+        Xt = Xt.drop(columns=['time_in_res'])
+        
+        return Xt
+
+    def plotly(self, X):
+        assert hasattr(self, 'w_'), 'Fit the transformer before plotting.'
+        df = self.transform(X)
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=df[TIME], y=df['time_sin'], name='sin'))
+        fig.update_layout(yaxis=dict(scaleanchor="x", scaleratio=1))
+        return fig
+
+class PositionalEncoding():
+
+    def __init__(self, d_dim, max_period=1e4):
+        self.d_dim = d_dim
+        self.max_period = max_period
+    
+    def fit(self, X=None, y=None):
+        self.min_freq = 1/self.max_period
+        return self
+
+    def get_angular_freqs(self):
+        i = np.arange(self.d_dim)//2
+        ws = np.power(self.min_freq, (2*i/self.d_dim))
+        return ws
+
+    def get_periods(self):
+        return 2*np.pi*self.get_angular_freqs()
+
+    def plot_angular_freq(self, scale='linear'):
+        assert scale in ['linear', 'log']
+
+        ws = self.get_angular_freqs()
+        fig, ax = plt.subplots()
+        ax.set_yscale(scale)
+        ax.plot(np.arange(len(ws)), ws, label=f'min{min(ws)}')
+        ax.set_xlabel('d - dimension')
+        ax.set_ylabel('$\omega(d)$')
+        ax.grid(True)
+        ax.legend()
+        return fig
+
+
+    def plot_waves(self, seq_length):
+        freqs = self.get_angular_freqs()
+
+        n_dim = len(freqs)
+        # Create a figure and an axis
+        fig, ax = plt.subplots(figsize=(10,10))
+
+        # Loop over the range of dimensions
+        x = np.linspace(0, seq_length, 1000)
+        for d in range(n_dim):   
+            oscil = np.sin if d%2==0 else np.cos     
+            ax.plot(x, oscil(freqs[d]*x)+2*d, label=f'pe dim={d}')
+        # Set the axis scales to be equal
+        #ax.set_aspect('equal', 'box')
+
+        # Show the legend
+        ax.legend()
+        return fig
+    
+    def transform(self, X, y=None):
+        """ 
+
+        sin(w*t) 
+        """
+        freqs = self.get_angular_freqs()
+        return self._pos_enc(freqs, X)
+
+    def _pos_enc(self, freqs, pos):
+        pos_enc = pos.reshape(-1,1)*freqs.reshape(1,-1)
+        pos_enc[:, ::2] = np.cos(pos_enc[:, ::2])
+        pos_enc[:, 1::2] = np.sin(pos_enc[:, 1::2])
+        return pos_enc
+    
+    def plot_pe_mat(self, X):
+        ### Plotting ####
+        mat = self.transform(X)
+        fig, ax = plt.subplots()
+        im = ax.pcolormesh(mat.T, cmap='RdBu')
+        ax.set_ylabel('Depth')
+        ax.set_ylim((0, self.d_dim))
+        ax.set_xlabel('Position')
+        ax.set_title("PE matrix heat map")
+        fig.colorbar(im)
+        return fig
+
+
+
+    def plot_dotproduct_similarity(self, X, pos):
+        # let's choose the first vector
+        pe = self.transform(X)
+        first_vector = pe[pos, :]
+
+        # compute the dot products
+        dot_products = np.dot(pe,first_vector)
+
+        # visualize with matplotlib
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.plot(dot_products)
+        ax.set_title(f'Dot products of the {pos} vector with rest')
+        ax.set_xlabel('Vector index')
+        ax.set_ylabel('Dot product')
+        ax.grid(True)
+        return fig
+
+
+class TimePositionalEncoding(PositionalEncoding):
+
+    def __init__(self, d_dim, max_period=pd.Timedelta('1D'), res=pd.Timedelta('8.64s')):
+        super().__init__(d_dim, max_period)  # Add super call to the parent class
+        self.res = res
+
+    def fit(self, X=None, y=None):
+        # Map timestamp values to a sequence 
+        self.res = pd.Timedelta(self.res)
+        self.max_period = self._td2num(self.max_period)
+        self.min_freq = 1/self.max_period
+        return self
+
+    def _td2num(self, x):
+        if isinstance(x, str):
+            x = pd.Timedelta(x)
+
+        x =  x/pd.Timedelta(self.res)
+        return x
+
+    def _num2td(self, x):
+        return pd.Timedelta(self.res)*x
+
+    def transform(self, X, y=None):
+        """ 
+
+        sin(w*t) 
+        """
+        if isinstance(X, pd.DataFrame):
+            X = X[TIME]
+
+        td = (X - pd.to_datetime(X.dt.date))
+        time_scaled = self._td2num(td).to_numpy()
+        freqs = self.get_angular_freqs()
+
+        return self._pos_enc(freqs, time_scaled)
+
+
+    
+
+class CyclicTimePositionalEncoding(TimePositionalEncoding):
+
+    def __init__(self, d_dim, max_period=pd.Timedelta('1D'), res=pd.Timedelta('8.64s'), base=2):
+        super().__init__(d_dim, max_period, res)  # Add super call to the parent class
+        self.base = base
+
+
+    def get_angular_freqs(self):
+        """period of length 1"""
+        i = np.arange(self.d_dim)//2
+        lmbd = self.max_period
+        f = 1/(lmbd/(np.minimum(self.base**i, lmbd)))
+        ws = 2*np.pi*f
+        return ws
+
+    def get_max_base(self):
+        for i in range(self.d_dim):
+            if min(self.base**i, self.max_period) == self.max_period:
+                return i
+            
+    def plotly_wave_length_per_dim(self):
+        from plotly import graph_objects as go
+        fig = go.Figure()
+        x = self.get_periods()*self.res
+        print(x)
+        x += pd.Timestamp('01.01.2000 00:00:00')
+        fig.add_trace(go.Scatter(y=np.arange(0, self.d_dim), x=x))
+        return fig
