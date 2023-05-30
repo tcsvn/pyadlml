@@ -883,9 +883,9 @@ class SineCosEncoder(TimeEncoder):
         return self
 
     def transform(self, X, y=None):
-        assert 'time' in X.columns, "The DataFrame must include a 'time' column"
+        assert TIME in X.columns, "The DataFrame must include a 'time' column"
+        
         # Create a copy of the DataFrame to avoid changes to the original one
-        print('went here')
         Xt = X.copy()
 
         # We assume the time range represents a full day
@@ -1059,9 +1059,10 @@ class PositionalEncoding():
 
 class TimePositionalEncoding(PositionalEncoding):
 
-    def __init__(self, d_dim, max_period=pd.Timedelta('1D'), res=pd.Timedelta('8.64s')):
+    def __init__(self, d_dim, max_period=pd.Timedelta('1D'), res=pd.Timedelta('8.64s'), inplace=True):
         super().__init__(d_dim, max_period)  # Add super call to the parent class
         self.res = res
+        self.inplace = inplace
 
     def fit(self, X=None, y=None):
         # Map timestamp values to a sequence 
@@ -1086,13 +1087,21 @@ class TimePositionalEncoding(PositionalEncoding):
         sin(w*t) 
         """
         if isinstance(X, pd.DataFrame):
-            X = X[TIME]
+            x = X[TIME]
 
-        td = (X - pd.to_datetime(X.dt.date))
+        assert isinstance(x, pd.Series), 'TimePosEnc: Sth. went wrong'
+        td = (x - pd.to_datetime(x.dt.date))
         time_scaled = self._td2num(td).to_numpy()
         freqs = self.get_angular_freqs()
 
-        return self._pos_enc(freqs, time_scaled)
+        # calc pos enc (T, d_dim)
+        xt = self._pos_enc(freqs, time_scaled)
+
+        if self.inplace:
+            xt = pd.DataFrame(data=xt, columns=[f'pe_dim_{i}' for i in range(0, self.d_dim)])
+            X = pd.concat([X, xt], axis=1)
+
+        return X
 
 
     

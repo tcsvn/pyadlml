@@ -11,4 +11,8 @@ from .preprocessing import \
     DropDevices, \
     Identity, \
     SkTime, \
-    OneHotEncoder
+    OneHotEncoder, \
+    SineCosEncoder, \
+    PositionalEncoding, \
+    TimePositionalEncoding, \
+    CyclicTimePositionalEncoding
