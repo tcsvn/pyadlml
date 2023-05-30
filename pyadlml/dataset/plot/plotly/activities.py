@@ -95,7 +95,52 @@ def _set_compact_title(fig: plotly.graph_objects.Figure, title: str) -> None:
 
 @check_scale
 def boxplot_duration(df_act, scale='linear', height=350, order='alphabetical') -> plotly.graph_objects.Figure:
-    """ Plot a boxplot of activity durations (mean) max min
+    """ 
+    Plots a boxplot of activity durations, including the mean, max, and min.
+
+    This function creates a boxplot of activity durations. It first calculates the duration distribution of 
+    activities, then orders the activities based on the specified rule. 
+    The boxplot is created using Plotly and is scaled along the x-axis according to the specified scale. 
+
+    Parameters
+    ----------
+    df_act : pandas.DataFrame
+        The DataFrame containing activity data. It must contain the following columns: 'start_time', 'end_time', 'activities'.
+
+    scale : str, optional
+        The scale to use for the x-axis of the boxplot. Default is 'linear'. The other options is 'log' for a logarithmic scale.
+
+    height : int, optional
+        The desired height of the plot in pixels. Default is 350.
+
+    order : str, optional
+        The rule for ordering the activities on the boxplot. Default is 'alphabetical'. 
+        Other rules may be defined in the function activity_order_by.
+
+    Returns
+    -------
+    plotly.graph_objects.Figure
+        The boxplot as a Plotly figure.
+
+    Raises
+    ------
+    ValueError
+        If the df_act DataFrame does not contain the required columns.
+
+    Note
+    ----
+    This function uses the `check_scale` decorator to validate the scale parameter before executing the function.
+
+    Example
+    -------
+    >>> df = pd.DataFrame({
+    ...     'START_TIME': pd.date_range(start='1/1/2022', periods=4),
+    ...     'END_TIME': pd.date_range(start='1/2/2022', periods=4),
+    ...     'total_time': [100, 200, 300, 400],
+    ...     'activity': ['Reading', 'Walking', 'Running', 'Sleeping'],
+    ...     'minutes': [60, 120, 180, 240]
+    ... })
+    >>> fig = boxplot_duration(df)
     """
     title = 'Duration'
 
@@ -128,9 +173,52 @@ def boxplot_duration(df_act, scale='linear', height=350, order='alphabetical') -
 
 @check_scale
 def bar_cum(df_act, scale='linear', height=350, order='alphabetical', no_title=False) -> plotly.graph_objects.Figure:
-    """ Plots the cumulated activities durations in a histogram for each activity
-    """
+    """ 
+    Plots the cumulated activities durations in a histogram for each activity.
 
+    This function creates a bar chart representing the cumulative duration of activities. It first calculates the total duration of 
+    each activity, then orders the activities based on a specified rule. The bar chart is created using Plotly and is scaled along 
+    the x-axis according to the specified scale. 
+
+    Parameters
+    ----------
+    df_act : pandas.DataFrame
+        The DataFrame containing activity data. It must contain the following columns: ACTIVITY and minutes.
+
+    scale : str, optional
+        The scale to use for the x-axis of the bar chart. Default is 'linear'. Other options may include 'log' for a logarithmic scale.
+
+    height : int, optional
+        The desired height of the plot in pixels. Default is 350.
+
+    order : str or list or np.ndarray, optional
+        The rule for ordering the activities on the bar chart. Default is 'alphabetical'. If a list or np.ndarray is passed, it is used as the order of activities.
+
+    no_title : bool, optional
+        If True, the plot will not have a title. Default is False.
+
+    Returns
+    -------
+    plotly.graph_objects.Figure
+        The bar chart as a Plotly figure.
+
+    Raises
+    ------
+    ValueError
+        If the df_act DataFrame does not contain the required columns.
+
+    Note
+    ----
+    This function uses the `check_scale` decorator to validate the scale parameter before executing the function.
+
+    Example
+    -------
+    >>> df = pd.DataFrame({
+    ...     'ACTIVITY': ['Reading', 'Walking', 'Running', 'Sleeping'],
+    ...     'minutes': [60, 120, 180, 240]
+    ... })
+    >>> fig = bar_cum(df)
+    """
     title = 'Duration'
     x_label = 'minutes' if scale == 'linear' else 'log minutes'
     df = activity_duration(df_act.copy())

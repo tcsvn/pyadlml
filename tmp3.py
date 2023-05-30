@@ -9,8 +9,8 @@ import torch
 
 from pyadlml.model import RNNClassifier
 from pyadlml.pipeline import TrainOrEvalOnlyWrapper, TrainOnlyWrapper, Pipeline
-from pyadlml.preprocessing import StateVectorEncoder, LabelEncoder, DropTimeIndex, DropDuplicates, Df2Torch, \
-    SequenceSlicer, DfCaster
+from pyadlml.preprocessing import StateVectorEncoder, LabelMatcher, DropTimeIndex, DropDuplicates, Df2Torch, \
+    EventWindow, DfCaster
 
 sys.path.append("../")
 from pyadlml.dataset import set_data_home, fetch_amsterdam, ACTIVITY
@@ -26,11 +26,11 @@ X_train, X_test, y_train, y_test = train_test_split(
     data.df_activities,
     split=0.8,
     temporal=False,
-    return_pre_vals=False)
+    return_init_states=False)
 
 
 from pyadlml.model_selection import GridSearchCV, TimeSeriesSplit
-from pyadlml.preprocessing import StateVectorEncoder, LabelEncoder, DropTimeIndex, CVSubset, SequenceSlicer, Df2Numpy, Df2Torch
+from pyadlml.preprocessing import StateVectorEncoder, LabelMatcher, DropTimeIndex, CrossValSplitter, EventWindow, Df2Numpy, Df2Torch
 from pyadlml.pipeline import Pipeline, TrainOnlyWrapper, EvalOnlyWrapper, TrainOrEvalOnlyWrapper
 from pyadlml.dataset import DEVICE
 
@@ -68,12 +68,12 @@ class AddBatchDim(TransformerMixin):
 
 steps = [
     ('sv_enc', StateVectorEncoder()),
-    ('lbl_enc', TrainOrEvalOnlyWrapper(LabelEncoder(idle=True))),
-    ('select_train', TrainOnlyWrapper(CVSubset())),
-    ('select_val', EvalOnlyWrapper(CVSubset())),
+    ('lbl_enc', TrainOrEvalOnlyWrapper(LabelMatcher(other=True))),
+    ('select_train', TrainOnlyWrapper(CrossValSplitter())),
+    ('select_val', EvalOnlyWrapper(CrossValSplitter())),
     ('drop_time', DropTimeIndex()),
     ('df->np', DfCaster('df->np', 'df->np')),
-    ('batcher', TrainOrEvalOnlyWrapper(SequenceSlicer(rep=seq_type, stride=3))),
+    ('batcher', TrainOrEvalOnlyWrapper(EventWindow(rep=seq_type, stride=3))),
    #('dim_fix', ProdOnlyWrapper(AddBatchDim())),
     ('classifier', classifier),
 ]

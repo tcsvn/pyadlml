@@ -1,8 +1,8 @@
 id,device
-0,input_boolean.motion_02
-1,input_boolean.motion_04
-2,input_boolean.motion_01
-3,input_boolean.light_03
-4,input_boolean.light_01
-5,input_boolean.motion_03
-6,input_boolean.light_02
+0,num_1
+1,bool_1
+2,bool_2
+3,bool_3
+4,cat_1
+5,cat_2
+

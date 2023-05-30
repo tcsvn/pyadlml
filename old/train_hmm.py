@@ -1,6 +1,4 @@
 from hassbrain_algorithm.controller import Controller, Dataset
-from hassbrain_algorithm.datasets._dataset import DataRep
-from hassbrain_algorithm.models.hmm.bhmm import BernoulliHMM
 
 # model names
 
@@ -62,8 +60,7 @@ def main():
     # set of observations
     ctrl = Controller()
     # todo this is only for testing interpretability
-    from scripts.test_model import BHMMTestModel
-    from scripts.test_model import BHSMMTestModel
+    from old.test_model import BHSMMTestModel
     #hmm_model = BHMMTestModel(ctrl)
     hmm_model = BHSMMTestModel(ctrl)
     ctrl.load_dataset_from_file(DATASET_FILE_PATH)

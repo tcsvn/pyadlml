@@ -234,7 +234,7 @@ def duration(df_acts=None, df_dur=None, scale='linear', other=False,
     if df_dur is None:
         if other:
             df_acts = add_other_activity(df_acts.copy())
-        df = activity_duration(df_acts, time_unit=freq)
+        df = activity_duration(df_acts, unit=freq)
     else:
         df = df_dur
     df = df.sort_values(by=[freq], axis=0)

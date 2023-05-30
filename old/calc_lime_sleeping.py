@@ -1,9 +1,7 @@
 from hassbrain_algorithm.controller import Controller, Dataset
-from hassbrain_algorithm.datasets._dataset import DataRep, _Dataset
-from hassbrain_algorithm.models.hmm.bhmm import BernoulliHMM
+from hassbrain_algorithm.datasets._dataset import _Dataset
 
 # model names
-from scripts.test_model import BHMMTestModel
 
 BHMM = 'bhmm'
 BHMMPC = 'bhmm_pc'

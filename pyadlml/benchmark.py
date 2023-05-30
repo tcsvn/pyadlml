@@ -1,6 +1,6 @@
 from pyadlml.model_selection import train_test_split, KFold, GridSearchCV
 from pyadlml.pipeline import Pipeline
-from pyadlml.preprocessing import LabelMatcher, CVSubset
+from pyadlml.preprocessing import LabelMatcher, CrossValSplitter
 
 
 def evaluate(data, param_grid, pipeline_steps, n_jobs=6):
@@ -55,7 +55,7 @@ def evaluate(data, param_grid, pipeline_steps, n_jobs=6):
     best_model_steps = []
     # remove the CSV splitter for the best model
     for name, step in pipeline_steps:
-        if isinstance(step, CVSubset):
+        if isinstance(step, CrossValSplitter):
             continue
         best_model_steps.append((name, step))
 

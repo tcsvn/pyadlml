@@ -1,5 +1,8 @@
 import sys
 import pathlib
+
+from testing.test_preprocessing import TestPreprocessingBase
+
 working_directory = pathlib.Path().absolute()
 script_directory = pathlib.Path(__file__).parent.absolute()
 sys.path.append(str(working_directory))
@@ -57,6 +60,29 @@ class TestDatasetUCIADLBinarySubjectB(TestDatasetBase):
     def _setUp(self):
         self.data = fetch_uci_adl_binary(keep_original=True, cache=False, subject=SUBJECT_B)
 
+class TestUCIADLBinarySubjectAPreprocessing(TestPreprocessingBase):
+    __test__ = True
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fetch_method = fetch_uci_adl_binary
+        self.data_home = TEST_DATA_HOME
+        self.df_activity_attrs = ['df_activities']
+        self.lst_activity_attrs = ['lst_activities']
+
+    def _setUp(self):
+        self.data = fetch_uci_adl_binary(cache=True, subject=SUBJECT_A)
+
+class TestUCIADLBinarySubjectBPreprocessing(TestPreprocessingBase):
+    __test__ = True
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fetch_method = fetch_uci_adl_binary
+        self.data_home = TEST_DATA_HOME
+        self.df_activity_attrs = ['df_activities']
+        self.lst_activity_attrs = ['lst_activities']
+
+    def _setUp(self):
+        self.data = fetch_uci_adl_binary(cache=True, subject=SUBJECT_B)
 
 if __name__ == '__main__':
     unittest.main()

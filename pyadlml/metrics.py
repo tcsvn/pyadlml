@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from pyadlml.constants import ACTIVITY, END_TIME, OTHER, START_TIME, TIME, OTHER_MIN_DIFF
 from pyadlml.dataset._core.activities import is_activity_df
-from pyadlml.util import _save_divide
+#from pyadlml.util import _save_divide
 
 
 """
@@ -37,7 +37,8 @@ def online_true_positive_rate(y_true: np.ndarray, y_pred: np.ndarray, times: np.
         cm = df_confmat.values
         tp = np.diag(cm)
         fn = cm.sum(axis=0) - tp
-        score = _save_divide(tp, (tp + fn))
+        #score = _save_divide(tp, (tp + fn))
+        score = tp, (tp + fn)
 
         return (score*(1/n_classes)).sum(-1)
 
@@ -122,7 +123,7 @@ def online_accuracy(y_true: np.ndarray, y_pred: np.ndarray, times: np.ndarray, n
         # tn = confmat.sum() - (fp + fn + tp)
 
         # Array of per class ppvs?
-        score = _save_divide(tp, (tp + fn))
+        score = tp, (tp + fn)
 
         # Normalize by each class by its
         normalized_score = (score*(1/n_classes)).sum(-1)

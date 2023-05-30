@@ -1,103 +1,97 @@
+import sys
 
-class Foo():
-    def __init__(self):
-        self.a = 1
-        self.b = -1
+from torch.autograd import Variable
 
-class Wrapper(object):
+from pyadlml.feature_extraction import EventTimeExtractor
 
-    def test_setter(self, val):
-        self._test = val
+sys.path.append("../")
+from pyadlml.dataset import set_data_home, fetch_amsterdam
+set_data_home('/tmp/pyadlml_data_home2')
+data = fetch_amsterdam(cache=True, retain_corrections=False)
+from timeit import default_timer as timer
 
-    def test_getter(self):
-        return self._test
+from pyadlml.preprocessing import StateVectorEncoder, EventWindow, LabelMatcher, Df2Torch, DropTimeIndex
+import numpy as np
+#res = '10s'
+dsize = 2000
 
-    def __init__(self, wrapped):
-        self.wrapped = wrapped
+#start = timer()
+enc = StateVectorEncoder(encode='raw')#, t_res=res)
+raw = enc.fit_transform(data.df_devices[:dsize])
 
-        # copy every attribute into the wrapper
-        for attr in self.wrapped.__dict__:
-            self._add_property(attr, wrapped)
+lbl_enc = LabelMatcher(other=True)
+lbls = lbl_enc.fit_transform(data.df_activities, raw)
+X, y = DropTimeIndex().fit_transform(raw, lbls)
+
+X, y = Df2Torch().fit_transform(X, y)
+
+sc = EventWindow(rep='many-to-many', window_size=4, stride=5)
+X, y = sc.fit_transform(X, y)
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class LSTMNetwork(nn.Module):
+    def __init__(self, input_size, n_classes, hidden_size=100, hidden_layers=1):
+        super().__init__()
+        self.num_layers = hidden_layers
+        self.hidden_size = hidden_size
+        self.lstm_layers = []
+        for i in range(hidden_layers):
+            self.lstm_layers.append(
+                nn.LSTMCell(input_size=input_size, hidden_size=hidden_size))
+
+        self.dense = nn.Linear(hidden_size, n_classes)
 
 
-        # create new child class for TrainAndEvalOnlyWrapper that inherits from the both
-        # this is done because an isinstance than can detect both
-        new_class_name = self.__class__.__name__ + self.wrapped.__class__.__name__
-        child_class = type(new_class_name, (self.__class__, wrapped.__class__), {})
-        self.__class__ = child_class
+    def forward(self, x):
+        outputs = []
 
-    def _add_property(self, attr_name, wrapped):
-        value = getattr(wrapped, attr_name)
-        # create local fget and fset functions
-        fget = lambda self: getattr(self, '_' + attr_name)
-        # set the attribute of the wrapped also
-        fset = lambda self, value: (setattr(wrapped, attr_name, value), setattr(self, '_' + attr_name, value))
+        # initalize the hidden states
+        h_0 = torch.zeros(x.shape[0], self.hidden_size)
+        c_0 = torch.zeros(x.shape[0], self.hidden_size)
+        h_t, c_t = h_0, c_0
 
-        # add property to self
-        setattr(self.__class__, attr_name, property(fget, fset))
-        # add corresponding local variable
-        setattr(self, '_' + attr_name, value)
+        for input_t in x.split(1, dim=1):
+            h_t, c_t = self.lstm_layers[0](input_t, (h_t, c_t))
+            out = self.relu(h_t)
+            out = self.dense(out)
+            out = torch.softmax(out, dim=-1)
+            outputs += [out]
+
+        outputs = torch.cat(outputs, dim=1)
+        return outputs
 
 
-class P(object):
-    def __init__(self):
-        self._add_property('x', 0)
+num_epochs = 1000       # 1000 epochs
+learning_rate = 0.001   # 0.001 lr
 
-    def _add_property(self, name, value):
-        # create local fget and fset functions
-        fget = lambda self: (print('entered get lambda'), getattr(self, '_' + name))[-1]
-        fset = lambda self, value: (print('entered set lambda'),setattr(self, '_' + name, value))
+input_size = 14     # number of features
+hidden_size = 20    # number of features in hidden state
+num_layers = 1      # number of stacked lstm layers
+num_classes = 8     # number of output classes
 
-        # add property to self
-        setattr(self.__class__, name, property(fget, fset))
-        # add corresponding local variable
-        setattr(self, '_' + name, value)
 
-    def f(self):
-        print('entered f1')
-        return self._x
+lstm1 = LSTMNetwork(input_size, num_classes, hidden_size, num_layers)
 
-    def f2(self, val):
-        print('entered f2')
-        self._x = val
+criterion = torch.nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(lstm1.parameters(), lr=learning_rate)
 
-    #x = property(lambda self: io(
-    #        print('entered get lambda'),
-    #        self._x
-    #    )[-1],
-    #    lambda self, value: (
-    #        print('entered set lambda'),
-    #        setattr(self, '_x', value)
-    #    )
-    #)
 
-#p = P()
-#print(type(p))
-#print(p.x)
-#p.x = 2
-#print(p.x)
-#
-#print('~'*10)
+for epoch in range(num_epochs):
+  outputs = lstm1.forward(X) #forward pass
+  optimizer.zero_grad() #calculate the gradient, manually setting to 0
 
-f = Foo()
-print('fa: ', f.a)
-print('fb: ', f.b)
-#
-w = Wrapper(f)
-print('iif: ', isinstance(w, Foo))
-print('iiw: ', isinstance(w, Wrapper))
+  # obtain the loss function
+  loss = criterion(outputs, y)
 
-print('wa: ', w.a)
-print('wb: ', w.b)
+  loss.backward() #calculates the loss of the loss function
 
-w.a = 10
+  optimizer.step() #improve from loss, i.e backprop
+  if epoch % 100 == 0:
+    print("Epoch: %d, loss: %1.5f" % (epoch, loss.item()))
 
-print('wa: ', w.a)
-print('fa: ', f.a)
-print(f.__dict__)
-print(w.__dict__)
-#w.test = 1
-#print('pt: ', w.test)
-##print(f.__dict__)
-##print(w.__dict__)
-#
+#end = timer()
+#td = end - start
+#print('size {} and res {} => elapsed time: {:.3f} seconds'.format(dsize, res, td)) # Time in seconds, e.g. 5.38091952400282

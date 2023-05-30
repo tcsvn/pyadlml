@@ -25,6 +25,7 @@ _extras_datavis = [
     'dash-bootstrap-components',
     'dash',
 ]
+o
 
 _extras_all = [
     'torch',
@@ -36,7 +37,7 @@ _extras_all = [
 
 setup_args = dict(
     name="pyadlml",
-    version="0.0.7.24alpha",
+    version="0.0.7.26alpha",
     url="https://github.com/tcsvn/pyadlml",
     author="Christian Meier",
     description="Sklearn flavored library containing numerous Activity of Daily Livings datasets, preprocessing methods, visualizations and models.",

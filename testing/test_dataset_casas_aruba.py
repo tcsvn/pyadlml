@@ -1,5 +1,8 @@
 import sys
 import pathlib
+
+from testing.test_preprocessing import TestPreprocessingBase
+
 working_directory = pathlib.Path().absolute()
 script_directory = pathlib.Path(__file__).parent.absolute()
 sys.path.append(str(working_directory))
@@ -31,6 +34,16 @@ class TestCasasArubaDataset(TestDatasetBase):
         self.num_devices = 31
         self.num_rec_devs = 31
         self.num_rec_binary_devs = 31
+
+
+class TestCasasArubaPreprocessing(TestPreprocessingBase):
+    __test__ = True
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fetch_method = fetch_casas_aruba
+        self.data_home = TEST_DATA_HOME
+        self.df_activity_attrs = ['df_activities']
+        self.lst_activity_attrs = ['lst_activities']
 
 if __name__ == '__main__':
     unittest.main()

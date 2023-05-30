@@ -1,5 +1,8 @@
 import sys
 import pathlib
+
+from testing.test_preprocessing import TestPreprocessingBase
+
 working_directory = pathlib.Path().absolute()
 script_directory = pathlib.Path(__file__).parent.absolute()
 sys.path.append(str(working_directory))
@@ -39,8 +42,15 @@ class TestDatasetAras(TestDatasetBase):
         print('act end: ', self.data.df_activities_res2.iloc[-1].end_time)
         print('dev start: ', self.data.df_devices.iloc[0].time)
         print('dev end: ', self.data.df_devices.iloc[-1].time)
-        exit(-1)
 
+class TestArasPreprocessing(TestPreprocessingBase):
+    __test__ = True
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fetch_method = fetch_aras
+        self.data_home = TEST_DATA_HOME
+        self.df_activity_attrs = ['df_activities']
+        self.lst_activity_attrs = ['lst_activities']
 
 if __name__ == '__main__':
     unittest.main()

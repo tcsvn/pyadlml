@@ -419,7 +419,7 @@ def hist_cum_duration(df_acts=None, lst_acts=None, df_dur=None, file_path=None):
 
     if df_dur is None:
         df_acts = add_other_activity(df_acts.copy())
-        df = activity_duration(df_acts, lst_acts=lst_acts, time_unit=freq)
+        df = activity_duration(df_acts, lst_acts=lst_acts, unit=freq)
     else:
         df = df_dur
     df = df.sort_values(by=[freq], axis=0)

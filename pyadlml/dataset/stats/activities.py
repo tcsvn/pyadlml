@@ -149,7 +149,7 @@ def activities_duration_dist(df_acts, lst_acts=None, freq='minutes', other=False
     df[freq] = df[diff].apply(_get_freq_func(freq))
     return df.sort_values(by=ACTIVITY)
 
-def activity_duration(df_acts, time_unit='minutes', normalize=False, other=False):
+def activity_duration(df_acts, unit='minutes', stat='sum', normalize=False, other=False):
     """ Compute how much time an inhabitant spent performing an activity
 
     Parameters
@@ -157,6 +157,8 @@ def activity_duration(df_acts, time_unit='minutes', normalize=False, other=False
     df_acts : pd.DataFrame
         All recorded activities from a dataset. Fore more information refer to the
         :ref:`user guide<activity_dataframe>`.
+    stat : str one of ['sum', 'mean', 'median']
+        The summary statistic to compute
     time_unit : str of {'minutes', 'seconds', 'hours', 'm', 's', 'h'}
         The unit of time the durations are returned in.
     normalize : bool, default=False
@@ -183,16 +185,26 @@ def activity_duration(df_acts, time_unit='minutes', normalize=False, other=False
     6         use toilet    195.249567
 
     """
-    df = activities_duration_dist(df_acts, freq=time_unit, other=other)
+    assert stat in ['sum', 'mean', 'median', 'std']
+    df = activities_duration_dist(df_acts, freq=unit, other=other)
     if df.empty:
         raise ValueError("no activity was recorded")
-    df = df.groupby(ACTIVITY).sum().reset_index()
-    df.columns = [ACTIVITY, time_unit]
+    grouped = df.groupby(ACTIVITY)
+    if stat == 'sum':
+        df = grouped.sum()
+    elif stat == 'mean':
+        df = grouped.mean()
+    elif stat == 'std':
+        df = grouped.std()
+    else:
+        df = grouped.median()
+    df = df.reset_index()
+    df.columns = [ACTIVITY, unit]
 
     # compute fractions of activities to each other
     if normalize:
-        normalize = df[time_unit].sum()
-        df[time_unit] = df[time_unit].apply(lambda x: x / normalize)
+        normalize = df[unit].sum()
+        df[unit] = df[unit].apply(lambda x: x / normalize)
 
     return df.sort_values(by=ACTIVITY)
 
@@ -241,7 +253,7 @@ def activities_count(df_acts: pd.DataFrame) -> pd.DataFrame:
     return df.sort_values(by=ACTIVITY)
 
 
-def activities_transitions(df_acts):
+def activities_transitions(df_acts, other=False):
     """  Compute a transition matrix that displays how often one
     activity was followed by another.
 
@@ -278,6 +290,10 @@ def activities_transitions(df_acts):
     """
 
     df = df_acts.copy()
+
+    if other:
+        df = add_other_activity(df)
+
     df = df[[ACTIVITY]]
     df['act_after'] = df[ACTIVITY].shift(-1)
     df = pd.crosstab(df[ACTIVITY], df['act_after'])

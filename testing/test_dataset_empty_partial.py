@@ -39,7 +39,7 @@ class TestEmptyDataset(unittest.TestCase):
 
     def test_stats_activities(self):
         from pyadlml.dataset.stats.activities import activities_dist, activities_count, \
-            activities_transitions, activity_durations
+            activities_transitions, activity_duration
         df = self.data.df_activities_one
         lst = self.data.lst_activities
 
@@ -50,7 +50,7 @@ class TestEmptyDataset(unittest.TestCase):
         assert len(act_trans) == len(lst)
         assert act_trans.values.sum() == 0.0
 
-        act_durs = activity_durations(df, lst)
+        act_durs = activity_duration(df, lst)
         assert len(act_durs) == len(lst)
         assert act_durs['minutes'].values.sum() == 0.0
 
@@ -60,32 +60,32 @@ class TestEmptyDataset(unittest.TestCase):
 
 
     def test_plot_activities(self):
-        from pyadlml.dataset.plot.activities import boxplot_duration, \
-            heatmap_transitions, hist_cum_duration, ridge_line, hist_counts
+        from pyadlml.dataset.plot.activities import boxplot, \
+            transitions, total_duration, density_one_day, counts
 
         df = self.data.df_activities_one
         lst = self.data.lst_activities
 
-        hist_counts(df)
-        hist_counts(df, lst_act=lst)
+        counts(df)
+        counts(df, lst_acts=lst)
 
-        boxplot_duration(df)
-        boxplot_duration(df, lst_act=lst)
-
-        try:
-            hist_cum_duration(df)
-        except ValueError:
-            pass
-        hist_cum_duration(df, act_lst=lst)
-
-        heatmap_transitions(df)
-        heatmap_transitions(df, lst_act=lst)
+        boxplot(df)
+        boxplot(df, lst_acts=lst)
 
         try:
-            ridge_line(df)
+            total_duration(df)
         except ValueError:
             pass
-        ridge_line(df, lst_act=lst, n=10)
+        total_duration(df, lst_acts=lst)
+
+        transitions(df)
+        transitions(df, lst_acts=lst)
+
+        try:
+            density_one_day(df)
+        except ValueError:
+            pass
+        density_one_day(df, lst_acts=lst, n=10)
 
 class TestPartialDataset(unittest.TestCase):
     def setUp(self):
@@ -108,7 +108,7 @@ class TestPartialDataset(unittest.TestCase):
 
     def test_stats_activities(self):
         from pyadlml.dataset.stats.activities import activities_dist, activities_count, \
-            activities_transitions, activity_durations
+            activities_transitions, activity_duration
         df = self.data.df_activities_admin
         lst = self.data.lst_activities
 
@@ -123,9 +123,9 @@ class TestPartialDataset(unittest.TestCase):
         act_trans = activities_transitions(df)
         assert len(act_trans) == 2
 
-        act_durs = activity_durations(df, lst)
+        act_durs = activity_duration(df, lst)
         assert len(act_durs) == len(lst)
-        act_durs = activity_durations(df)
+        act_durs = activity_duration(df)
         assert len(act_durs) == 2
 
         act_dist = activities_dist(df, lst, n=100)
@@ -136,89 +136,89 @@ class TestPartialDataset(unittest.TestCase):
         assert len(act_dist) == 100
 
     def test_stats_devices(self):
-        from pyadlml.dataset.stats.devices import device_tcorr, devices_trigger_count, \
-            device_triggers_one_day, trigger_time_diff, devices_on_off_stats, duration_correlation
+        from pyadlml.dataset.stats.devices import event_cross_correlogram, event_count, \
+            events_one_day, inter_event_intervals, on_off_stats, state_cross_correlation
 
         df = self.data.df_devices
         lst = self.data.lst_devices
         recorded_devs = 5 # only those devices have an entry in devices.csv
 
         #tcorr = device_tcorr(df)
-        tcorr = device_tcorr(df, lst)
+        tcorr = event_cross_correlogram(df, lst)
         assert tcorr.shape[0] == len(lst) and tcorr.shape[1] == len(lst)
 
-        trigg_c = devices_trigger_count(df)
+        trigg_c = event_count(df)
         assert len(trigg_c) == recorded_devs
-        trigg_c = devices_trigger_count(df, lst)
+        trigg_c = event_count(df, lst)
         assert len(trigg_c) == len(lst)
 
-        trigg_od = device_triggers_one_day(df)
+        trigg_od = events_one_day(df)
         assert len(trigg_od.columns) == recorded_devs
-        trigg_od = device_triggers_one_day(df,  lst)
+        trigg_od = events_one_day(df, lst)
         assert len(trigg_od.columns) == len(lst)
 
-        trigg_td = trigger_time_diff(df)
+        trigg_td = inter_event_intervals(df)
         assert len(trigg_td) == len(df) - 1
 
-        onoff = devices_on_off_stats(df)
+        onoff = on_off_stats(df)
         assert len(onoff) == recorded_devs
-        onoff = devices_on_off_stats(df, lst)
+        onoff = on_off_stats(df, lst)
         assert len(onoff) == len(lst)
 
-        dc = duration_correlation(df)
+        dc = state_cross_correlation(df)
         assert len(dc) == recorded_devs
-        dc = duration_correlation(df, lst)
+        dc = state_cross_correlation(df, lst)
         assert len(dc) == len(lst)
 
 
     def test_plot_activities(self):
-        from pyadlml.dataset.plot.activities import activities_duration_dist, boxplot_duration, \
-            heatmap_transitions, hist_cum_duration, ridge_line, hist_counts
+        from pyadlml.dataset.plot.activities import activities_duration_dist, boxplot, \
+            transitions, total_duration, density_one_day, counts
 
         df = self.data.df_activities_admin
         lst = self.data.lst_activities
 
-        hist_counts(df)
-        hist_counts(df, lst_act=lst)
+        counts(df)
+        counts(df, lst_acts=lst)
 
-        boxplot_duration(df)
-        boxplot_duration(df, lst_act=lst)
+        boxplot(df)
+        boxplot(df, lst_acts=lst)
 
-        hist_cum_duration(df)
-        hist_cum_duration(df, act_lst=lst)
+        total_duration(df)
+        total_duration(df, lst_acts=lst)
 
-        heatmap_transitions(df)
-        heatmap_transitions(df, lst_act=lst)
+        transitions(df)
+        transitions(df, lst_acts=lst)
 
-        ridge_line(df)
-        ridge_line(df, lst_act=lst, n=10)
+        density_one_day(df)
+        density_one_day(df, lst_acts=lst, n=10)
 
     def test_plot_devices(self):
-        from pyadlml.dataset.plot.devices import hist_counts, heatmap_trigger_one_day, heatmap_trigger_time,\
-           hist_on_off, boxplot_on_duration, heatmap_cross_correlation, hist_trigger_time_diff
+        from pyadlml.dataset.plot.devices import event_count, event_density_one_day, states_cross_correlation,\
+           state_fractions, state_boxplot, state_cross_correlation, inter_event_intervals
 
         df = self.data.df_devices
         lst = self.data.lst_devices
 
-        hist_counts(df)
-        hist_counts(df_dev=df, lst_dev=lst)
+        event_count(df)
+        event_count(df_devs=df, lst_devs=lst)
 
-        heatmap_trigger_one_day(df)
-        heatmap_trigger_one_day(df, lst_dev=lst)
+        event_density_one_day(df)
+        event_density_one_day(df, lst_devs=lst)
 
-        heatmap_trigger_time(df)
-        heatmap_trigger_time(df, lst_dev=lst)
+        states_cross_correlation(df)
+        states_cross_correlation(df, lst_devs=lst)
 
-        hist_trigger_time_diff(df)
+        inter_event_intervals(df)
 
-        hist_on_off(df)
-        hist_on_off(df, lst_dev=lst)
+        state_fractions(df)
+        state_fractions(df, lst_devs=lst)
 
-        boxplot_on_duration(df)
-        boxplot_on_duration(df, lst_dev=lst)
+        state_boxplot(df)
+        state_boxplot(df, lst_devs=lst)
 
-        heatmap_cross_correlation(df)
-        heatmap_cross_correlation(df, lst_dev=lst)
+        state_cross_correlation(df)
+        state_cross_correlation(df, lst_devs=lst)
 
 
 if __name__ == '__main__':

@@ -1,9 +1,0 @@
-pandas
-numpy
-sklearn
-joblib
-mega.py
-dask[complete]
-matplotlib
-scipy
-sqlalchemy

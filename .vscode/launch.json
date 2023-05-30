@@ -20,6 +20,7 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [
+                "-d",
                 //"uci_ordonezB",
                 "joblib",
                 "-i",

@@ -1,10 +1,7 @@
 from hassbrain_algorithm.controller import Controller, Dataset
-from hassbrain_algorithm.datasets._dataset import DataRep
-from hassbrain_algorithm.models.hmm.bhmm import BernoulliHMM
 
 # model names
-from scripts.test_model import BHMMTestModel
-from scripts.test_model import BHSMMTestModel
+from old.test_model import BHMMTestModel
 
 BHMM = 'bhmm'
 BHMMPC = 'bhmmpc'
@@ -79,7 +76,7 @@ MD_FEATURE_IMP_PLT_FILE_PATH = MODEL_FOLDER_PATH + '/' + MODEL_NAME + '.feature_
 def main():
     ctrl = Controller()
     ctrl.load_dataset_from_file(DATASET_FILE_PATH)
-    from scripts.test_model import BHSMMTestModel
+    from old.test_model import BHSMMTestModel
     from hassbrain_algorithm.models.hmm.bhmm_hp import BernoulliHMM_HandcraftedPriors
     from hassbrain_algorithm.models.tads import TADS
 

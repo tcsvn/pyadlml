@@ -962,9 +962,10 @@ class HalfSineEncoder(BaseEstimator, TransformerMixin):
 
 class PositionalEncoding():
 
-    def __init__(self, d_dim, max_period=1e4):
+    def __init__(self, d_dim, max_period=1e4, inplace=True):
         self.d_dim = d_dim
         self.max_period = max_period
+        self.inplace = inplace
     
     def fit(self, X=None, y=None):
         self.min_freq = 1/self.max_period
@@ -1011,13 +1012,28 @@ class PositionalEncoding():
         ax.legend()
         return fig
     
-    def transform(self, X, y=None):
+    def transform(self, X, y=None, inplace=None):
         """ 
 
         sin(w*t) 
         """
+        inplace = inplace if inplace is not None else self.inplace
+
         freqs = self.get_angular_freqs()
-        return self._pos_enc(freqs, X)
+        if isinstance(X, pd.DataFrame):
+            x = X[TIME].values
+        else:
+            x = X
+        assert isinstance(x, np.ndarray), 'DEBUG'
+
+        xt = self._pos_enc(freqs, x)
+        if inplace:
+            xt = pd.DataFrame(data=xt, columns=[f'pe_dim_{i}' for i in range(0, self.d_dim)])
+            X = pd.concat([X, xt], axis=1)
+        else:
+            X = xt 
+        return X
+
 
     def _pos_enc(self, freqs, pos):
         pos_enc = pos.reshape(-1,1)*freqs.reshape(1,-1)
@@ -1027,7 +1043,8 @@ class PositionalEncoding():
     
     def plot_pe_mat(self, X):
         ### Plotting ####
-        mat = self.transform(X)
+
+        mat = self.transform(X, inplace=False)
         fig, ax = plt.subplots()
         im = ax.pcolormesh(mat.T, cmap='RdBu')
         ax.set_ylabel('Depth')
@@ -1041,7 +1058,8 @@ class PositionalEncoding():
 
     def plot_dotproduct_similarity(self, X, pos):
         # let's choose the first vector
-        pe = self.transform(X)
+
+        pe = self.transform(X, inplace=False)
         first_vector = pe[pos, :]
 
         # compute the dot products
@@ -1081,11 +1099,13 @@ class TimePositionalEncoding(PositionalEncoding):
     def _num2td(self, x):
         return pd.Timedelta(self.res)*x
 
-    def transform(self, X, y=None):
+    def transform(self, X, y=None, inplace=None):
         """ 
 
         sin(w*t) 
         """
+        inplace = self.inplace if inplace is None else inplace
+
         if isinstance(X, pd.DataFrame):
             x = X[TIME]
 
@@ -1097,11 +1117,11 @@ class TimePositionalEncoding(PositionalEncoding):
         # calc pos enc (T, d_dim)
         xt = self._pos_enc(freqs, time_scaled)
 
-        if self.inplace:
+        if inplace:
             xt = pd.DataFrame(data=xt, columns=[f'pe_dim_{i}' for i in range(0, self.d_dim)])
-            X = pd.concat([X, xt], axis=1)
+            xt = pd.concat([X, xt], axis=1)
 
-        return X
+        return xt
 
 
     
@@ -1122,15 +1142,12 @@ class CyclicTimePositionalEncoding(TimePositionalEncoding):
         return ws
 
     def get_max_base(self):
-        for i in range(self.d_dim):
-            if min(self.base**i, self.max_period) == self.max_period:
-                return i
+        return np.floor(np.log10(self.max_period)/np.log10(self.base)).astype(int)
             
     def plotly_wave_length_per_dim(self):
         from plotly import graph_objects as go
         fig = go.Figure()
         x = self.get_periods()*self.res
-        print(x)
         x += pd.Timestamp('01.01.2000 00:00:00')
         fig.add_trace(go.Scatter(y=np.arange(0, self.d_dim), x=x))
         return fig

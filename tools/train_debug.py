@@ -366,7 +366,7 @@ def main():
 
 
 
-    trainable = TrainableDebug(exp_name='masterarbeit', ds_name=dataset)
+    trainable = TrainableDebug(exp_name='masterarbeit', ds_name=dataset, ds_ident=args.ident)
 
 
     #    model='Self Attentive Hawkes Process',
