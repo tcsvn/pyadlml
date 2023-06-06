@@ -231,8 +231,7 @@ def discreteRle2timeRle(df, time):
            .rename(columns={'start_time':'start', 'lengths_time':'lengths'})
 
 
-
-def _plot_devices_into(fig, X, cat_col_map, row, col, time):
+def _plot_devices_into(fig, X, cat_col_map, row, col, time, dev_order):
     ON = 1
     OFF = 0
     # TODO refactor, generalize also for numerical labels
@@ -243,39 +242,86 @@ def _plot_devices_into(fig, X, cat_col_map, row, col, time):
         if time is not None:
             bars[f] = discreteRle2timeRle(bars[f], time)
             bars[f]['lengths'] = bars[f]['lengths'].astype("timedelta64[ms]")
-
+            
     trace_lst = []
-    for dev in X.columns:
-        for k in [0, 1]:
+    devs = dev_order or X.columns
+    devs_num = []
+    for dev in devs:
+
+        # Check if 0-1-vector numeric
+        vals = set(X[dev].unique())
+        is_01_dev = (vals == set([0, 1]) or vals == set([0]) or vals == set([1])) 
+        if is_01_dev:
+
+            for k in [0, 1]:
+                if time is None:
+                    hover_template = '<b>' + dev + '</b><br>'\
+                                    + 'Int: [%{base}, %{x})<br>' \
+                                    + 'Dur: %{customdata}<extra></extra>'
+                else:
+                    hover_template = '<b>' + dev + '</b><br>'\
+                                    + 'Start_time: %{base|' + STRFTIME_DATE + '}<br>' \
+                                    + 'End_time: %{x| ' + STRFTIME_DATE + '}<br>' \
+                                    + 'Dur: %{customdata}<extra></extra>'
+
+                vals = bars[dev].loc[(bars[dev]['state'] == k)]
+                trace = go.Bar(name=str(k),
+                                meta=dev,
+                                base=vals['start'],
+                                x=vals['lengths'],
+                                y=np.full(vals.shape[0], dev),
+                                #legendgrouptitle_text=set_legendgroup_title,
+                                marker_color=cat_col_map[k],
+                                #legendgroup=cat,
+                                #customdata=cd,
+                                orientation='h',
+                                width=0.3,
+                                textposition='auto',
+                                showlegend=False,
+                                hovertemplate=hover_template,
+                )
+                fig.add_trace(trace, row=row, col=col)
+                #trace_lst.append(trace)
+        else:
+            continue
+            devs_num.append(dev)
+            hovertemplate = '<b>' + dev + '</b><br>'\
+                          + 'Value: %{customdata:.2f}<extra></extra>'\
+                          + 'Time: %{x}'
             if time is None:
-                hover_template = '<b>' + dev + '</b><br>'\
-                                + 'Int: [%{base}, %{x})<br>' \
-                                + 'Dur: %{customdata}<extra></extra>'
+                times_x = pd.arange(len(X[dev]))
             else:
-                hover_template = '<b>' + dev + '</b><br>'\
-                                + 'Start_time: %{base|' + STRFTIME_DATE + '}<br>' \
-                                + 'End_time: %{x| ' + STRFTIME_DATE + '}<br>' \
-                                + 'Dur: %{customdata}<extra></extra>'
+                times_x = time
+            values = pd.to_numeric(X[dev])
+            values_norm = (values-values.min())/(values.max()-values.min())*0.5
 
-            vals = bars[dev].loc[(bars[dev]['state'] == k)]
-            trace = go.Bar(name=str(k),
-                            meta=dev,
-                            base=vals['start'],
-                            x=vals['lengths'],
-                            y=np.full(vals.shape[0], dev),
-                            #legendgrouptitle_text=set_legendgroup_title,
-                            marker_color=cat_col_map[k],
-                            #legendgroup=cat,
-                            #customdata=cd,
-                            orientation='h',
-                            width=0.3,
-                            textposition='auto',
-                            showlegend=False,
-                            hovertemplate=hover_template,
+            trace = go.Scatter(
+                name=dev,
+                meta=dev,
+                x = times_x,
+                y = values_norm,
+                #mode='markers',
+                customdata=values, 
+                marker=dict(
+                    color='SteelBlue',
+                ),
+                showlegend=False,
+                hovertemplate=hovertemplate
             )
-            trace_lst.append(trace)
 
-    [fig.add_trace(trace, row=row, col=col) for trace in trace_lst]
+            # Add dummy bar plot as placeholder
+            fig.add_trace(go.Bar(
+                            name=dev,
+                            base=[times_x[0]],
+                            x=[10],
+                            y=[dev],
+                            orientation='h',
+                            showlegend=False
+            ), row=row, col=col)
+
+            fig.add_trace(trace, row=row, col=col, secondary_y=True)
+
+
 
     fig.update_layout({'barmode': 'overlay',
                        'legend': {'tracegroupgap': 0}
@@ -284,10 +330,33 @@ def _plot_devices_into(fig, X, cat_col_map, row, col, time):
     if time is not None:
         fig.update_xaxes(type="date")
 
+
+    for dev in devs_num:
+        # Rescale numerical devices and position them at their index 
+        # Since data is scaled to 0.5 add 0.25 to center around dev_idx
+        y = list(fig.select_traces(selector=dict(name=dev, type='scatter')))[0]['y']
+        y = y + dev_order.index(dev) + 0.25
+        fig.update_traces(dict(y=y), selector=dict(type='scatter', name=dev))
+
+    if devs_num:
+        axis_name = "yaxis3" if row == 2 else "yaxis2" 
+        yaxis = fig['layout'][axis_name].overlaying
+        fig.update_yaxes(row=row, col=col, secondary_y=True,
+            range=[0, len(devs) + 2],
+            scaleanchor=yaxis,  # Linking the secondary y-axis to the primary y-axis
+            scaleratio=1,  # Ensuring equal scaling for both y-axes
+            constrain='domain',  # Coupling the secondary y-axis to the primary y-axis
+            overlaying=yaxis,  # Overlay the secondary y-axis on the primary y-axis
+            side='right',  # Position the secondary y-axis on the right side
+            tickvals=[],  # Empty list to hide the tick values
+            ticktext=[],  # Empty string to hide the tick text
+        )
+
     return fig
 
+
 @remove_whitespace_around_fig
-def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, times=None):
+def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, dev_order=None, times=None, heatmap:go.Heatmap=None):
     """ Plot activities and devices for already 
 
     """
@@ -305,6 +374,8 @@ def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, time
 
 
     times = pd.Series(times) if isinstance(times, np.ndarray) else times
+    device_order = dev_order or X.columns.to_list()
+
 
     error_text = 'parameter act_order has to be set if y_conf is given'
     assert y_conf is None or act_order is not None, error_text
@@ -316,14 +387,24 @@ def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, time
 
     if y_conf is None:
         cols, rows, row_heights = 1, 1, [1.0]
+        specs = [[{"secondary_y": True}]]
     else:
         cols, rows, row_heights = 1, 2, [0.15, 0.85]
+        specs = [[{"secondary_y": False}], [{"secondary_y": True}]]
+        # scnd plt scndy leads to axis attributes (xaxis,yaxis),(xaxis2,yaxis2),(x2axis,yaxis3)  
+        # where yaxis3 is the secondary axis correpsonding to the second row subplot
 
     fig = make_subplots(cols=cols, rows=rows, row_heights=row_heights,                        
         shared_xaxes=True, vertical_spacing=0.02,
+        specs = specs
     )
 
-    fig = _plot_devices_into(fig, X, cat_col_map, row=rows, col=cols, time=times)
+    if heatmap is not None:
+        heatmap_row = 1 if y_conf is None else 2
+        fig.add_trace(heatmap, row=heatmap_row, col=1)
+
+    fig = _plot_devices_into(fig, X, cat_col_map, row=rows, col=cols, time=times, dev_order=device_order)
+
 
     if y_true is not None:
         fig = _plot_activities_into(fig, y_true, 'y_true', cat_col_map, row=rows, col=cols, time=times, activities=act_order)
@@ -332,6 +413,15 @@ def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, time
     if y_conf is not None:
         fig = _plot_confidences_into(fig, 1, 1, y_conf, act_order,
                                      cat_col_map,  times)
+    
+    # Update y-axis tickfont
+    fig.update_yaxes(row=rows, col=cols, 
+        tickfont=dict(size=8, family='Arial'),
+        categoryorder='array',
+        categoryarray=device_order + ['y_pred', 'y_true'],
+        secondary_y=False,
+    )
+    if times is not None:
+        fig.update_xaxes(range=[times.iloc[0], times.iloc[-1]])
 
     return fig
-

@@ -107,7 +107,7 @@ def _build_choice_devices(df_devs, id, sel=None, multi=True):
     )
 
 
-def _build_range_slider(df_acts, df_devs, start_time, end_time, set_end_time):
+def _build_range_slider(start_time, end_time, set_start_time, set_end_time):
     strf_time = '%d.%m.%Y'
     def create_mark(ts, format):
         return {'label': _np_dt_strftime(ts, format), 'style': {"transform": "rotate(45deg)"}}
@@ -134,8 +134,9 @@ def _build_range_slider(df_acts, df_devs, start_time, end_time, set_end_time):
     for day in rng:
         marks[timestamp_to_num(day, start_time, end_time)] = create_mark(day, strf_time[:-3])
     set_end_time = timestamp_to_num(set_end_time, start_time, end_time)
+    set_start_time = timestamp_to_num(set_start_time, start_time, end_time)
     return dcc.RangeSlider(id='range-slider', min=0, max=1, step=0.001,
-                           value=[0, set_end_time], marks=marks)
+                           value=[set_start_time, set_end_time], marks=marks)
 
 
 def _build_plot_header(h_id, title, op_id):

@@ -591,13 +591,21 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
         if self.other:
             self.classes_.append(OTHER)
 
-        if self.encode_labels:
-            self.class2int_ = lambda x: {
-                v: k for k, v in enumerate(self.classes_)}.get(x)
-            self.int2class_ = lambda x: {
-                k: v for k, v in enumerate(self.classes_)}.get(x)
-
         return self
+
+    def class2int_(self, x=None):
+        f = {v: k for k, v in enumerate(self.classes_)}.get
+        if x is None:
+            return f
+        else:
+            return f(x)
+
+    def int2class_(self, x=None):
+        f = {k: v for k, v in enumerate(self.classes_)}.get
+        if x is None:
+            return f
+        else:
+            return f(x)
 
     def fit_transform(self, y, X):
         """
@@ -718,7 +726,7 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
         df = label_data2(X, y, self.other)[
             [TIME, ACTIVITY]].copy()
         if self.encode_labels:
-            df[ACTIVITY] = df[ACTIVITY].map(self.class2int_)
+            df[ACTIVITY] = df[ACTIVITY].map(self.class2int_())
         return df
         # remove Nans before encoding the labels and then concatenate again
         # if not self.other:
