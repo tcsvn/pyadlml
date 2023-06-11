@@ -7,6 +7,7 @@ import pandas as pd
 import argparse
 import dash
 from dash.exceptions import PreventUpdate
+from plotly_resampler import FigureResampler
 from pyadlml.constants import ACTIVITY, DEVICE, END_TIME, START_TIME, TIME, VALUE, ts2str, str2ts
 from pyadlml.dataset._core.activities import ActivityDict, create_empty_activity_df
 from pyadlml.dataset.act_assist import read_activities, write_activities, read_devices, write_devices
@@ -14,7 +15,7 @@ from pyadlml.dataset.plot.plotly.acts_and_devs import _determine_start_and_end, 
 from pyadlml.dataset.plot.plotly.util import dash_get_trigger_element, dash_get_trigger_value, set_fig_range
 import json
 import numpy as np
-from pyadlml.dataset.util import activity_order_by, device_order_by, df_difference, fetch_by_name, num_to_timestamp, select_timespan
+from pyadlml.dataset.util import activity_order_by, device_order_by, df_difference, fetch_by_name, num_to_timestamp, timestamp_to_num, select_timespan
 from pyadlml.dataset.plot.plotly.activities import _set_compact_title, correction
 from pyadlml.dataset.plot.plotly.util import deserialize_range, serialize_range, range_from_fig
 import dash_bootstrap_components as dbc
@@ -40,6 +41,20 @@ for dataset options look under pyadlml.constants:
 DEL_KEY = 'DELETE'
 JOIN_KEY = 'JOIN'
 
+def add_act2fig(fig, act):
+    # Hot replacement of activities in figure dict
+    start_time = str(act.start_time).split(' ')[0] + 'T' + str(act.start_time).split(' ')[1]
+    duration = str(act.end_time - act.start_time)
+    x_length_in = (act.end_time - act.start_time) / pd.Timedelta('1ms')
+    data_idx = [i for i in range(len(fig['data'])) 
+                        if fig['data'][i]['type'] == 'bar' 
+                        and fig['data'][i]['name'] == act.activity
+                ][0]
+    fig['data'][data_idx]['y'] = fig['data'][data_idx]['y'] + ['Acts: subject']
+    fig['data'][data_idx]['x'] = fig['data'][data_idx]['x'] + [x_length_in]
+    fig['data'][data_idx]['customdata'] = fig['data'][data_idx]['customdata'] + [duration]
+    fig['data'][data_idx]['base'] = fig['data'][data_idx]['base'] + [start_time]
+    return fig
 
 def json_to_df(df):
     try:
@@ -99,7 +114,6 @@ def label_figure(df_acts, df_devs, dev2area, range_store=None, zoomed_range=[], 
 
     from pyadlml.dataset.plot.plotly.acts_and_devs import activities_and_devices
     dev_order = 'alphabetical' if dev2area is None else 'area'
-
 
     fig = activities_and_devices(df_devs, df_acts, dev2area=dev2area, zoomed_range=zoomed_range, states=states, dev_order=dev_order)
 
@@ -235,10 +249,14 @@ if __name__ == '__main__':
 
     code_str, code_str_devs, df_acts, df_devs = read_code_and_update(fp_code, fp_code_dev, fp_df_acts, fp_df_devs)
 
-    (a,b,_,_) = _determine_start_and_end(df_acts, df_devs, st=None, et=None)
+    start_time = pd.Timestamp('2023-01-30 00:00:00')
+    end_time = pd.Timestamp('2023-02-04 00:00:00')
+                
+    (a,b, _, _) = _determine_start_and_end(df_acts, df_devs, st=None, et=None)
     fig_range = a,b
 
-    fig = label_figure(df_acts, df_devs, dev2area, range_store=fig_range)
+    df_devs_sel, df_acts_sel = select_timespan(df_devs, df_acts, start_time, end_time)
+    fig = label_figure(df_acts_sel, df_devs_sel, dev2area, range_store=fig_range)
 
     from pyadlml.dataset.plot.plotly.dashboard.layout import _build_range_slider
     #from dash_extensions import EventListener
@@ -266,9 +284,9 @@ if __name__ == '__main__':
 
         ]),
         dbc.Row([
-            _build_range_slider(df_acts, df_devs, a, b, b),
+            _build_range_slider(df_acts, df_devs, a, b, start_time, end_time),
             dcc.Store(id='range-store', data=serialize_range(fig_range)),
-            dcc.Store(id='range-slider-t-1', data=[0, 1]),       
+            dcc.Store(id='range-slider-t-1', data=[0,1]),
         ],  className='mb-2'),
         dbc.Row([
             dbc.Col(md=5),
@@ -698,6 +716,11 @@ if __name__ == '__main__':
                 #df_add = pd.concat([df_add, act.to_frame().T], axis=0)\
                 #    .reset_index(drop=True)
                 code_str += '\n' + add_op2str(act)
+                fig = add_act2fig(fig, act)
+                is_figure_reload = False
+
+            import time
+            tic = time.perf_counter()
 
             # Reset values
             range_store = reset_range_store(df_devs, df_acts)
@@ -708,6 +731,10 @@ if __name__ == '__main__':
             lcls = {'df_acts': read_activities(fp_df_acts)} 
             exec(code_str, {}, lcls)
             df_acts = lcls['df_acts']
+
+            toc = time.perf_counter()
+            print(f"Updating activity_df in: {toc - tic:0.4f} seconds")
+            
 
         elif trigger == 'times':
             range_store[0] = str2ts(times[0][START_TIME])
@@ -775,7 +802,7 @@ if __name__ == '__main__':
                 device_options = []
                 sel_device_state = None
 
-        if trigger in ['set-frame', 'set-left', 'set-right', 'fig-activity']:
+        if trigger in ['set-frame', 'set-left', 'set-right', 'fig-activity', 'submit']:
             # Update vlines without recomputing figure
             try:
                 # Left vline

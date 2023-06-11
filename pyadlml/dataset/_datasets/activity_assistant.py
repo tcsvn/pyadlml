@@ -87,7 +87,7 @@ def read_devices(path: Path, dev_map: dict = None):
 @_folder2filename(DEV2AREA_NAME)
 def read_device2area(path: Path, dev_map: dict) -> pd.DataFrame:
     """"""
-    dev2area = pd.read_csv(path)
+    dev2area = pd.read_csv(path, sep=";")
     dev2area[DEVICE] = dev2area[DEVICE].map(dev_map)
     assert (dev2area.columns == np.array([DEVICE, AREA])).all()
     return dev2area
@@ -95,21 +95,23 @@ def read_device2area(path: Path, dev_map: dict) -> pd.DataFrame:
 @_folder2filename(DEV2AREA_NAME)
 def write_device2area(df: pd.DataFrame, path: Path):
     assert (df.columns == np.array([DEVICE, AREA])).all()
+    raise NotImplementedError
     df.to_csv(path, sep=',', index=False)
 
 
 @_folder2filename(ACT2AREA_NAME)
 def read_activity2area(path: Path, act_map: dict) -> pd.DataFrame:
     """"""
-    act2area = pd.read_csv(path)
+    act2area = pd.read_csv(path, sep=";")
     act2area[ACTIVITY] = act2area[ACTIVITY].map(act_map)
+    act2area[AREA] = act2area[AREA].apply(lambda x: x[1:-1].split(','))
     assert (act2area.columns == np.array([ACTIVITY, AREA])).all()
     return act2area
 
 @_folder2filename(ACT2AREA_NAME)
 def write_activity2area(df: pd.DataFrame, path: Path):
     assert (df.columns == np.array([ACTIVITY, AREA])).all()
-    df.to_csv(path, sep=',', index=False)
+    df.to_csv(path, sep=';', index=False)
 
 
 @_folder2filename(DEV_MAP_NAME)

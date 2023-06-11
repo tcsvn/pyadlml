@@ -8,7 +8,7 @@
             "name": "test",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/tmp4.py",
+            "program": "${workspaceFolder}/test20.py",
             "console": "integratedTerminal",
             "justMyCode": false,
         },
@@ -58,13 +58,13 @@
             "justMyCode": false,
             "args": [
                 //"-d",
-                //"casas_tulum",
+                //"aras",
                 "-p",
                 "8070",
                 "-d",
                 "joblib",
                 "-i",
-                "/media/data/code/adlml/pyadlml/data_cleansing/tuebingen_2023/df_dump.joblib"
+                "/home/chris/master_thesis/ma_adl_prediction/data_cleansing/tuebingen_2023/df_dump_pre_merge.joblib"
             ]
         },
         {
@@ -81,9 +81,9 @@
                 "-d",
                 "joblib",
                 "-i",
-                "/media/data/code/adlml/pyadlml/data_cleansing/tuebingen_2023/df_dump_pre_act_relabel.joblib",
+                "/home/chris/master_thesis/pyadlml/data_cleansing/tuebingen_2023/df_dump_pre_act_relabel.joblib",
                 "-o",
-                "/media/data/code/adlml/pyadlml/data_cleansing/tuebingen_2023/",
+                "/home/chris/master_thesis/pyadlml/data_cleansing/tuebingen_2023/",
                 "--out-act-file",
                 "relabel_activities_pre.py"
             ]
@@ -102,9 +102,9 @@
                 "-d",
                 "joblib",
                 "-i",
-                "/media/data/code/adlml/pyadlml/data_cleansing/tuebingen_2023/df_dump_post_merge.joblib",
+                "/home/chris/master_thesis/pyadlml/data_cleansing/tuebingen_2023/df_dump_post_merge.joblib",
                 "-o",
-                "/media/data/code/adlml/pyadlml/data_cleansing/tuebingen_2023/"
+                "/home/chris/master_thesis/pyadlml/data_cleansing/tuebingen_2023/"
             ]
         },
         {

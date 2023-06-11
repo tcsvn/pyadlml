@@ -44,5 +44,4 @@ clf_CNN = dict(
     clf_cnn__kernel_size=tune.randint(3, 16),       # default=7
     clf_cnn__avg_pool_size=tune.randint(3, 5),      # default=3
     clf_cnn__use_bias=tune.choice([True, False])    # default=true
-
 )

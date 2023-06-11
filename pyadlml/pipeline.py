@@ -550,7 +550,7 @@ class Pipeline(SklearnPipeline):
         -------
         y_pred : array-like
         """
-        predict_params_steps = self._check_fit_params(**predict_params_steps)
+        predict_params_steps = self._check_fit_params(**predict_params)
         Xt = X
         # TODO BUG in evaluation mode the transformed X_t and Xt for pipe.transform have different ouput
         for _, name, transform in self._iter(with_final=False):

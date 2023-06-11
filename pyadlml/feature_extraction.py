@@ -2,6 +2,7 @@ import pandas as pd
 from sklearn.base import TransformerMixin, BaseEstimator
 from pyadlml.constants import TIME, DEVICE
 
+
 def _tres_2_pd_res(res):
     if _is_hour(res) or _is_sec(res):
         return res
@@ -13,7 +14,8 @@ def _tres_2_discrete(resolution):
     """ create resolution for one day
     """
     res = []
-    range = pd.date_range(start='1/1/2000', end='1/2/2000', freq=resolution).time
+    range = pd.date_range(
+        start='1/1/2000', end='1/2/2000', freq=resolution).time
     range = [str(d) for d in range]
     for t1, t2 in zip(range[:-1], range[1:]):
         res.append(t1 + '-' + t2)
@@ -23,10 +25,12 @@ def _tres_2_discrete(resolution):
 def _tres_2_vals(resolution):
     """ create resolution for one day
     """
-    ser = pd.date_range(start='1/1/2000', end='1/2/2000', freq=resolution).to_series()
+    ser = pd.date_range(start='1/1/2000', end='1/2/2000',
+                        freq=resolution).to_series()
     if _is_min(resolution):
         return ser.dt.floor(resolution).dt.minute
-    if _is_hour(resolution): return ser.dt.floor(resolution).dt.hour
+    if _is_hour(resolution):
+        return ser.dt.floor(resolution).dt.hour
     if _is_sec(resolution):
         return ser.dt.floor(resolution).dt.sec
 
@@ -48,8 +52,8 @@ def _valid_tres(t_res):
     res = t_res[-1:]
     assert t_res[-1:] in ['h', 'm', 's']
     assert (val > 0 and val <= 12 and res == 'h') \
-           or (val > 0 and val <= 60 and res == 'm') \
-           or (val > 0 and val <= 60 and res == 's')
+        or (val > 0 and val <= 60 and res == 'm') \
+        or (val > 0 and val <= 60 and res == 's')
     return True
 
 
@@ -82,7 +86,8 @@ class DayOfWeek(TransformerMixin, BaseEstimator):
     """
 
     WD_COL = 'weekday'
-    WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday',
+                'Thursday', 'Friday', 'Saturday', 'Sunday']
 
     def __init__(self, one_hot_encoding=False, inplace=False):
         self.one_hot_encoding = one_hot_encoding
@@ -149,14 +154,34 @@ class TimeOfDay(TransformerMixin, BaseEstimator):
     TIME_BINS = 'time_bins'
     ALLOWED_RESOLUTIONS = ['m', 's', 'h']
 
-    def __init__(self, dt='2h', one_hot_encoding=False, inplace=False):
+    def __init__(self, dt='2h', one_hot_encoding=False, inplace=False, dtype=bool):
         self.dt = dt
         self.inplace = inplace
         self.one_hot_encoding = one_hot_encoding
+        self.dtype = dtype
 
     def fit(self, X, y=None):
         assert self.dt[-1:] in self.ALLOWED_RESOLUTIONS
+        assert self.dtype in [bool, int]
         return self
+
+    def get_time_bin(self, value: pd.Timestamp) -> str:
+        return _time2intervall(value, self.dt)
+
+    def get_time_bins(self) -> list:
+        tdelta = pd.Timedelta(self.dt)
+        total_bins = (pd.Timedelta('1 day') // tdelta)
+
+        time_bins = []
+        current_time = pd.Timestamp("00:00:00")
+
+        for _ in range(total_bins):
+            time_bin = _time2intervall(
+                current_time + pd.Timedelta('1ms'), self.dt)
+            time_bins.append(time_bin)
+            current_time += tdelta
+
+        return time_bins
 
     def fit_transform(self, X, y=None, **fit_params):
         """
@@ -172,7 +197,7 @@ class TimeOfDay(TransformerMixin, BaseEstimator):
         df : pd.DataFrame
             One-hot encoding of the devices.
         """
-        self.fit(X,y)
+        self.fit(X, y)
 
         return self.transform(X)
 
@@ -190,7 +215,6 @@ class TimeOfDay(TransformerMixin, BaseEstimator):
         df : pd.DataFrame
             One-hot encoding of the devices.
         """
-        assert self.dt[-1:] in self.ALLOWED_RESOLUTIONS
 
         df = X.copy()
         df[self.TIME_BINS] = df[TIME].apply(_time2intervall, args=[self.dt])
@@ -201,7 +225,7 @@ class TimeOfDay(TransformerMixin, BaseEstimator):
             else:
                 return df[self.TIME_BINS]
 
-        one_hot = pd.get_dummies(df[self.TIME_BINS]).astype(bool)
+        one_hot = pd.get_dummies(df[self.TIME_BINS]).astype(self.dtype)
         df = df.join(one_hot, on=df.index)
         del (df[self.TIME_BINS])
 
@@ -297,26 +321,31 @@ class InterEventTime(TransformerMixin, BaseEstimator):
 
         # impute either last or first value with the average of the value
         if self.direction == self.BACKWARD:
-            del(df[self.FORWARD])
+            del (df[self.FORWARD])
             first_device = df.iloc[0][DEVICE]
-            df.at[0, self.BACKWARD] = self.td_avg[self.td_avg[DEVICE] == first_device][self.BACKWARD].iloc[0]
+            df.at[0, self.BACKWARD] = self.td_avg[self.td_avg[DEVICE]
+                                                  == first_device][self.BACKWARD].iloc[0]
             df.rename(columns={self.BACKWARD: self.COL_NAME}, inplace=True)
 
         elif self.direction == self.FORWARD:
-            del(df[self.BACKWARD])
+            del (df[self.BACKWARD])
             last_device = df.iloc[-1][DEVICE]
-            df.at[0, self.FORWARD] = self.td_avg[self.td_avg[DEVICE] == last_device][self.FORWARD].iloc[0]
+            df.at[0, self.FORWARD] = self.td_avg[self.td_avg[DEVICE]
+                                                 == last_device][self.FORWARD].iloc[0]
             df.rename(columns={self.FORWARD: self.COL_NAME}, inplace=True)
         else:
             raise ValueError
 
         if self.normalize:
             # apply min max normalization
-            df[self.COL_NAME] = (df[self.COL_NAME] - self.min_)/(self.max_ - self.min_)
+            df[self.COL_NAME] = (df[self.COL_NAME] -
+                                 self.min_)/(self.max_ - self.min_)
 
             # clip values that don't fit
-            df[self.COL_NAME] = df[self.COL_NAME].where(df[self.COL_NAME] < 1, 1)
-            df[self.COL_NAME] = df[self.COL_NAME].where(df[self.COL_NAME] > 0, 0)
+            df[self.COL_NAME] = df[self.COL_NAME].where(
+                df[self.COL_NAME] < 1, 1)
+            df[self.COL_NAME] = df[self.COL_NAME].where(
+                df[self.COL_NAME] > 0, 0)
 
         elif self.unit is not None:
             if self.unit == 's':

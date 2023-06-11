@@ -24,12 +24,14 @@ def get_index_matching_rows(df_act, rows, tolerance='1ms'):
     ----
     Attention, since rows are read from strings or whatever the format assumed is dayfirst
                i.e. 01.08.2009 equalst the first of august.
-    
+
     """
     if isinstance(rows, list):
         df = pd.DataFrame(rows, columns=COLS)
-        df[START_TIME] = pd.to_datetime(df[START_TIME], errors='coerce', dayfirst=True)
-        df[END_TIME] = pd.to_datetime(df[END_TIME], errors='coerce', dayfirst=True)
+        df[START_TIME] = pd.to_datetime(
+            df[START_TIME], errors='coerce', dayfirst=True)
+        df[END_TIME] = pd.to_datetime(
+            df[END_TIME], errors='coerce', dayfirst=True)
     else:
         print('went here')
         df = rows
@@ -40,9 +42,9 @@ def get_index_matching_rows(df_act, rows, tolerance='1ms'):
     idxs = []
     for idx, row in df.iterrows():
         mask_st = (row[START_TIME]-tol < df_act[START_TIME])\
-                & (df_act[START_TIME] < row[START_TIME]+tol)
+            & (df_act[START_TIME] < row[START_TIME]+tol)
         mask_et = (row[END_TIME]-tol < df_act[END_TIME])\
-                & (df_act[END_TIME] < row[END_TIME]+tol)
+            & (df_act[END_TIME] < row[END_TIME]+tol)
         mask_act = (df_act[ACTIVITY] == row[ACTIVITY])
         res = df_act[mask_st & mask_et & mask_act].index.values
         assert len(res) <= 1
@@ -51,7 +53,6 @@ def get_index_matching_rows(df_act, rows, tolerance='1ms'):
         if len(res) == 0:
             print('Warning!!!. Activity corrections are not applied!')
     return idxs
-
 
 
 def is_activity_df(df):
@@ -104,11 +105,13 @@ def _is_activity_overlapping(df):
     overlapping = df[mask]
     return not overlapping.empty
 
+
 def _get_overlapping_activities(df):
     df = df.sort_values(by=START_TIME).reset_index(drop=True)
     mask = (df[END_TIME].shift()-df[START_TIME]) >= pd.Timedelta('0ms')
     overlapping = df[mask]
     return overlapping
+
 
 def create_empty_activity_df():
     """
@@ -132,18 +135,22 @@ def add_other_activity(acts, min_diff=pd.Timedelta('5s')):
         activity data with columns: start_time, end_time, activity
     """
     acts = acts.copy().reset_index(drop=True)
+    eps = pd.Timedelta('10ns')
+    assert 2*eps < min_diff
 
     def func(series, df):
         """
         """
+        if series.name in [209, 211]:
+            print()
         # check if at end of the series
         if series.name == len(df)-1:
             return series
         else:
             next_entry = df.loc[series.name+1, :]
             return pd.Series({
-                START_TIME: series.end_time + pd.Timedelta('1ms'),
-                END_TIME: next_entry.start_time - pd.Timedelta('1ms'),
+                START_TIME: series.end_time + eps,
+                END_TIME: next_entry.start_time - eps,
                 ACTIVITY: OTHER
             })
 
@@ -519,18 +526,20 @@ def _correct_overlapping_segment(area_to_correct, strats, excepts=[]):
                 result = pd.concat([result, stack])
                 return result
             else:
-                result = pd.concat([result, current_row.to_frame().T], ignore_index=True)
+                result = pd.concat(
+                    [result, current_row.to_frame().T], ignore_index=True)
                 stack = stack.iloc[1:]
 
         new_rows = _merge_ints(current_row, ov, strats, excepts)
-        
+
         assert isinstance(new_rows, pd.DataFrame)
 
         if stack.empty:
             result = pd.concat([result, new_rows], axis=0, ignore_index=True)
             return result
         elif len(new_rows) >= 2:
-            result = pd.concat([result, new_rows.iloc[0,:].to_frame().T], ignore_index=True)
+            result = pd.concat(
+                [result, new_rows.iloc[0, :].to_frame().T], ignore_index=True)
             new_rows = new_rows.iloc[1:]
 
         stack = pd.concat([stack, new_rows], axis=0, ignore_index=True)
@@ -566,6 +575,7 @@ def exists_st_before_et(df_acts):
     violating = df[mask]
     return not violating.empty
 
+
 def correct_succ_same_end_and_start_time(df: pd.DataFrame) -> pd.DataFrame:
     """ Correct pairwise activities where the firsts end_time is equal to the seconds start_time
         by adding a ms onto the respective start_time
@@ -580,6 +590,7 @@ def correct_succ_same_end_and_start_time(df: pd.DataFrame) -> pd.DataFrame:
     mask = (test == pd.Timedelta('0s'))
     df.loc[mask, START_TIME] += pd.Timedelta(INT_EPS)
     return df
+
 
 def correct_activities(df, strats=[], excepts=[], retain_corrections=False):
     """ gets df in form of activities and removes overlapping activities
@@ -627,16 +638,18 @@ class ActivityDict(dict):
 
     def __init__(self, obj=None):
 
-        if isinstance(obj, pd.DataFrame): 
+        if isinstance(obj, pd.DataFrame):
             obj = obj.copy().reset_index(drop=True)
-            super().__init__({'subject':obj})
+            super().__init__({'subject': obj})
         elif isinstance(obj, list):
-            super().__init__({f'subject_{i}':df for i, df in enumerate(obj)})
+            if isinstance(obj[0], tuple):
+                super().__init__({name: df for (name, df) in obj})
+            else:
+                super().__init__({f'subject_{i}': df for i, df in enumerate(obj)})
         elif isinstance(obj, ActivityDict) or isinstance(obj, dict):
             super().__init__(obj)
         else:
             super().__init__()
-
 
     def subjects(self) -> list:
         return list(self.keys())
@@ -649,7 +662,7 @@ class ActivityDict(dict):
 
         return json.dumps(tmp)
 
-    def read_json(cls, string):        
+    def read_json(cls, string):
         """Serialize from json"""
         tmp = json.loads(string)
         for k, str in tmp.items():
@@ -660,9 +673,9 @@ class ActivityDict(dict):
         """"""
         return max([len(df_acts[ACTIVITY].unique()) for df_acts in self.values()])
 
-    def get_activity_union(self): 
-        return list(set([item for v in self.values() \
-                              for item in v[ACTIVITY].unique()]))
+    def get_activity_union(self):
+        return list(set([item for v in self.values()
+                         for item in v[ACTIVITY].unique()]))
 
     def apply(self, func):
         """ Applies a function to each dataframe
@@ -675,14 +688,14 @@ class ActivityDict(dict):
         min_lst = []
         for df_acts in self.values():
             if not df_acts.empty:
-                min_lst.append(df_acts[START_TIME].iloc[0]) 
+                min_lst.append(df_acts[START_TIME].iloc[0])
         return min(min_lst)
 
     def max_endtime(self):
         max_lst = []
         for df_acts in self.values():
             if not df_acts.empty:
-                max_lst.append(df_acts[END_TIME].iloc[-1]) 
+                max_lst.append(df_acts[END_TIME].iloc[-1])
         return max(max_lst)
 
     def concat(self):
@@ -691,16 +704,16 @@ class ActivityDict(dict):
     def copy(self):
         """ Returns a deep copy of itsself
         """
-        return ActivityDict({k:v.copy() for k, v in self.items()})
+        return ActivityDict({k: v.copy() for k, v in self.items()})
 
     @classmethod
     def wrap(cls, df_acts):
-        if isinstance(df_acts, pd.DataFrame): 
+        if isinstance(df_acts, pd.DataFrame):
             df_acts = df_acts.copy().reset_index(drop=True)  # TODO not here
-            df_acts = ActivityDict({'subject':df_acts})
+            df_acts = ActivityDict({'subject': df_acts})
             return df_acts
         elif isinstance(df_acts, list):
-            return ActivityDict({f'subject_{i}':df for i, df in enumerate(df_acts)})
+            return ActivityDict({f'subject_{i}': df for i, df in enumerate(df_acts)})
         elif isinstance(df_acts, ActivityDict):
             return df_acts
         elif isinstance(df_acts, dict):
@@ -709,7 +722,7 @@ class ActivityDict(dict):
             raise NotImplementedError
 
     def unwrap(self, inst_type: type):
-        if inst_type  == ActivityDict:
+        if inst_type == ActivityDict:
             return self
         elif inst_type == list:
             return list(self.values())
@@ -720,5 +733,3 @@ class ActivityDict(dict):
             return list(self.values())[0]
         else:
             raise NotImplementedError
-
-

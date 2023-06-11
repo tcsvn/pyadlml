@@ -16,9 +16,12 @@ from pyadlml.dataset._core.activities import ActivityDict, _is_activity_overlapp
     includes generic methods for manpulating dataframes
 """
 
+
 def print_df(df):
-    with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
+    # more options can be specified also
+    with pd.option_context('display.max_rows', None, 'display.max_columns', None):
         print(df)
+
 
 def unitsfromdaystart(ts, unit='s'):
     """ Computes units passed from the start of the day until the timestamp
@@ -54,8 +57,8 @@ def timestr_2_timedelta(t_str):
     ttype = t_str[-1:]
     val = int(t_str[:-1])
 
-    assert ttype in ['h','m','s']
-    assert (val > 0 and val <=12 and ttype == 'h')\
+    assert ttype in ['h', 'm', 's']
+    assert (val > 0 and val <= 12 and ttype == 'h')\
         or (val > 0 and val <= 60 and ttype == 'm')\
         or (val > 0 and val <= 60 and ttype == 's')
     import datetime as dt
@@ -71,10 +74,10 @@ def time2int(ts, t_res='30m'):
     """
     rounds to the next lower min bin or hour bin
     """
-    assert t_res[-1:] in ['h','m']
+    assert t_res[-1:] in ['h', 'm']
     val = int(t_res[:-1])
 
-    assert (val > 0 and val <=12 and t_res[-1:] == 'h')\
+    assert (val > 0 and val <= 12 and t_res[-1:] == 'h')\
         or (val > 0 and val <= 60 and t_res[-1:] == 'm')
 
     import datetime as dt
@@ -91,7 +94,6 @@ def time2int(ts, t_res='30m'):
         return dt.time(hour=ts.hour, minute=m_bin)
     else:
         raise ValueError
-
 
 
 def fill_nans_ny_inverting_first_occurence(df):
@@ -115,7 +117,7 @@ def fill_nans_ny_inverting_first_occurence(df):
     for col_label in df.columns:
         col = df[col_label]
 
-        # get timestamp of first valid index and replace previous Nans 
+        # get timestamp of first valid index and replace previous Nans
         #   by opposite
         ts = col.first_valid_index()
         idx = df.index.get_loc(ts)
@@ -160,9 +162,10 @@ def categorical_2_binary(df_devices, cat_list):
     df_cat = df_cat.drop(columns='new_device')
 
     df_devices = pd.concat([df_devices[~mask_cat], df_cat])\
-                    .sort_values(by=TIME)\
-                    .reset_index(drop=True)
+        .sort_values(by=TIME)\
+        .reset_index(drop=True)
     return df_devices
+
 
 def infer_dtypes(df_devices):
     """ Infers automatically the datatypes for each device of a device dataframe
@@ -198,7 +201,8 @@ def infer_dtypes(df_devices):
         elif inf == 'floating' or 'integer':
             dev_num.append(dev)
         else:
-            raise ValueError('could not infer correct dtype for device {}'.format(dev))
+            raise ValueError(
+                'could not infer correct dtype for device {}'.format(dev))
 
     return {'categorical': dev_cat, 'boolean': dev_bool, 'numerical': dev_num}
 
@@ -214,7 +218,7 @@ def select_timespan(df_devs=None, df_acts=None, start_time=None, end_time=None, 
     start_time : str or None
         The start time from
     end_time : str or None
-    
+
     clip_activities : bool, default=False
         If set then the activities are clipped to the start and end time
 
@@ -223,8 +227,10 @@ def select_timespan(df_devs=None, df_acts=None, start_time=None, end_time=None, 
     df_d, df_a : the two subsets
     """
     # Cast to pandas timestamp
-    start_time = str_to_timestamp(start_time) if isinstance(start_time, str) else start_time
-    end_time = str_to_timestamp(end_time) if isinstance(end_time, str) else end_time
+    start_time = str_to_timestamp(start_time) if isinstance(
+        start_time, str) else start_time
+    end_time = str_to_timestamp(end_time) if isinstance(
+        end_time, str) else end_time
 
     if df_devs is not None:
         if start_time is not None:
@@ -259,12 +265,12 @@ def select_timespan(df_devs=None, df_acts=None, start_time=None, end_time=None, 
                     and (start_time < df_activity[END_TIME].iat[0] and start_time > df_activity[START_TIME].iat[0]):
                 df_activity.at[df_activity.index[0], START_TIME] = start_time
             if not df_activity.empty and clip_activities and end_time is not None \
-            and end_time < df_activity[END_TIME].iat[-1]:
+                    and end_time < df_activity[END_TIME].iat[-1]:
                 df_activity.at[df_activity.index[-1], END_TIME] = end_time
-                
+
             df_acts[k] = df_activity
 
-        df_acts = df_acts.unwrap(df_acts_inst_type) 
+        df_acts = df_acts.unwrap(df_acts_inst_type)
 
     if df_acts is None:
         return df_devs
@@ -292,10 +298,11 @@ def get_last_states(df_devs: pd.DataFrame, left_bound=-1) -> dict:
     """
     left_bound = len(df_devs) if left_bound == -1 else left_bound
     return df_devs.iloc[:left_bound, :]\
-            .sort_values(by=TIME)\
-            .groupby(DEVICE)\
-            .last()[VALUE]\
-            .to_dict()
+        .sort_values(by=TIME)\
+        .groupby(DEVICE)\
+        .last()[VALUE]\
+        .to_dict()
+
 
 def get_first_states(df_devs: pd.DataFrame) -> dict:
     """ Creates a dictionary where every device maps to its first known value.
@@ -315,7 +322,6 @@ def get_first_states(df_devs: pd.DataFrame) -> dict:
         .groupby(DEVICE)\
         .first()[VALUE]\
         .to_dict()
-
 
 
 def str_to_timestamp(val):
@@ -378,8 +384,6 @@ def df_difference(df1: pd.DataFrame, df2: pd.DataFrame, which=None, return_mask=
         return diff_df
 
 
-
-
 def event_times(df_devices, start_time=None, end_time=None):
     """
     Parameters
@@ -419,9 +423,11 @@ def num_to_timestamp(val, start_time, end_time):
     """Converts value [0,1] into timestamp between start_time and end_time"""
     return start_time + val*(end_time - start_time)
 
+
 def timestamp_to_num(ts, start_time, end_time):
     """Converts timestamp between start_time and end_time into value in [0,1]"""
     return float((ts - start_time)/(end_time - start_time))
+
 
 def get_sorted_index(df: pd.DataFrame, rule='alphabetical', area: pd.DataFrame = None) -> np.ndarray:
     """ Returns a new dataframes index that is sorted after a specific rule
@@ -472,18 +478,21 @@ def get_sorted_index(df: pd.DataFrame, rule='alphabetical', area: pd.DataFrame =
         elif DEVICE in df.columns:
             df = df.sort_values(by=DEVICE)
         else:
-            raise KeyError(f"Tried to sort alphabetical but no activity or device column was found, only {rule}")
+            raise KeyError(
+                f"Tried to sort alphabetical but no activity or device column was found, only {rule}")
     elif rule == 'value':
         # The case when the column other than ACTIVITY or order should be used
         cs = df.columns
         col = [i for i in cs if i not in [ACTIVITY, DEVICE, 'order']]
-        assert len(col) == 1, 'When value is specified there must be only one remaining column.'
+        assert len(
+            col) == 1, 'When value is specified there must be only one remaining column.'
         if ACTIVITY in df.columns:
             df = df.sort_values(by=col[0])
         elif DEVICE in df.columns:
             df = df.sort_values(by=col[0])
         else:
-            raise KeyError(f"Tried to sort alphabetical but no activity or device column was found, only {rule}")
+            raise KeyError(
+                f"Tried to sort alphabetical but no activity or device column was found, only {rule}")
     elif rule == 'areas':
         raise NotImplementedError
     elif isinstance(rule, str):
@@ -523,10 +532,11 @@ def check_order(func):
     def wrapper(*args, **kwargs):
         o = kwargs['order']
         assert o in ['alphabetical', 'occurence'] or isinstance(o, list) \
-               or isinstance(o, np.ndarray), f'Sort rule is either "alphabetical", a custom string or a iterable. Found {o}'
+            or isinstance(o, np.ndarray), f'Sort rule is either "alphabetical", a custom string or a iterable. Found {o}'
         tmp = func(*args, **kwargs)
         return tmp
     return wrapper
+
 
 def check_scale(func):
     @extract_kwargs
@@ -547,12 +557,13 @@ def device_order_by(df_devs: pd.DataFrame, rule='alphabetical', dev2area=None, o
     if isinstance(rule, list) or isinstance(rule, np.ndarray):
         return rule
 
-    allowed_combis =['alphabetical', 'count', 'area', 'area+alphabetical', 'area+count'] 
+    allowed_combis = ['alphabetical', 'count',
+                      'area', 'area+alphabetical', 'area+count']
     assert rule in allowed_combis, f'rule{rule} not in assertion.'
 
     if rule == 'alphabetical':
         dev_order = df_devs[DEVICE].unique().tolist()
-        dev_order.sort() # CAVE returns None, do not change ^^
+        dev_order.sort()  # CAVE returns None, do not change ^^
     elif rule == 'count':
         from pyadlml.dataset.stats.devices import device_order_by_count
         dev_order = device_order_by_count(df_devs)
@@ -560,14 +571,15 @@ def device_order_by(df_devs: pd.DataFrame, rule='alphabetical', dev2area=None, o
         assert dev2area is not None, 'When selecting area as sorting measure, an area mapping must be given as parameter.'
         split = rule.split('+')
         dev2area['area'] = dev2area['area'].fillna('-na')
-        if len(split) == 1 or split[1] == 'alphabetical' :
+        if len(split) == 1 or split[1] == 'alphabetical':
             dev_order = dev2area.groupby('area')\
                                 .apply(lambda x: x.sort_values(by=DEVICE))\
                                 .reset_index(drop=True)[DEVICE].to_list()
         elif split[1] == 'count':
             from pyadlml.dataset.stats.devices import device_order_by_count
             ordered_by_count = device_order_by_count(df_devs)
-            dev_order = pd.DataFrame(zip(range(len(ordered_by_count), ordered_by_count)), columns=['count', DEVICE])
+            dev_order = pd.DataFrame(
+                zip(range(len(ordered_by_count), ordered_by_count)), columns=['count', DEVICE])
             dev_order = dev_order.set_index(DEVICE)
             tmp = dev2area.set_index(DEVICE)
             tmp['count'] = dev_order['count']
@@ -579,7 +591,8 @@ def device_order_by(df_devs: pd.DataFrame, rule='alphabetical', dev2area=None, o
 
     return dev_order
 
-def activity_order_by(dct_acts, rule: str='alphabetical') -> list:
+
+def activity_order_by(dct_acts, rule: str = 'alphabetical') -> list:
     """ Return a list with ordered activities
 
     Parameters
@@ -598,7 +611,7 @@ def activity_order_by(dct_acts, rule: str='alphabetical') -> list:
     """
     is_iterable = isinstance(rule, list) or isinstance(rule, np.ndarray)
     if is_iterable:
-        # TODO refactor, negate: any not int and not dct is none than below 
+        # TODO refactor, negate: any not int and not dct is none than below
         if all(isinstance(item, int) for item in rule) or dct_acts is None:
             return rule
 
@@ -608,7 +621,8 @@ def activity_order_by(dct_acts, rule: str='alphabetical') -> list:
             rule.remove(act_not_in_df)
         return rule
 
-    assert rule in ['alphabetical', 'duration', 'count', 'area'], f'rule{rule} not in assertion.'
+    assert rule in ['alphabetical', 'duration', 'count',
+                    'area'], f'rule{rule} not in assertion.'
 
     if isinstance(dct_acts, pd.DataFrame):
         dct_acts = ActivityDict.wrap(dct_acts)
@@ -644,9 +658,9 @@ def fetch_by_name(dataset: str, identifier=None, **kwargs) -> dict:
     assert dataset in DATASET_STRINGS + ['joblib'], error_msg
 
     from pyadlml.dataset import fetch_amsterdam, \
-                                fetch_mitlab, fetch_aras, fetch_kasteren_2010, \
-                                fetch_tuebingen_2019, fetch_casas,\
-                                fetch_uci_adl_binary, load_act_assist
+        fetch_mitlab, fetch_aras, fetch_kasteren_2010, \
+        fetch_tuebingen_2019, fetch_casas,\
+        fetch_uci_adl_binary, load_act_assist
     if dataset == DATASET_STRINGS[0]:
         return fetch_casas(testbed='aruba', **kwargs)
     if dataset == DATASET_STRINGS[1]:
@@ -687,15 +701,17 @@ def get_dev_row_where(df, time, dev, state):
     raise ValueError('deprecated: use get_index_matchingrows instead')
     time = pd.Timestamp(time)
     mask = (df[DEVICE] == dev) \
-           & (df[TIME] == time) \
-           & (df[VALUE] == state)
+        & (df[TIME] == time) \
+        & (df[VALUE] == state)
     df = df.reset_index().set_index('index')
     return df[mask.values].copy()
+
 
 def get_dev_rows_where(df_devs, rows):
     raise ValueError('deprecated: use get_index_matchingrows instead')
     res = [get_dev_row_where(df_devs, r[0], r[1], r[2]) for r in rows]
     return pd.concat(res)
+
 
 def append_devices(df_devs, rows):
     raise ValueError('deprecated: use get_index_matchingrows instead')
@@ -703,16 +719,16 @@ def append_devices(df_devs, rows):
     df[TIME] = pd.to_datetime(df[TIME])
     return pd.concat([df_devs, df])
 
+
 def remove_devices(df_devs, rows):
     raise ValueError('deprecated: use get_index_matchingrows instead')
-    idx_to_drop = [get_dev_row_where(df_devs, r[0], r[1], r[2]).index[0] for r in rows]
+    idx_to_drop = [get_dev_row_where(
+        df_devs, r[0], r[1], r[2]).index[0] for r in rows]
     return df_devs.drop(index=idx_to_drop)
 
 
-
-
-def to_sktime(df_devs: pd.DataFrame, df_acts: pd.DataFrame = None, return_type: str=None, 
-              return_X_y: bool=False):
+def to_sktime(df_devs: pd.DataFrame, df_acts: pd.DataFrame = None, return_type: str = None,
+              return_X_y: bool = False):
     """
 
     Parameters
@@ -734,7 +750,7 @@ def to_sktime(df_devs: pd.DataFrame, df_acts: pd.DataFrame = None, return_type: 
         it returns two objects, if False, it appends the class labels to the dataframe.
 
 
-    
+
     Returns 
     -------
     X: pd.DataFrame
@@ -746,19 +762,19 @@ def to_sktime(df_devs: pd.DataFrame, df_acts: pd.DataFrame = None, return_type: 
     from pyadlml.preprocessing.preprocessing import LabelMatcher
 
     return_type = 'nested_univ' if return_type is None else return_type
-    return_type = 'numpy3d' if return_type in ['numpy3D', 'np3D', 'np3d'] else return_type
+    return_type = 'numpy3d' if return_type in [
+        'numpy3D', 'np3D', 'np3d'] else return_type
 
     if return_type in ["pd-multiindex", "numpy2d"]:
         err_txt = "BasicMotions loader: Error, attempting to load into a numpy2d array, but cannot because it is a multivariate problem. Use numpy3d instead"
         raise ValueError(err_txt)
 
-    assert return_type in ["numpy3d","nested_univ"]
-
+    assert return_type in ["numpy3d", "nested_univ"]
 
     if df_acts is not None:
         y = LabelMatcher(other=False).fit_transform(df_acts, df_devs).values
-        y = y[:,1].astype(np.dtype('U'))
-    else: 
+        y = y[:, 1].astype(np.dtype('U'))
+    else:
         y = None
 
     if return_type == "nested_univ":
@@ -769,11 +785,12 @@ def to_sktime(df_devs: pd.DataFrame, df_acts: pd.DataFrame = None, return_type: 
         """
         columns = [TIME, DEVICE, VALUE]
         index = 'RangeIndex'
-        data = {TIME:[df_devs[TIME]], DEVICE:[df_devs[DEVICE]], VALUE: [df_devs[VALUE]]}
+        data = {TIME: [df_devs[TIME]], DEVICE: [
+            df_devs[DEVICE]], VALUE: [df_devs[VALUE]]}
         X = pd.DataFrame(columns=columns, index=[0], data=data)
         if y is not None:
             if return_X_y:
-                return X, y 
+                return X, y
             else:
                 X.loc[0, 'class_val'] = y
                 return X
@@ -797,8 +814,9 @@ def to_sktime(df_devs: pd.DataFrame, df_acts: pd.DataFrame = None, return_type: 
     else:
         raise
 
-def to_sktime2(df_X: pd.DataFrame, df_y: pd.DataFrame, return_type: str=None, 
-              return_X_y: bool=False):
+
+def to_sktime2(df_X: pd.DataFrame, df_y: pd.DataFrame, return_type: str = None,
+               return_X_y: bool = False):
     """
 
     Parameters
@@ -822,7 +840,7 @@ def to_sktime2(df_X: pd.DataFrame, df_y: pd.DataFrame, return_type: str=None,
         it returns two objects, if False, it appends the class labels to the dataframe.
 
 
-    
+
     Returns 
     -------
     X: pd.DataFrame
@@ -834,14 +852,14 @@ def to_sktime2(df_X: pd.DataFrame, df_y: pd.DataFrame, return_type: str=None,
 
     from pyadlml.dataset._core.devices import is_device_df
     return_type = 'nested_univ' if return_type is None else return_type
-    return_type = 'numpy3d' if return_type in ['numpy3D', 'np3D', 'np3d'] else return_type
+    return_type = 'numpy3d' if return_type in [
+        'numpy3D', 'np3D', 'np3d'] else return_type
 
     if return_type in ["pd-multiindex", "numpy2d"]:
         err_txt = "BasicMotions loader: Error, attempting to load into a numpy2d array, but cannot because it is a multivariate problem. Use numpy3d instead"
         raise ValueError(err_txt)
 
-    assert return_type in ["numpy3d","nested_univ"]
-
+    assert return_type in ["numpy3d", "nested_univ"]
 
     """
     Create appropriate targets depending on given input
@@ -849,23 +867,24 @@ def to_sktime2(df_X: pd.DataFrame, df_y: pd.DataFrame, return_type: str=None,
     if is_activity_df(df_y):
         from pyadlml.preprocessing.preprocessing import LabelMatcher
         y = LabelMatcher(other=False).fit_transform(df_y, df_X).values
-        y = y[:,1].astype(np.dtype('U'))
+        y = y[:, 1].astype(np.dtype('U'))
     else:
-        # Ensure there are no other things such as timestamps choose the last dimension as 
-        y = df_y[:,:,-1] if len(df_y.shape) == 3 else df_y
+        # Ensure there are no other things such as timestamps choose the last dimension as
+        y = df_y[:, :, -1] if len(df_y.shape) == 3 else df_y
 
         if len(y.shape) == 2 and y.shape[1] > 1:
-            # When the windows were produces with many-to-many relationship reduce to many-to-one 
-            # since 
-            y = y[:,-1]
-            print('Warning!!! Reducing many-to-many into many-to-one. Check if this was the intended measure.')
-        y = y.squeeze() 
+            # When the windows were produces with many-to-many relationship reduce to many-to-one
+            # since
+            y = y[:, -1]
+            print(
+                'Warning!!! Reducing many-to-many into many-to-one. Check if this was the intended measure.')
+        y = y.squeeze()
         assert len(y.shape) == 1
-
 
     X = df_X.copy()
 
-    assert y.shape[0] == X.shape[0], f"Shape mismatch between X and y: {y.shape[0]} vs. {X.shape[0]}"
+    assert y.shape[0] == X.shape[
+        0], f"Shape mismatch between X and y: {y.shape[0]} vs. {X.shape[0]}"
 
     if return_type == "nested_univ" and len(X.shape) == 2:
         """ Convert a 2d dataframe or numpy array 
@@ -902,7 +921,7 @@ def to_sktime2(df_X: pd.DataFrame, df_y: pd.DataFrame, return_type: str=None,
 
         X = pd.DataFrame(data_X)
         if return_X_y:
-            return X, y 
+            return X, y
         else:
             return X
     elif return_type == "nested_univ" and len(X.shape) == 3:
@@ -916,14 +935,15 @@ def to_sktime2(df_X: pd.DataFrame, df_y: pd.DataFrame, return_type: str=None,
         for i in range(len(y)):
             # Xi of shape (T, F) where T is the sequence length and F are the number of features
             Xi, yi = X[i], y[i]
-            datum = {f'dim_{f}': pd.Series(Xi[:, f]) for f in range(Xi.shape[1])}
+            datum = {f'dim_{f}': pd.Series(Xi[:, f])
+                     for f in range(Xi.shape[1])}
             if not return_X_y:
                 datum['class_val'] = yi
             data_X.append(datum)
 
         X = pd.DataFrame(data_X)
         if return_X_y:
-            return X, y 
+            return X, y
         else:
             return X
     elif return_type == "numpy3d":

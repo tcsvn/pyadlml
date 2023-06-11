@@ -107,7 +107,7 @@ def _build_choice_devices(df_devs, id, sel=None, multi=True):
     )
 
 
-def _build_range_slider(start_time, end_time, set_start_time, set_end_time):
+def _build_range_slider(df_acts, df_devs, start_time, end_time, set_start_time=None, set_end_time=None):
     strf_time = '%d.%m.%Y'
     def create_mark(ts, format):
         return {'label': _np_dt_strftime(ts, format), 'style': {"transform": "rotate(45deg)"}}
@@ -133,8 +133,16 @@ def _build_range_slider(start_time, end_time, set_start_time, set_end_time):
 
     for day in rng:
         marks[timestamp_to_num(day, start_time, end_time)] = create_mark(day, strf_time[:-3])
-    set_end_time = timestamp_to_num(set_end_time, start_time, end_time)
-    set_start_time = timestamp_to_num(set_start_time, start_time, end_time)
+    if set_end_time is not None:
+        set_end_time = timestamp_to_num(set_end_time, start_time, end_time)
+    else:
+        set_end_time = 1
+    
+    if set_start_time is not None:
+        set_start_time = timestamp_to_num(set_start_time, start_time, end_time)
+    else:
+        set_start_time = 0
+
     return dcc.RangeSlider(id='range-slider', min=0, max=1, step=0.001,
                            value=[set_start_time, set_end_time], marks=marks)
 
@@ -342,7 +350,7 @@ def acts_n_devs_layout(df_devs, df_acts, start_time, end_time, set_end_time, plo
         choice_device = dcc.Dropdown(id='select-devices', options=[], multi=True, value=[], clearable=False)
     else:
         fig_and = activities_and_devices(df_devs, df_acts, st=start_time, et=set_end_time, height=plot_height)
-        time_slider = _build_range_slider(None, None, start_time, end_time, set_end_time)
+        time_slider = _build_range_slider(None, None, start_time, end_time, None, set_end_time)
         checklist_act = _build_choice_activity(df_acts, id='select-activities')
         choice_device = _build_choice_devices(df_devs, id='select-devices')
 

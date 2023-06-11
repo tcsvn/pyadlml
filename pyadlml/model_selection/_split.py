@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection._split import _BaseKFold
 
-from pyadlml.constants import ACTIVITY, TIME, START_TIME, END_TIME, DEVICE, VALUE
+from pyadlml.constants import ACTIVITY, TIME, START_TIME, END_TIME, DEVICE, VALUE, STRFTIME_PRECISE
 from sklearn.model_selection import TimeSeriesSplit as SklearnTSSplit, KFold as SklearnKFold
 from sklearn.base import BaseEstimator, TransformerMixin
 from pyadlml.dataset._core.activities import is_activity_df
@@ -11,6 +11,7 @@ from pyadlml.dataset._core.activities import is_activity_df
 from pyadlml.dataset.util import df_difference, get_last_states, select_timespan
 from pyadlml.dataset.cleaning.misc import remove_days
 from pyadlml.pipeline import XAndYTransformer, XOrYTransformer
+
 
 
 def train_test_split(df_devs: pd.DataFrame, df_acts: pd.DataFrame, split: str ='leave_one_day_out', temporal: bool =False,
@@ -279,9 +280,9 @@ class CrossValSelector(BaseEstimator, TransformerMixin, XAndYTransformer):
         Only
 
     """
-    def __init__(self, data_range=None, day_shift=False):
+    def __init__(self, data_range=None, shift=False):
         self.data_range = data_range
-        self.day_shift = day_shift
+        self.shift = shift
 
 
     def _extract_first_sample(self, data_range):
@@ -300,7 +301,8 @@ class CrossValSelector(BaseEstimator, TransformerMixin, XAndYTransformer):
 
         # determine whether the splits are made based on index ranges or timestamp tuples
         sample = self._extract_first_sample(self.data_range)
-        self.is_temporal_split_ = not (isinstance(sample, int) or isinstance(sample, np.int64))
+        self.is_temporal_split_ = not (isinstance(sample, int) \
+                                  or isinstance(sample, np.int64))
 
         return self
 
@@ -340,11 +342,15 @@ class CrossValSelector(BaseEstimator, TransformerMixin, XAndYTransformer):
                 st1, et1 = self.data_range[0][0], self.data_range[0][1]
                 st2, et2 = self.data_range[1][0], self.data_range[1][1]
 
-                if self.day_shift:
-                    # Assume exclusive ranges [t1, t2)  
+                if self.shift:
+                    # Assume exclusive ranges [t1, t2), preserves offset 
                     days_to_remove = pd.date_range(et1, st2, freq='1D').values[:-1]
                     if is_activity_df(y):
-                        X_sel, y_sel = remove_days(X, y, days=days_to_remove)
+                        et1, st2 = pd.Timestamp(et1), pd.Timestamp(st2)
+                        X_sel, y_sel = remove_days(X, y, 
+                                                   days=[et1.strftime("%d.%m.%Y") + ' - ' + st2.strftime("%d.%m.%Y")],
+                                                   offsets=[et1.strftime("%H:%M:%S.%f"), st2.strftime("%H:%M:%S.%f")],
+                        )
                     else:
                         X_sel1, y_sel1 = select_timespan(X, y, start_time=st1, end_time=et1, clip_activities=True)
                         X_sel2, y_sel2 = select_timespan(X, y, start_time=st2, end_time=et2, clip_activities=True)
@@ -532,8 +538,6 @@ class LeaveKDayOutSplit(object):
 
     Parameters
     ----------
-    k : int, default=1
-        The number of days to use for the test set.
     n_splits : int, default=1
         The number of splits. All splits are exclusive, meaning there will not be more t TODO
     return_timestamp : bool, default=False
@@ -552,16 +556,15 @@ class LeaveKDayOutSplit(object):
     --------
     >>> import os
     """
-    def __init__(self, n_splits=1, k=1, return_timestamp=False, epsilon='5ms', offset='0s', shift=False):
+    def __init__(self, n_splits=1, return_timestamp=False, epsilon='5ms', offset='0s'):
         self.n_splits = n_splits
         self.return_timestamp = return_timestamp
-        self.k = k
         self.offset = pd.Timedelta(offset)
         self.eps = pd.Timedelta(epsilon)
-        self.shift = shift
 
     def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
+
         Parameters
         ----------
         X : object
@@ -579,6 +582,85 @@ class LeaveKDayOutSplit(object):
             Returns the number of splitting iterations in the cross-validator.
         """
         return self.n_splits
+
+    def calc_avg_train_val_frac(self, X):
+
+        first_day = X[TIME].iloc[0].floor('d')
+        last_day = X[TIME].iloc[-1].ceil('d')
+        days = pd.date_range(first_day, last_day, freq='1D').values
+        days_per_split = np.ceil(len(days)/self.n_splits)
+        return days_per_split/len(days)
+
+    def days_per_split(self, X) -> np.ndarray:
+        """ Computes the days per splits as a list
+        """
+        first_day = X[TIME].iloc[0].floor('d')
+        last_day = X[TIME].iloc[-1].ceil('d')
+        days = pd.date_range(first_day, last_day, freq='1D').values
+        N = len(days)
+        days_per_split = np.ceil(N/self.n_splits)
+        result = []
+        for i in range(self.n_splits):
+            step = N%days_per_split if i == self.n_splits - 1 else days_per_split
+            result.append((i*days_per_split, step, max(0, N-(i+1)*days_per_split)))
+        return [(int(e[0]), int(e[1]), int(e[2])) for e in result]
+
+
+    def plotly_splits(self, X):
+        from plotly.subplots import make_subplots
+        from pyadlml.dataset.plot.plotly.acts_and_devs import _plot_device_states_into_fig
+        data = {DEVICE: [], TIME:[], VALUE:[]}
+        min_time = np.datetime64(X[TIME].min())
+        max_time = np.datetime64(X[TIME].max())
+        for i, (train, val) in enumerate(self.split(X)):
+            split_name = f'split_{i+1}'
+
+            if i == 0:
+                data[DEVICE].append(split_name)
+                data[TIME].append(max(min_time, val[0]))
+                data[VALUE].append(f'val')
+
+                data[DEVICE].append(split_name)
+                data[TIME].append(train[0])
+                data[VALUE].append(f'train')
+                # Dummy device for last split
+                data[DEVICE].append(split_name)
+                data[TIME].append(max_time)
+                data[VALUE].append(f'val')
+
+            elif i == self.n_splits - 1:
+                data[DEVICE].append(split_name)
+                data[TIME].append(max(min_time, train[0]))
+                data[VALUE].append(f'train')
+
+                data[DEVICE].append(split_name)
+                data[TIME].append(val[0])
+                data[VALUE].append(f'val')
+            else:
+                data[DEVICE].append(split_name)
+                data[TIME].append(max(min_time, train[0][0]))
+                data[VALUE].append(f'train')
+                data[DEVICE].append(split_name)
+                data[TIME].append(val[0])
+                data[VALUE].append(f'val')
+                data[DEVICE].append(split_name)
+                data[TIME].append(train[1][0])
+                data[VALUE].append(f'train')
+
+        df = pd.DataFrame(data)
+        df[TIME] = pd.to_datetime(df[TIME])
+
+        fig = make_subplots(cols=1, rows=1)
+        fig = _plot_device_states_into_fig(fig, df, df_devs_usel=None, df_devs_outside=None, dev_order=None)
+        fig.update_layout({'barmode': 'overlay',
+                            'legend': {'tracegroupgap': 0}
+                            })
+        fig.update_xaxes(type="date")
+        fig.update_layout(title="LeaveKDayOut splits")
+        fig.update_yaxes(categoryorder='array', categoryarray=df[DEVICE].unique())
+
+
+        return fig
 
     def split(self, X=None, y=None, groups=None):
         """ Generate indices to split data into training and test set.
@@ -603,51 +685,48 @@ class LeaveKDayOutSplit(object):
 
         X = X.copy()
 
-        first_day = X[TIME].iloc[0].floor('d')
-        last_day = X[TIME].iloc[-1].ceil('d')
+        first_day = X[TIME].min().floor('d')
+        last_day = X[TIME].max().ceil('d')  # Exclusive
         days = pd.date_range(first_day, last_day, freq='1D').values
-        days[1:-2] = days[1:-2] + self.offset
+
+        # Shift the boundary for all but the first and the last day since
+        # they wrap the content and do not need to change
+        days[1:-2] = days[1:-2] + self.offset 
 
         N = len(days)
-        if self.k is None:
-            self.k = (N-2)//self.n_splits
+        self.k = (N-2)//self.n_splits
 
         assert self.k <= (N-2)//self.n_splits, "The number of days for each split exceeds the possible"
 
-        step_size = N//self.n_splits
         res = []
+        step_size = int(np.ceil(N/self.n_splits))
         for i in range(self.n_splits):
-            test = (days[i*step_size], days[i*step_size + self.k])
+            step = N%step_size if i == self.n_splits -1 else step_size
+            val = (days[i*step_size], days[min(i*step_size+step, N-1)])
             if i == 0:
                 # case when | test | train |
-                train = (days[i*step_size + self.k], days[-1])
-            elif i == self.n_splits-1 and (i*step_size+self.k) == N-1:
+                train = (days[step], days[-1])
+            elif i == self.n_splits-1:
                 # case  when | train | test|
                 train = (days[0], days[i*step_size])
             else:
                 # case when | train | test | train |
                 train = ((days[0], days[i*step_size]),
-                         (days[i*step_size + self.k], days[-1]))
+                         (days[i*step_size + step], days[-1]))
 
             if self.return_timestamp:
-                res.append((train, test))
+                res.append((train, val))
             else:
+                raise NotImplementedError("TODO verify if this works.")
                 def get_indices(df, l_bound, r_bound):
                     return df[(l_bound < df[TIME]) & (df[TIME] < r_bound)].index.values
-                test_idxs = get_indices(X, test[0], test[1])
+                test_idxs = get_indices(X, val[0], val[1])
                 if i == 0 or (i == self.n_splits-1 and (i*step_size+self.k) == N-1):
                     train_idxs = get_indices(X, train[0], train[1])
                 else:
                     train_idxs_int_1 = get_indices(X, train[0][0], train[0][1])
                     train_idxs_int_2 = get_indices(X, train[1][0], train[1][1])
                     train_idxs = np.concatenate([train_idxs_int_1, train_idxs_int_2])
-
-                    if self.shift:
-                        # shift the second interval by that amount of days into the past
-                        X.loc[train_idxs_int_2, TIME] = X[TIME] - pd.Timedelta(str(self.k) + 'D')
-                        if y is not None:
-                            y.loc[train_idxs_int_2, TIME] = y[TIME] - pd.Timedelta(str(self.k) + 'D')
-
                 res.append((train_idxs, test_idxs))
 
         return res

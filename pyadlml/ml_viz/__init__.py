@@ -57,10 +57,11 @@ def plotly_confusion_matrix(y_pred, y_true, labels, per_step=False, scale='linea
         import plotly.express as px
 
         for step in range(nr_steps):
+            z = np.log(cms[step]) if scale == 'log' else cms[step]
             fig.add_trace(
                 go.Heatmap(
                     name=f'CM_{step}',
-                    z=cms[step],
+                    z=z,
                     x=labels,
                     y=labels,
                     colorscale='Viridis',

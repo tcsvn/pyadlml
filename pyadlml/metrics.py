@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from pyadlml.constants import ACTIVITY, END_TIME, OTHER, START_TIME, TIME, OTHER_MIN_DIFF
 from pyadlml.dataset._core.activities import is_activity_df
-#from pyadlml.util import _save_divide
+# from pyadlml.util import _save_divide
 
 
 """
@@ -37,8 +37,8 @@ def online_true_positive_rate(y_true: np.ndarray, y_pred: np.ndarray, times: np.
         cm = df_confmat.values
         tp = np.diag(cm)
         fn = cm.sum(axis=0) - tp
-        #score = _save_divide(tp, (tp + fn))
-        score = tp, (tp + fn)
+        # score = _save_divide(tp, (tp + fn))
+        score = tp / (tp + fn)
 
         return (score*(1/n_classes)).sum(-1)
 
@@ -90,10 +90,8 @@ def online_accuracy(y_true: np.ndarray, y_pred: np.ndarray, times: np.ndarray, n
 
     # An array where for each class the specified quantities are computed
     df_confmat = online_confusion_matrix(y_true, y_pred, times, n_classes)
-    from pyadlml.ml_viz import plotly_online_confusion_matrix
-    plotly_online_confusion_matrix(conf_mat=df_confmat).write_html('test.html')
 
-    if average == 'micro':
+    if average == 'micro' or average is None:
         confmat = df_confmat.values
 
         """
@@ -123,11 +121,13 @@ def online_accuracy(y_true: np.ndarray, y_pred: np.ndarray, times: np.ndarray, n
         # tn = confmat.sum() - (fp + fn + tp)
 
         # Array of per class ppvs?
-        score = tp, (tp + fn)
+        score = tp / (tp + fn)
 
         # Normalize by each class by its
         normalized_score = (score*(1/n_classes)).sum(-1)
         return normalized_score
+    else:
+        raise NotImplementedError
 
 
 def _slice_categorical_stream(df1, df2, first_ts=None, last_ts=None):
@@ -200,6 +200,8 @@ def online_confusion_matrix(y_true: pd.DataFrame, y_pred: np.ndarray, times: np.
     cm : pd.DataFrame
 
     """
+    assert is_activity_df(y_true)
+    assert isinstance(y_pred, np.ndarray)
     if is_activity_df(y_true):
 
         y_pred, times = y_pred.squeeze(), times.squeeze()
@@ -209,7 +211,7 @@ def online_confusion_matrix(y_true: pd.DataFrame, y_pred: np.ndarray, times: np.
         df = df.rename(columns={START_TIME: TIME})
 
         # Fill up with other
-        df_other = df[[END_TIME, ACTIVITY]]
+        df_other = df[[END_TIME, ACTIVITY]].copy()
         df_other.loc[:, ACTIVITY] = OTHER
         df_other = df_other.rename(columns={END_TIME: TIME})
         df = df.drop(columns=END_TIME)
@@ -230,8 +232,10 @@ def online_confusion_matrix(y_true: pd.DataFrame, y_pred: np.ndarray, times: np.
         df_y_pred = pd.DataFrame({TIME: times, 'y_pred': y_pred})
         df_y_true = df.copy().rename(columns={ACTIVITY: 'y_true'})
 
-        df_y_true = df_y_true.sort_values(by=TIME).reset_index(drop=True)
-        df_y_pred = df_y_pred.sort_values(by=TIME).reset_index(drop=True)
+        df_y_true = df_y_true.sort_values(by=TIME)[[TIME, 'y_true']] \
+                             .reset_index(drop=True)
+        df_y_pred = df_y_pred.sort_values(by=TIME)[[TIME, 'y_pred']] \
+                             .reset_index(drop=True)
 
         # if prediction is larger than ground truth activities pad gt with 'other'
         if df_y_pred[TIME].iat[0] < df_y_true[TIME].iat[0]:
@@ -243,7 +247,7 @@ def online_confusion_matrix(y_true: pd.DataFrame, y_pred: np.ndarray, times: np.
         if df_y_true[TIME].iat[-1] < df_y_pred[TIME].iat[-1]:
             df_y_true = pd.concat([df_y_true,
                                    pd.Series(
-                                       {TIME: df_y_pred.at[0, TIME], 'y_true':'other'})
+                                       {TIME: df_y_pred.at[df_y_pred.index[-1], TIME], 'y_true':'other'})
                                    .to_frame().T], axis=0, ignore_index=True)
 
         # if prediction frame is smaller than ground truth clip gt to prediction
@@ -273,7 +277,10 @@ def online_confusion_matrix(y_true: pd.DataFrame, y_pred: np.ndarray, times: np.
 
     cm = pd.crosstab(
         index=df['y_true'], columns=df['y_pred'], values=df['diff'], aggfunc=np.sum)
+
     cm = cm.replace({pd.NaT: pd.Timedelta('0s')})
+    # TODO refactor, find out why cross tab creates 0 integers since the sum over values should be
+    cm = cm.replace({0: pd.Timedelta('0s')})
 
     missing_row = set(cm.columns) - set(cm.index)
     missing_col = set(cm.index) - set(cm.columns)

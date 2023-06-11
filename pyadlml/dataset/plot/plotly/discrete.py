@@ -143,7 +143,6 @@ def _plot_activities_into(fig, y, y_label, cat_col_map, row=1, col=1, time=None,
             df['lengths'] = (df['end'] - df['start'])/pd.Timedelta('1ms')
             df['y_label'] = y_label
         else:
-
             if activities is None:
                 activities = np.unique(y)
 
@@ -244,8 +243,11 @@ def _plot_devices_into(fig, X, cat_col_map, row, col, time, dev_order):
             bars[f]['lengths'] = bars[f]['lengths'].astype("timedelta64[ms]")
             
     trace_lst = []
-    devs = dev_order or X.columns
+
+    devs = X.columns.to_list() if dev_order is None else dev_order
+    devs = devs.tolist() if isinstance(devs, np.ndarray) else devs
     devs_num = []
+
     for dev in devs:
 
         # Check if 0-1-vector numeric
@@ -283,7 +285,6 @@ def _plot_devices_into(fig, X, cat_col_map, row, col, time, dev_order):
                 fig.add_trace(trace, row=row, col=col)
                 #trace_lst.append(trace)
         else:
-            continue
             devs_num.append(dev)
             hovertemplate = '<b>' + dev + '</b><br>'\
                           + 'Value: %{customdata:.2f}<extra></extra>'\
@@ -374,7 +375,8 @@ def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, dev_
 
 
     times = pd.Series(times) if isinstance(times, np.ndarray) else times
-    device_order = dev_order or X.columns.to_list()
+    device_order = X.columns.to_list() if dev_order is None else dev_order
+    device_order = device_order.tolist() if isinstance(device_order, np.ndarray) else device_order
 
 
     error_text = 'parameter act_order has to be set if y_conf is given'
@@ -401,7 +403,7 @@ def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, dev_
 
     if heatmap is not None:
         heatmap_row = 1 if y_conf is None else 2
-        fig.add_trace(heatmap, row=heatmap_row, col=1)
+        fig.add_trace(heatmap, row=heatmap_row, col=1, secondary_y=False)
 
     fig = _plot_devices_into(fig, X, cat_col_map, row=rows, col=cols, time=times, dev_order=device_order)
 
@@ -419,8 +421,13 @@ def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, dev_
         tickfont=dict(size=8, family='Arial'),
         categoryorder='array',
         categoryarray=device_order + ['y_pred', 'y_true'],
-        secondary_y=False,
+        secondary_y=True,
     )
+    fig.update_yaxes(row=rows, col=cols, secondary_y=False,
+        tickmode='linear', 
+        dtick=1,
+    )
+
     if times is not None:
         fig.update_xaxes(range=[times.iloc[0], times.iloc[-1]])
 

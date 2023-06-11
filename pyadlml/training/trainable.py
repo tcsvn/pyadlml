@@ -36,15 +36,17 @@ def _mpl_clear():
 class Trainable():
 
 
-    def __init__(self, exp_name, ds_name, ds_ident=None, use_tune=False):
+    def __init__(self, exp_name, ds_name, data_folder=None, use_tune=False):
         self._exp_name = exp_name
         self.ds_name = ds_name
-        self.ds_ident = ds_ident
-        self.exp = mlflow.set_experiment(exp_name)
+        self.data_folder = Path(data_folder)
+        self.exp_name = exp_name
         self.use_tune = use_tune
 
     def get_experiment_name(self):
-        return self.exp.name
+        raise 
+        #mlflow.set_experiment(exp_name)
+        return name
 
     def _run_exists(self, run_id):
         try:
@@ -53,11 +55,10 @@ class Trainable():
         except:
             return False
 
-    def _fetch_dataset(self):
+    def _fetch_dataset(self, ds_name):
         set_data_home('/tmp/pyadlml/')
-        # TODO debug
-        #data = fetch_by_name(self.ds_name, load_cleaned=True)
-        data = fetch_by_name(self.ds_name, identifier=self.ds_ident)
+
+        data = fetch_by_name(self.ds_name, identifier=self.data_folder / ds_name)
         if isinstance(data['activities'], ActivityDict):
             subjects = list(data['activities'].keys())
             key = subjects[0]
@@ -67,6 +68,11 @@ class Trainable():
 
         return data['devices'], data['activities']
 
+    def _fetch_split(self, ds_name):
+        from adl_models.constants import SPLIT_X_TRAIN, SPLIT_X_VAL, SPLIT_y_TRAIN, SPLIT_y_VAL
+        import joblib
+        data = joblib.load(self.data_folder / ds_name)
+        return data[SPLIT_X_TRAIN], data[SPLIT_X_VAL], data[SPLIT_y_TRAIN], data[SPLIT_y_VAL]
 
     def set_pipe(self, pipe):
         self.pipe = pipe
@@ -205,12 +211,20 @@ class Trainable():
         mlflow.log_figure(f_and, artifact_file='eval/val_predictions_time.html')
 
 
-
-    def _get_run_id_of(self, model_name):
+    def _get_runid_of(self, model_name):
         df_runs = mlflow.search_runs(experiment_ids=[self.exp.experiment_id])
         try:
             # Get parent run id from subtrials since an outer trial has no params, ... way to identify
-            return df_runs[df_runs['params.clf__name'] == model_name].reset_index()\
+            return df_runs[df_runs['tags.trial_name'] == model_name].reset_index()\
+                                                                 .at[0, 'run_id']
+        except:
+            return None
+
+    def _get_parent_runid_of(self, model_name):
+        df_runs = mlflow.search_runs(experiment_ids=[self.exp.experiment_id])
+        try:
+            # Get parent run id from subtrials since an outer trial has no params, ... way to identify
+            return df_runs[df_runs['tags.trial_name'] == model_name].reset_index()\
                                                                  .at[0, 'tags.mlflow.parentRunId']
         except:
             return None
@@ -252,7 +266,7 @@ class Trainable():
         with tempfile.TemporaryDirectory() as workdir:
             workdir = Path(workdir)
             model_name = hparam_dict['model']
-            run_id = self._get_run_id_of(model_name)
+            run_id = self._get_parent_runid_of(model_name)
 
             with mlflow.start_run(run_id, self.exp.experiment_id, model_name) as run:
                 if self.use_tune:

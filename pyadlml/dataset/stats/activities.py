@@ -21,9 +21,10 @@ def activity_order_by_duration(df_acts: pd.DataFrame) -> list:
     """
     if isinstance(df_acts, pd.DataFrame):
         dct_acts = ActivityDict.wrap(df_acts)
-    else: 
+    else:
         dct_acts = df_acts
-    dfs = [activity_duration(df).set_index(ACTIVITY) for df in dct_acts.values()]
+    dfs = [activity_duration(df).set_index(ACTIVITY)
+           for df in dct_acts.values()]
 
     df = pd.concat(dfs, axis=1).fillna(0)
     df['sum'] = df.sum(axis=1)
@@ -46,9 +47,10 @@ def activity_order_by_count(df_acts: pd.DataFrame) -> list:
     """
     if isinstance(df_acts, pd.DataFrame):
         dct_acts = ActivityDict.wrap(df_acts)
-    else: 
+    else:
         dct_acts = df_acts
-    dfs = [activities_count(df).set_index(ACTIVITY) for df in dct_acts.values()]
+    dfs = [activities_count(df).set_index(ACTIVITY)
+           for df in dct_acts.values()]
 
     df = pd.concat(dfs, axis=1).fillna(0)
     df['sum'] = df.sum(axis=1)
@@ -74,6 +76,7 @@ def _get_freq_func(freq):
     else:
         return lambda x: x.total_seconds()/3600
 
+
 def coverage(df_activities, df_devices, datapoints=False):
     """ Computes the activity coverage for the devices.
 
@@ -97,10 +100,12 @@ def coverage(df_activities, df_devices, datapoints=False):
         nr_nans = lbl_devs[ACTIVITY].isna().sum()
         return 1 - nr_nans/len(lbl_devs)
     else:
-        durations = activity_duration(df_activities, other=True).set_index('activity')
+        durations = activity_duration(
+            df_activities, other=True).set_index('activity')
         total = durations['minutes'].sum()
         amount_other = durations.at['other', 'minutes']
         return 1 - amount_other/total
+
 
 def activities_duration_dist(df_acts, lst_acts=None, freq='minutes', other=False):
     """ Computes the activity distribution.
@@ -140,7 +145,7 @@ def activities_duration_dist(df_acts, lst_acts=None, freq='minutes', other=False
     df = df[[ACTIVITY, diff]]
 
     # if no data is logged for a certain activity append 0.0 duration value
-    #if lst_acts is not None:
+    # if lst_acts is not None:
     #    for activity in set(lst_acts).difference(set(list(df[ACTIVITY]))):
     #        df = df.append(pd.DataFrame(
     #            data=[[activity, pd.Timedelta('0ns')]],
@@ -148,6 +153,7 @@ def activities_duration_dist(df_acts, lst_acts=None, freq='minutes', other=False
 
     df[freq] = df[diff].apply(_get_freq_func(freq))
     return df.sort_values(by=ACTIVITY)
+
 
 def activity_duration(df_acts, unit='minutes', stat='sum', normalize=False, other=False):
     """ Compute how much time an inhabitant spent performing an activity
@@ -191,13 +197,13 @@ def activity_duration(df_acts, unit='minutes', stat='sum', normalize=False, othe
         raise ValueError("no activity was recorded")
     grouped = df.groupby(ACTIVITY)
     if stat == 'sum':
-        df = grouped.sum()
+        df = grouped.sum(numeric_only=True)
     elif stat == 'mean':
-        df = grouped.mean()
+        df = grouped.mean(numeric_only=True)
     elif stat == 'std':
-        df = grouped.std()
+        df = grouped.std(numeric_only=True)
     else:
-        df = grouped.median()
+        df = grouped.median(numeric_only=True)
     df = df.reset_index()
     df.columns = [ACTIVITY, unit]
 
@@ -207,6 +213,7 @@ def activity_duration(df_acts, unit='minutes', stat='sum', normalize=False, othe
         df[unit] = df[unit].apply(lambda x: x / normalize)
 
     return df.sort_values(by=ACTIVITY)
+
 
 def activities_count(df_acts: pd.DataFrame) -> pd.DataFrame:
     """ Computes how many times a certain activity occurs within the dataset.
@@ -245,7 +252,7 @@ def activities_count(df_acts: pd.DataFrame) -> pd.DataFrame:
     df.columns = [ACTIVITY, res_col_name]
 
     # correct for missing activities
-    #if lst_acts is not None:
+    # if lst_acts is not None:
     #    diff = set(lst_acts).difference(set(list(df[ACTIVITY])))
     #    for activity in diff:
     #        df = df.append(pd.DataFrame(data=[[activity, 0.0]], columns=df.columns, index=[len(df) + 1]))
@@ -314,7 +321,8 @@ def activities_transitions(df_acts, other=False):
             df[activity] = 0
         for activity in row_diff:
             # when rows are missing
-            df = df.append(pd.DataFrame(data=0.0, columns=df.columns, index=[activity]))
+            df = df.append(pd.DataFrame(
+                data=0.0, columns=df.columns, index=[activity]))
 
     # sort activities alphabetically
     df = df.sort_index(axis=0)
@@ -367,12 +375,14 @@ def activities_dist(df_acts, n=1000, dt=None, relative=False):
     df = df_acts.copy()
     activities = df_acts[ACTIVITY].unique()
 
-    #res = pd.DataFrame(index=range(n), columns=activities, data=0)
-    res = pd.DataFrame(index=range(len(activities)*n), columns=[TIME, ACTIVITY], dtype=object)
+    # res = pd.DataFrame(index=range(n), columns=activities, data=0)
+    res = pd.DataFrame(index=range(len(activities)*n),
+                       columns=[TIME, ACTIVITY], dtype=object)
 
     # sample for each column separately
     for i, activity in enumerate(activities):
-        series = _sample_ts(df.loc[df[ACTIVITY] == activity, [START_TIME, END_TIME]], n)
+        series = _sample_ts(
+            df.loc[df[ACTIVITY] == activity, [START_TIME, END_TIME]], n)
         res.loc[n*i:n*i+n-1, TIME] = series.values
         res.loc[n*i:n*i+n-1, ACTIVITY] = activity
 
@@ -386,8 +396,6 @@ def activities_dist(df_acts, n=1000, dt=None, relative=False):
         res = df_density_binned(res, column_str=ACTIVITY, dt=dt)
 
     return res
-    
-
 
 
 def _sample_ts(df, n):

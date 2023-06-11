@@ -49,32 +49,37 @@ def remove_days(df_devices, df_activities, days=[], offsets=[], shift='right', r
             new_days.append(d + pd.Timedelta(offset))
     days = new_days
 
-    if shift == 'right':
-        # Sort days from last to first
-        days = np.array(days)[np.flip(np.argsort(days))]
-    else: 
-        # Sort days from first to last
-        days = np.array(days)[np.argsort(days)]
-    dtypes = infer_dtypes(df_devs)
-
-
+    # Days that follow each other are summarized
     new_days = []
+    new_offsets = []
     td = pd.Timedelta('1D')
     j = 0
     for i in range(0,len(days)-1):
         if days[i] + pd.Timedelta('1D') == days[i+1]:
             td += pd.Timedelta('1D') 
         else:
-            new_days.append((days[j], td))
+            new_days.append(days[j])
+            new_offsets.append(td)
             j = i + 1
             td = pd.Timedelta('1D')
         if i == len(days)-2 and j == 0:
-            new_days = [(days[0], td)]
-    days = new_days
+            new_days = [days[0]]
+            new_offsets = [td]
 
+    days = new_days
+    offsets = new_offsets
+
+    # Sort days from last to first or else first to last
+    if shift == 'right':
+        new_idx = np.flip(np.argsort(days))
+    else: 
+        new_idx = np.argsort(days)
+    days = np.array(days)[new_idx]
+    offsets = np.array(offsets)[new_idx]
+    dtypes = infer_dtypes(df_devs)
 
     # 1. remove iteratively the latest day and shift the succeeding part accordingly
-    for day_lwr_bnd, td in days:
+    for day_lwr_bnd, td in zip(days, offsets):
 
         # when day is i.e. 2008-03.23 00:00:00 then day after will be 2008-03-24 00:00:00
         # these variables have to be used as only timepoints can be compared as seen below

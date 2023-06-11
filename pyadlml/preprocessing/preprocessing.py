@@ -481,7 +481,7 @@ class StateVectorEncoder(Encoder, BaseEstimator, TransformerMixin):
                 # convert boolean data into integers (1,0)
                 dev_bool = [dev for dev in self.data_info_.keys() if self.data_info_[
                     dev]['dtype'] == 'boolean']
-                data[dev_bool] = data[dev_bool].astype(int)
+                data[dev_bool] = data[dev_bool].applymap(lambda x: 1 if x == True else 0)
 
             elif enc == ENC_CP:
                 data = create_changepoint(df_devs)
@@ -666,22 +666,6 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
     #    #else:
     #    #    raise ValueError
 
-    # TODO mark for removal
-    # def id2class(self, y: int) -> str:
-    #    """ Get class label corresponding to the numeric label.
-    #    """
-    #    raise NotImplementedError
-    #    if isinstance(y, int):
-    #        return self.classes_[y]
-    #    elif isinstance(y, np.ndarray):
-    #        return np.vectorize(self.classes_.__getitem__)(y)
-
-    # TODO mark for removal
-    # def class2id(self, y: str) -> int:
-    #    """ Get numeric label from class label.
-    #    """
-    #    raise NotImplementedError
-
     def _is_iterable(self, z):
         try:
             iter(z)
@@ -832,7 +816,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     def __init__(self, column_name, inplace=True, as_bool=False):
         self.column_name = column_name
         self.inplace = inplace
-        self.as_bool=as_bool
+        self.as_bool = as_bool
 
     def fit(self, X, y=None):
         self.one_hot_encoder_ = SkOneHotEncoder()
@@ -858,25 +842,29 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         encoded = self.one_hot_encoder_.transform(
             ser.values.reshape(-1, 1)).toarray()
-        df_encoded = pd.DataFrame(encoded, columns=self.categories, 
+        df_encoded = pd.DataFrame(encoded, columns=self.categories,
                                   dtype=bool if self.as_bool else int)
 
         if self.inplace and is_df:
             X = X.drop(columns=self.column_name)
             X = pd.concat([X, df_encoded], axis=1)
         return X
+
+
 class TimeEncoder(BaseEstimator, TransformerMixin):
 
     @classmethod
     def period_length(cls, res):
         return int(pd.Timedelta('24h')/pd.Timedelta(res))
+
     @classmethod
     def time2res(cls, Xt, res):
         if isinstance(Xt, pd.DataFrame):
             ser = Xt[TIME]
-        else: 
+        else:
             ser = Xt
         return (ser - ser.dt.floor('D'))/pd.Timedelta(res)
+
 
 class SineCosEncoder(TimeEncoder):
     def __init__(self, res='100ms'):
@@ -892,7 +880,7 @@ class SineCosEncoder(TimeEncoder):
 
     def transform(self, X, y=None):
         assert TIME in X.columns, "The DataFrame must include a 'time' column"
-        
+
         # Create a copy of the DataFrame to avoid changes to the original one
         Xt = X.copy()
 
@@ -902,10 +890,10 @@ class SineCosEncoder(TimeEncoder):
         # Add sin_emb and cos_emb columns to the DataFrame
         Xt['time_sin'] = np.sin(self.w_*Xt['time_in_res'])
         Xt['time_cos'] = np.cos(self.w_*Xt['time_in_res'])
-        
+
         # Drop the temporary 'x' column
         Xt = Xt.drop(columns=['time_in_res'])
-        
+
         return Xt
 
     def plotly(self, X):
@@ -933,6 +921,7 @@ class SineCosEncoder(TimeEncoder):
         )
         fig.show()
 
+
 class HalfSineEncoder(BaseEstimator, TransformerMixin):
     def __init__(self, res='100ms'):
         self.res = res
@@ -954,10 +943,10 @@ class HalfSineEncoder(BaseEstimator, TransformerMixin):
 
         # Add sin_emb and cos_emb columns to the DataFrame
         Xt['time_sin'] = np.sin(self.w_*Xt['time_in_res'])
-        
+
         # Drop the temporary 'x' column
         Xt = Xt.drop(columns=['time_in_res'])
-        
+
         return Xt
 
     def plotly(self, X):
@@ -968,13 +957,14 @@ class HalfSineEncoder(BaseEstimator, TransformerMixin):
         fig.update_layout(yaxis=dict(scaleanchor="x", scaleratio=1))
         return fig
 
-class PositionalEncoding():
+
+class PositionalEncoding(BaseEstimator, TransformerMixin):
 
     def __init__(self, d_dim, max_period=1e4, inplace=True):
         self.d_dim = d_dim
         self.max_period = max_period
         self.inplace = inplace
-    
+
     def fit(self, X=None, y=None):
         self.min_freq = 1/self.max_period
         return self
@@ -993,33 +983,32 @@ class PositionalEncoding():
         ws = self.get_angular_freqs()
         fig, ax = plt.subplots()
         ax.set_yscale(scale)
-        ax.plot(np.arange(len(ws)), ws, label=f'min{min(ws)}')
+        ax.plot(np.arange(len(ws)), ws, label=f'min{min(ws):.3f}, max{max(ws):.3f}')
         ax.set_xlabel('d - dimension')
         ax.set_ylabel('$\omega(d)$')
         ax.grid(True)
         ax.legend()
         return fig
 
-
     def plot_waves(self, seq_length):
         freqs = self.get_angular_freqs()
 
         n_dim = len(freqs)
         # Create a figure and an axis
-        fig, ax = plt.subplots(figsize=(10,10))
+        fig, ax = plt.subplots(figsize=(10, 10))
 
         # Loop over the range of dimensions
         x = np.linspace(0, seq_length, 1000)
-        for d in range(n_dim):   
-            oscil = np.sin if d%2==0 else np.cos     
+        for d in range(n_dim):
+            oscil = np.sin if d % 2 == 0 else np.cos
             ax.plot(x, oscil(freqs[d]*x)+2*d, label=f'pe dim={d}')
         # Set the axis scales to be equal
-        #ax.set_aspect('equal', 'box')
+        # ax.set_aspect('equal', 'box')
 
         # Show the legend
         ax.legend()
         return fig
-    
+
     def transform(self, X, y=None, inplace=None):
         """ 
 
@@ -1036,19 +1025,19 @@ class PositionalEncoding():
 
         xt = self._pos_enc(freqs, x)
         if inplace:
-            xt = pd.DataFrame(data=xt, columns=[f'pe_dim_{i}' for i in range(0, self.d_dim)])
+            xt = pd.DataFrame(data=xt, columns=[
+                              f'pe_dim_{i}' for i in range(0, self.d_dim)])
             X = pd.concat([X, xt], axis=1)
         else:
-            X = xt 
+            X = xt
         return X
 
-
     def _pos_enc(self, freqs, pos):
-        pos_enc = pos.reshape(-1,1)*freqs.reshape(1,-1)
+        pos_enc = pos.reshape(-1, 1)*freqs.reshape(1, -1)
         pos_enc[:, ::2] = np.cos(pos_enc[:, ::2])
         pos_enc[:, 1::2] = np.sin(pos_enc[:, 1::2])
         return pos_enc
-    
+
     def plot_pe_mat(self, X):
         ### Plotting ####
 
@@ -1062,8 +1051,6 @@ class PositionalEncoding():
         fig.colorbar(im)
         return fig
 
-
-
     def plot_dotproduct_similarity(self, X, pos):
         # let's choose the first vector
 
@@ -1071,7 +1058,7 @@ class PositionalEncoding():
         first_vector = pe[pos, :]
 
         # compute the dot products
-        dot_products = np.dot(pe,first_vector)
+        dot_products = np.dot(pe, first_vector)
 
         # visualize with matplotlib
         fig, ax = plt.subplots(figsize=(10, 6))
@@ -1091,7 +1078,7 @@ class TimePositionalEncoding(PositionalEncoding):
         self.inplace = inplace
 
     def fit(self, X=None, y=None):
-        # Map timestamp values to a sequence 
+        # Map timestamp values to a sequence
         self.res = pd.Timedelta(self.res)
         self.max_period = self._td2num(self.max_period)
         self.min_freq = 1/self.max_period
@@ -1101,7 +1088,7 @@ class TimePositionalEncoding(PositionalEncoding):
         if isinstance(x, str):
             x = pd.Timedelta(x)
 
-        x =  x/pd.Timedelta(self.res)
+        x = x/pd.Timedelta(self.res)
         return x
 
     def _num2td(self, x):
@@ -1126,13 +1113,12 @@ class TimePositionalEncoding(PositionalEncoding):
         xt = self._pos_enc(freqs, time_scaled)
 
         if inplace:
-            xt = pd.DataFrame(data=xt, columns=[f'pe_dim_{i}' for i in range(0, self.d_dim)])
+            xt = pd.DataFrame(data=xt, columns=[
+                              f'pe_dim_{i}' for i in range(0, self.d_dim)])
             xt = pd.concat([X, xt], axis=1)
 
         return xt
 
-
-    
 
 class CyclicTimePositionalEncoding(TimePositionalEncoding):
 
@@ -1140,18 +1126,17 @@ class CyclicTimePositionalEncoding(TimePositionalEncoding):
         super().__init__(d_dim, max_period, res)  # Add super call to the parent class
         self.base = base
 
-
     def get_angular_freqs(self):
         """period of length 1"""
         i = np.arange(self.d_dim)//2
         lmbd = self.max_period
-        f = 1/(lmbd/(np.minimum(self.base**i, lmbd)))
+        f = 1/(lmbd/(np.minimum((self.base**i).astype(int), lmbd)))
         ws = 2*np.pi*f
         return ws
 
     def get_max_base(self):
         return np.floor(np.log10(self.max_period)/np.log10(self.base)).astype(int)
-            
+
     def plotly_wave_length_per_dim(self):
         from plotly import graph_objects as go
         fig = go.Figure()

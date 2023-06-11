@@ -1,6 +1,8 @@
 import functools
 import plotly.figure_factory as ff
-from .util import legend_current_items, _style_colorbar, remove_whitespace_around_fig
+
+from pyadlml.dataset._core.activities import ActivityDict
+from .util import CatColMap, dyn_y_label_size, legend_current_items, _style_colorbar, remove_whitespace_around_fig
 import plotly.express as px
 import pandas as pd
 import numpy as np
@@ -378,4 +380,51 @@ def correction(df_pre, df_post):
 
     fig.update_layout(height=300)
 
+    return fig
+
+
+
+def plotly_activity_traces(y_traces):
+    """ 
+    Parameters
+    ----------
+    y_traces: list of tuples
+        Where a tuple ("name", ) consists of the name and an activity dataframe
+
+    Returns
+    -------
+    fig
+    """
+    from pyadlml.dataset.plot.plotly.discrete import _plot_activities_into
+
+
+    title = "Activities"
+    height = 400
+    y_label_size = dyn_y_label_size(height, len(y_traces))
+    cat_col_map = CatColMap()
+    
+
+    fig = make_subplots(cols=1, rows=1)
+    acts = ActivityDict(y_traces)
+    activities = acts.get_activity_union()
+    activities.sort()
+
+
+    for name, trace in acts.items():
+        time = trace[START_TIME]
+        fig = _plot_activities_into(
+            fig,
+            trace,
+            name,
+            cat_col_map,
+            time=time,
+            activities=activities
+        )
+
+    _set_compact_title(fig, title)
+    fig.update_yaxes(title=None, fixedrange=True, tickfont=dict(size=y_label_size),
+                     ticklabeloverflow='allow'
+                     )
+    fig.update_xaxes(type='date')
+    fig.update_layout(margin=dict(l=0, r=0, b=0, t=30, pad=0), height=height)
     return fig

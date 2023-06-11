@@ -15,8 +15,8 @@ STRFTIME_PRECISE = '%d.%m.%Y %H:%M:%S.%f' # Microsecond accuracy
 
 # Name for the other activity; used to fill in gaps between activities
 OTHER = 'other'
-# The minimum difference allowed between activities to no tinsert the other activity
-OTHER_MIN_DIFF = pd.Timedelta('5s')
+# The minimum difference allowed between activities to not insert the other activity
+OTHER_MIN_DIFF = pd.Timedelta('100ms')
 
 # Dataset columns
 

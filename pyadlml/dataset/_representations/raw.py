@@ -2,13 +2,14 @@ import numpy as np
 import pandas as pd
 
 from pyadlml.constants import DEVICE, TIME, VALUE, CAT, NUM, BOOL
-from pyadlml.dataset._core.devices import _create_devices, most_prominent_categorical_values
+from pyadlml.dataset._core.devices import _create_devices, create_device_info_dict, most_prominent_categorical_values
 from pyadlml.dataset.util import infer_dtypes
 
 ST_FFILL = 'ffill'
 ST_INT_COV = 'interval_coverage'
 
-def create_raw(df_dev, dataset_info, dev_pre_values={}):
+
+def create_raw(df_dev, dataset_info=None, dev_pre_values={}):
     """
 
     Parameters
@@ -32,13 +33,19 @@ def create_raw(df_dev, dataset_info, dev_pre_values={}):
     """
     df_dev = df_dev.copy()
 
+    if dataset_info is None:
+        dataset_info = create_device_info_dict(df_dev)
+
     df = df_dev.pivot(index=TIME, columns=DEVICE, values=VALUE)
     df = df.reset_index()
 
     # get all learned devices by data type
-    dev_cat = [dev for dev in dataset_info.keys() if dataset_info[dev]['dtype'] == CAT]
-    dev_bool = [dev for dev in dataset_info.keys() if dataset_info[dev]['dtype'] == BOOL]
-    dev_num = [dev for dev in dataset_info.keys() if dataset_info[dev]['dtype'] == NUM]
+    dev_cat = [dev for dev in dataset_info.keys() if dataset_info[dev]
+               ['dtype'] == CAT]
+    dev_bool = [dev for dev in dataset_info.keys() if dataset_info[dev]
+                ['dtype'] == BOOL]
+    dev_num = [dev for dev in dataset_info.keys() if dataset_info[dev]
+               ['dtype'] == NUM]
 
     # filter for devices that appear in given dataset
     devs = set(df_dev[DEVICE].unique())
@@ -124,30 +131,31 @@ def parallel_resample_apply(resampler, func):
     for name, group in resampler:
         jobs.append(delayed(func)(group))
     ret_lst = Parallel(n_jobs=multiprocessing.cpu_count())(jobs)
-    #retLst = Parallel(n_jobs=multiprocessing.cpu_count())(delayed(func)(group) for name, group in grouped)
+    # retLst = Parallel(n_jobs=multiprocessing.cpu_count())(delayed(func)(group) for name, group in grouped)
     return pd.concat(retLst)
 
+
 def resample_pandas(df_raw, t_res, df_dev, dev_dtypes, most_likely_values):
-        df_raw = df_raw.set_index(TIME)
-        resampler = df_raw.resample(t_res, kind='timestamp')
+    df_raw = df_raw.set_index(TIME)
+    resampler = df_raw.resample(t_res, kind='timestamp')
 
-        # first do a forward fill to correctly represent intervals where no observation falls into
-        # ffill takes a devices last known value and assigns it to the timeslice
-        raw_ff = resampler.ffill()
+    # first do a forward fill to correctly represent intervals where no observation falls into
+    # ffill takes a devices last known value and assigns it to the timeslice
+    raw_ff = resampler.ffill()
 
-        # then for intervals where multiple sensors trigger choose the most prevalent for categorical and
-        # boolean values. For numerical drop the most unlikely one (determined on difference to mean)
-        raw_int = resampler.apply(_assign_timeslices,
-                                  t_res=t_res,
-                                  dev=df_dev,
-                                  dev_dtypes=dev_dtypes,
-                                  most_likely_values=most_likely_values
-                                  )
-        # combine both by filling gaps with the forward fills
-        raw = raw_int.where(~raw_int.isnull(), raw_ff)
+    # then for intervals where multiple sensors trigger choose the most prevalent for categorical and
+    # boolean values. For numerical drop the most unlikely one (determined on difference to mean)
+    raw_int = resampler.apply(_assign_timeslices,
+                              t_res=t_res,
+                              dev=df_dev,
+                              dev_dtypes=dev_dtypes,
+                              most_likely_values=most_likely_values
+                              )
+    # combine both by filling gaps with the forward fills
+    raw = raw_int.where(~raw_int.isnull(), raw_ff)
 
-        raw = raw.reset_index()
-        return raw
+    raw = raw.reset_index()
+    return raw
 
 
 def resample_pandas_and_pandarell_applymap(df_raw, t_res, df_dev, dev_dtypes, most_likely_value):
@@ -159,7 +167,8 @@ def resample_pandas_and_pandarell_applymap(df_raw, t_res, df_dev, dev_dtypes, mo
     raw_ff = df_raw.resample(t_res, kind='timestamp').ffill()
 
     # first make resampling and safe lists of choices inside each bin
-    raw_int = df_raw.resample(t_res).apply(lambda x: [x.name, x.tolist(), x.index.tolist()])
+    raw_int = df_raw.resample(t_res).apply(
+        lambda x: [x.name, x.tolist(), x.index.tolist()])
 
     def _assign_timeslicesC(lst: list) -> pd.Series:
         """
@@ -199,14 +208,16 @@ def resample_pandas_and_pandarell_applymap(df_raw, t_res, df_dev, dev_dtypes, mo
                 tmp = resolve_collision_categorical(series, t_res, df_dev)
 
             elif series.name in dev_dtypes['numerical']:
-                tmp = resolve_collision_numerical(series, t_res, df_dev, most_likely_value)
+                tmp = resolve_collision_numerical(
+                    series, t_res, df_dev, most_likely_value)
             else:
-                raise ValueError("The column/device didn't match either boolean, categorical or numerical type.")
+                raise ValueError(
+                    "The column/device didn't match either boolean, categorical or numerical type.")
             return tmp
 
     # on each field apply the collision resolvment
-    #raw_int = raw_int.applymap(_assign_timeslicesC)
-    #raw_int = raw_int.parallel_applymap(_assign_timeslicesC)
+    # raw_int = raw_int.applymap(_assign_timeslicesC)
+    # raw_int = raw_int.parallel_applymap(_assign_timeslicesC)
 
     # combine both by filling gaps with the forward fills
     raw = raw_int.where(~raw_int.isnull(), raw_ff)
@@ -214,94 +225,102 @@ def resample_pandas_and_pandarell_applymap(df_raw, t_res, df_dev, dev_dtypes, mo
     raw = raw.reset_index()
     return raw
 
+
 def resample_pure_dask(df_raw, t_res, dev_dtypes, df_dev, most_likely_values):
-        import dask.dataframe as dd
-        dd_raw = dd.from_pandas(df_raw, 4)
+    import dask.dataframe as dd
+    dd_raw = dd.from_pandas(df_raw, 4)
 
-        # TODO problem dask resampler doesn't implement function ffill
-        # solution 1
-        resampler_ffill = dd_raw.groupby(pd.Grouper(key=TIME, freq=t_res, origin='start'))
-        def func(x):
-            """ returns nan if list is empty and """
-            x = x.dropna()
-            if x.empty:
-                return np.nan
-            else:
-                return x.iloc[-1]
+    # TODO problem dask resampler doesn't implement function ffill
+    # solution 1
+    resampler_ffill = dd_raw.groupby(
+        pd.Grouper(key=TIME, freq=t_res, origin='start'))
 
-        raw_ff = resampler_ffill.apply(func)
-        df = raw_ff.compute()
-        # solution 2: use rolling in combination with apply and a lambda
-        # function that mimics ffill to achieve parallelnes
+    def func(x):
+        """ returns nan if list is empty and """
+        x = x.dropna()
+        if x.empty:
+            return np.nan
+        else:
+            return x.iloc[-1]
 
-        resampler = dd_raw.resample(t_res)
-        raw_int = resampler.apply(_assign_timeslices, t_res=t_res, dev=df_dev,
+    raw_ff = resampler_ffill.apply(func)
+    df = raw_ff.compute()
+    # solution 2: use rolling in combination with apply and a lambda
+    # function that mimics ffill to achieve parallelnes
+
+    resampler = dd_raw.resample(t_res)
+    raw_int = resampler.apply(_assign_timeslices, t_res=t_res, dev=df_dev,
                               dev_dtypes=dev_dtypes, most_likely_values=most_likely_values)
-        raw = raw_int.where(~raw_int.isnull(), raw_ff)
-        raw = raw.reset_index().compute()
-        return raw
+    raw = raw_int.where(~raw_int.isnull(), raw_ff)
+    raw = raw.reset_index().compute()
+    return raw
 
 
 def resample_dask_pandarell(df_raw, t_res, dev_dtypes, df_dev, most_likely_values):
-        import dask.dataframe as dd
-        n_jobs = 8
-        df_raw = df_raw.set_index(TIME)
-        raw_ff = df_raw.resample(t_res, kind='timestamp').ffill()
+    import dask.dataframe as dd
+    n_jobs = 8
+    df_raw = df_raw.set_index(TIME)
+    raw_ff = df_raw.resample(t_res, kind='timestamp').ffill()
 
-        # first make resampling and safe lists of choices inside each bin
-        dd_raw_int = dd.from_pandas(df_raw, npartitions=n_jobs)
-        raw_count = dd_raw_int.resample(t_res).count().compute()
-        row_mask = (raw_count > 0).any(axis=1)
-        # first make resampling and safe lists of choices inside each bin
-        #raw_int = df_raw.resample(t_res).apply(lambda x: [x.name, x.tolist(), x.index.tolist()])
-        raw_int = parallel_resample_apply(df_raw.resample(t_res), lambda x: [x.name, x.tolist(), x.index.tolist()])
-        raw_int_subset = raw_int.loc[row_mask]
+    # first make resampling and safe lists of choices inside each bin
+    dd_raw_int = dd.from_pandas(df_raw, npartitions=n_jobs)
+    raw_count = dd_raw_int.resample(t_res).count().compute()
+    row_mask = (raw_count > 0).any(axis=1)
+    # first make resampling and safe lists of choices inside each bin
+    # raw_int = df_raw.resample(t_res).apply(lambda x: [x.name, x.tolist(), x.index.tolist()])
+    raw_int = parallel_resample_apply(df_raw.resample(t_res), lambda x: [
+                                      x.name, x.tolist(), x.index.tolist()])
+    raw_int_subset = raw_int.loc[row_mask]
 
-        def _assign_timeslicesC(lst: list) -> pd.Series:
-            name = lst[0]
-            values = lst[1]
-            timestamps = lst[2]
-            series = pd.Series(values, index=timestamps)
-            series.name = name
-            # return nan if no element matchs, happens till first occurence of data
-            series = series.dropna()
-            if series.empty:
-                return np.nan
+    def _assign_timeslicesC(lst: list) -> pd.Series:
+        name = lst[0]
+        values = lst[1]
+        timestamps = lst[2]
+        series = pd.Series(values, index=timestamps)
+        series.name = name
+        # return nan if no element matchs, happens till first occurence of data
+        series = series.dropna()
+        if series.empty:
+            return np.nan
 
-            # if one element matches the interval slot, assign the one
-            elif series.size == 1:
-                return series
+        # if one element matches the interval slot, assign the one
+        elif series.size == 1:
+            return series
 
-            # if there are multiple elements falling into the same timeslice
+        # if there are multiple elements falling into the same timeslice
+        else:
+            if series.name in dev_dtypes['boolean']:
+                tmp = resolve_collision_boolean(series, t_res, df_dev)
+
+            elif series.name in dev_dtypes['categorical']:
+                tmp = resolve_collision_categorical(series, t_res, df_dev)
+
+            elif series.name in dev_dtypes['numerical']:
+                tmp = resolve_collision_numerical(
+                    series, t_res, df_dev, most_likely_values)
             else:
-                if series.name in dev_dtypes['boolean']:
-                    tmp = resolve_collision_boolean(series, t_res, df_dev)
+                raise ValueError(
+                    "The column/device didn't match either boolean, categorical or numerical type.")
+            return tmp
 
-                elif series.name in dev_dtypes['categorical']:
-                    tmp = resolve_collision_categorical(series, t_res, df_dev)
+    from pandarallel import pandarallel
+    pandarallel.initialize(verbose=2)
+    # on each field apply the collision resolvment
+    raw_int_subset = raw_int_subset.parallel_apply(_assign_timeslicesC)
+    raw_int = pd.concat(
+        raw_int_subset, raw_int[~row_mask]).sort_values(by=TIME)
 
-                elif series.name in dev_dtypes['numerical']:
-                    tmp = resolve_collision_numerical(series, t_res, df_dev, most_likely_values)
-                else:
-                    raise ValueError("The column/device didn't match either boolean, categorical or numerical type.")
-                return tmp
+    # combine both by filling gaps with the forward fills
+    raw = raw_int.where(~raw_int.isnull(), raw_ff)
 
-        from pandarallel import pandarallel
-        pandarallel.initialize(verbose=2)
-        # on each field apply the collision resolvment
-        raw_int_subset = raw_int_subset.parallel_apply(_assign_timeslicesC)
-        raw_int = pd.concat(raw_int_subset, raw_int[~row_mask]).sort_values(by=TIME)
+    raw = raw.reset_index()
+    return raw
 
-        # combine both by filling gaps with the forward fills
-        raw = raw_int.where(~raw_int.isnull(), raw_ff)
-
-        raw = raw.reset_index()
-        return raw
 
 def _assign_timeslices(series: pd.Series, t_res, dev, dev_dtypes, most_likely_values) -> pd.Series:
     """
     cc. kasteren
-    
+
     Parameters
     ----------
     series: pd.Series
@@ -330,9 +349,11 @@ def _assign_timeslices(series: pd.Series, t_res, dev, dev_dtypes, most_likely_va
             tmp = resolve_collision_categorical(series, t_res, dev)
 
         elif series.name in dev_dtypes['numerical']:
-            tmp = resolve_collision_numerical(series, t_res, dev, most_likely_values)
+            tmp = resolve_collision_numerical(
+                series, t_res, dev, most_likely_values)
         else:
-            raise ValueError("The column/device didn't match either boolean, categorical or numerical type.")
+            raise ValueError(
+                "The column/device didn't match either boolean, categorical or numerical type.")
         return tmp
 
 
@@ -360,7 +381,7 @@ def resolve_collision_categorical(series, t_res, df_dev):
     df_subdev = df_dev[df_dev[DEVICE] == dev_name]
     cats = list(df_subdev[VALUE].unique())
     tds = [pd.Timedelta(seconds=0) for i in range(len(cats))]
-    categories = dict(zip(cats,tds))
+    categories = dict(zip(cats, tds))
 
     # deduce the beginning of the interval and the timeslice
     start_time = series.index[0].floor(t_res)
@@ -389,6 +410,7 @@ def resolve_collision_categorical(series, t_res, df_dev):
     # select category with most overlap
     max_cat = max(categories, key=lambda key: categories[key])
     return max_cat
+
 
 def resolve_collision_boolean(series, t_res, dev):
     """
