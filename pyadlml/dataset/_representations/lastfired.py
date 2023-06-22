@@ -1,16 +1,16 @@
 import pandas as pd
 from pyadlml.constants import TIME, DEVICE, VALUE
 from pyadlml.dataset._representations.changepoint import create_changepoint
+import dask.dataframe as dd
 
 
-def create_lastfired(df_devs):
+def create_lastfired(df_devs, n_jobs=None, no_compute=False):
+    """ Creates the last fired representation
     """
-    creates the last fired representation
-    """
-    return create_changepoint(df_devs)
+    return create_changepoint(df_devs, n_jobs=n_jobs, no_compute=no_compute)
 
 
-def resample_last_fired(lf, t_res):
+def resample_last_fired(df_devs, dt=None, n_jobs=None):
     """
 
     Parameters
@@ -19,61 +19,40 @@ def resample_last_fired(lf, t_res):
         last fired representation
 
     """
-    lf = lf.set_index(TIME)
-    resampler = lf.resample(t_res, kind='timestamp')
-    lf = resampler.apply(_lf_evaluator, df=lf.copy())
-    lf = lf.fillna(method='ffill')\
+    use_dask = n_jobs is not None
+    df = df_devs.sort_values(by=TIME).copy()
+    origin = df.at[0, TIME].floor(freq=dt)
+
+    # Only keep last device to have fired in a bin
+    df['bin'] = df.groupby(
+        pd.Grouper(key=TIME, freq=dt, origin=origin))\
+        .ngroup()
+
+    if use_dask:
+        n = 100 # MB
+        df = dd.from_pandas(df, npartitions=n_jobs)
+
+    df = df.groupby(['bin', DEVICE], observed=True)\
+                    .last()\
+                    .reset_index()
+    df = df.drop(columns='bin')\
+                    .sort_values(by=TIME)\
+                    .reset_index(drop=True)\
+                    [[TIME, DEVICE, VALUE]]    
+    df[VALUE] = True
+    df = df.pivot_table(index=TIME, columns=DEVICE, values=VALUE)\
+        .fillna(False)\
+        .astype(int)\
         .reset_index()
-    return lf
+    df = df.set_index(TIME)
+    if use_dask:
+        df = df.compute()
 
+    df = df.resample(dt).ffill()
+    first_dev = df_devs.iloc[0, df_devs.columns.tolist().index(DEVICE)]
+    first_dev_col_idx = df.columns.tolist().index(first_dev)
+    df.iat[0, first_dev_col_idx] = 1.0
+    df = df.fillna(0.0)
+    df = df.reset_index()
 
-def _lf_evaluator(series: pd.Series, df:pd.DataFrame) -> int:
-    """
-    Is called column-wise for each element of the
-    
-    Parameters
-    ----------
-    series : pd.Series
-        conatins name of the column the evaluator operates on
-        contains the timestamps for that change in that frame and the value
-        that the specified column has at that timestamp.
-
-        is empty if all columns that have no changing entity
-
-    df : pd.DataFrame
-        contains device representation 3. Is for determining the states of other
-        device/columns for the timestamps
-
-    Returns: 0|1
-    """
-    #print('series: ', series, '\n')
-    if series.empty:
-        return None
-    else:         
-        # check if this device is triggered during the timeslice
-        # this is okay because other devices where triggered -> it has to be zero
-        if series.sum() == 0:
-            return 0
-        
-        # get dataframe for timeslice
-        ts = series.index[0]
-        if len(series) == 1:
-            te = ts
-        else:
-            te = series.index[-1]
-        df_slice = df.loc[ts:te]
-        
-        # if the device changed the state check if it was the 
-        # last device to do so in the interval. When true 
-        # the timeslice should be 1 for device last fired and 0 otherwise
-        for i in range(len(df_slice)-1, -1, -1):
-            
-            # check if any device triggered
-            if df_slice.iloc[i].values.sum() == 0:
-                continue
-                
-            # check if our device was the one who triggered
-            elif df_slice.loc[df_slice.index[i], series.name] == 1:
-                return 1
-            else:
-                return 0
+    return df
