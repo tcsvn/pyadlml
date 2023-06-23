@@ -58,7 +58,7 @@ presumes the data to be I.i.d.
 
     # define pipeline
     steps = [
-        ('sve', Event2Vec(encode='raw')),      # encode device dataframe into state vectors
+        ('sve', Event2Vec(encode='state')),      # encode device dataframe into state vectors
         ('le', LabelEncoder(idle=False)),               # generate encoded labels
         ('drop nans', ),                                # drop all rows where no matching activity was found
         ('cast',),                                      # cast the activities from numpy to a dataframe
@@ -78,7 +78,7 @@ presumes the data to be I.i.d.
 Discussion
 ~~~~~~~~~~
 
-There are two particular drawbacks presupposing the data to be iid:
+There are two particular dstatebacks presupposing the data to be iid:
 
 - Datapoints are in fact not independent of each other. As shown in the cross-correlogram below, certain events are preceded by others with a regular pattern. For example, the cupboard opening or closing is often followed by operating the microwave three minutes after. Although it holds that temporal structure does not strictly imply the observations to be dependent, in the real world they most often are. Models assuming independence may miss out on useful information.
 
@@ -107,7 +107,7 @@ Definition
     :scale: 100%
 
 Datapoints are an ordered list containing :math:`N` observations :math:`X = [x_1, ..., x_N]`. Transforming a device
-dataframe into the representations *raw*, *changepoint* or *last_fired* yields the datapoints already being ordered.
+dataframe into the representations *state*, *changepoint* or *last_fired* yields the datapoints already being ordered.
 Consequently, the usage is straight forward.
 
 Example: Hidden Markov Model
@@ -152,9 +152,9 @@ one activity is followed by another. There is no magic happening there. Pyadlml 
 
     # define pipeline
     steps = [
-        ('sve', Event2Vec(encode='raw')),      # encode device dataframe into state vectors
+        ('sve', Event2Vec(encode='state')),      # encode device dataframe into state vectors
         ('le', LabelEncoder(other=True)),                # generate encoded labels
-        ('cast', DfCaster('df->np', 'df->np')),         # cast labels and raw representation to numpy arrays
+        ('cast', DfCaster('df->np', 'df->np')),         # cast labels and state representation to numpy arrays
         ('classifier', BernoulliHMM())                  # apply classifier to data
     ]
     pipe = Pipeline(steps).train()
@@ -203,7 +203,7 @@ Definition
 
 From the first unto the last event, the data is divided into :math:`M` equal-length bins. A bin
 is referred to as a timeslice. A state-vector is assigned to each timeslice :math:`X = [x_1 ,..., x_M]`.
-The *raw* representation tries to assign each timeslice a representative value of the Smart Homes state.
+The *state* representation tries to assign each timeslice a representative value of the Smart Homes state.
 The *changepoint* representation sets fields to one if at least one corresponding event falls
 into the timeslice's interval.
 The *last_fired* representation assigns one to fields corresponding to the device that fired last with respect
@@ -222,13 +222,13 @@ of the same timeslice have to be handled. Device values are imputed and merged d
    :alt: alternate text
    :align: center
 
-The raw representation handles gaps by assigning an entry the last known device state. Numerical values have to
+The state representation handles gaps by assigning an entry the last known device state. Numerical values have to
 be handled explicitly as only categorical and binary values are inferred automatically. For the
 changepoint representation gaps are per definition zero. The *lastfired* representation sets every
 field to zero except for the device that was responsible for the last event. These properties
 are illustrated for the timeslice :math:`t_3` above.
 
-If multiple events originating from the same device fall into the same timeslice, the *raw*
+If multiple events originating from the same device fall into the same timeslice, the *state*
 representation sets the timeslice to the most prominent state and the succeeding timeslice
 to the last known device state.
 
@@ -264,7 +264,7 @@ The encoder-decoder recurrent neural network
    :align: center
 
 Timeslices can be constructed by passing the parameter resolution ``t_res='freq'`` to the Event2Vec.
-To create a *raw* representation with timeslice-length of 10 seconds use
+To create a *state* representation with timeslice-length of 10 seconds use
 
 .. code:: python
 
@@ -305,7 +305,7 @@ To create a *raw* representation with timeslice-length of 10 seconds use
 Discussion
 ~~~~~~~~~~
 
-The drawback using timeslices lies in a trade-off regarding the choice of
+The dstateback using timeslices lies in a trade-off regarding the choice of
 timeslice resolution. The greater the timeslice-length the higher the probability multiple events
 fall into the same timeslice. Consequently larger timeslices lead to higher information loss
 as more events have to be merged. To visualize the number of events prone to merging use the inter-event interval and the parameter ``imp_frac_dts``:

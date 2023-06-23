@@ -28,14 +28,14 @@ with the desired time bin size as demonstrated in the following example
 
     >>> # load data and encode as state-vector
     >>> data = fetch_aras()
-    >>> raw = Event2Vec(encode='raw')\
+    >>> state = Event2Vec(encode='state')\
            .fit_transform(data['devices'])
 
     >>> # extract the time of a day with a bin size of 2h, will result in 12 new features
     >>> tode = TimeOfDay(dt='2h')
 
     >>> # return device dataframe containing one row with strings representing the bins
-    >>> tode.fit_transform(raw)
+    >>> tode.fit_transform(state)
     index, time_of_day
     1, '09:00:00 - 10:00:00'
     2, '09:00:00 - 10:00:00'
@@ -44,7 +44,7 @@ with the desired time bin size as demonstrated in the following example
 
     >>> # Append to the current encoded vectors  as one hot encoding
     >>> tode = TimeOfDay(dt='2h', inline=True, one_hot_encoding=True)
-    >>> tode.fit_transform(raw)
+    >>> tode.fit_transform(state)
     , time, features, '00:00:00 - 02:00:00', ..., '22:00:00 - 24:00:00'
     1, timestamp1, ..., 1, 0, ..., 0
     2, timestamp1, ..., 1, 0, ..., 0
@@ -80,7 +80,7 @@ To accommodate this, *pyadlml* provides a transformer for extracting the day of 
     >>> dowe = DayOfWeek()
 
     >>> # return device dataframe containing one row with strings representing the bins
-    >>> dowe.fit_transform(raw)
+    >>> dowe.fit_transform(state)
     index, day_of_week
     1, 'Monday'
     2, 'Monday'
@@ -89,7 +89,7 @@ To accommodate this, *pyadlml* provides a transformer for extracting the day of 
 
     >>> # Append to the current encoded vectors  as one hot encoding
     >>> dowe = DayOfWeekExtractor(inline=True, one_hot_encoding=True)
-    >>> dowe.fit_transform(raw)
+    >>> dowe.fit_transform(state)
     , time, features, 'Monday', ..., 'Sunday'
     1, timestamp1, ..., 1, 0, ..., 0
     2, timestamp1, ..., 1, 0, ..., 0
@@ -129,7 +129,7 @@ or ``to=successor`` leads to the respective interval being computed:
     >>> tde = InterEventTime(to='predecessor', unit='s')
 
     >>> # Returns a device dataframe containing one row representing the bins
-    >>> tde.fit_transform(raw)
+    >>> tde.fit_transform(state)
     index, td
     1, 101231981
     2, 101231981
@@ -138,7 +138,7 @@ or ``to=successor`` leads to the respective interval being computed:
 
     >>> # TODO
     >>> tde = InterEventTime(to='predecessor', inline=True, unit='s')
-    >>> tde.fit_transform(raw)
+    >>> tde.fit_transform(state)
     , time, features, td
     1, timestamp1, ..., 1101231981
     2, timestamp1, ..., 1101231981
@@ -224,7 +224,7 @@ TODO finish
 
     >>> from pyadlml.feature_extraction import HawkesIntensity
     >>> hp = HP(alpha=1, kernel='exponential', kernel_param={beta:2})
-    >>> hp.transform(raw, td='1ms')
+    >>> hp.transform(state, td='1ms')
     , time, intensity
     1, timestamp1, 2.23254
     2, timestmap2, 1.23123

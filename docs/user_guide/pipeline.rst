@@ -214,7 +214,7 @@ only during *training* mode but not in *evaluation* or in *production* mode.
 
     # Define pipeline steps
     steps = [
-        ('sve', Event2Vec(encode='raw')),
+        ('sve', Event2Vec(encode='state')),
         ('le', TrainOrEvalOnlyWrapper(LabelMatcher(other=True))),
         ('drop_time_idx', DropTimeIndex()),
         ('drop_duplicates', TrainOnlyWrapper(DropDuplicates())),
@@ -264,7 +264,7 @@ Pyadlml extends scikit-learns ``FeatureUnion`` class to fully leverage the pipel
 Within a pipeline, the Feature Union step processes input data by applying multiple transformers 
 in parallel and concatenating their outputs as columns.
 
-.. raw:: html
+.. state:: html
    :file: ../_static/pipeline_feature_union_example.html
 
 Scikit-learn's original FeatureUnion implementation lacks the ability to 

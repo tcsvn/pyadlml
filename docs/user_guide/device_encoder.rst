@@ -12,8 +12,8 @@
 The Smart Home device datastream is sequence of events :math:`[e_1, ..., e_T]` where the :math:`i`-th event 
 consists of a triplet :math:`e_i=(t_i, d_i, o_i)`, containing the device :math:`d_i`, that produces the observation :math:`o_i` 
 recorded at time :math:`t_i`.
-Since different algorithms require the event stream to be formatted in certain ways, the 
-``pyadlml.preprocessing`` module provides several device encoders.
+Since various algorithms require the event stream to be formatted in different ways, the 
+``pyadlml.preprocessing`` module provides several event encoders.
 To generate encoded data and correct labels, the overall procedure
 involves transforming the device dataframe into a specific format using 
 a suitable ``[Specific]Encoder`` and subsequently labeling the new representation
@@ -61,16 +61,15 @@ To enable the use of a lookup embedding, the ``IndexEncoder`` maps each device t
 
 
 
-StateVector
-^^^^^^^^^^^
-Pyadlml supports three different types of state-vectors, the *raw*, *changepoint* and *lastfired*
+Vector
+^^^^^^
+Pyadlml supports three different types of vectors representations, the *state*, *changepoint* and *lastfired*
 encoding.
 
 
 
-
-Raw
-~~~
+State
+~~~~~
 
 Definition
 ==========
@@ -82,8 +81,8 @@ Definition
    :alt: alternate text
    :align: center
 
-The *raw* representation is a vector representing the state of all Smart Home devices at 
-the given moment in time. For example, the illustration above depicts the raw representation
+The *state* representation is a vector representing the state of all Smart Home devices at 
+the given moment in time. For example, the illustration above depicts the state representation
 of a binary, categorcal and a numerical devices. 
 
 .. math::
@@ -94,14 +93,14 @@ of a binary, categorcal and a numerical devices.
 Example
 =======
 
-To transform a device dataframe to the *raw* representation use the *Event2Vec* with the 
-``encode=raw`` parameter
+To transform a device dataframe to the *state* representation use the *Event2Vec* with the 
+``encode=state`` parameter
 
 .. code:: python
 
     >>> from pyadlml.preprocessing import Event2Vec
-    >>> raw = Event2Vec(encode='raw').fit_transform(data['devices'])
-    >>> print(raw.head())
+    >>> states = Event2Vec(encode='state').fit_transform(data['devices'])
+    >>> print(states.head())
                         time  Hall-Toilet door  ...  Croceries Cupboard     Pans Cupboard
     0    2008-02-25 00:20:14                 1  ...                   0                 0
     1    2008-02-25 00:22:57                 0  ...                   0                 0
@@ -139,13 +138,13 @@ not emit observations are populated with ``NaN``'s.
 
     .. code:: python
 
-        raw = Event2Vec(encode='raw').fit_transform(data['devices'])
+        states = Event2Vec(encode='state').fit_transform(data['devices'])
 
         # get time string of last device that fired for the first time
         timestr = TODO
 
         # select all values after the device
-        raw = raw[raw['time'] > timestr]
+        states = states[states['time'] > timestr]
 
 
 Changepoint
@@ -164,7 +163,7 @@ Definition
 The changepoint representation one-hot encodes all devices indicating the device that generated the event.
 A field is assigned a value of one at timepoint :math:`t_i` if the device :math:`d_i` is responsible for producing
 the current event :math:`e_i`. Conversely, if the device did not generate the current event,
-the fields value is set to zero
+the devices field is set to zero
 
 .. math::
     x_i = \begin{bmatrix} t_i & 0 & 1  & ... & 0 \end{bmatrix}^T \text{ where } x_{i, k_{/1}} \in \{0,1\}
@@ -203,7 +202,7 @@ Definition
    :alt: alternate text
    :align: center
 
-The *last_fired* representation is a device one-hot-encoding signifying the device to fired last. 
+The *last_fired* representation is a device one-hot-encoding signifying the device that fired last. 
 A field contains the value one at timepoint :math:`t`, if the device was the most recent to change its state. 
 Conversely, for devices firing earlier all fields are assigned a zero.
 
@@ -230,14 +229,14 @@ To transform a device dataframe into the *last_fired* representation use the ``e
 Combining Encodings
 ~~~~~~~~~~~~~~~~~~~
 
-In the majority of cases, it is practical to combine multiple encodings,
-such as i.e. the *raw* and the *last_fired* representation. To do this,
+In some cases, it is practical to combine multiple encodings,
+such as i.e. the *state* and the *last_fired* representation. To do this,
 concatenate the different encodings string-representations using the ``+`` 
 operator and provide the resultant string as parameter. Below is an example snippet, 
-that combines the *raw* and the *changepoint* encoding:
+that combines the *state* and the *changepoint* encoding:
 
 .. code:: python
 
-    X = Event2Vec(encode='raw+changepoint')\
+    X = Event2Vec(encode='state+changepoint')\
         .fit_transform(data['devices'])\
         .values
