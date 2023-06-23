@@ -43,7 +43,7 @@ class MitLabFetcher(DataFetcher):
         df_act_map = _load_activity_map(act_path)
         df_dev, df_act = _read_data(data_path, df_dev_map, df_act_map)
         df_dev = device_boolean_on_states_to_events(df_dev)
-
+        df_dev[DEVICE] = df_dev[DEVICE].astype('category')
         lst_act = df_act[ACTIVITY].unique()
         lst_dev = df_dev[DEVICE].unique()
 

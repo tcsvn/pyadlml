@@ -285,7 +285,7 @@ class InterEventTime(TransformerMixin, BaseEstimator):
         # compute average value
         self.td_avg = df[[DEVICE, self.BACKWARD, self.FORWARD]]\
             .iloc[1:-1]\
-            .groupby(DEVICE)\
+            .groupby(DEVICE, observed=True)\
             .mean(numeric_only=False)\
             .reset_index()
 

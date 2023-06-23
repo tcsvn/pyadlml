@@ -116,5 +116,6 @@ def load_homeassistant_devices(db_url, device_list, start_time=None, end_time=No
     #      is on or off or if binary-device is not on or off
     df[VALUE] = df[VALUE].replace(to_replace='on', value=True)
     df[VALUE] = df[VALUE].replace(to_replace='off', value=False)
+    df[DEVICE] = df[DEVICE].astype('category')
 
     return df

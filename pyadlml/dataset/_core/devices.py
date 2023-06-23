@@ -458,7 +458,7 @@ def correct_cat_inconsistency(df_cat: pd.DataFrame) -> pd.DataFrame:
     """
     idxs_to_drop = [-1]
     while len(idxs_to_drop) != 0:
-        df_cat['shifted'] = df_cat.groupby(by=DEVICE)['value'].shift(1)
+        df_cat['shifted'] = df_cat.groupby(by=DEVICE, observed=True)['value'].shift(1)
         idxs_to_drop = df_cat[df_cat['value'] == df_cat['shifted']].index
         df_cat = df_cat.drop(index=idxs_to_drop)
 
@@ -570,52 +570,23 @@ def _create_empty_dev_dataframe():
 
 
 def most_prominent_categorical_values(df: pd.DataFrame):
-    tmp = df
-    tmp['conc'] = tmp[DEVICE] + ',' + tmp[VALUE]
-    dev_list = tmp[DEVICE].unique()
-    tmp = pd.concat([tmp[TIME], pd.get_dummies(tmp['conc'], dtype=int)], axis=1)
-    tmp2 = tmp.copy()
-    for dev in dev_list:
-        dev_col_cats = []
-        for col in tmp.columns:
-            if dev not in col:
-                continue
-            dev_col_cats.append(col)
-
-        for di in dev_col_cats:
-            other = dev_col_cats[:]
-            other.remove(di)
-            for o in other:
-                tmp2[di] = tmp2[di] - tmp[o]
-    tmp2 = tmp2.set_index(TIME)
-    tmp2 = tmp2.where(tmp2 != 0, np.nan)
-    tmp2 = tmp2.ffill(axis=0)
-    tmp2 = tmp2.where(tmp2 != -1, 0)
-    tmp2 = tmp2.reset_index()
-    tmp2['td'] = tmp2[TIME].shift(-1) - tmp2[TIME]
-
-    lst = []
-    for dev in dev_list:
-        dev_col_cats = []
-        for col in tmp.columns:
-            if dev not in col:
-                continue
-            dev_col_cats.append(col)
-        asdf = []
-        max_td = pd.Timedelta('0s')
-        max_cat = None
-        for di in dev_col_cats:
-            abc = tmp2[[di, 'td']].groupby(di).sum().reset_index()
-            td_on = abc.iloc[1, 1]
-            if max_td < td_on:
-                max_td = td_on
-                max_cat = di
-            asdf.append(td_on)
-        lst.append([dev, max_cat.split(',')[1]])
     ML_STATE = 'ml_state'
-    df = pd.DataFrame(data=lst, columns=[DEVICE, ML_STATE])
-    return df
+    df_cat = df.copy()
 
+    # Compute at each category row its duration to the next category change
+    df_cat = df_cat.sort_values([DEVICE, TIME])
+    df_cat['td'] = df_cat.groupby(DEVICE, observed=True)[TIME].diff().shift(-1)
+    df_cat = df_cat.sort_values(by=TIME).reset_index(drop=True).iloc[:-1]
+    nan_idxs = df_cat[df_cat.isna().any(axis=1)].index
+    df_cat.loc[nan_idxs, 'td'] = (df_cat.at[df_cat.index[-1], TIME] - df_cat.loc[nan_idxs, TIME]).values
+
+
+    df = df_cat.groupby([DEVICE, VALUE], observed=True)['td'].sum().reset_index()
+    max_rows = df.loc[df.groupby(DEVICE, observed=True)['td'].idxmax()]
+    max_rows = max_rows.reset_index(drop=True)\
+                       .drop(columns=['td'])\
+                       .rename(columns={VALUE: ML_STATE})
+    return max_rows
 
 def _get_bool_mask(df: pd.DataFrame, col: list):
     """ returns a mask where the columns are booleans"""
@@ -643,7 +614,7 @@ def _get_bool(df):
         else:
             return ((x[VALUE].astype(str) == 'False') | (x[VALUE].astype(str) == 'True')).all()
 
-    return df.groupby(by=[DEVICE]).filter(func)
+    return df.groupby(by=[DEVICE], observed=True).filter(func)
 
 
 def create_device_info_dict(df_dev: pd.DataFrame) -> dict:
@@ -689,7 +660,7 @@ def create_device_info_dict(df_dev: pd.DataFrame) -> dict:
     if dtypes[NUM]:
         df_num = df_dev.loc[df_dev[DEVICE].isin(dtypes[NUM]), [DEVICE, VALUE]].copy()
         df_num[VALUE] = pd.to_numeric(df_num[VALUE])
-        res_num = df_num.groupby(by=[DEVICE]).median()
+        res_num = df_num.groupby(by=[DEVICE], observed=True).median()
         for dev in dtypes[NUM]:
             res[dev][ML_STATE] = res_num.at[dev, VALUE]
 

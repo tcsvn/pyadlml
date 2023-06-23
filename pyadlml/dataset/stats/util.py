@@ -76,7 +76,7 @@ def df_density_binned(df, column_str, dt):
     df[TIME] = df[TIME].dt.floor(freq=dt).dt.time
 
     df[VALUE] = 1
-    df = df.groupby([TIME, column_str]).sum().unstack()
+    df = df.groupby([TIME, column_str], observed=True).sum().unstack()
     df = df.fillna(0)
     df.columns = df.columns.droplevel(0)
 

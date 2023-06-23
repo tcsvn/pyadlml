@@ -611,7 +611,7 @@ class EventWindow(Windows, XOrYTransformer):
         from pyadlml.preprocessing import EventWindows
         data = fetch_kasteren()
 
-        raw = StateVectorEncoder(encode='raw', t_res='10s')\
+        raw = Event2Vec(encode='raw', t_res='10s')\
               .fit_transform(data.df_devices)
         labels = LabelEncoder().fit_transform(raw, data.df_activities)
 
@@ -632,7 +632,7 @@ class EventWindow(Windows, XOrYTransformer):
 
         from pyadlml.preprocessing import SequenceDicer
 
-        raw = StateVectorEncoder(encode='raw', t_res='10s')\
+        raw = Event2Vec(encode='raw', t_res='10s')\
               .fit_transform(data.df_devices)
         labels = LabelEncoder().fit_transform(raw, data.df_activities)
 
@@ -643,20 +643,23 @@ class EventWindow(Windows, XOrYTransformer):
                .fit_transform(X, y)
 
     """
-    def __init__(self, rep: str ='many-to-many', window_size: int =10, stride: int=1, use_stride_trick=False, dtype=None):
+    def __init__(self, rep: str ='many-to-many', window_size: int =10, stride: int=1, return_view=True, dtype=None):
         """
         Parameters
         ----------
         rep: str 
         window_size: int
         stride: int
+        return_view : bool, 
+            Rather than transforming the original array to be a cube. A view is returned
+            Note!!! The view is immuatble. 
 
         """
 
         TransformerMixin.__init__(self)
         XOrYTransformer.__init__(self)
         Windows.__init__(self, rep, window_size, stride)
-        self.use_stride_trick = use_stride_trick
+        self.return_view = return_view
         self.dtype = dtype
     
     def fit(self, X, y=None):
@@ -717,25 +720,24 @@ class EventWindow(Windows, XOrYTransformer):
         new_shape =(n_prime, self.window_size, *X.shape[1:])
 
         dtype = X.dtype if self.dtype is None else self.dtype
-        from numpy.core._exceptions import _ArrayMemoryError
-        if self.use_stride_trick:
-            new_shape = (X.shape[0] - self.window_size + 1, self.window_size, *X.shape[1:])
-            strides = (X.strides[0],) + X.strides 
-            res = np.lib.stride_tricks.as_strided(X, shape=new_shape, strides=strides, 
-                                                  writeable=False)
+
+        from numpy.lib.stride_tricks import sliding_window_view
+        if self.return_view:
+            res = sliding_window_view(X, window_shape=(self.window_size, X.shape[1]))\
+                                    .squeeze(1)[::self.stride]
             return res
         else:
             try:
                 res = np.zeros(shape=new_shape, dtype=dtype)
             except _ArrayMemoryError:
                 from pathlib import Path
+                raise 
                 self.fp_memmap_ = Path("/tmp/mmemap.dat")
                 print('Warning! memcache boolean dtype used. This may be wrong')
                 res = np.memmap(self.fp_memmap_, mode='w+', shape=new_shape, dtype=np.bool_)
 
             for r, i in enumerate(range(0, n_prime*self.stride, self.stride)):
                 res[r] = X[i:i+self.window_size]
-                #res[r, :, :] = X[i:i+self.window_size, :]
 
             return res.squeeze()
 

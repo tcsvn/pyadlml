@@ -75,7 +75,7 @@ def label_data2(df_devs: pd.DataFrame, df_acts: pd.DataFrame, other=False):
     for col in set(df_devs.columns).difference(df_act_tmp.columns):
         df_act_tmp[col] = np.nan
 
-    df = pd.concat([df_devs, df_act_tmp], ignore_index=True, axis=0)\
+    df = pd.concat([df_dev_tmp, df_act_tmp], ignore_index=True, axis=0)\
         .sort_values(by=TIME)\
         .reset_index(drop=True)
 

@@ -7,7 +7,7 @@ from pyadlml.dataset._core.devices import device_events_to_states, _create_devic
     is_device_df, _is_dev_rep2, contains_non_binary, split_devices_binary, create_device_info_dict
 
 from pyadlml.dataset.util import timestr_2_timedeltas
-from pyadlml.dataset._representations.raw import create_raw
+from pyadlml.dataset._representations.state import create_state
 from pyadlml.util import get_npartitions
 from dask import delayed
 
@@ -79,7 +79,7 @@ def state_cross_correlation(df_devices,  n_jobs=-1):
     df_devs = df_devs.sort_values(by=TIME)
     info_dict = create_device_info_dict(df_devs)
     # make off to -1 and on to 1 and then calculate cross correlation between signals
-    raw = create_raw(df_devs, info_dict)
+    raw = create_state(df_devs, info_dict)
     raw.loc[:, dev_lst] = raw.loc[:, dev_lst].applymap(lambda x: 1 if x else -1)
     raw[td] = raw[TIME].shift(-1) - raw[TIME]
     n = get_npartitions()
@@ -216,7 +216,7 @@ def state_fractions(df_devices: pd.DataFrame) -> pd.DataFrame:
 
     # Calculate time deltas for online time
     df_devs[diff] = df_devs[END_TIME] - df_devs[START_TIME]
-    df_devs = df_devs.groupby(by=[DEVICE, VALUE])[diff].sum()
+    df_devs = df_devs.groupby(by=[DEVICE, VALUE], observed=True)[diff].sum()
     df_devs = pd.DataFrame(df_devs)
     df_devs.columns = [td]
 
@@ -256,7 +256,7 @@ def event_count(df_devices: pd.DataFrame) -> pd.DataFrame:
 
     col_label = 'event_count'
 
-    ser = df_devices.groupby(DEVICE)[DEVICE].count()
+    ser = df_devices.groupby(DEVICE, observed=True)[DEVICE].count()
     df_devices = pd.DataFrame({DEVICE: ser.index, col_label: ser.values})
 
     #if lst_devs is not None:
@@ -400,7 +400,7 @@ def event_cross_correlogram_slice(df_devs: pd.DataFrame, lst_devs=None, t_window
         dev_name = row[1].device
 
         df_devs['tmp'] = (td - t_window < df_devs['cum_sum']) & (df_devs['cum_sum'] < td + t_window)
-        tmp = df_devs.groupby(DEVICE)['tmp'].sum()
+        tmp = df_devs.groupby(DEVICE, observed=True)['tmp'].sum()
         res_df.loc[dev_name] += tmp
 
     return res_df.sort_index(axis=0, ascending=True) \

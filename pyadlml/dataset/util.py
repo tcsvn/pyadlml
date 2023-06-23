@@ -22,6 +22,15 @@ def print_df(df):
     with pd.option_context('display.max_rows', None, 'display.max_columns', None):
         print(df)
 
+def memory_usage(df, unit='MB'):
+    assert unit in ['MB', 'GB', 'B']
+    if unit == 'MB':
+        denom  = (1024 * 1024)
+    elif unit == 'GB':
+        unit =  (1024 * 1024 * 1024)
+    else:
+        unit = 1
+    return df.memory_usage().sum() / denom
 
 def unitsfromdaystart(ts, unit='s'):
     """ Computes units passed from the start of the day until the timestamp
@@ -299,7 +308,7 @@ def get_last_states(df_devs: pd.DataFrame, left_bound=-1) -> dict:
     left_bound = len(df_devs) if left_bound == -1 else left_bound
     return df_devs.iloc[:left_bound, :]\
         .sort_values(by=TIME)\
-        .groupby(DEVICE)\
+        .groupby(DEVICE, observed=True)\
         .last()[VALUE]\
         .to_dict()
 
@@ -319,7 +328,7 @@ def get_first_states(df_devs: pd.DataFrame) -> dict:
     """
     return df_devs.copy()\
         .sort_values(by=TIME)\
-        .groupby(DEVICE)\
+        .groupby(DEVICE, observed=True)\
         .first()[VALUE]\
         .to_dict()
 

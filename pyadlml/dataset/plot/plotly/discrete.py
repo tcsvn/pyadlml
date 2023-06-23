@@ -3,7 +3,7 @@ import numpy as np
 from plotly.subplots import make_subplots
 import pandas as pd
 
-from pyadlml.constants import ACTIVITY, END_TIME, START_TIME, STRFTIME_DATE
+from pyadlml.constants import ACTIVITY, END_TIME, START_TIME, STRFTIME_PRECISE
 from pyadlml.dataset._core.activities import is_activity_df
 from pyadlml.dataset.plot.plotly.acts_and_devs import legend_current_items
 from pyadlml.dataset.plot.plotly.util import remove_whitespace_around_fig, CatColMap
@@ -142,6 +142,7 @@ def _plot_activities_into(fig, y, y_label, cat_col_map, row=1, col=1, time=None,
             df = df.rename(columns={START_TIME:'start', END_TIME:'end'})
             df['lengths'] = (df['end'] - df['start'])/pd.Timedelta('1ms')
             df['y_label'] = y_label
+            activities = df[ACTIVITY].unique()
         else:
             if activities is None:
                 activities = np.unique(y)
@@ -166,8 +167,8 @@ def _plot_activities_into(fig, y, y_label, cat_col_map, row=1, col=1, time=None,
                                 + 'Dur: %{customdata}<extra></extra>'
             else:
                 hover_template = '<b>' + act_name + '</b><br>'\
-                                + 'Start_time: %{base|' + STRFTIME_DATE + '}<br>' \
-                                + 'End_time: %{x| ' + STRFTIME_DATE + '}<br>' \
+                                + 'Start_time: %{base|' + STRFTIME_PRECISE + '}<br>' \
+                                + 'End_time: %{x| ' + STRFTIME_PRECISE + '}<br>' \
                                 + 'Dur: %{customdata}<extra></extra>'
 
             trace = go.Bar(name=act_name,
@@ -262,8 +263,8 @@ def _plot_devices_into(fig, X, cat_col_map, row, col, time, dev_order):
                                     + 'Dur: %{customdata}<extra></extra>'
                 else:
                     hover_template = '<b>' + dev + '</b><br>'\
-                                    + 'Start_time: %{base|' + STRFTIME_DATE + '}<br>' \
-                                    + 'End_time: %{x| ' + STRFTIME_DATE + '}<br>' \
+                                    + 'Start_time: %{base|' + STRFTIME_PRECISE + '}<br>' \
+                                    + 'End_time: %{x| ' + STRFTIME_PRECISE + '}<br>' \
                                     + 'Dur: %{customdata}<extra></extra>'
 
                 vals = bars[dev].loc[(bars[dev]['state'] == k)]
@@ -375,8 +376,15 @@ def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, dev_
 
 
     times = pd.Series(times) if isinstance(times, np.ndarray) else times
-    device_order = X.columns.to_list() if dev_order is None else dev_order
-    device_order = device_order.tolist() if isinstance(device_order, np.ndarray) else device_order
+    if dev_order is None:
+        device_order = X.columns.to_list() 
+    elif isinstance(dev_order, np.ndarray):
+        device_order = device_order.tolist() 
+    elif isinstance(dev_order, str) and dev_order == 'alphabetical':
+        device_order = X.columns.to_list()
+        device_order.sort(reverse=True)
+    else:
+        device_order = dev_order
 
 
     error_text = 'parameter act_order has to be set if y_conf is given'

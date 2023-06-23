@@ -107,7 +107,7 @@ def _build_choice_devices(df_devs, id, sel=None, multi=True):
     )
 
 
-def _build_range_slider(df_acts, df_devs, start_time, end_time, set_start_time=None, set_end_time=None):
+def _build_range_slider(start_time, end_time, set_start_time=None, set_end_time=None):
     strf_time = '%d.%m.%Y'
     def create_mark(ts, format):
         return {'label': _np_dt_strftime(ts, format), 'style': {"transform": "rotate(45deg)"}}

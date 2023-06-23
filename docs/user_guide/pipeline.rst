@@ -30,11 +30,11 @@ introducing supplementary behavior while maintaining full backward compatibility
 .. code:: python
 
     from pyadlml.pipeline import Pipeline
-    from pyadlml.preprocessing import StateVectorEncoder, LabelMatcher
+    from pyadlml.preprocessing import Event2Vec, LabelMatcher
     from sklearn.classifier import DecisionTreeClassifier
 
      # Define preprocessing steps and a classifier as last step
-    steps = [('sve': StateVectorEncoder()),
+    steps = [('sve': Event2Vec()),
              ('le': LabelMatcher()),
              ('classifier': DecisionTreeClassifier())]
 
@@ -214,7 +214,7 @@ only during *training* mode but not in *evaluation* or in *production* mode.
 
     # Define pipeline steps
     steps = [
-        ('sve', StateVectorEncoder(encode='raw')),
+        ('sve', Event2Vec(encode='raw')),
         ('le', TrainOrEvalOnlyWrapper(LabelMatcher(other=True))),
         ('drop_time_idx', DropTimeIndex()),
         ('drop_duplicates', TrainOnlyWrapper(DropDuplicates())),
@@ -285,7 +285,7 @@ the events timestmaps:
          ('passthrough', IdentityTransformer())])
 
     steps = [
-        ('enc', StateVectorEncoder()),
+        ('enc', Event2Vec()),
         ('lbls', TrainOrEvalOnlyWrapper(LabelMatcher())),
         ('f_extract', feature_extraction),
         ('drop_time', DropTimeIndex()),

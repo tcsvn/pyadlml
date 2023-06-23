@@ -94,13 +94,13 @@ of a binary, categorcal and a numerical devices.
 Example
 =======
 
-To transform a device dataframe to the *raw* representation use the *StateVectorEncoder* with the 
+To transform a device dataframe to the *raw* representation use the *Event2Vec* with the 
 ``encode=raw`` parameter
 
 .. code:: python
 
-    >>> from pyadlml.preprocessing import StateVectorEncoder
-    >>> raw = StateVectorEncoder(encode='raw').fit_transform(data['devices'])
+    >>> from pyadlml.preprocessing import Event2Vec
+    >>> raw = Event2Vec(encode='raw').fit_transform(data['devices'])
     >>> print(raw.head())
                         time  Hall-Toilet door  ...  Croceries Cupboard     Pans Cupboard
     0    2008-02-25 00:20:14                 1  ...                   0                 0
@@ -125,7 +125,7 @@ for the first time, the values must be inferred.
    :align: center
 
 In the binary case, the correct values are inferred by inverting the first observed value. 
-For categorical values, the *StateVectorEncoder* fills in the preceding category with the most 
+For categorical values, the *Event2Vec* fills in the preceding category with the most 
 likely category given the first known succeeding category :math:`argmax[p(c_{<t}|c_{t})]`. 
 Numerical values in a state-vector at timepoints where the device does
 not emit observations are populated with ``NaN``'s. 
@@ -139,7 +139,7 @@ not emit observations are populated with ``NaN``'s.
 
     .. code:: python
 
-        raw = StateVectorEncoder(encode='raw').fit_transform(data['devices'])
+        raw = Event2Vec(encode='raw').fit_transform(data['devices'])
 
         # get time string of last device that fired for the first time
         timestr = TODO
@@ -177,9 +177,9 @@ Load the changepoint representation by using the ``encode='changepoint'`` argume
 
 .. code:: python
 
-    >>> from pyadlml.preprocessing import StateVectorEncoder
+    >>> from pyadlml.preprocessing import Event2Vec
 
-    >>> cp = StateVectorEncoder(encode='changepoint').fit_transform(data['devices'])
+    >>> cp = Event2Vec(encode='changepoint').fit_transform(data['devices'])
     >>> print(cp.head())
                         time  Hall-Toilet door  ...  Croceries Cupboard     Pans Cupboard
     0    2008-02-25 00:20:14                 1  ...                   0                 0
@@ -221,9 +221,9 @@ To transform a device dataframe into the *last_fired* representation use the ``e
 
 .. code:: python
 
-    from pyadlml.preprocessing import StateVectorEncoder
+    from pyadlml.preprocessing import Event2Vec
 
-    lf = StateVectorEncoder(encode='last_fired').fit_transform(data['devices'])
+    lf = Event2Vec(encode='last_fired').fit_transform(data['devices'])
     X = lf.values
 
 
@@ -238,6 +238,6 @@ that combines the *raw* and the *changepoint* encoding:
 
 .. code:: python
 
-    X = StateVectorEncoder(encode='raw+changepoint')\
+    X = Event2Vec(encode='raw+changepoint')\
         .fit_transform(data['devices'])\
         .values

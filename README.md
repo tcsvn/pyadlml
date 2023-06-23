@@ -46,16 +46,16 @@ fig.show()
 
 # Create a vector representing the state of all Smart Home devices
 # at a certain time and discretize the events into 20 second bins
-from pyadlml.preprocessing import StateVectorEncoder, LabelMatcher
-sve = StateVectorEncoder(encode='raw', dt='20s')
-raw = sve.fit_transform(df_devs)
+from pyadlml.preprocessing import Event2Vec, LabelMatcher
+e2v = Event2Vec(encode='state', dt='20s')
+states = e2v.fit_transform(df_devs)
 
 # Label each datum with the corresponding activity.
 # When an event matches no activity set the activity to "other"
-lbls = LabelMatcher(other=True).fit_transform(df_acts, raw)
+lbls = LabelMatcher(other=True).fit_transform(df_acts, states)
 
 # Extract numpy arrays without timestamps (1st column)
-X, y = raw.values[:,1:], lbls.values[:,1:]
+X, y = states.values[:,1:], lbls.values[:,1:]
 
 # Proceed with machine learning stuff 
 from sklearn.tree import DecisionTreeClassifier
@@ -75,7 +75,7 @@ from pyadlml.pipeline import Pipeline
 from pyadlml.preprocessing import IndexEncoder, LabelMatcher, DropTimeIndex, \
                                   EventWindows, DropColumn
 from pyadlml.model_selection import train_test_split
-from pyadlml.model import WaveNet
+from pyadlml.model import DilatedModel
 from pyadlml.dataset.torch import TorchDataset
 from torch.utils.data import DataLoader
 from torch.optim import Adam 
@@ -104,7 +104,7 @@ pipe = Pipeline([
 # Create a dataset to sample from
 dataset = TorchDataset(X_train, y_train, pipe) 
 train_loader = DataLoader(dataset, batch_size=32, shuffle=True)
-model = WaveNet(
+model = DilatedModel(
     n_features=14,       # Number of devices
     n_classes=8          # Number of activities
 )
@@ -136,14 +136,16 @@ _For more examples and how to use, please refer to the [documentation](https://p
     - Interactive dashboard for data exploration
   - Various statistics and visualizations for devices, activities and their interaction
   - Preprocessing methods
-    - Device encoder (index, raw, changepoint, last_fired, ...)
+    - Device encoder (index, state, changepoint, last_fired, ...)
     - Feature extraction (inter-event-times, intensity, time2vec, ...)
-    - Sliding windows (event, temporal, explicit or fuzzytime)
+    - Sliding windows (event, temporal, explicit or (fuzzytime))
     - Many more ... 
   - Cross validation iterators and pipeline adapted for ADLs
     - LeaveKDayOutSplit, TimeSeriesSplit
     - Conditional transformer: YTransformer, XorYTransformer, ...
-  - Ready to use models
+  - Online metrics to compare models regardless of resample frequency
+    - Accuracy, TPR, PPV, ConfMat, Calibration
+  - Ready to use models (TODO)
     - RNNs
     - WaveNet
     - Transformer
@@ -164,7 +166,7 @@ _For more examples and how to use, please refer to the [documentation](https://p
   - [ ] Orange [TODO]
 
 ## Examples, benchmarks and replications
-The project includes a ranked model leaderboard evaluated on the cleaned dataset versions.
+The project includes (TODO) a ranked model leaderboard evaluated on the cleaned dataset versions.
 Additionaly, here is a useful list of awesome references (todo include link) to papers
 and repos related to ADLs and machine learning.
 

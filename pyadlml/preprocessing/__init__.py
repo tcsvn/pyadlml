@@ -1,6 +1,6 @@
 from .windows import TimeWindow, EventWindow, ExplicitWindow
 from .preprocessing import \
-    StateVectorEncoder, \
+    Event2Vec, \
     IndexEncoder, \
     DropColumn, \
     DropTimeIndex, \

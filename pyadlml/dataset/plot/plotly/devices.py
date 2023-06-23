@@ -9,7 +9,7 @@ from pyadlml.constants import *
 
 import numpy as np
 
-from pyadlml.constants import DEVICE, TIME, VALUE, STRFTIME_HOUR, STRFTIME_DATE, PRIMARY_COLOR, SECONDARY_COLOR
+from pyadlml.constants import DEVICE, TIME, VALUE, STRFTIME_HOUR, STRFTIME_PRECISE, PRIMARY_COLOR, SECONDARY_COLOR
 from pyadlml.dataset.plot.plotly.activities import _set_compact_title, _scale_xaxis
 from pyadlml.dataset.plot.plotly.util import CatColMap
 from pyadlml.dataset.stats.devices import event_count, event_cross_correlogram, event_cross_correlogram3, events_one_day, \
@@ -256,7 +256,7 @@ def boxplot_state(df_devs, scale='linear', height=350, binary_state='on',
     fig.update_yaxes(title=None, visible=False, showticklabels=False)
     fig.update_layout(margin=dict(l=0, r=0, b=0, t=30, pad=0), height=height)
     fig.data[0].hovertemplate = 'Device=%{y}<br>Seconds=%{x}<br>Td=%{customdata[0]}<br>' +\
-                                'Start time=%{customdata[1]|' + STRFTIME_DATE + '}<extra></extra>'
+                                'Start time=%{customdata[1]|' + STRFTIME_PRECISE + '}<extra></extra>'
 
     return fig
 

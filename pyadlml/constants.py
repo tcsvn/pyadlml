@@ -8,7 +8,6 @@ CM_SEQ_MAP = 'viridis'  # BrwnYI, BurgYI, Burg
 
 # String representations that are used to format quantities
 # for plotly graphs
-STRFTIME_DATE = '%d.%m.%Y %H:%M:%S.%s'
 STRFTIME_HOUR = '%H:%M:%S'
 STRFTIME_DELTA = ''
 STRFTIME_PRECISE = '%d.%m.%Y %H:%M:%S.%f' # Microsecond accuracy
@@ -19,11 +18,11 @@ OTHER = 'other'
 OTHER_MIN_DIFF = pd.Timedelta('100ms')
 
 # Dataset columns
-
 # df_activities columns
 START_TIME = 'start_time'
 END_TIME = 'end_time'
 ACTIVITY = 'activity'
+
 # df_devices columns
 TIME = 'time'
 DEVICE = 'device'
@@ -36,19 +35,16 @@ NUM = 'numerical'
 BOOL = 'boolean'
 
 # Device encoding
-ENC_RAW = 'raw'
+ENC_STATE = 'state'
 ENC_LF = 'last_fired'
 ENC_CP = 'changepoint'
-REPS = [ENC_RAW, ENC_LF, ENC_CP]
-
+REPS = [ENC_STATE, ENC_LF, ENC_CP]
 
 # Activity assistant
 AREA = 'area'
 
-
 DATA_DUMP_NAME = 'data.joblib'
 DATA_HOME_FOLDER_NAME = 'pyadlml_data_home'
-
 
 # The keys of dictionary returned by fetch methods
 DATA_DCT_KEY_DEVS = 'devices'

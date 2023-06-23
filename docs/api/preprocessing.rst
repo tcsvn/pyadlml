@@ -12,10 +12,10 @@ IndexEncoder
 .. autoclass:: pyadlml.preprocessing.IndexEncoder
 
 
-StateVectorEncoder
+Event2Vec
 ~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: pyadlml.preprocessing.StateVectorEncoder
+.. autoclass:: pyadlml.preprocessing.Event2Vec
 
 
 LabelMatcher

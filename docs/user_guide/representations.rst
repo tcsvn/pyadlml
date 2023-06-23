@@ -42,7 +42,7 @@ presumes the data to be I.i.d.
 
 .. code:: python
 
-    from pyadlml.preprocessing import StateVectorEncoder, LabelEncoder
+    from pyadlml.preprocessing import Event2Vec, LabelEncoder
     from pyadlml.dataset import fetch_aras
     from pyadlml.pipeline import Pipeline
     from sklearn.utils import shuffle
@@ -58,7 +58,7 @@ presumes the data to be I.i.d.
 
     # define pipeline
     steps = [
-        ('sve', StateVectorEncoder(encode='raw')),      # encode device dataframe into state vectors
+        ('sve', Event2Vec(encode='raw')),      # encode device dataframe into state vectors
         ('le', LabelEncoder(idle=False)),               # generate encoded labels
         ('drop nans', ),                                # drop all rows where no matching activity was found
         ('cast',),                                      # cast the activities from numpy to a dataframe
@@ -138,7 +138,7 @@ one activity is followed by another. There is no magic happening there. Pyadlml 
 
 .. code:: python
 
-    from pyadlml.preprocessing import StateVectorEncoder, LabelEncoder
+    from pyadlml.preprocessing import Event2Vec, LabelEncoder
     from pyadlml.dataset import fetch_aras
     from pyadlml.pipeline import Pipeline
     from pyadlml.models import BernoulliHMM
@@ -152,7 +152,7 @@ one activity is followed by another. There is no magic happening there. Pyadlml 
 
     # define pipeline
     steps = [
-        ('sve', StateVectorEncoder(encode='raw')),      # encode device dataframe into state vectors
+        ('sve', Event2Vec(encode='raw')),      # encode device dataframe into state vectors
         ('le', LabelEncoder(other=True)),                # generate encoded labels
         ('cast', DfCaster('df->np', 'df->np')),         # cast labels and raw representation to numpy arrays
         ('classifier', BernoulliHMM())                  # apply classifier to data
@@ -236,13 +236,13 @@ to the last known device state.
 .. code:: python
 
     >>> from pyadlml.dataset import fetch_aras
-    >>> from pyadlml.preprocessing import StateVectorEncoder
+    >>> from pyadlml.preprocessing import Event2Vec
 
     >>> data = fetch_aras()
     >>> print(len(data.df_devices))
     (24000, )
 
-    >>> X = StateVectorEncoder(encoding='changepoint', dt='10s').fit_transform(data.df_devices)
+    >>> X = Event2Vec(encoding='changepoint', dt='10s').fit_transform(data.df_devices)
     >>> print(len(X))
     (1230000, )
 
@@ -263,7 +263,7 @@ The encoder-decoder recurrent neural network
    :alt: alternate text
    :align: center
 
-Timeslices can be constructed by passing the parameter resolution ``t_res='freq'`` to the StateVectorEncoder.
+Timeslices can be constructed by passing the parameter resolution ``t_res='freq'`` to the Event2Vec.
 To create a *raw* representation with timeslice-length of 10 seconds use
 
 .. code:: python
@@ -286,7 +286,7 @@ To create a *raw* representation with timeslice-length of 10 seconds use
     )
 
     steps = [
-        ('sv_enc', StateVectorEncoder()),
+        ('sv_enc', Event2Vec()),
         ('lbl_enc', TrainOrEvalOnlyWrapper(LabelEncoder(idle=True))),
         ('select_train', TrainOnlyWrapper(CVSubset())),
         ('select_val', EvalOnlyWrapper(CVSubset())),
@@ -351,12 +351,12 @@ of different vector encodings.
 
     from pyadlml.dataset import fetch_amsterdam
     from pyadlml.models import NODE
-    from pyadlml.preprocessing import StateVectorEncoder
+    from pyadlml.preprocessing import Event2Vec
 
     data = fetch_amsterdam()
     X = .fit_transform(data.df_devices)
 
-    steps = [('sve', StateVectorEncoder()),
+    steps = [('sve', Event2Vec()),
             ('le', LabelEncoder(other=True)),
             ('classifier', NODE()),
         ]

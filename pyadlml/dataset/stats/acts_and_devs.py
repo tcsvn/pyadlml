@@ -7,7 +7,7 @@ from pyadlml.util import get_npartitions, get_parallel
 from pyadlml.constants import START_TIME, END_TIME, TIME, DEVICE, VALUE, ACTIVITY, CAT, NUM, BOOL
 from pyadlml.dataset.util import infer_dtypes, categorical_2_binary
 import dask.dataframe as dd
-from pyadlml.dataset._representations.raw import create_raw
+from pyadlml.dataset._representations.state import create_state
 #import __logger__
 
 
@@ -307,7 +307,7 @@ def contingency_table_states_old(df_devs, df_acts, other=False, distributed=Fals
 
     dataset_info = create_device_info_dict(df_devs)
     df_devs = df_devs.sort_values(by=TIME)
-    raw = create_raw(df_devs, dataset_info)
+    raw = create_state(df_devs, dataset_info)
 
     # raw representation one-hot-encode categorical devices and create on-boolean and off-boolean devices
     raw = pd.get_dummies(data=raw, columns=dtypes[CAT], prefix_sep=SEP, dtype=bool)
@@ -463,7 +463,7 @@ def contingency_table_states(df_devs, df_acts, other=False, n_jobs=1):
         ddf = ddf.map_partitions(lambda dff: dff.apply(func, args=[df_acts], axis=1), meta=meta)
 
         ddf = ddf.drop(columns=[START_TIME, END_TIME])
-        ddf = ddf.groupby(DEVICE).sum()
+        ddf = ddf.groupby(DEVICE, observed=True).sum()
 
         # Visualize as graph
         #ddf.visualize(filename='test.svg')
@@ -472,7 +472,7 @@ def contingency_table_states(df_devs, df_acts, other=False, n_jobs=1):
     else:
         df = df.apply(func, args=[df_acts], axis=1)
         df = df.drop(columns=[START_TIME, END_TIME])
-        df = df.groupby(DEVICE).sum()
+        df = df.groupby(DEVICE, observed=True).sum()
 
     # Add row for categories for binary devices that are not present 
     devices_in_index = df.index.values
@@ -543,7 +543,7 @@ def mutual_info_events(df_devs: pd.DataFrame, df_acts: pd.DataFrame, kind='point
         df = label_data(df_devs, df_acts, other=other)
         # Id each trial
         df['trial_id'] = (df[ACTIVITY].shift(1) != df[ACTIVITY]).astype(int)
-        df_grp = df.groupby(by=[ACTIVITY, DEVICE, 'trial_id']).count()
+        df_grp = df.groupby(by=[ACTIVITY, DEVICE, 'trial_id'], observed=True).count()
         devs = df_devs[DEVICE].unique()
         acts = df_acts[ACTIVITY].unique()
         from itertools import product

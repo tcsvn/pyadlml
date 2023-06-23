@@ -12,7 +12,7 @@ import plotly.graph_objects as go
 from plotly.colors import n_colors
 from plotly.subplots import make_subplots
 
-from pyadlml.constants import START_TIME, ACTIVITY, TIME, END_TIME, STRFTIME_DATE, PRIMARY_COLOR, \
+from pyadlml.constants import START_TIME, ACTIVITY, TIME, END_TIME, STRFTIME_PRECISE, PRIMARY_COLOR, \
                               SECONDARY_COLOR
 from pyadlml.dataset.stats.activities import activities_duration_dist, \
     activities_count, activity_duration, activities_dist, \
@@ -166,8 +166,8 @@ def boxplot_duration(df_act, scale='linear', height=350, order='alphabetical') -
     fig.update_yaxes(title=None, visible=False, showticklabels=False)
     fig.update_layout(margin=dict(l=0, r=0, b=0, t=30, pad=0), height=height)
     hover_template = 'Minutes=%{x}=%{customdata[2]}<br>Activity=%{y}<br>'\
-                     + 'Start_time=%{customdata[0]|' + STRFTIME_DATE + '}<br>'\
-                     + 'End_time=%{customdata[1]|' + STRFTIME_DATE + '}<extra></extra>'
+                     + 'Start_time=%{customdata[0]|' + STRFTIME_PRECISE + '}<br>'\
+                     + 'End_time=%{customdata[1]|' + STRFTIME_PRECISE + '}<extra></extra>'
     fig.data[0].hovertemplate = hover_template
     return fig
 
@@ -352,8 +352,8 @@ def correction(df_pre, df_post):
         show_legend = act_name not in legend_current_items(fig)
         act_mask = (df[ACTIVITY] == act_name)
         hover_template = '<b>' + act_name + '</b><br>'\
-                        + 'Start_time: %{base|' + STRFTIME_DATE + '}<br>' \
-                        + 'End_time: %{x| ' + STRFTIME_DATE + '}<br>' \
+                        + 'Start_time: %{base|' + STRFTIME_PRECISE + '}<br>' \
+                        + 'End_time: %{x| ' + STRFTIME_PRECISE + '}<br>' \
                         + 'Dur: %{customdata}<extra></extra>'
 
         trace = go.Bar(name=act_name,

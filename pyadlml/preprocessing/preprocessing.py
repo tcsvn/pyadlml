@@ -11,12 +11,12 @@ from sklearn.utils.metaestimators import _safe_split
 import sklearn.preprocessing as preprocessing
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from pyadlml.dataset._representations.raw import create_raw, resample_raw
+from pyadlml.dataset._representations.state import create_state, resample_state
 from pyadlml.dataset._representations.changepoint import create_changepoint, resample_changepoint
 from pyadlml.dataset._representations.lastfired import create_lastfired, resample_last_fired
 from pyadlml.dataset._core.acts_and_devs import label_data, label_data2
 from pyadlml.constants import ACTIVITY, TIME, DEVICE, VALUE, END_TIME, START_TIME, \
-    ENC_RAW, ENC_LF, ENC_CP, REPS
+    ENC_STATE, ENC_LF, ENC_CP, REPS
 from pyadlml.dataset._core.devices import create_device_info_dict
 from pyadlml.pipeline import XOrYTransformer, XAndYTransformer, YTransformer
 from pyadlml.constants import OTHER
@@ -343,17 +343,17 @@ class DropColumn():
         return self.transform(X, y)
 
 
-class StateVectorEncoder(Encoder, BaseEstimator, TransformerMixin):
+class Event2Vec(Encoder, BaseEstimator, TransformerMixin):
     """
-    Create a State-vector sequence from a device event stream.
+    Create a sequence of vectors from a device event stream.
     Read more in the :ref:`User Guide <preprocessing_discretization>`.
 
     Parameters
     ----------
-    encode : {'raw', 'changepoint', 'last_fired'}, default='raw'
+    encode : {'state', 'changepoint', 'last_fired'}, default='raw'
         Determines the state-vectors encoding.
 
-        raw
+        state 
             Encode the event stream as vector, where each field
             represents a device. Each entry represents the current
             state that the device is in.
@@ -371,6 +371,8 @@ class StateVectorEncoder(Encoder, BaseEstimator, TransformerMixin):
     dt : str, optional, default=None
         The timeslices resolution for discretizing the event stream. If
         set to None the event stream is not discretized.
+    
+    out_names: 
 
     Attributes
     ----------
@@ -389,18 +391,20 @@ class StateVectorEncoder(Encoder, BaseEstimator, TransformerMixin):
     --------
     >>> from pyadlml.dataset import fetch_amsterdam
     >>> data = fetch_amsterdam()
-    >>> from pyadlml.preprocessing import StateVectorEncoder
-    >>> sve = StateVectorEncoder(encode='raw')
-    >>> X = sve.fit_transform(data.df_devices)
-    >>> sve2 = StateVectorEncoder(encode='changepoint+raw', dt='6s')
-    >>> X_upsampled = sve2.fit_transform(data.df_devices)
+    >>> from pyadlml.preprocessing import Event2Vec
+    >>> e2v = Event2Vec(encode='state')
+    >>> X = e2v.fit_transform(data['devices'])
+    >>> e2v_p = Event2Vec(encode='changepoint+raw', dt='6s')
+    >>> X_resampled = e2v_p.fit_transform(data['devices])
 
     """
 
-    def __init__(self, encode=ENC_RAW, dt=None):
+    def __init__(self, encode='state', dt=None, out_features=[], n_jobs=None):
         super().__init__()
         self.encode = encode
         self.dt = dt
+        self.out_features = out_features
+        self.n_jobs = n_jobs
 
     @classmethod
     def _is_valid_encoding(cls, encoding):
@@ -430,14 +434,22 @@ class StateVectorEncoder(Encoder, BaseEstimator, TransformerMixin):
         -------
         self
         """
-        assert StateVectorEncoder._is_valid_encoding(self.encode)
+        assert Event2Vec._is_valid_encoding(self.encode)
 
         # Create dict off all input features with mean for numerical
         # and most common value for binary or categorical features
         self.data_info_ = create_device_info_dict(df_devs)
         self.n_features_in_ = 3
         self.features_in_ = [TIME, DEVICE, VALUE]
-        self.feature_names_out_ = [TIME] + list(self.data_info_.keys())
+        if self.out_features:
+            feature_names_out = self.out_features
+            del (self.out_features)
+        else:
+            feature_names_out = list(self.data_info_.keys())
+
+        feature_names_out.sort()
+        self.feature_names_out_ = [TIME] + feature_names_out
+
         self.n_features_out = len(self.feature_names_out_)
 
         return self
@@ -469,24 +481,30 @@ class StateVectorEncoder(Encoder, BaseEstimator, TransformerMixin):
 
         df_lst = []
         iters = self.encode.split('+')
+        df_devs[DEVICE] = df_devs[DEVICE].astype('category')
         for enc in iters:
-            if enc == ENC_RAW:
-                data = create_raw(df_devs, self.data_info_,
-                                  dev_pre_values=initial_states)
-                if self.dt is not None:
-                    data = resample_raw(data, df_dev=df_devs, dt=self.dt,
-                                        most_likely_values=self.data_info_
-                                        )
+            if enc == ENC_STATE:
+                if self.dt is None:
+                    data = create_state(df_devs, self.data_info_,
+                                    dev_pre_values=initial_states)
+                else:
+                    data = resample_state(
+                            df_dev=df_devs, 
+                            dt=self.dt,
+                            most_likely_values=self.data_info_
+                    )
 
                 # convert boolean data into integers (1,0)
                 dev_bool = [dev for dev in self.data_info_.keys() if self.data_info_[
-                    dev]['dtype'] == 'boolean']
-                data[dev_bool] = data[dev_bool].applymap(lambda x: 1 if x == True else 0)
+                    dev]['dtype'] == BOOL]
+                data[dev_bool] = data[dev_bool].applymap(
+                    lambda x: 1 if x == True else 0)
 
             elif enc == ENC_CP:
-                data = create_changepoint(df_devs)
-                if self.dt is not None:
-                    data = resample_changepoint(data, self.dt)
+                if self.dt is None:
+                    data = create_changepoint(df_devs, self.n_jobs)
+                else:
+                    data = resample_changepoint(df_devs, self.dt, self.n_jobs)
 
                 # set values that are missing in transform but were present when fitting to 0
                 dev_diff = set(self.feature_names_out_) - set(data.columns)
@@ -500,9 +518,10 @@ class StateVectorEncoder(Encoder, BaseEstimator, TransformerMixin):
                         TIME] + list(map(PRAEFIX_CP.__add__, data.columns[1:]))
 
             elif enc == ENC_LF:
-                data = create_lastfired(df_devs)
-                if self.dt is not None:
-                    data = resample_last_fired(data, self.dt)
+                if self.dt is None:
+                    data = create_lastfired(df_devs)
+                else:
+                    data = resample_last_fired(df_devs, self.dt, self.n_jobs)
 
                 # set values that are missing in transform but were present when fitting to 0
                 dev_diff = set(self.feature_names_out_) - set(data.columns)
@@ -551,25 +570,37 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
 
     """
 
-    def __init__(self, other: bool = False, encode_labels=False, use_dask=False):
+    def __init__(self, other: bool = False, encode_labels=False, use_dask=False, classes=[]):
         """
+        Initialize the object of the class with the given parameters.
+
         Parameters
         ----------
-        other : bool, default=False
-            The other activity TODO
+        other : bool, optional
+            A boolean parameter to indicate whether to include the 'other' activity in the processing,
+            the functionality depends on the specifics of the use case (default is False).
 
-        encode_labels : bool, default=False        
+        encode_labels : bool, optional
+            A flag to specify if labels are encoded or not. If true, labels will be encoded
+            as integers based on classes defined. (default is False).
 
-        dask : bool, default=False
-            Whether to para
+        use_dask : bool, optional
+            A flag to indicate whether to use Dask for parallel computations. If true, computations 
+            will be carried out in parallel to improve efficiency (default is False).
+
+        classes : list of str, optional
+            A list of predefined class labels for the data. This is particularly useful in scenarios 
+            such as cross-validation where some classes may not be present in the training data, 
+            but may exist in the validation data (default is []).
 
         Returns
         -------
-        self
+        None
         """
         self.other = other
         self.use_dask = use_dask
         self.encode_labels = encode_labels
+        self.classes = classes
 
     def fit(self, y, X):
         """
@@ -586,10 +617,15 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
         self : returns an instance of self
         """
         self.df_acts_ = y
-        self.classes_ = list(y[ACTIVITY].unique())
+        if self.classes:
+            self.classes_ = self.classes
+            del (self.classes)
+        else:
+            self.classes_ = list(y[ACTIVITY].unique())
 
-        if self.other:
+        if self.other and OTHER not in self.classes_:
             self.classes_.append(OTHER)
+        self.classes_.sort()
 
         return self
 
@@ -626,45 +662,6 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
         """
         self.fit(y, X)
         return self.transform(y, X)
-
-    # TODO mark for removal
-    # def inverse_transform(self, y, retain_index=False):
-    #    """
-    #    Transform labels back to original encoding.
-
-    #    Parameters
-    #    ----------
-    #    x : array like or pd.DataFrame or pd.Series
-    #        array of numbers that are transformed to labels
-    #    retain_index : bool, default=False
-    #        TODO
-
-    #    Returns
-    #    -------
-    #        TODO
-    #    """
-    #    if isinstance(y, int):
-    #        # Case when a string is passed
-    #        return self.id2class(y)
-    #    elif self._is_iterable(y):
-    #        # Iter through thing and replace values with encodings
-    #        return self._wrap_iterable(list(map(self.id2class, y)), y)
-    #    else:
-    #        raise ValueError('Passed weird argument!!!')
-    #    raise NotImplementedError
-    #    #if isinstance(x, np.ndarray):
-    #    #    res = self._lbl_enc.inverse_transform(x)
-    #    #    if retain_index:
-    #    #        return pd.Series(data=res, index=self.df_devs.index[:len(res)])
-    #    #    else:
-    #    #        return res
-    #    #
-    #    #elif isinstance(x, pd.DataFrame) or isinstance(x, pd.Series):
-    #    #    tmp_index = x.index
-    #    #    res = self._lbl_enc.inverse_transform(x.values)
-    #    #    return pd.Series(data=res, index=tmp_index)
-    #    #else:
-    #    #    raise ValueError
 
     def _is_iterable(self, z):
         try:
@@ -712,29 +709,6 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
         if self.encode_labels:
             df[ACTIVITY] = df[ACTIVITY].map(self.class2int_())
         return df
-        # remove Nans before encoding the labels and then concatenate again
-        # if not self.other:
-        # nan_mask = df[ACTIVITY].isna()
-        # df_san_nan = df[~nan_mask]
-        # encoded_labels = self.lbl_enc_.transform(df_san_nan[ACTIVITY].values)
-        # new_san_nan = pd.DataFrame(data={TIME: df_san_nan[TIME].values, ACTIVITY: encoded_labels})
-        # new_nans = pd.DataFrame(data={TIME: df[nan_mask][TIME].values, ACTIVITY: np.nan})
-        # return pd.concat([new_nans, new_san_nan]).sort_values(by=TIME)
-        # else:
-        # encoded_labels = self.lbl_enc_.transform(df[ACTIVITY].values)
-        # return pd.DataFrame(data={TIME: df[TIME].values, ACTIVITY: encoded_labels})
-        # else:
-
-        #    if isinstance(y, str):
-        #        # Case when a string is passed
-        #        raise NotImplementedError
-        #        return self.class2id(y)
-        #    elif self._is_iterable(y):
-        #        raise NotImplementedError
-        #        # Iter through thing and replace values with encodings
-        #        return self._wrap_iterable(list(map(self.class2id, y)), y)
-        #    else:
-        #        raise ValueError('Passed weird argument!!!')
 
 
 class DropDevices(BaseEstimator, XAndYTransformer, TransformerMixin):
@@ -983,7 +957,8 @@ class PositionalEncoding(BaseEstimator, TransformerMixin):
         ws = self.get_angular_freqs()
         fig, ax = plt.subplots()
         ax.set_yscale(scale)
-        ax.plot(np.arange(len(ws)), ws, label=f'min{min(ws):.3f}, max{max(ws):.3f}')
+        ax.plot(np.arange(len(ws)), ws,
+                label=f'min{min(ws):.3f}, max{max(ws):.3f}')
         ax.set_xlabel('d - dimension')
         ax.set_ylabel('$\omega(d)$')
         ax.grid(True)

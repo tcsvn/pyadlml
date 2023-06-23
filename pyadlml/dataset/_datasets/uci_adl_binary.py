@@ -89,7 +89,7 @@ class UCIFetcher(DataFetcher):
         # Load devices
         df_dev, df_areas = _load_devices(sub_dev_file)
         df_dev = device_boolean_on_states_to_events(df_dev)
-
+        df_dev[DEVICE] = df_dev[DEVICE].astype('category')
         lst_act = df_act[ACTIVITY].unique()
         lst_dev = df_dev[DEVICE].unique()
 
@@ -174,7 +174,7 @@ def _load_devices(dev_path):
     df_dev[DEVICE] = df_dev['Place'] + ' ' + df_dev['Location'] + ' ' + df_dev['Type']
     
     # get room mapping devices
-    df_locs = df_dev.copy().groupby([DEVICE, 'Type', 'Place', 'Location']).sum()
+    df_locs = df_dev.copy().groupby([DEVICE, 'Type', 'Place', 'Location'], observed=True).sum()
     df_locs = df_locs.reset_index().drop([START_TIME, END_TIME], axis=1)
 
     df_dev = df_dev[[START_TIME, END_TIME, DEVICE]]

@@ -20,7 +20,7 @@ from plotly.express._core import apply_default_cascade, infer_config, \
 #from plotly.subplots import _subplot_type_for_trace_type, _set_trace_grid_reference
 from plotly.validators.choropleth import ColorscaleValidator
 from pyadlml.constants import DEVICE, TIME, ACTIVITY, START_TIME, END_TIME, VALUE, NUM, BOOL, \
-    CAT, STRFTIME_DATE
+    CAT, STRFTIME_PRECISE
 import plotly.express as px
 
 from pyadlml.dataset._core.devices import device_events_to_states
@@ -159,8 +159,8 @@ def _plot_device_states_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs
     cat_col_map = {ON:COL_ON, OFF:COL_OFF}
     cat_idx = 0
     hover_template = '%{customdata[0]}<br>' + \
-                        'Start_time: %{base|' + STRFTIME_DATE + '}<br>' + \
-                        'End_time: %{customdata[2]|' + STRFTIME_DATE + '}<br>' + \
+                        'Start_time: %{base|' + STRFTIME_PRECISE + '}<br>' + \
+                        'End_time: %{customdata[2]|' + STRFTIME_PRECISE + '}<br>' + \
                         'Duration: %{customdata[1]}<br>' + \
                         'State: %{customdata[3]}<extra></extra>'
 
@@ -323,7 +323,7 @@ def _plot_device_events_into_fig(fig: go.Figure, df_devs: pd.DataFrame,  df_devs
     # Enable webgl rendering
     scatter = go.Scattergl if len(df_devs) > 15000 else go.Scatter
     EVENT_COLOR = 'Black'
-    hover_template = '%{customdata[1]}<br>%{x|' + STRFTIME_DATE + '}<br>Event: %{customdata[0]} <extra></extra>'
+    hover_template = '%{customdata[1]}<br>%{x|' + STRFTIME_PRECISE + '}<br>Event: %{customdata[0]} <extra></extra>'
 
 
     marker = dict(size=marker_height, symbol=42, line=dict(color=EVENT_COLOR, width=1))
@@ -458,8 +458,8 @@ def _plot_selected_activity_marker(fig, df, label='Selected Activity mark'):
 
     marker = dict(size=5, symbol=5, line=dict(color='Red', width=1))
     hover_template = 'Activity: %{customdata[2]}<br>' + \
-                     'Start_time: %{customdata[0]|' + STRFTIME_DATE + '}<br>' + \
-                     'End_time: %{customdata[1]|' + STRFTIME_DATE + '}<br>' + \
+                     'Start_time: %{customdata[0]|' + STRFTIME_PRECISE + '}<br>' + \
+                     'End_time: %{customdata[1]|' + STRFTIME_PRECISE + '}<br>' + \
                      '<extra></extra>'
 
     fig.add_trace(go.Scatter(
@@ -499,8 +499,8 @@ def _plot_selected_device_marker(fig, df, df_devs, states=False, label='Sel devi
         df[TIME] = df[TIME] + (df[END_TIME] - df[TIME])/2
         custom_data = df[[DEVICE, START_TIME, END_TIME]].values
         hover_template = 'Device: %{customdata[0]}<br>' + \
-                         'Start_time: %{customdata[1]|' + STRFTIME_DATE + '}<br>' + \
-                         'End_time: %{customdata[2]|' + STRFTIME_DATE + '}<br>' + \
+                         'Start_time: %{customdata[1]|' + STRFTIME_PRECISE + '}<br>' + \
+                         'End_time: %{customdata[2]|' + STRFTIME_PRECISE + '}<br>' + \
                          '<extra></extra>'
     else:
         custom_data = df[DEVICE]
@@ -734,8 +734,8 @@ def _plot_activities_into_fig(fig, df_acts: pd.DataFrame, df_acts_usel: pd.DataF
         trace_color = m.val_map[act_name]
 
         hover_template = '<b>' + act_name + '</b><br>'\
-                         + 'Start_time: %{base|' + STRFTIME_DATE + '}<br>' \
-                         + 'End_time: %{x| ' + STRFTIME_DATE + '}' \
+                         + 'Start_time: %{base|' + STRFTIME_PRECISE + '}<br>' \
+                         + 'End_time: %{x| ' + STRFTIME_PRECISE + '}' \
                          + '<br>Duration: %{customdata}<extra></extra>'
 
         trace = go.Bar(name=act_name,

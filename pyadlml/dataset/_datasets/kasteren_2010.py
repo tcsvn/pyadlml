@@ -60,15 +60,15 @@ class KasterenFetcher(DataFetcher):
 
         # Load activity structure
         path = Path(folder_path).joinpath('datasets', 'house%s'%ident)
-        df_act = _load_activities(path, ident)
-        df_dev = _load_devices(path, ident)
+        df_acts = _load_activities(path, ident)
+        df_devs = _load_devices(path, ident)
 
-        lst_act = df_act[ACTIVITY].unique()
-        lst_dev = df_dev[DEVICE].unique()
+        lst_act = df_acts[ACTIVITY].unique()
+        lst_dev = df_devs[DEVICE].unique()
 
         return dict(
-            activities=df_act,
-            devices=df_dev,
+            activities=df_acts,
+            devices=df_devs,
             activity_list=lst_act,
             device_list=lst_dev
         )
@@ -202,6 +202,7 @@ def _load_devices(path, house):
         df_dev = df_dev.dropna()
 
     df_dev = device_boolean_on_states_to_events(df_dev)
+    df_dev[DEVICE] = df_dev[DEVICE].astype('category')
     return df_dev
 
 from datetime import datetime, timedelta

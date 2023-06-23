@@ -28,7 +28,7 @@ with the desired time bin size as demonstrated in the following example
 
     >>> # load data and encode as state-vector
     >>> data = fetch_aras()
-    >>> raw = StateVectorEncoder(encode='raw')\
+    >>> raw = Event2Vec(encode='raw')\
            .fit_transform(data['devices'])
 
     >>> # extract the time of a day with a bin size of 2h, will result in 12 new features

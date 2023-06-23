@@ -1,4 +1,4 @@
-from pyadlml.constants import ACTIVITY, BOOL, CAT, START_TIME, END_TIME, STRFTIME_DATE
+from pyadlml.constants import ACTIVITY, BOOL, CAT, START_TIME, END_TIME, STRFTIME_PRECISE
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
@@ -218,8 +218,8 @@ def plot_activities_into(fig, df_acts: pd.DataFrame, y_label: str, cat_col_map,
         show_legend = act_name not in legend_current_items(fig)
         act_mask = (df[ACTIVITY] == act_name)
         hover_template = '<b>' + act_name + '</b><br>'\
-                        + 'Start_time: %{base|' + STRFTIME_DATE + '}<br>' \
-                        + 'End_time: %{x| ' + STRFTIME_DATE + '}<br>' \
+                        + 'Start_time: %{base|' + STRFTIME_PRECISE + '}<br>' \
+                        + 'End_time: %{x| ' + STRFTIME_PRECISE + '}<br>' \
                         + 'Dur: %{customdata}<extra></extra>'
 
         trace = go.Bar(name=act_name,

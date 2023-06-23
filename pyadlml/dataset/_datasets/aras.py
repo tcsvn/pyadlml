@@ -223,5 +223,7 @@ def _create_device_df(df):
     
     res = res.sort_values(by=TIME).reset_index(drop=True)
     res[VALUE] = res[VALUE].astype(bool)
+    res[DEVICE] = res[DEVICE].astype('category')
+    res[TIME] = pd.to_datetime(res[TIME])
     return res
 

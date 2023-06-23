@@ -36,16 +36,16 @@ class AmsterdamFetcher(DataFetcher):
         device_fp = Path(folder_path).joinpath(DEVICES_FN)
         activity_fp = Path(folder_path).joinpath(ACTIVITIES_FN)
 
-        df_act = _load_activities(activity_fp)
-        df_dev = _load_devices(device_fp)
-        df_dev = device_boolean_on_states_to_events(df_dev)
-
-        lst_act = df_act[ACTIVITY].unique()
-        lst_dev = df_dev[DEVICE].unique()
+        df_acts = _load_activities(activity_fp)
+        df_devs = _load_devices(device_fp)
+        df_devs = device_boolean_on_states_to_events(df_devs)
+        df_devs[DEVICE] = df_devs[DEVICE].astype('category')
+        lst_act = df_acts[ACTIVITY].unique()
+        lst_dev = df_devs[DEVICE].unique()
 
         return dict(
-            activities=df_act,
-            devices=df_dev,
+            activities=df_acts,
+            devices=df_devs,
             activity_list=lst_act,
             device_list=lst_dev
         )

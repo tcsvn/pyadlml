@@ -133,7 +133,7 @@ set the respective time periods and transform the device and activity dataframes
 .. code:: python
 
     from pyadlml.dataset import fetch_amsterdam
-    from pyadlml.preprocessing import StateVectorEncoder, LabelMatcher
+    from pyadlml.preprocessing import Event2Vec, LabelMatcher
     from pyadlml.model_selection import LeaveKDayOutSplit, CrossValSelector
 
     data = fetch_amsterdam()
@@ -150,7 +150,7 @@ set the respective time periods and transform the device and activity dataframes
 
         # Simple pipeline for iid data
         steps = [
-            ('enc', StateVectorEncoder(encode='raw+changepoint')),
+            ('enc', Event2Vec(encode='raw+changepoint')),
             ('lbl', TrainOrEvalOnlyWrapper(LabelMatcher(other=False))),
             ('drop_time', DropTimeIndex()),
             ('drop_nans', DropNans()),
@@ -184,7 +184,7 @@ set the respective time periods and transform the device and activity dataframes
         for train_time, val_time in cv.split(data['devices'], data['activities']):
 
             steps = [
-                ('enc', StateVectorEncoder(encode='raw+changepoint', dt='10s')),
+                ('enc', Event2Vec(encode='raw+changepoint', dt='10s')),
                 ('lbl', TrainOrEvalOnlyWrapper(LabelMatcher(other=False))),
                 ('cv_sel', CrossValSelector(data_range=train_time))
                 ('cls', RandomForestClassifier(random_state=42))
