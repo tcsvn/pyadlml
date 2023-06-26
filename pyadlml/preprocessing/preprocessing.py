@@ -371,7 +371,7 @@ class Event2Vec(Encoder, BaseEstimator, TransformerMixin):
     dt : str, optional, default=None
         The timeslices resolution for discretizing the event stream. If
         set to None the event stream is not discretized.
-    
+
     out_names: 
 
     Attributes
@@ -486,12 +486,12 @@ class Event2Vec(Encoder, BaseEstimator, TransformerMixin):
             if enc == ENC_STATE:
                 if self.dt is None:
                     data = create_state(df_devs, self.data_info_,
-                                    dev_pre_values=initial_states)
+                                        dev_pre_values=initial_states)
                 else:
                     data = resample_state(
-                            df_dev=df_devs, 
-                            dt=self.dt,
-                            most_likely_values=self.data_info_
+                        df_dev=df_devs,
+                        dt=self.dt,
+                        most_likely_values=self.data_info_
                     )
 
                 # convert boolean data into integers (1,0)
@@ -1047,27 +1047,24 @@ class PositionalEncoding(BaseEstimator, TransformerMixin):
 
 class TimePositionalEncoding(PositionalEncoding):
 
-    def __init__(self, d_dim, max_period=pd.Timedelta('1D'), res=pd.Timedelta('8.64s'), inplace=True):
-        super().__init__(d_dim, max_period)  # Add super call to the parent class
-        self.res = res
+    def __init__(self, d_dim, max_period='1D', inplace=True):
+        super().__init__(d_dim, max_period)
         self.inplace = inplace
 
     def fit(self, X=None, y=None):
-        # Map timestamp values to a sequence
-        self.res = pd.Timedelta(self.res)
-        self.max_period = self._td2num(self.max_period)
-        self.min_freq = 1/self.max_period
+        self.max_period = pd.Timedelta(self.max_period)
+
         return self
 
     def _td2num(self, x):
         if isinstance(x, str):
             x = pd.Timedelta(x)
-
-        x = x/pd.Timedelta(self.res)
-        return x
+        elif isinstance(x, pd.Series):
+            x = x.dt
+        return x.total_seconds()
 
     def _num2td(self, x):
-        return pd.Timedelta(self.res)*x
+        return pd.Timedelta('1s')*x
 
     def transform(self, X, y=None, inplace=None):
         """ 
@@ -1097,25 +1094,83 @@ class TimePositionalEncoding(PositionalEncoding):
 
 class CyclicTimePositionalEncoding(TimePositionalEncoding):
 
-    def __init__(self, d_dim, max_period=pd.Timedelta('1D'), res=pd.Timedelta('8.64s'), base=2):
-        super().__init__(d_dim, max_period, res)  # Add super call to the parent class
-        self.base = base
+    def __init__(self, d_dim, max_period='1D', min_period='10s'):
+        assert d_dim % 2 == 0
+        super().__init__(d_dim, max_period)  # Add super call to the parent class
+        self.min_period = min_period
+
+    def fit(self, X=None, y=None):
+        super().fit(X, y)
+        self.min_period = pd.Timedelta(self.min_period)
+        return self
 
     def get_angular_freqs(self):
         """period of length 1"""
-        i = np.arange(self.d_dim)//2
-        lmbd = self.max_period
-        f = 1/(lmbd/(np.minimum((self.base**i).astype(int), lmbd)))
+        num_max_period = self._td2num(self.max_period)
+        num_min_period = self._td2num(self.min_period)
+
+        # [0, 0, 2, 2, 4, 4, ...]
+        i = (np.arange(self.d_dim)//2)*2
+        expon = (-i+(self.d_dim-2))/(self.d_dim-2)
+        f = (np.round(np.power(num_max_period / num_min_period, expon))/num_max_period)
         ws = 2*np.pi*f
         return ws
 
-    def get_max_base(self):
-        return np.floor(np.log10(self.max_period)/np.log10(self.base)).astype(int)
+    def plotly_waves(self, end='06:30:00', res='200ms'):
+
+        min_period_posx = int(self.min_period/pd.Timedelta(res))
+        max_period_posx = int(self.max_period/pd.Timedelta(res))
+        X = pd.DataFrame(columns=[TIME],
+                         data=pd.date_range(start='6/1/2020', end='6/1/2020' + ' ' + end, freq=res)[:-1])
+
+        num_min_period = self._td2num(self.min_period)
+        num_max_period = self._td2num(self.max_period)
+
+        # print('n minp: ', num_min_period)
+        # print('n maxp: ', num_max_period)
+
+        # Convert timestamps to numeric in seconds
+        td = (X[TIME] - pd.to_datetime(X[TIME].dt.date))
+        x = td.dt.total_seconds()
+
+        traces = []
+        d_p = self.d_dim
+        offset = 0
+        ws = self.get_angular_freqs()
+        for i in range(0, self.d_dim):
+            if i % 2 == 0:
+                y1 = np.sin(ws[i]*x)
+            else:
+                y1 = np.cos(ws[i]*x)
+            f1 = ws[i]/(2*np.pi)
+            trace = go.Scatter(
+                x=X[TIME], y=y1+offset, mode='lines', name=f'f={f1:.2f}, lmbd={1/f1:.2f}=minp')
+
+            offset += 2
+            traces.append(trace)
+
+        layout = go.Layout(title='Sine Function',
+                           xaxis=dict(title='x'),
+                           yaxis=dict(title='sin(x)'))
+
+        trace5 = go.Scatter(x=[X.at[min_period_posx, TIME]]*2, y=[-1, 2*self.d_dim],
+                            mode='lines', name=f'{num_min_period}', line=dict(color='black'))
+        traces.append(trace5)
+        trace6 = go.Scatter(x=[X.at[max_period_posx, TIME]]*2, y=[-1, 2 *
+                            self.d_dim], mode='lines', name='line', line=dict(color='black'))
+        traces.append(trace6)
+        fig = go.Figure(data=traces, layout=layout)
+
+        fig.update_layout(
+            xaxis_range=[X.at[0, TIME], X.at[min_period_posx, TIME]],
+            yaxis=dict(fixedrange=True)
+        )
+        return fig
 
     def plotly_wave_length_per_dim(self):
         from plotly import graph_objects as go
         fig = go.Figure()
-        x = self.get_periods()*self.res
+        x = self._num2td(self.get_periods())
         x += pd.Timestamp('01.01.2000 00:00:00')
         fig.add_trace(go.Scatter(y=np.arange(0, self.d_dim), x=x))
         return fig

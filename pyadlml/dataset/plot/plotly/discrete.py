@@ -386,6 +386,9 @@ def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, dev_
     else:
         device_order = dev_order
 
+    if act_order is None:
+        act_order = list({*np.unique(y_pred).tolist(), *y_true[ACTIVITY].unique().tolist()})
+        act_order.sort()
 
     error_text = 'parameter act_order has to be set if y_conf is given'
     assert y_conf is None or act_order is not None, error_text

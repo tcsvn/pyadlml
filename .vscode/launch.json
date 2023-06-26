@@ -49,6 +49,24 @@
             "args": []
         },
         {
+            "name": "integrated_gradients",
+            "type": "python",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/tools/",
+            "program": "${workspaceFolder}/tools/dash_integrated_gradients.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "3c80eefc1df544f6bad6b030cd2056f3",
+                "--src",
+                "http://localhost:4567",
+                "-p",
+                "8050",
+                "--exp-id",
+                "1"
+            ]
+        },
+        {
             "name": "dashboard",
             "type": "python",
             "request": "launch",

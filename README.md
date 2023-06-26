@@ -90,7 +90,7 @@ X_train, X_val, X_test, y_train, y_val, y_test = train_test_split(
 
 # Formulate all preprocessing steps using a sklearn styled pipeline 
 pipe = Pipeline([
-    ('enc', IndexEncoder()),            # Encode devices strings with indices
+    ('enc', IndexEncoder()),            # Encode devices strings as indices
     ('drop_obs', DropColumn(VALUE)),    # Disregard device observations
     ('lbl', LabelMatcher(other=True)),  # Generate labels y  
     ('drop_time', DropTimeIndex()),     # Remove timestamps for x and y
