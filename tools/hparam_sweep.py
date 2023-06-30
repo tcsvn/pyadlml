@@ -2,7 +2,7 @@ from pathlib import Path
 
 from sklearn.tree import export_graphviz
 from pyadlml.dataset import *
-from pyadlml.preprocessing import StateVectorEncoder, LabelMatcher, DropTimeIndex, DropDuplicates
+from pyadlml.preprocessing import Event2Vec, LabelMatcher, DropTimeIndex, DropDuplicates
 from pyadlml.pipeline import Pipeline, FeatureUnion, TrainOnlyWrapper, \
     EvalOnlyWrapper, TrainOrEvalOnlyWrapper, YTransformer
 from pyadlml.model_selection import train_test_split
@@ -49,7 +49,7 @@ def main():
     from sktime.classification.deep_learning import CNNClassifier
 
     sktime_ev_win_pipe = Pipeline([
-        ('enc', StateVectorEncoder()),
+        ('enc', Event2Vec()),
         ('lbl', LabelMatcher()),
         ('drop_dups', TrainOnlyWrapper(DropDuplicates())),
         ('drop_time', DropTimeIndex()),

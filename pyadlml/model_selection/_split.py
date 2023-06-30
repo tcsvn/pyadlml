@@ -280,7 +280,10 @@ class CrossValSelector(BaseEstimator, TransformerMixin, XAndYTransformer):
         Only
 
     """
-    def __init__(self, data_range=None, shift=False):
+    def __init__(self, data_range=None, shift: bool=False):
+        """
+
+        """
         self.data_range = data_range
         self.shift = shift
 
@@ -319,6 +322,8 @@ class CrossValSelector(BaseEstimator, TransformerMixin, XAndYTransformer):
         X : pd.DataFrame
             Has to have one column named 'time' if the split is temporal.
         """
+
+
         # Case when x and y are activity and device dataframes
         if self.is_temporal_split_:
             # 1. case for |-sel-|-other-| or |-other-|-sel-|
@@ -361,13 +366,9 @@ class CrossValSelector(BaseEstimator, TransformerMixin, XAndYTransformer):
                     X_sel1, y_sel1 = select_timespan(X, y, start_time=st1, end_time=et1, clip_activities=True)
                     X_sel2, y_sel2 = select_timespan(X, y, start_time=st2, end_time=et2, clip_activities=True)
                     X_sel, y_sel = pd.concat([X_sel1, X_sel2]), pd.concat([y_sel1, y_sel2])
-
             return X_sel, y_sel
-
         else:
-            X, y = self._safe_split(None, X, y, self.data_range)
-            return X, y
-
+            return self._safe_split(None, X, y, self.data_range)
 
 
 class TimeSeriesSplit(_BaseKFold):

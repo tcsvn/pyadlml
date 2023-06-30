@@ -489,9 +489,11 @@ class Event2Vec(Encoder, BaseEstimator, TransformerMixin):
                                         dev_pre_values=initial_states)
                 else:
                     data = resample_state(
-                        df_dev=df_devs,
-                        dt=self.dt,
-                        most_likely_values=self.data_info_
+                            df_dev=df_devs, 
+                            dt=self.dt,
+                            most_likely_values=self.data_info_,
+                            dev_pre_values=initial_states,
+                            n_jobs=self.n_jobs
                     )
 
                 # convert boolean data into integers (1,0)
@@ -543,7 +545,7 @@ class Event2Vec(Encoder, BaseEstimator, TransformerMixin):
         # Ensure to always return feature columns in order
         return df_res[self.feature_names_out_]
 
-    def fit_transform(self, df_devs, y=None):
+    def fit_transform(self, df_devs, y=None, initial_states={}):
         """
 
         Parameters
@@ -556,7 +558,7 @@ class Event2Vec(Encoder, BaseEstimator, TransformerMixin):
             :class:`~sklearn.pipeline.Pipeline`.
         """
         self.fit(df_devs)
-        return self.transform(df_devs)
+        return self.transform(df_devs, initial_states=initial_states)
 
 
 class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
@@ -570,7 +572,7 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
 
     """
 
-    def __init__(self, other: bool = False, encode_labels=False, use_dask=False, classes=[]):
+    def __init__(self, other: bool = False, encode_labels=False, n_jobs=None, classes=[]):
         """
         Initialize the object of the class with the given parameters.
 
@@ -584,7 +586,7 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
             A flag to specify if labels are encoded or not. If true, labels will be encoded
             as integers based on classes defined. (default is False).
 
-        use_dask : bool, optional
+        n_jobs : bool, optional
             A flag to indicate whether to use Dask for parallel computations. If true, computations 
             will be carried out in parallel to improve efficiency (default is False).
 
@@ -598,7 +600,7 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
         None
         """
         self.other = other
-        self.use_dask = use_dask
+        self.n_jobs = n_jobs
         self.encode_labels = encode_labels
         self.classes = classes
 
@@ -703,7 +705,7 @@ class LabelMatcher(BaseEstimator, TransformerMixin, YTransformer):
             TODO asdf
         """
         # normal case where X an y are provided
-        n_jobs = 1000 if self.use_dask else 1
+        n_jobs = 1000 if self.n_jobs else 1
         df = label_data2(X, y, self.other)[
             [TIME, ACTIVITY]].copy()
         if self.encode_labels:

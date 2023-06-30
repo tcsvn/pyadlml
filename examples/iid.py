@@ -5,7 +5,7 @@ set_data_home('/tmp/pyadlml/')
 
 data = fetch_amsterdam(keep_original=False, cache=True)
 
-from pyadlml.preprocessing import StateVectorEncoder, LabelMatcher, DropTimeIndex, DropDuplicates, \
+from pyadlml.preprocessing import Event2Vec, LabelMatcher, DropTimeIndex, DropDuplicates, \
     CrossValSplitter
 from pyadlml.pipeline import Pipeline, FeatureUnion, TrainOnlyWrapper, \
     EvalOnlyWrapper, TrainOrEvalOnlyWrapper, YTransformer
@@ -32,7 +32,7 @@ X_train, X_val, X_test, y_train, y_val, y_test, init_states = train_test_split(
 Example: Set up a simple Pipeline
 """
 
-sve = StateVectorEncoder(encode='raw')
+sve = Event2Vec(encode='raw')
 lbe = LabelMatcher(other=True)
 X_enc_train = sve.fit_transform(X_train)
 X_enc_val = sve.transform(X_val, initial_states=init_states['init_states_val'])
@@ -52,7 +52,7 @@ print(lbe.inverse_transform([0, 2, 3]))
 print(lbe.inverse_transform(np.array([0, 2, 3])))
 
 steps = [
-    ('enc', StateVectorEncoder(encode='raw')),
+    ('enc', Event2Vec(encode='raw')),
     ('lbl', TrainOrEvalOnlyWrapper(LabelMatcher(other=True))),
     ('drop_time_idx', DropTimeIndex()),
     ('drop_duplicates', TrainOnlyWrapper(DropDuplicates())),
@@ -140,7 +140,7 @@ feature_extraction = FeatureUnion(
      #('time_diff', TimeDifferenceExtractor())]
 
 steps = [
-    ('encode_devices', StateVectorEncoder()),
+    ('encode_devices', Event2Vec()),
     ('fit_labels', TrainOrEvalOnlyWrapper(LabelMatcher())),
     ('feature_extraction', feature_extraction),
     ('select_train_set', TrainOnlyWrapper(CrossValSplitter())),

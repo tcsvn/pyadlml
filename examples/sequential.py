@@ -7,7 +7,7 @@ from pyadlml.dataset import set_data_home, fetch_amsterdam, TIME
 set_data_home('/tmp/pyadlml_data_home')
 data = fetch_amsterdam(keep_original=False, cache=True)
 
-from pyadlml.preprocessing import StateVectorEncoder, LabelMatcher, DropTimeIndex, DropSubset, KeepSubset, CrossValSplitter
+from pyadlml.preprocessing import Event2Vec, LabelMatcher, DropTimeIndex, DropSubset, KeepSubset, CrossValSplitter
 from pyadlml.pipeline import Pipeline, TrainOnlyWrapper, EvalOnlyWrapper, TrainOrEvalOnlyWrapper, YTransformer, \
     XAndYTransformer
 from pyadlml.model_selection import train_test_split
@@ -48,7 +48,7 @@ scores = []
 # cross validation on train set
 for train_int, val_int in ts.split(X_train):
     steps = [
-        ('enc', StateVectorEncoder(encode='raw')),
+        ('enc', Event2Vec(encode='raw')),
         ('lbl', TrainOrEvalOnlyWrapper(LabelMatcher(other=True))),
         ('drop_val', TrainOnlyWrapper(CrossValSplitter(train_int))),
         ('drop_train', EvalOnlyWrapper(CrossValSplitter(val_int))),
@@ -76,7 +76,7 @@ param_grid = {
 }
 
 steps = [
-    ('encode_devices', StateVectorEncoder()),
+    ('encode_devices', Event2Vec()),
     ('fit_labels', TrainOrEvalOnlyWrapper(LabelMatcher(other=True))),
     ('select_train_set', TrainOnlyWrapper(CrossValSplitter())),
     ('select_val_set', EvalOnlyWrapper(CrossValSplitter())),

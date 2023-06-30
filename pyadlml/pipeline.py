@@ -280,7 +280,7 @@ class Pipeline(SklearnPipeline):
         raise ValueError('No transformer saved the forwarded times. Readjust the pipeline')
 
 
-    def construct_y_times_and_X(self, X_val, y_val):
+    def construct_y_times_and_X(self, X_val, y_val, **transform_params):
         from pyadlml.preprocessing.preprocessing import FinalTimeTransformer
         from pyadlml.preprocessing.windows import Windows
 
@@ -299,7 +299,7 @@ class Pipeline(SklearnPipeline):
 
         if win_name is not None:
             y_times = self[win_name].construct_target_times(y_times)
-            Xt_prae_win, _ = self[:win_pos-len(self)].transform(X_val, y_val)
+            Xt_prae_win, _ = self[:win_pos-len(self)].transform(X_val, y_val, **transform_params)
             X_at_times = self[win_name].construct_X_at_target(Xt_prae_win)
         else:
             X_at_times, _ = self[:-1].transform(X_val, y_val)
@@ -494,7 +494,7 @@ class Pipeline(SklearnPipeline):
         """
         Extends transform behavior by allowing for transform params and x or y transformation
         """
-        #transform_params_steps = self._check_fit_params(**transform_params)
+
 
         Xt = X
         if retrieve_last_time:
@@ -613,6 +613,7 @@ class Pipeline(SklearnPipeline):
         """
         tparams_steps, pipe_params = self._check_transform_params(**transform_params)
         return self._transform(X, y, **pipe_params, **tparams_steps)
+        #return self._transform(X, y, **transform_params)
 
 
     def _check_transform_params(self, **fit_params):

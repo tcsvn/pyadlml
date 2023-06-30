@@ -12,7 +12,7 @@ from pyadlml.model.transformer.vanilla import VanillaTransformer
 
 from pyadlml.model_selection import train_test_split
 from pyadlml.dataset import *
-from pyadlml.preprocessing import IndexEncoder, DropColumn, StateVectorEncoder, LabelMatcher, DropTimeIndex, \
+from pyadlml.preprocessing import IndexEncoder, DropColumn, Event2Vec, LabelMatcher, DropTimeIndex, \
     DropDuplicates, EventWindow
 from pyadlml.pipeline import EvalOnlyWrapper, Pipeline, TrainOnlyWrapper
 from sklearn.ensemble import RandomForestClassifier
@@ -167,7 +167,7 @@ def main():
     trainable = TrainableDebug(exp_name='masterarbeit', ds_name=dataset)
 
     uci_sklearn_iid_pipe = Pipeline([
-        ('enc', StateVectorEncoder()),
+        ('enc', Event2Vec()),
         ('lbl', LabelMatcher()),
         ('drop_dups', TrainOnlyWrapper(DropDuplicates())),
         ('drop_time', DropTimeIndex()),

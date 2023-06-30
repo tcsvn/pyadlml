@@ -13,7 +13,7 @@ from matplotlib import pyplot as plt
 from sklearn.tree import export_graphviz
 from pyadlml.dataset import *
 from pyadlml.dataset.io import set_data_home
-from pyadlml.preprocessing import StateVectorEncoder, LabelMatcher, DropTimeIndex, DropDuplicates
+from pyadlml.preprocessing import Event2Vec, LabelMatcher, DropTimeIndex, DropDuplicates
 from pyadlml.pipeline import Pipeline, FeatureUnion, TrainOnlyWrapper, \
     EvalOnlyWrapper, TrainOrEvalOnlyWrapper, YTransformer
 from pyadlml.model_selection import train_test_split, CrossValSelector
@@ -58,7 +58,8 @@ class Trainable():
     def _fetch_dataset(self, ds_name):
         set_data_home('/tmp/pyadlml/')
 
-        data = fetch_by_name(self.ds_name, identifier=self.data_folder / ds_name)
+        #data = fetch_by_name(self.ds_name, identifier=self.data_folder / ds_name)
+        data = fetch_by_name('joblib', identifier=self.data_folder / ds_name)
         if isinstance(data['activities'], ActivityDict):
             subjects = list(data['activities'].keys())
             key = subjects[0]
@@ -72,7 +73,7 @@ class Trainable():
         from adl_models.constants import SPLIT_X_TRAIN, SPLIT_X_VAL, SPLIT_y_TRAIN, SPLIT_y_VAL
         import joblib
         data = joblib.load(self.data_folder / ds_name)
-        return data[SPLIT_X_TRAIN], data[SPLIT_X_VAL], data[SPLIT_y_TRAIN], data[SPLIT_y_VAL]
+        return data[SPLIT_X_TRAIN], data[SPLIT_X_VAL], data[SPLIT_y_TRAIN], data[SPLIT_y_VAL], data
 
     def set_pipe(self, pipe):
         self.pipe = pipe

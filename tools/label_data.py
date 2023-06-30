@@ -212,7 +212,7 @@ if __name__ == '__main__':
     devices = df_devs[DEVICE].unique()
 
     # Create device to category mapping
-    dev2cat =  lambda x: df_devs.groupby([DEVICE, VALUE])\
+    dev2cat =  lambda x: df_devs.groupby([DEVICE, VALUE], observed=True)\
                                 .count().loc[x].index.tolist()
 
     app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -564,7 +564,7 @@ if __name__ == '__main__':
                 )
 
                 # Get last events in and last events right before edited timeframe 
-                last_evs_in = df_rem_evs.groupby([DEVICE], as_index=False).last()
+                last_evs_in = df_rem_evs.groupby([DEVICE], observed=True, as_index=False).last()
                 last_evs_before = df[df[TIME] < data[START_TIME]].groupby(DEVICE, as_index=False).last()
                 devs_not_in_tf_with_prcdng_ev = set(last_evs_before[DEVICE].unique()).difference(last_evs_in[DEVICE].unique())
                 relevant_last_events = pd.concat([

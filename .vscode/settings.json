@@ -14,7 +14,7 @@
     "jupyter.jupyterServerType": "local",
     "debug.inlineValues": "on",
     "[python]": {
-        "editor.defaultFormatter": "ms-python.autopep8"
+        //"editor.defaultFormatter": "ms-python.autopep8"
     },
     "python.formatting.provider": "none",
 }

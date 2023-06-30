@@ -13,7 +13,10 @@ def _calc_class_weights(Y_t, classes):
     import torch
     Y_t = Y_t.astype(np.int32)
     count_per_class = np.bincount(Y_t.flatten())
-    assert len(classes) == len(count_per_class)
+
+    # When the nr classes in Y_t is smaller than classes
+    count_per_class = np.append(count_per_class, [0]*(len(classes)-len(count_per_class)))
+
     class_weights_ = torch.tensor(
         count_per_class.sum()/(len(count_per_class)*count_per_class
     ),dtype=torch.float32)
@@ -176,10 +179,11 @@ class TorchDataset(Dataset):
             return self.Xtr[idx], self.Ytr[idx]
 
 class TorchDataset2(Dataset):
-    def __init__(self, X_t, y_t, classes):
+    def __init__(self, X_t, y_t, classes, eval=False):
         self.Xtr = X_t
         self.Ytr = y_t
-        self.class_weights = _calc_class_weights(y_t, classes)
+        if not eval:
+            self.class_weights = _calc_class_weights(y_t, classes)
 
     def __len__(self):
         return len(self.Xtr)
@@ -192,6 +196,9 @@ class TorchDataset2(Dataset):
         else:
             y_np = self.Ytr[idx]
         y = torch.from_numpy(y_np).long()
+
+        assert not torch.isnan(X).any().item() \
+           and not torch.isnan(y).any().item()
         return X, y.squeeze()
 
 

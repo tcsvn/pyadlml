@@ -5,7 +5,7 @@ from pyadlml.constants import DEVICE, TIME, VALUE, CAT, NUM, BOOL
 from pyadlml.dataset._core.devices import _create_devices, create_device_info_dict, most_prominent_categorical_values
 from pyadlml.dataset.util import infer_dtypes
 import dask.dataframe as dd
-
+import gc
 ST_FFILL = 'ffill'
 ST_INT_COV = 'interval_coverage'
 
@@ -93,9 +93,10 @@ def create_state(df_dev, dataset_info=None, dev_pre_values={}, n_jobs=None):
         else:
             df[dev] = dataset_info[dev]['ml_state']
     return df
+from pyadlml.dataset.util import memory_usage
 
 
-def resample_state(df_dev, dt, most_likely_values=None):
+def resample_state(df_dev, dt, most_likely_values=None, dev_pre_values={}, n_jobs=None):
     df_dev = df_dev.copy()\
                    .sort_values(by=TIME)\
                    .reset_index(drop=True)
@@ -117,16 +118,19 @@ def resample_state(df_dev, dt, most_likely_values=None):
                      [[TIME, DEVICE, VALUE]]
 
     # Calculate additional infos for each event, such as
-    # if it is a collision, its bin_start and end time
+    # if it is a collision, its bin start and end time
     df = df_dev.copy()
     df[DEVICE] = df[DEVICE].astype(object)
     df['bin'] = df.groupby(pd.Grouper(key=TIME, freq=dt, origin=origin)).ngroup()
     #df['coll'] = (df.groupby(['bin', 'device']).transform('size') > 1).astype(bool)
 
     df2 = df.copy().set_index(TIME)
-    df2 = df2.resample(dt, origin=origin).count().reset_index()
+    df2 = df2.resample(dt, origin=origin).count()
+    df2.reset_index(inplace=True)
     df2[df2.columns[1:]] = np.nan
-    df_devs = pd.concat([df, df2], axis=0).sort_values(by=TIME).reset_index(drop=True)
+    df_devs = pd.concat([df, df2], axis=0).sort_values(by=TIME)
+    df_devs.reset_index(drop=True, inplace=True)
+    del(df2)
 
     # Add start time bin to each device
     orig_values = ~df_devs.isna().any(axis=1)
@@ -141,14 +145,17 @@ def resample_state(df_dev, dt, most_likely_values=None):
     last_time_bin = df_devs.at[df_devs.index[-1], 'bin_time_start'] 
     df_devs['bin_time_end'] = df_devs['bin_time_end'].fillna(last_time_bin+ pd.Timedelta(dt))
 
+    del(orig_values)
+    gc.collect()
+
     df_devs = df_devs.dropna()
 
     # Add an additional device for each device in time bin at the start of the bin
     # with correct[sic] state. Add eps to first device such that it is in a bin if it turns
     # out to be the prominent device
     df_devs_first_per_bin = df_devs.copy().groupby(['bin', DEVICE], observed=True)\
-                        .first()\
-                        .reset_index()
+                        .first()
+    df_devs_first_per_bin.reset_index(inplace=True)
     df_devs_first_per_bin[TIME] = df_devs_first_per_bin['bin_time_start'] + pd.Timedelta('1ns')
     bool_mask = df_devs_first_per_bin[DEVICE].isin(dtypes['boolean'])
     df_devs_first_per_bin.loc[bool_mask, VALUE] = ~df_devs_first_per_bin.loc[bool_mask, VALUE].astype(bool)
@@ -165,25 +172,44 @@ def resample_state(df_dev, dt, most_likely_values=None):
 
     # Get the most promintent value per time bin 
     # -> only one device of a certain type per bin
-    idx = df_devs.groupby([DEVICE, 'bin'], observed=True)['time_diff'].idxmax()
+    if n_jobs is not None:
+        df_devs[DEVICE] = df_devs[DEVICE].astype(object)
+        ddf_devs = dd.from_pandas(df_devs, npartitions=n_jobs)  
+        idx = ddf_devs.groupby([DEVICE, 'bin'], observed=True)['time_diff'].idxmax().compute()
+    else:
+        # TODO takes too long ~1.5min
+        idx = df_devs.groupby([DEVICE, 'bin'], observed=True)['time_diff'].idxmax()         
+
     df_most_prom = df_devs.loc[idx].sort_values(by=TIME).reset_index(drop=True)
+    del(idx)
 
     # Create state representation that has correct ffill and bbfill but not 
     # necessarily the correct values for the collisions
-    first_values = df_dev.groupby(DEVICE, observed=True)[VALUE].first().to_dict()
-    for dev in dtypes[BOOL]:
-        first_values[dev] = not first_values[dev] 
-    for dev in dtypes[CAT]:
-        first_values[dev] = most_likely_values[dev]['ml_state']
-    
+    if dev_pre_values:
+        first_values = dev_pre_values
+    else:
+        first_values = df_dev.groupby(DEVICE, observed=True)[VALUE].first().to_dict()
+        for dev in dtypes[BOOL]:
+            first_values[dev] = not first_values[dev] 
+        for dev in dtypes[CAT]:
+            first_values[dev] = most_likely_values[dev]['ml_state']
+
+        # For devices that do not occur in df_dev also add ml state
+        for dev in set(most_likely_values.keys()) - set(first_values.keys()):
+            first_values[dev] = most_likely_values[dev]['ml_state']
+
     # Create resampled state representation where in each 
     # bin the value corresponds to the last known device state
-    df_state_last = create_state(df_last, dev_pre_values=first_values).set_index(TIME)
+    df_state_last = create_state(df_last, dev_pre_values=first_values)\
+                        .set_index(TIME)\
+                        .astype('category') # Use to lower memory usage
     df_state_last = df_state_last.resample(dt, kind='timestamp', origin=origin).ffill()
 
     # There is no last element for the first time bin. Since all device states in the next 
     # timebin are correct copy those, except for 
     first_dev = df_dev.iloc[0, df_dev.columns.tolist().index(DEVICE)]
+    for col in df_state_last.columns:
+        df_state_last[col] = df_state_last[col].cat.add_categories([np.inf])
     first_dev_col_idx = df_state_last.columns.tolist().index(first_dev)
     df_state_last.iat[0, first_dev_col_idx] = np.inf
     df_state_last.iloc[0] = df_state_last.iloc[0].where(df_state_last.iloc[0] == np.inf, df_state_last.iloc[1])
@@ -192,18 +218,20 @@ def resample_state(df_dev, dt, most_likely_values=None):
     # Create resampled state representation where in each 
     # bin the value corresponds to the most prominent device state or is nan
     df_most_prom = df_most_prom.pivot(index=TIME, columns=DEVICE, values=VALUE)
-    df_most_prom = df_most_prom.resample(dt, kind='timestamp', origin=origin).first()
+
+    df_most_prom = df_most_prom.resample(dt, kind='timestamp', origin=origin).first()       # TODO takes too long 30sec + 12 GB
     df_most_prom.index.name = TIME
 
     assert len(df_most_prom) == len(df_state_last) \
         and set(df_most_prom.columns) == set(df_state_last.columns) \
         and (df_most_prom.index == df_state_last.index).all()
 
-    df_most_prom = df_most_prom.replace({None: np.nan})
-    df_most_prom = df_most_prom[df_state_last.columns]
+    df = df_most_prom.combine_first(df_state_last)
+    df.reset_index(names=TIME, inplace=True)
 
-    df = df_most_prom.where(df_most_prom.notna(), df_state_last)\
-           .reset_index(names=TIME)
+    del(df_state_last)
+    del(df_most_prom)
+    gc.collect()
 
     # For timeslices where the most prominent category was the one that extended
     # from the previous timeslice, correct the states
@@ -218,10 +246,17 @@ def resample_state(df_dev, dt, most_likely_values=None):
         # The case when for the first occurence of a category the cat is not the 
         # prominent in the timeslice. Just use first value
         if df[dev].isna().sum() == 1:
-            df[dev] = df[dev].fillna(first_values[dev])
+            df[dev].fillna(first_values[dev], inplace=True)
         assert np.inf not in df[dev].unique() \
             and np.nan not in df[dev].unique()
 
+    # Add device state if the device is not in the current data, may occur
+    # when using cross validation
+    for dev in set(first_values.keys()) - set(df.columns):
+        df[dev] = first_values[dev]
+
     assert df.notna().all().all() \
-       and (df != np.inf).all().all()
+       and (df != np.inf).all().all() \
+       and (df != None).all().all() 
+
     return df

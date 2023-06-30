@@ -27,9 +27,9 @@ def memory_usage(df, unit='MB'):
     if unit == 'MB':
         denom  = (1024 * 1024)
     elif unit == 'GB':
-        unit =  (1024 * 1024 * 1024)
+        denom =  (1024 * 1024 * 1024)
     else:
-        unit = 1
+        denom = 1
     return df.memory_usage().sum() / denom
 
 def unitsfromdaystart(ts, unit='s'):

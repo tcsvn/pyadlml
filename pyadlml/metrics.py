@@ -23,12 +23,14 @@ def online_true_positive_rate(y_true: np.ndarray, y_pred: np.ndarray, times: np.
 
     """
     assert average in [None, 'micro', 'macro', 'weighted']
-    df_confmat = online_confusion_matrix(y_true, y_pred, times, n_classes)
+
+    # C_ij = true class i predicted as class j
+    df_confmat = online_confusion_matrix(y_true, y_pred, times)
 
     if average == 'micro':
         cm = df_confmat.values
         tp = np.diag(cm)
-        fn = cm.sum(axis=0) - tp
+        fn = cm.sum(axis=1) - tp
 
         FN, TP = fn.sum(), tp.sum()
         return TP/(TP + FN)
@@ -36,16 +38,20 @@ def online_true_positive_rate(y_true: np.ndarray, y_pred: np.ndarray, times: np.
     elif average == 'macro':
         cm = df_confmat.values
         tp = np.diag(cm)
-        fn = cm.sum(axis=0) - tp
-        # score = _save_divide(tp, (tp + fn))
+        fn = cm.sum(axis=1) - tp
+
+        # When a class is not present in the data tpr for that class should be 1
+        zero_mask = (tp + fn) == np.timedelta64(0, 'ns')
+        tp = np.where(zero_mask, np.timedelta64(1, 'ns'), tp)
+
         score = tp / (tp + fn)
 
         return (score*(1/n_classes)).sum(-1)
 
 
 def online_positive_predictive_value(y_true: np.ndarray, y_pred: np.ndarray, times: np.ndarray, n_classes: int, average: str = None):
-    """ Calculate the positive predictive value/precision.
-
+    """ Calculate the positive predictive value/precision. 
+        From all the predictions for certain class C how many where really class C.
     Parameters
     ----------
 
@@ -53,14 +59,13 @@ def online_positive_predictive_value(y_true: np.ndarray, y_pred: np.ndarray, tim
     """
     assert average in [None, 'micro', 'macro', 'weighted']
 
-    # Extract true as columns and preds as rows in nanosecond resolution
     # c_ij = true class i when predicted class is j
-    df_confmat = online_confusion_matrix(y_true, y_pred, times, n_classes)
+    df_confmat = online_confusion_matrix(y_true, y_pred, times)
 
     if average == 'micro':
         cm = df_confmat.values
         tp = np.diag(cm)
-        fp = cm.sum(axis=1) - tp
+        fp = cm.sum(axis=0) - tp
 
         FP, TP = fp.sum(), tp.sum()
         return TP/(TP + FP)
@@ -68,8 +73,14 @@ def online_positive_predictive_value(y_true: np.ndarray, y_pred: np.ndarray, tim
     elif average == 'macro':
         cm = df_confmat.values
         tp = np.diag(cm)
-        fp = cm.sum(axis=1) - tp
+        fp = cm.sum(axis=0) - tp
+
+        # When a class was never predicted the ppv for that class should be 1
+        zero_mask = (tp + fp) == np.timedelta64(0, 'ns')
+        tp = np.where(zero_mask, np.timedelta64(1, 'ns'), tp)
+
         score = tp / (tp + fp)
+
 
         return (score*(1/n_classes)).sum(-1)
 
@@ -88,8 +99,8 @@ def online_accuracy(y_true: np.ndarray, y_pred: np.ndarray, times: np.ndarray, n
     """
     assert average in [None, 'micro', 'macro', 'weighted']
 
-    # An array where for each class the specified quantities are computed
-    df_confmat = online_confusion_matrix(y_true, y_pred, times, n_classes)
+    # c_ij = true class i when predicted class is j
+    df_confmat = online_confusion_matrix(y_true, y_pred, times)
 
     if average == 'micro' or average is None:
         confmat = df_confmat.values
@@ -111,19 +122,23 @@ def online_accuracy(y_true: np.ndarray, y_pred: np.ndarray, times: np.ndarray, n
         tp = np.diag(confmat)
 
         # Sum over is sth. else but was mistaken as c
-        # fp = confmat.sum(1) - tp
+        # fp = confmat.sum(0) - tp
 
         # Sum over is c but was predicted as sth. else
         # recovers y_true with df.groupby('y_true')['diff'].sum()
-        fn = confmat.sum(0) - tp
+        fn = confmat.sum(axis=1) - tp
 
         # All predictions that do not include c
         # tn = confmat.sum() - (fp + fn + tp)
 
+        # When the actual class is not present the acc for that class should be 1
+        zero_mask = (tp + fn) == np.timedelta64(0, 'ns')
+        tp = np.where(zero_mask, np.timedelta64(1, 'ns'), tp)
+
         # Array of per class ppvs?
         score = tp / (tp + fn)
 
-        # Normalize by each class by its
+        # Normalize by each class by its score
         normalized_score = (score*(1/n_classes)).sum(-1)
         return normalized_score
     else:
@@ -184,24 +199,88 @@ def _slice_categorical_stream(df1, df2, first_ts=None, last_ts=None):
     return df.copy()
 
 
-def online_confusion_matrix(y_true: pd.DataFrame, y_pred: np.ndarray, times: np.ndarray,
-                            n_classes: int, average=''):
-    """
-    Rows are predictions and columns are true values
-    c_ij = predicted class is i at i-th row and true class j
+def online_confusion_matrix(y_true: pd.DataFrame=None, y_pred: np.ndarray=None, times: np.ndarray=None, df=None):
+    """ Computes the online confusion matrix 
+
+    By definition a confusion matrix C is such that c_ij is equal to the number of 
+    observations known to be in group i and predicted to be in group j.
+
+    Rows are true values and predictions are columns
+    c_ij = actual class is i at i-th row and predicted as class j at j-th column 
 
     Parameters
     ----------
     y_true : pd.DataFrame
-
+    y_true : pd.DataFrame
+    times : pd.DataFrame
+    df : pd.DataFrame
+        The already prepared dataframe     
 
     Returns
     -------
     cm : pd.DataFrame
 
     """
+
+    if df is None: 
+        df = _prepare_cat_stream(y_true, y_pred, times)
+
+    cm = pd.crosstab(
+        index=df['y_true'], 
+        columns=df['y_pred'], 
+        values=df['diff'], 
+        aggfunc=np.sum
+    )
+
+    cm = cm.replace({pd.NaT: pd.Timedelta('0s')})
+    cm = cm.replace({0: pd.Timedelta('0s')})
+
+    missing_row = set(cm.columns) - set(cm.index)
+    missing_col = set(cm.index) - set(cm.columns)
+    if missing_row:
+        # y_true did not contain classes present in y_pred
+        for m_row in missing_row:
+            new_row = pd.Series(name=m_row,
+                                data=[pd.Timedelta('0s')]*len(cm.columns),
+                                index=cm.columns
+                                )
+            cm = pd.concat([cm, new_row.to_frame().T], axis=0)
+
+    if missing_col:
+        # y_pred did not contain classes present in y_true
+        for m_col in missing_col:
+            cm[m_col] = pd.Series(name=m_col,
+                                  data=[pd.Timedelta('0s')]*len(cm.index),
+                                  index=cm.index
+                                  )
+
+        # Rearange columns and for diagonal to again matchup
+        # when col or row was inserted above
+        cm = cm.sort_index(ascending=True)
+        cm = cm[cm.index.values]
+
+    return cm
+
+
+def _prepare_cat_stream(y_true, y_pred, times):
+    """
+
+
+    Example
+    -------
+                                     time     y_pred   y_true                   diff  y_pred_idx
+        0      2023-03-20 08:04:38.439769  waking_up    other 0 days 00:00:00.593270           0
+        1      2023-03-20 08:04:39.033039  waking_up    other 0 days 00:00:02.516079           1
+        2      2023-03-20 08:04:41.549118  waking_up    other 0 days 00:00:00.025476           2
+        3      2023-03-20 08:04:41.574594  waking_up    other 0 days 00:00:01.191777           3
+        ...                           ...        ...      ...                    ...         ...
+        31423  2023-03-26 23:10:59.012646    working  working        0 days 00:00:00       30975
+
+        [31424 rows x 6 columns]
+    """
     assert is_activity_df(y_true)
     assert isinstance(y_pred, np.ndarray)
+
     if is_activity_df(y_true):
 
         y_pred, times = y_pred.squeeze(), times.squeeze()
@@ -267,43 +346,23 @@ def online_confusion_matrix(y_true: pd.DataFrame, y_pred: np.ndarray, times: np.
         df[TIME] = pd.to_datetime(df[TIME])
 
     df['diff'] = df[TIME].shift(-1) - df[TIME]
-
-    # TODO discuss
-    # Impute last unknown time difference with mean
-    # last_activity = df.at[df.shape[0]-1, 'y_true']
-    # last_act_mean = df.groupby('y_true').mean().at[last_activity, 'diff']
-    # df.at[df.shape[0], 'diff'] = last_act_mean
     df = df.iloc[:-1]
+    
+    df.reset_index(inplace=True)
+    df_y_pred.reset_index(inplace=True)
+    merged_df = df.merge(df_y_pred, on='time', how='left')
 
-    cm = pd.crosstab(
-        index=df['y_true'], columns=df['y_pred'], values=df['diff'], aggfunc=np.sum)
+    # Create the new column using the index from df_y_pred
+    df['y_pred_idx'] = merged_df['index_y'].ffill().astype(int)
 
-    cm = cm.replace({pd.NaT: pd.Timedelta('0s')})
-    # TODO refactor, find out why cross tab creates 0 integers since the sum over values should be
-    cm = cm.replace({0: pd.Timedelta('0s')})
+    return df
 
-    missing_row = set(cm.columns) - set(cm.index)
-    missing_col = set(cm.index) - set(cm.columns)
-    if missing_row:
-        # y_pred did not contain classes present in y_true
-        for m_row in missing_row:
-            new_row = pd.Series(name=m_row,
-                                data=[pd.Timedelta('0s')]*len(cm.columns),
-                                index=cm.columns
-                                )
-            cm = pd.concat([cm, new_row.to_frame().T], axis=0)
 
-    if missing_col:
-        # y_true did not contain classes present in y_pred
-        for m_col in missing_col:
-            cm[m_col] = pd.Series(name=m_col,
-                                  data=[pd.Timedelta('0s')]*len(cm.index),
-                                  index=cm.index
-                                  )
+def online_expected_calibration_error(y_true, y_pred, y_conf, y_times, num_bins):
+    bin_data = compute_online_calibration(y_true, y_pred, y_conf, y_times, num_bins=num_bins)
+    return bin_data['expected_calibration_error']
 
-        # Rearange columns and for diagonal to again matchup
-        # when col or row was inserted above
-        cm = cm.sort_index(ascending=True)
-        cm = cm[cm.index.values]
 
-    return cm
+def online_max_calibration_error(y_true, y_pred, y_conf, y_times, num_bins):
+    bin_data = compute_online_calibration(y_true, y_pred, y_conf, y_times, num_bins=num_bins)
+    return bin_data['max_calibration_error']

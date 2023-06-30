@@ -1,6 +1,6 @@
 from pathlib import Path
 from pyadlml.dataset import *
-from pyadlml.preprocessing import StateVectorEncoder, LabelMatcher, DropTimeIndex, \
+from pyadlml.preprocessing import Event2Vec, LabelMatcher, DropTimeIndex, \
     DropDuplicates
 from pyadlml.pipeline import EvalOnlyWrapper, Pipeline, TrainOnlyWrapper
 from sklearn.ensemble import RandomForestClassifier

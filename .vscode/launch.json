@@ -8,7 +8,7 @@
             "name": "test",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/test20.py",
+            "program": "${workspaceFolder}/tmp3.py",
             "console": "integratedTerminal",
             "justMyCode": false,
         },

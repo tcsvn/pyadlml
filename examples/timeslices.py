@@ -7,7 +7,7 @@ from pyadlml.dataset import set_data_home, fetch_amsterdam, TIME
 set_data_home('/tmp/pyadlml_data_home')
 data = fetch_amsterdam(keep_original=False, cache=True)
 
-from pyadlml.preprocessing import StateVectorEncoder, LabelMatcher, DropTimeIndex, DropSubset, KeepSubset, CrossValSplitter
+from pyadlml.preprocessing import Event2Vec, LabelMatcher, DropTimeIndex, DropSubset, KeepSubset, CrossValSplitter
 from pyadlml.pipeline import Pipeline, TrainOnlyWrapper, EvalOnlyWrapper, TrainOrEvalOnlyWrapper, YTransformer, \
     XAndYTransformer
 from pyadlml.model_selection import train_test_split
@@ -77,7 +77,7 @@ param_grid = {
 }
 
 steps = [
-    ('encode_devices', StateVectorEncoder(encode='raw')),
+    ('encode_devices', Event2Vec(encode='raw')),
     ('fit_labels', TrainOrEvalOnlyWrapper(LabelMatcher(other=True))),
     ('select_train_set', TrainOnlyWrapper(CrossValSplitter(temporal_split=True))),
     ('select_val_set', EvalOnlyWrapper(CrossValSplitter(temporal_split=True))),

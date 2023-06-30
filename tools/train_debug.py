@@ -10,7 +10,7 @@ from pyadlml.model.transformer.vanilla import VanillaTransformer
 
 from pyadlml.model_selection import train_test_split
 from pyadlml.dataset import *
-from pyadlml.preprocessing import IndexEncoder, DropColumn, StateVectorEncoder, LabelMatcher, DropTimeIndex, \
+from pyadlml.preprocessing import IndexEncoder, DropColumn, Event2Vec, LabelMatcher, DropTimeIndex, \
     DropDuplicates, EventWindow
 from pyadlml.pipeline import EvalOnlyWrapper, Pipeline, TrainOnlyWrapper
 from sklearn.ensemble import RandomForestClassifier
@@ -387,7 +387,7 @@ def main():
                             'val_online_acc_macro', online_acc_macro)
 
     trainable = TrainableDebug(
-        exp_name='masterarbeit', ds_name=dataset, ds_ident=args.ident)
+        exp_name='masterarbeit', ds_name=dataset, ds_ident=args.identifier)
 
     #    model='Self Attentive Hawkes Process',
     hp_pipe = Pipeline([
@@ -449,11 +449,11 @@ def main():
         pipe_params=dict(
             lbl__other=True,
             windows__rep='many-to-one',
-            windows__window_size=100,
+            windows__window_size=256,
         )
     )
     pipe_wvn2 = Pipeline([
-        ('enc', StateVectorEncoder(encode='changepoint')),
+        ('enc', Event2Vec(encode='raw')),
         ('lbl', LabelMatcher(other=True)),
         ('drop_time', DropTimeIndex()),
         ('windows', EventWindow()),
