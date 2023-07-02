@@ -146,6 +146,7 @@ def _plot_activities_into(fig, y, y_label, cat_col_map, row=1, col=1, time=None,
         else:
             if activities is None:
                 activities = np.unique(y)
+            time = pd.Series(time) 
 
             df = pd.DataFrame(data=zip(*rlencode(y)), columns=['start', 'lengths', ACTIVITY])
             df['y_label'] = y_label

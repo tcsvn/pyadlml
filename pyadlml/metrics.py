@@ -254,17 +254,64 @@ def online_confusion_matrix(y_true: pd.DataFrame=None, y_pred: np.ndarray=None, 
                                   index=cm.index
                                   )
 
-        # Rearange columns and for diagonal to again matchup
-        # when col or row was inserted above
-        cm = cm.sort_index(ascending=True)
-        cm = cm[cm.index.values]
+    # Rearange columns and for diagonal to again matchup
+    # when col or row was inserted above
+    cm = cm.sort_index(ascending=True)
+    cm = cm[cm.index.values]
 
     return cm
 
 
-def _prepare_cat_stream(y_true, y_pred, times):
+def add_other(df_acts, add_offset=False):
+    """
+    """
+    epsilon = pd.Timedelta('10ns')
+    #other_min_diff = OTHER_MIN_DIFF
+    other_min_diff = pd.Timedelta('100ns')
+
+    df = df_acts.copy()
+
+    # Create other activity dataframe by using the gaps 
+    # between activities as such
+    df_other = df.copy()
+    df_other.loc[:, ACTIVITY] = OTHER
+    df_other[START_TIME] = df[END_TIME]
+    df_other[END_TIME] = df[START_TIME].shift(-1)
+    df_other = df_other.iloc[:-1, :]
+    df_other['diff'] = df_other[END_TIME] - df_other[START_TIME]
+
+    # Filter out other activities that are to small
+    df_other = df_other[(df_other['diff'] > other_min_diff)]\
+                       .drop(columns=['diff'])
+
+
+    df = pd.concat([df, df_other], ignore_index=True, axis=0) \
+            .sort_values(by=START_TIME) \
+            .reset_index(drop=True)
+
+
+    if add_offset:
+        other_mask = df[ACTIVITY] == OTHER
+        df.loc[other_mask, START_TIME] += epsilon
+        df.loc[other_mask, END_TIME] -= epsilon
+
+    return df
+
+
+
+def _prepare_cat_stream(y_true: pd.DataFrame, y_pred: np.ndarray, times:np.ndarray) -> pd.DataFrame:
     """
 
+    CAVE add the 'other' activity
+
+    Parameters
+    ----------
+    y_true : pd.DataFrame
+        An activity dataframe with columns ['start_time', 'end_time', 'activity']
+    y_pred : np.ndarray of strings, shape (N, )
+        Contains N predictions
+    times : np.ndarray datetime64[ns], shape (N, )
+        Contains the times the predictions where made
 
     Example
     -------
@@ -280,63 +327,59 @@ def _prepare_cat_stream(y_true, y_pred, times):
     """
     assert is_activity_df(y_true)
     assert isinstance(y_pred, np.ndarray)
+    
+    epsilon = pd.Timedelta('1ns')
 
     if is_activity_df(y_true):
 
         y_pred, times = y_pred.squeeze(), times.squeeze()
 
-        # From [st, et, a1] -> [t, a1]
-        df = y_true.copy()
-        df = df.rename(columns={START_TIME: TIME})
-
-        # Fill up with other
-        df_other = df[[END_TIME, ACTIVITY]].copy()
-        df_other.loc[:, ACTIVITY] = OTHER
-        df_other = df_other.rename(columns={END_TIME: TIME})
-        df = df.drop(columns=END_TIME)
-        df = pd.concat([df, df_other.iloc[:-1]], ignore_index=True, axis=0) \
-               .sort_values(by=TIME) \
-               .reset_index(drop=True)
-        df['diff'] = df[TIME].shift(-1) - df[TIME]
-        mask_invalid_others = (df['diff'] < OTHER_MIN_DIFF) & (
-            df[ACTIVITY] == OTHER)
-        df = df[~mask_invalid_others][[TIME, ACTIVITY]]
-
-        # Add the ending
-        df = pd.concat([df, pd.Series({
-            TIME: y_true.at[y_true.index[-1], END_TIME],
-            ACTIVITY: y_true.at[y_true.index[-1], ACTIVITY]}
-        ).to_frame().T])
-
         df_y_pred = pd.DataFrame({TIME: times, 'y_pred': y_pred})
-        df_y_true = df.copy().rename(columns={ACTIVITY: 'y_true'})
-
-        df_y_true = df_y_true.sort_values(by=TIME)[[TIME, 'y_true']] \
-                             .reset_index(drop=True)
         df_y_pred = df_y_pred.sort_values(by=TIME)[[TIME, 'y_pred']] \
                              .reset_index(drop=True)
 
-        # if prediction is larger than ground truth activities pad gt with 'other'
-        if df_y_pred[TIME].iat[0] < df_y_true[TIME].iat[0]:
-            df_y_true = pd.concat([df_y_true,
-                                   pd.Series(
-                                       {TIME: df_y_pred.at[0, TIME], 'y_true':'other'})
-                                   .to_frame().T], axis=0, ignore_index=True)
+        # From [st, et, a1] -> [t, a1]
+        df_y_true = add_other(y_true).copy()
+        df_y_true = df_y_true.rename(columns={START_TIME: TIME})
+        last_ts = df_y_true.loc[df_y_true.index[-1], END_TIME]
+        df_y_true = df_y_true.rename(columns={ACTIVITY: 'y_true'})\
+                             .sort_values(by=TIME)[[TIME, 'y_true']] \
+                             .reset_index(drop=True)
 
-        if df_y_true[TIME].iat[-1] < df_y_pred[TIME].iat[-1]:
-            df_y_true = pd.concat([df_y_true,
-                                   pd.Series(
-                                       {TIME: df_y_pred.at[df_y_pred.index[-1], TIME], 'y_true':'other'})
-                                   .to_frame().T], axis=0, ignore_index=True)
+        df_y_true = pd.concat([df_y_true, pd.DataFrame({
+            TIME: last_ts, 'y_true':[OTHER]})
+        ]).reset_index(drop=True)
 
-        # if prediction frame is smaller than ground truth clip gt to prediction
-        if df_y_pred[TIME].iat[-1] < df_y_true[TIME].iat[-1]:
-            df_y_true[TIME].iat[-1] = df_y_pred[TIME].iat[-1]
 
-        if df_y_pred[TIME].iat[0] < df_y_true[TIME].iat[0]:
-            df_y_true[TIME].iat[0] = df_y_pred[TIME].iat[0]
+        # Clip Ground truth to predictions or pad GT with other such
+        # That both series start and end at the same time
+        df_sel_y_true, df_sel_y_pred = df_y_true.copy(), df_y_pred.copy()
+        if df_sel_y_pred[TIME].iat[-1] < df_sel_y_true[TIME].iat[-1]:
+            # Preds end before GT -> clip GT to preds
+            mask = (df_sel_y_true[TIME] < df_sel_y_pred[TIME].iat[-1]).shift(fill_value=True)
+            df_sel_y_true = df_sel_y_true[mask].reset_index(drop=True)
+        else:
+            # GT ends before preds -> add 'other' activity to GT
+            df_sel_y_true = pd.concat([df_sel_y_true, pd.DataFrame({
+                TIME: df_sel_y_pred.at[df_sel_y_pred.index[-1], TIME] + epsilon, 
+                'y_true':[OTHER]})
+            ]).reset_index(drop=True)
 
-        df = _slice_categorical_stream(df_y_pred,  df_y_true)
+        if df_sel_y_pred[TIME].iat[0] < df_sel_y_true[TIME].iat[0]:
+            # Preds start before GT -> add 'other' activity to GT
+            df_sel_y_true = pd.concat([pd.DataFrame({
+                TIME: [df_sel_y_pred.at[0, TIME] - epsilon],
+                'y_true': [OTHER]
+            }), df_sel_y_true]).reset_index(drop=True)
+            clipped_true_to_preds = False
+        else:
+            # GT starts before Preds -> clip GT to preds
+            mask = (df_sel_y_pred[TIME].iat[0] < df_sel_y_true[TIME]).shift(-1, fill_value=True)
+            df_sel_y_true = df_sel_y_true[mask].reset_index(drop=True)
+            df_sel_y_true[TIME].iat[0] = df_sel_y_pred[TIME].iat[0] - epsilon
+            clipped_true_to_preds = True
+
+        df = _slice_categorical_stream(df_sel_y_pred,  df_sel_y_true)
 
     else:
         y_true, y_pred, times = y_true.squeeze(), y_pred.squeeze(), times.squeeze()
@@ -344,18 +387,31 @@ def _prepare_cat_stream(y_true, y_pred, times):
         df = pd.DataFrame(data=[times, y_true, y_pred],
                           index=[TIME, 'y_true', 'y_pred']).T
         df[TIME] = pd.to_datetime(df[TIME])
+        raise
 
     df['diff'] = df[TIME].shift(-1) - df[TIME]
-    df = df.iloc[:-1]
-    
+    # Remove last prediction since there is no td and remove first if GT was clipped 
+    s_idx = 1 if clipped_true_to_preds else 0
+    df = df.iloc[s_idx:-1]
     df.reset_index(inplace=True)
-    df_y_pred.reset_index(inplace=True)
-    merged_df = df.merge(df_y_pred, on='time', how='left')
 
     # Create the new column using the index from df_y_pred
-    df['y_pred_idx'] = merged_df['index_y'].ffill().astype(int)
+    df_y_pred = df_y_pred.reset_index().rename(columns={'index': 'y_pred_idx'})
+    df = df.merge(df_y_pred[['time', 'y_pred_idx']], on='time', how='left')
+    df['y_pred_idx'] = df['y_pred_idx'].ffill().astype(int)
 
-    return df
+    df_y_true = df_y_true.reset_index().rename(columns={'index': 'y_true_idx'})
+    df = df.merge(df_y_true[['time', 'y_true_idx']], on='time', how='left')
+    df['y_true_idx'] = df['y_true_idx'].ffill()
+    if df['y_true_idx'].isna().any(): 
+        err_msg = 'Only the firstmost values should be Nan'
+        assert df['y_true_idx'].first_valid_index() == df['y_true_idx'].isna().sum(), err_msg
+        prev_idx = df.at[df['y_true_idx'].first_valid_index(), 'y_true_idx']
+        assert prev_idx > 0
+        df['y_true_idx'] = df['y_true_idx'].fillna(prev_idx-1)\
+                                           .astype(int)
+
+    return df.drop(columns=['index'])
 
 
 def online_expected_calibration_error(y_true, y_pred, y_conf, y_times, num_bins):
@@ -366,3 +422,278 @@ def online_expected_calibration_error(y_true, y_pred, y_conf, y_times, num_bins)
 def online_max_calibration_error(y_true, y_pred, y_conf, y_times, num_bins):
     bin_data = compute_online_calibration(y_true, y_pred, y_conf, y_times, num_bins=num_bins)
     return bin_data['max_calibration_error']
+
+
+def relative_rate(df_y_true: pd.DataFrame, y_pred:np.ndarray, y_times: np.ndarray, average: str ='micro'):
+    """ Calculates how often 
+
+    Parameters
+    ----------
+    df_y_true: pd.DataFrame
+
+    """
+
+    assert average in ['micro', 'macro']
+
+    df = _prepare_cat_stream(df_y_true, y_pred, y_times)
+    counts_per_activity = df.groupby(['y_true', 'y_true_idx'])['y_pred_idx']\
+                            .nunique()\
+                            .reset_index()\
+                            .rename(columns={'y_pred_idx': 'y_pred_count'})
+    counts_per_activity['y_pred_count'] = counts_per_activity['y_pred_count'] -1
+    counts_per_activity
+
+    if average == 'micro':
+        frag = counts_per_activity['y_pred_count'].sum()/len(counts_per_activity)
+    else:
+        counts_per_class = counts_per_activity.groupby('y_true').sum()['y_pred_count']
+        samples_per_class =  counts_per_activity.groupby('y_true').count()['y_pred_count']
+        n_classes = counts_per_activity['y_true'].nunique()
+        class_avg = counts_per_class/samples_per_class
+        frag = class_avg.sum() * (1/n_classes)
+
+    return frag
+
+
+
+def transition_accuracy2(y_true: pd.DataFrame, y_pred, y_times, eps=0.8, lag='10s', average='micro'):
+       """ Compute the amount of successull transitions
+
+       Parameters
+       ----------
+       y_true : pd.DataFrame
+              An activity dataframe with columns ['start_time', 'end_time', 'activity']
+
+       y_pred : np.ndarray of strings
+              An array containing all prediction 
+       
+       y_times : np.ndarray of datetime64[ns]
+              The timestamps of the predictions
+
+       eps: float, default=0.8
+             Number between 0 and 1, determining the fraction of time the activities
+             have to be correct during the lag after and before the transition in order
+             to be accounted as correct transition
+
+       lag : str, valid 
+              The 
+
+
+
+       Returns
+       -------
+       float
+              The transition accuracy
+
+       """
+       error_msg = 'The lag can not be greater than the length of the shortest activity.'
+       lag_greater_than_min_act =  ((y_true[END_TIME] - y_true[START_TIME]) > lag).all(), error_msg
+       if lag_greater_than_min_act:
+            print('Warning!!! The lag is greater then the shortest activity.')
+
+       assert 0 <= eps and eps <= 1, 'Epsilon should be in range [0, 1]'
+       assert average in ['micro', 'macro']
+
+       lag = pd.Timedelta(lag)
+
+       df = _prepare_cat_stream(y_true, y_pred, y_times)
+       df = df[df['diff'] > pd.Timedelta('0s')].reset_index(drop=True)
+       df['act_end'] = False
+       df.loc[df[TIME].isin(y_true[END_TIME]), 'act_end'] = True
+       df.at[0, 'act_end'] = False
+       df['act_start'] = False
+       df.loc[df[TIME].isin(y_true[START_TIME]), 'act_start'] = True
+       df.at[df.index[-1], 'act_start'] = False
+       df['trans_start'] = np.nan
+       df.loc[df[df['act_end'] == True].index, 'trans_start'] = False
+       df['trans_end'] = np.nan
+       df.loc[df[df['act_start'] == True].index[1:]-1, 'trans_end'] = False
+
+       df_trns_start = df.copy().iloc[0:0].reset_index(drop=True)
+       df_trns_start[TIME] = y_true[END_TIME].iloc[:-1] - lag
+       df_trns_start['trans_start'] = True
+
+       df_trns_end = df.copy().iloc[0:0].reset_index(drop=True)
+       df_trns_end[TIME] = y_true[START_TIME].iloc[1:] + lag
+       df_trns_end['trans_end'] = True
+
+       df = pd.concat([df, df_trns_start, df_trns_end], ignore_index=True)\
+              .sort_values(by=TIME).reset_index(drop=True)
+       df['trans_start'] = df['trans_start'].ffill().fillna(False)
+       df['trans_end'] = df['trans_end'].bfill().fillna(False)
+       df.loc[df[TIME].isin(df_trns_end[TIME]), 'trans_end'] = False
+
+       # Set correct values at lag times for predictions, ground truth and the td
+       df['y_pred'] = df['y_pred'].ffill()
+       df['y_true'] = df['y_true'].ffill()
+       tmp = df.at[df.index[-1], 'diff']
+       df['diff'] = df[TIME].shift(-1) - df[TIME]
+       df.at[df.index[-1], 'diff'] = tmp
+
+       # Create unique id for each block
+       df['trans_end_block'] = ((df['trans_end'] != df['trans_end'].shift()).cumsum()\
+                            *df['trans_end']).replace(0, np.nan)
+       df['trans_start_block'] = ((df['trans_start'] != df['trans_start'].shift()).cumsum()\
+                            *df['trans_start']).replace(0, np.nan)
+
+       # 
+       df['correct_time'] = (df['y_pred'] == df['y_true']).astype(float)*df['diff']
+
+       df_trans_end = df.groupby('trans_end_block')['correct_time'].sum()
+       df_trans_end = pd.DataFrame(data={'te':df_trans_end})
+
+       df_trans_start = df.groupby('trans_start_block')['correct_time'].sum()
+       df_trans_start = pd.DataFrame(data={'ts':df_trans_start})
+
+       df_trans = pd.concat([df_trans_start, df_trans_end], axis=1)
+       df_trans['acc_end'] = df_trans['ts']/lag
+       df_trans['acc_start'] = df_trans['te']/lag
+       df_trans['trans_succ'] = (df_trans['acc_start'] > eps) & (df_trans['acc_end'] > eps)
+       return df_trans['trans_succ'].sum()/len(df_trans)
+
+
+
+def transition_accuracy(y_true: pd.DataFrame, y_pred, y_times, eps=0.8, lag='10s'):
+    """ Compute the amount of successull transitions
+
+    Parameters
+    ----------
+    y_true : pd.DataFrame
+            An activity dataframe with columns ['start_time', 'end_time', 'activity']
+
+    y_pred : np.ndarray of strings
+            An array containing all prediction 
+    
+    y_times : np.ndarray of datetime64[ns]
+            The timestamps of the predictions
+
+    eps: float, default=0.8
+            Number between 0 and 1, determining the fraction of time the activities
+            have to be correct during the lag after and before the transition in order
+            to be accounted as correct transition
+
+    lag : str, valid 
+            The 
+
+
+
+    Returns
+    -------
+    float
+            The transition accuracy
+
+    """
+    error_msg = 'The lag can not be greater than the length of the shortest activity.'
+    lag_greater_than_min_act =  ((y_true[END_TIME] - y_true[START_TIME]) > lag).all(), error_msg
+
+    assert 0 <= eps and eps <= 1, 'Epsilon should be in range [0, 1]'
+    assert average in ['micro', 'macro']
+
+    lag = pd.Timedelta(lag)
+    y_true, y_pred, y_times = y_true.copy(), y_pred.copy(), y_times.copy()
+
+
+    df_y_true = add_other(y_true).copy().reset_index(drop=True)
+    no_other = (df_y_true[ACTIVITY] != OTHER)
+
+    df = _prepare_cat_stream(y_true, y_pred, y_times)
+    df = df[df['diff'] > pd.Timedelta('0s')].reset_index(drop=True)
+    st, et = df.loc[0, TIME], df.loc[df.index[-1], TIME]
+    # Mark end of transition start times
+    mask_start_times = (df['y_true_idx'] != df['y_true_idx'].shift(-1))\
+                    & (df['y_true'] != OTHER)
+    mask_start_times.iat[-1] = False
+    df['trans_start_et'] = np.nan
+    df.loc[mask_start_times, 'trans_start_et'] = df.loc[mask_start_times, 'y_true_idx']
+    df['trans_start_et'] = df['trans_start_et'].shift(1)
+
+    trns_start = df_y_true.copy()[no_other].iloc[:-1].reset_index()
+    trns_start['trans_start'] = trns_start[END_TIME] - lag
+    mask_col = (trns_start['trans_start'] < trns_start[START_TIME]  )
+    trns_start['trans_start'] = trns_start['trans_start'].where(
+            ~mask_col, trns_start.loc[mask_col, START_TIME]
+    )
+    df_trns_start = df.copy().iloc[0:0].reset_index(drop=True)
+    df_trns_start[TIME] = trns_start['trans_start']
+    df_trns_start['trans_start'] = trns_start['index']
+    df_trns_start = df_trns_start[(st < df_trns_start[TIME]) & (df_trns_start[TIME] < et)]
+
+
+    # Mark start of transition end times
+    mask_end_times = df[TIME].isin(y_true.loc[1:, START_TIME])
+    df['trans_end_st'] = np.nan
+    df.loc[mask_end_times, 'trans_end_st'] = df.loc[mask_end_times, 'y_true_idx']
+
+    trns_end = df_y_true.copy()[no_other].iloc[1:].reset_index()
+    trns_end['trans_end'] = trns_end[START_TIME] + lag
+    mask_col = (trns_end[END_TIME] < trns_end['trans_end'])
+    trns_end['trans_end'] = trns_end['trans_end'].where(
+            ~mask_col, trns_end.loc[mask_col, END_TIME]
+    )
+    df_trns_end = df.copy().iloc[0:0].reset_index(drop=True)
+    df_trns_end[TIME] = trns_end['trans_end']
+    df_trns_end['trans_end'] = trns_end['index']
+    df_trns_end = df_trns_end[(st < df_trns_end[TIME]) & (df_trns_end[TIME] < et)]
+
+    df = pd.concat([df, df_trns_start, df_trns_end], ignore_index=True)\
+            .sort_values(by=TIME).reset_index(drop=True)
+
+    # Shift back TODO write better description
+    df['trans_end'] = df['trans_end'].shift(-1)
+    df['trans_end'] = df['trans_end'].where(df['trans_end_st'].isna(), df['trans_end_st'])
+
+    df['trans_start_et'] = df['trans_start_et'].shift(-1)
+    df['trans_start'] = df['trans_start'].where(df['trans_start_et'].isna(), df['trans_start_et'])
+    #df = df.drop(columns=['trans_end_st', 'trans_start_et'])
+    #assert (df['trans_end'].value_counts() == 2).all()
+    #assert (df['trans_start'].value_counts() == 2).all()
+
+    # Use 'ffill' to fill NaN values with the previous non-NaN value
+    df['forward_fill'] = df['trans_end'].ffill()
+    df['backward_fill'] = df['trans_end'].bfill()
+    df['trans_end'] = df['trans_end'].where(df['forward_fill'] != df['backward_fill'], df['forward_fill'])
+    df = df.drop(['forward_fill', 'backward_fill'], axis=1)
+
+    # Use 'bfill' to fill NaN values with the next non-NaN value
+    df['forward_fill'] = df['trans_start'].ffill()
+    df['backward_fill'] = df['trans_start'].bfill()
+    df['trans_start'] = df['trans_start'].where(df['forward_fill'] != df['backward_fill'], df['forward_fill'])
+    df = df.drop(['forward_fill', 'backward_fill'], axis=1)
+
+    # Set correct values at lag times for predictions, ground truth and the td
+    df['y_pred'] = df['y_pred'].ffill()
+    df['y_true'] = df['y_true'].ffill()
+    tmp = df.at[df.index[-1], 'diff']
+    df['diff'] = df[TIME].shift(-1) - df[TIME]
+    df.at[df.index[-1], 'diff'] = tmp
+
+    df['correct_time'] = (df['y_pred'] == df['y_true']).astype(float)*df['diff']
+
+    # Test that all blocks have the length of lag or of the duration of the actiivty
+    # if the duration is smaller than the lag
+    trans_start_viol = df.groupby('trans_start')['diff'].sum()[df.groupby('trans_start')['diff'].sum() != lag]
+    dur_trans_start_viol = df_y_true.loc[trans_start_viol.index][END_TIME] - df_y_true.loc[trans_start_viol.index][START_TIME]
+    trans_start_viol_tmp = trans_start_viol[dur_trans_start_viol != trans_start_viol]
+    dur_trans_start_viol = dur_trans_start_viol[dur_trans_start_viol != trans_start_viol]
+    trans_start_viol = trans_start_viol_tmp
+
+    trans_end_viol = df.groupby('trans_end')['diff'].sum()[df.groupby('trans_end')['diff'].sum() != lag]
+    dur_trans_end_viol = df_y_true.loc[trans_end_viol.index][END_TIME] - df_y_true.loc[trans_end_viol.index][START_TIME]
+    trans_end_viol_tmp = trans_end_viol[dur_trans_end_viol != trans_end_viol]
+    dur_trans_end_viol = dur_trans_end_viol[dur_trans_end_viol != trans_end_viol]
+    trans_end_viol = trans_end_viol_tmp
+    assert not trans_start_viol and not trans_end_viol
+
+
+    df_trans_start = df.groupby('trans_start')['correct_time'].sum().iloc[1:]
+    df_trans_start = pd.DataFrame(data={'ts':df_trans_start})
+
+    df_trans_end = df.groupby('trans_end')['correct_time'].sum().iloc[:-1]
+    df_trans_end = pd.DataFrame(data={'te':df_trans_end})
+
+
+    df_trans = pd.concat([df_trans_start, df_trans_end], axis=1)
+    df_trans['acc_end'] = df_trans['ts']/lag
+    df_trans['acc_start'] = df_trans['te']/lag
+    df_trans['trans_succ'] = (df_trans['acc_start'] > eps) & (df_trans['acc_end'] > eps)
+    return df_trans['trans_succ'].sum()/len(df_trans)
