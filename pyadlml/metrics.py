@@ -436,25 +436,23 @@ def relative_rate(df_y_true: pd.DataFrame, y_pred:np.ndarray, y_times: np.ndarra
     assert average in ['micro', 'macro']
 
     df = _prepare_cat_stream(df_y_true, y_pred, y_times)
-    counts_per_activity = df.groupby(['y_true', 'y_true_idx'])['y_pred_idx']\
-                            .nunique()\
+    df['y_pred_changes'] = (df['y_pred'] != df['y_pred'].shift())\
+                         & (df['y_true'] == df['y_true'].shift())
+    counts_per_activity = df.groupby(['y_true', 'y_true_idx'])['y_pred_changes']\
+                            .sum()\
                             .reset_index()\
-                            .rename(columns={'y_pred_idx': 'y_pred_count'})
-    counts_per_activity['y_pred_count'] = counts_per_activity['y_pred_count'] -1
-    counts_per_activity
+                            .rename(columns={'y_pred_changes': 'y_pred_count'})
 
     if average == 'micro':
         frag = counts_per_activity['y_pred_count'].sum()/len(counts_per_activity)
     else:
         counts_per_class = counts_per_activity.groupby('y_true').sum()['y_pred_count']
-        samples_per_class =  counts_per_activity.groupby('y_true').count()['y_pred_count']
+        activities_per_class =  counts_per_activity.groupby('y_true').count()['y_pred_count']
         n_classes = counts_per_activity['y_true'].nunique()
-        class_avg = counts_per_class/samples_per_class
-        frag = class_avg.sum() * (1/n_classes)
+        class_rate = counts_per_class/activities_per_class
+        frag = class_rate.sum() * (1/n_classes)
 
     return frag
-
-
 
 def transition_accuracy2(y_true: pd.DataFrame, y_pred, y_times, eps=0.8, lag='10s', average='micro'):
        """ Compute the amount of successull transitions
