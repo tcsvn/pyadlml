@@ -2,6 +2,7 @@ import plotly.graph_objects as go
 import numpy as np
 from plotly.subplots import make_subplots
 import pandas as pd
+from copy import copy
 
 from pyadlml.constants import ACTIVITY, END_TIME, START_TIME, STRFTIME_PRECISE
 from pyadlml.dataset._core.activities import is_activity_df
@@ -232,7 +233,7 @@ def discreteRle2timeRle(df, time):
            .rename(columns={'start_time':'start', 'lengths_time':'lengths'})
 
 
-def _plot_devices_into(fig, X, cat_col_map, row, col, time, dev_order):
+def _plot_devices_into(fig, X, cat_col_map, row, col, time, dev_order, init_device_markers=False):
     ON = 1
     OFF = 0
     # TODO refactor, generalize also for numerical labels
@@ -246,18 +247,25 @@ def _plot_devices_into(fig, X, cat_col_map, row, col, time, dev_order):
             
     trace_lst = []
 
-    devs = X.columns.to_list() if dev_order is None else dev_order
+    devs = X.columns.to_list() if dev_order is None else copy(dev_order)
     devs = devs.tolist() if isinstance(devs, np.ndarray) else devs
     devs_num = []
 
+    if init_device_markers:
+        fig = _plot_selected_device_marker(fig, time, init=True)
+        devs_num.append('sel_dev')
+        dev_order.insert(0, 'sel_dev')
+
+
     for dev in devs:
 
-        # Check if 0-1-vector numeric
+    
         vals = set(X[dev].unique())
-        is_01_dev = (vals == set([0, 1]) or vals == set([0]) or vals == set([1])) 
-        if is_01_dev:
-
-            for k in [0, 1]:
+        is_binary_dev = (vals == set([0, 1]) or vals == set([0]) or vals == set([1]))\
+                or (vals == set([-1, 1]) or vals == set([-1]) or vals == set([1]))
+        if is_binary_dev:
+            zero_value = list(vals - {1})[0]
+            for k in [zero_value, 1]:
                 if time is None:
                     hover_template = '<b>' + dev + '</b><br>'\
                                     + 'Int: [%{base}, %{x})<br>' \
@@ -325,7 +333,6 @@ def _plot_devices_into(fig, X, cat_col_map, row, col, time, dev_order):
             fig.add_trace(trace, row=row, col=col, secondary_y=True)
 
 
-
     fig.update_layout({'barmode': 'overlay',
                        'legend': {'tracegroupgap': 0}
     })
@@ -337,7 +344,7 @@ def _plot_devices_into(fig, X, cat_col_map, row, col, time, dev_order):
     for dev in devs_num:
         # Rescale numerical devices and position them at their index 
         # Since data is scaled to 0.5 add 0.25 to center around dev_idx
-        y = list(fig.select_traces(selector=dict(name=dev, type='scatter')))[0]['y']
+        y = np.array((list(fig.select_traces(selector=dict(name=dev, type='scatter')))[0]['y']))
         y = y + dev_order.index(dev) + 0.25
         fig.update_traces(dict(y=y), selector=dict(type='scatter', name=dev))
 
@@ -345,7 +352,7 @@ def _plot_devices_into(fig, X, cat_col_map, row, col, time, dev_order):
         axis_name = "yaxis3" if row == 2 else "yaxis2" 
         yaxis = fig['layout'][axis_name].overlaying
         fig.update_yaxes(row=row, col=col, secondary_y=True,
-            range=[0, len(devs) + 2],
+            range=[0, len(devs) + 2 + int(init_device_markers)],
             scaleanchor=yaxis,  # Linking the secondary y-axis to the primary y-axis
             scaleratio=1,  # Ensuring equal scaling for both y-axes
             constrain='domain',  # Coupling the secondary y-axis to the primary y-axis
@@ -359,7 +366,7 @@ def _plot_devices_into(fig, X, cat_col_map, row, col, time, dev_order):
 
 
 @remove_whitespace_around_fig
-def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, dev_order=None, times=None, heatmap:go.Heatmap=None):
+def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, dev_order=None, times=None, heatmap:go.Heatmap=None, sel_device=False):
     """ Plot activities and devices for already 
 
     """
@@ -374,9 +381,10 @@ def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, dev_
         raise
     #N = y_true.shape[0]
     #assert y_pred.shape[0] == N and y_conf.shape[0] == N and times.shape[0] == N and X.shape[0] == N
-
-
     times = pd.Series(times) if isinstance(times, np.ndarray) else times
+
+
+
     if dev_order is None:
         device_order = X.columns.to_list() 
     elif isinstance(dev_order, np.ndarray):
@@ -417,8 +425,10 @@ def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, dev_
         heatmap_row = 1 if y_conf is None else 2
         fig.add_trace(heatmap, row=heatmap_row, col=1, secondary_y=False)
 
-    fig = _plot_devices_into(fig, X, cat_col_map, row=rows, col=cols, time=times, dev_order=device_order)
-
+    fig = _plot_devices_into(fig, X, cat_col_map, row=rows, col=cols, 
+                             time=times, dev_order=device_order, 
+                             init_device_markers=sel_device
+        )
 
     if y_true is not None:
         fig = _plot_activities_into(fig, y_true, 'y_true', cat_col_map, row=rows, col=cols, time=times, activities=act_order)
@@ -428,13 +438,14 @@ def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, dev_
         fig = _plot_confidences_into(fig, 1, 1, y_conf, act_order,
                                      cat_col_map,  times)
     
+
     # Update y-axis tickfont
-    fig.update_yaxes(row=rows, col=cols, 
-        tickfont=dict(size=8, family='Arial'),
-        categoryorder='array',
-        categoryarray=device_order + ['y_pred', 'y_true'],
-        secondary_y=True,
-    )
+    #fig.update_yaxes(row=rows, col=cols, 
+    #    tickfont=dict(size=8, family='Arial'),
+    #    categoryorder='array',
+    #    categoryarray=['sel_dev'] + device_order + ['y_pred', 'y_true'],
+    #    secondary_y=True,
+    #)
     fig.update_yaxes(row=rows, col=cols, secondary_y=False,
         tickmode='linear', 
         dtick=1,
@@ -443,4 +454,48 @@ def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, dev_
     if times is not None:
         fig.update_xaxes(range=[times.iloc[0], times.iloc[-1]])
 
+
+    return fig
+
+
+def _plot_selected_device_marker(fig, times, init=False):
+    from pyadlml.constants import TIME
+    row = 2
+    col = 1
+    label= 'sel_dev'
+
+    if init:
+        times = times[:3]
+
+    df = pd.DataFrame({TIME: times, 'y':[label]*len(times)})
+    hover_template = 'Time: %{x|' + STRFTIME_PRECISE + '}<br>' + \
+                        '<extra></extra>'
+    marker = dict(size=5, symbol=5, line=dict(color='Red', width=1))
+    trace = go.Scatter(
+        name=label,
+        meta=label, 
+        mode='markers', 
+        y=[0.25]*len(df[TIME]),
+        x=df[TIME],
+        marker=marker,
+        opacity=0.0 if init else 1.0, 
+        hovertemplate=hover_template,
+        showlegend=False)
+
+    # Add dummy bar plot as placeholder
+    fig.add_trace(go.Bar(
+        name='-1',
+        meta=label,
+        base=times.loc[:2],
+        x=[10, 30],
+        y=np.array([label]*2),
+        orientation='h',
+        showlegend=False,
+        width=0.3,
+        textposition='auto',
+        opacity=0.0,
+        marker_color='black',
+    ), row=row, col=col)
+
+    fig.add_trace(trace, row=row, col=col, secondary_y=True)
     return fig

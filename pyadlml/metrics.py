@@ -585,7 +585,6 @@ def transition_accuracy(y_true: pd.DataFrame, y_pred, y_times, eps=0.8, lag='10s
     lag_greater_than_min_act =  ((y_true[END_TIME] - y_true[START_TIME]) > lag).all(), error_msg
 
     assert 0 <= eps and eps <= 1, 'Epsilon should be in range [0, 1]'
-    assert average in ['micro', 'macro']
 
     lag = pd.Timedelta(lag)
     y_true, y_pred, y_times = y_true.copy(), y_pred.copy(), y_times.copy()
@@ -680,7 +679,7 @@ def transition_accuracy(y_true: pd.DataFrame, y_pred, y_times, eps=0.8, lag='10s
     trans_end_viol_tmp = trans_end_viol[dur_trans_end_viol != trans_end_viol]
     dur_trans_end_viol = dur_trans_end_viol[dur_trans_end_viol != trans_end_viol]
     trans_end_viol = trans_end_viol_tmp
-    assert not trans_start_viol and not trans_end_viol
+    assert trans_start_viol.empty and trans_end_viol.empty
 
 
     df_trans_start = df.groupby('trans_start')['correct_time'].sum().iloc[1:]

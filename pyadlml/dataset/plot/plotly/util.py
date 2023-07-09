@@ -281,7 +281,7 @@ class CatColMap():
     cat_idx =0
 
     cat_col_map = {
-        0:COL_OFF, 1:COL_ON,
+        0:COL_OFF, -1:COL_OFF, 1:COL_ON, 
         'off':COL_OFF, 'on':COL_ON,
         False:COL_OFF, True:COL_ON,
     }
