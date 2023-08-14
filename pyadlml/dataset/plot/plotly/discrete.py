@@ -396,7 +396,8 @@ def acts_and_devs(X, y_true=None, y_pred=None, y_conf=None, act_order=None, dev_
         device_order = dev_order
 
     if act_order is None:
-        act_order = list({*np.unique(y_pred).tolist(), *y_true[ACTIVITY].unique().tolist()})
+        y_pred_acts = np.unique(y_pred).tolist() if y_pred is not None else {}
+        act_order = list({*y_pred_acts, *y_true[ACTIVITY].unique().tolist()})
         act_order.sort()
 
     error_text = 'parameter act_order has to be set if y_conf is given'

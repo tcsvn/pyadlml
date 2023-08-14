@@ -294,7 +294,7 @@ class Encoder():
         raise NotImplementedError
 
 
-class IndexEncoder():
+class IndexEncoder(BaseEstimator):
 
     def __repr__(self):
         return f'{self.__class__.__name__}()'
@@ -303,6 +303,7 @@ class IndexEncoder():
         self.n_features_in_ = 3
         self.lbl_enc = preprocessing.LabelEncoder()
         self.lbl_enc.fit(X[DEVICE])
+        self.n_indices_out_ = len(self.lbl_enc.classes_)
 
     def transform(self, X, y=None):
         X[DEVICE] = self.lbl_enc.transform(X[DEVICE])
@@ -739,10 +740,20 @@ class KeepOnlyDevices(BaseEstimator, XAndYTransformer, TransformerMixin):
         return X.loc[idxs, :], y
 
 
-class Timestamp2Seqtime(BaseEstimator, TransformerMixin, XOrYTransformer, FinalTimeTransformer):
-    def __init__(self, dt='s'):
+class Time2UnitFromOrigin(BaseEstimator, TransformerMixin, XOrYTransformer, FinalTimeTransformer):
+
+    SEC2UNIT_FACTOR = dict(
+        ms=1e-3,
+        s=1,
+        m=60,
+        h=3600,
+        d=3600*24,
+    )
+
+    def __init__(self, unit='s', round_to='D'):
         super().__init__()
-        self.dt = dt
+        self.unit = unit
+        self.round_to = round_to
 
     @XOrYTransformer.x_or_y_transform
     def fit_transform(self, X, y=None):
@@ -750,23 +761,33 @@ class Timestamp2Seqtime(BaseEstimator, TransformerMixin, XOrYTransformer, FinalT
         return self.transform(X, y)
 
     def fit(self, X, y=None):
-        assert self.dt in ['ms', 's', 'm', 'h']
+        assert self.unit in ['ms', 's', 'm', 'h', 'd']
+        self.orig_time_ = X[TIME].iloc[0].floor(self.round_to)
         return X, y
+
+    def _td2num(self, x):
+        if isinstance(x, str):
+            x = pd.Timedelta(x)
+        elif isinstance(x, pd.Series):
+            x = x.dt
+        x_sec  = x.total_seconds()
+        return x_sec*self.SEC2UNIT_FACTOR[self.unit]
+
+    def _num2td(self, x):
+        x_sec = (1/self.SEC2UNIT_FACTOR[self.unit])*x
+        return pd.Timedelta('1s')*x_sec
+
+
 
     def transform(self, X, y=None):
         """ Change every timestamp into unit i.e. seconds relative
             to the first timestamp in the sequence.
         """
-        self.time = X[TIME]
-        X[TIME] -= X[TIME].iloc[0]
-        if self.dt == 'ms':
-            X[TIME] = X[TIME]/pd.Timedelta('1milli')
-        elif self.dt == 's':
-            X[TIME] = X[TIME]/pd.Timedelta('1sec')
-        elif self.dt == 'm' or self.dt == 'min':
-            X[TIME] = X[TIME]/pd.Timedelta('1min')
-        elif self.dt == 'h':
-            X[TIME] = X[TIME]/pd.Timedelta('1hr')
+        assert self.orig_time_ <= X[TIME].iloc[0]
+        self.times_ = X[TIME].copy()
+        td = (X[TIME] - self.orig_time_)
+        X[TIME] = self._td2num(td)
+
         return X, y
 
 
@@ -1169,10 +1190,24 @@ class CyclicTimePositionalEncoding(TimePositionalEncoding):
         )
         return fig
 
+
     def plotly_wave_length_per_dim(self):
         from plotly import graph_objects as go
+        import numpy as np
         fig = go.Figure()
-        x = self._num2td(self.get_periods())
-        x += pd.Timestamp('01.01.2000 00:00:00')
-        fig.add_trace(go.Scatter(y=np.arange(0, self.d_dim), x=x))
+        ws = self.get_angular_freqs()
+        f = ws/(2*np.pi)
+        lmbd = 1/f
+        periods = self._num2td(lmbd)
+        print(periods.dtype)
+        x = pd.Timestamp('01.01.2000 00:00:00') + periods
+        fig.add_trace(
+            go.Scatter(
+                y=np.arange(0, self.d_dim), 
+                x=x,
+                customdata=pd.to_timedelta(periods).map(str),
+                hovertemplate="Dim: %{y}<br>Period: %{customdata}<br><extra></extra>"
+            )
+        )
+        fig.update_layout(title='Period per dim')
         return fig

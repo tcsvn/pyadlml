@@ -6,7 +6,7 @@ from .preprocessing import \
     DropTimeIndex, \
     LabelMatcher, \
     DropDuplicates,\
-    Timestamp2Seqtime, \
+    Time2UnitFromOrigin, \
     KeepOnlyDevices, \
     DropDevices, \
     Identity, \

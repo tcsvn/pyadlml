@@ -1006,7 +1006,7 @@ class EventWindow(Windows, XOrYTransformer):
         dur_min = float('inf') 
         dur_max = float('-inf')
         for s in window_sizes:
-            Xt = cls(window_size=s).fit_transform(x_times)
+            Xt = cls(window_size=s, return_view=False).fit_transform(x_times)
             # Get normalized time lengths
             Xt_dur = (Xt[:,-1] - Xt[:,0])/np.timedelta64(1, time_unit)
             

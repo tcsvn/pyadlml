@@ -167,11 +167,9 @@ def _slice_categorical_stream(df1, df2, first_ts=None, last_ts=None):
 
     if first_ts is None:
         first_ts = max(df2.loc[0, TIME], df1.loc[0, TIME])
-        first_ts -= pd.Timedelta('1ms')
     if last_ts is None:
         last_ts = min(df2.loc[df2.index[-1], TIME],
                       df1.loc[df1.index[-1], TIME])
-        last_ts += pd.Timedelta('1ms')
 
     df1_tmp = df1.copy()
     df2_tmp = df2.copy()
@@ -189,8 +187,8 @@ def _slice_categorical_stream(df1, df2, first_ts=None, last_ts=None):
     df1[ACTIVITY] = df1[ACTIVITY].ffill()
     df2[ACTIVITY] = df2[ACTIVITY].ffill()
 
-    df1 = df1[(first_ts < df1[TIME]) & (df1[TIME] < last_ts)]
-    df2 = df2[(first_ts < df2[TIME]) & (df2[TIME] < last_ts)]
+    df1 = df1[(first_ts <= df1[TIME]) & (df1[TIME] <= last_ts)]
+    df2 = df2[(first_ts <= df2[TIME]) & (df2[TIME] <= last_ts)]
 
     df = df1.copy()
     df[lbl2_col] = df2[ACTIVITY]
@@ -211,7 +209,7 @@ def online_confusion_matrix(y_true: pd.DataFrame=None, y_pred: np.ndarray=None, 
     Parameters
     ----------
     y_true : pd.DataFrame
-    y_true : pd.DataFrame
+    y_true : np.ndarray 
     times : pd.DataFrame
     df : pd.DataFrame
         The already prepared dataframe     
@@ -299,7 +297,7 @@ def add_other(df_acts, add_offset=False):
 
 
 
-def _prepare_cat_stream(y_true: pd.DataFrame, y_pred: np.ndarray, times:np.ndarray) -> pd.DataFrame:
+def _prepare_cat_stream(y_true: pd.DataFrame, y_pred: np.ndarray, y_times:np.ndarray) -> pd.DataFrame:
     """
 
     CAVE add the 'other' activity
@@ -312,6 +310,10 @@ def _prepare_cat_stream(y_true: pd.DataFrame, y_pred: np.ndarray, times:np.ndarr
         Contains N predictions
     times : np.ndarray datetime64[ns], shape (N, )
         Contains the times the predictions where made
+
+    Attention
+    ---------
+    The last prediction is not included since for the last prediction the duration is not known.
 
     Example
     -------
@@ -332,9 +334,9 @@ def _prepare_cat_stream(y_true: pd.DataFrame, y_pred: np.ndarray, times:np.ndarr
 
     if is_activity_df(y_true):
 
-        y_pred, times = y_pred.squeeze(), times.squeeze()
+        y_pred, y_times = y_pred.squeeze(), y_times.squeeze()
 
-        df_y_pred = pd.DataFrame({TIME: times, 'y_pred': y_pred})
+        df_y_pred = pd.DataFrame({TIME: y_times, 'y_pred': y_pred})
         df_y_pred = df_y_pred.sort_values(by=TIME)[[TIME, 'y_pred']] \
                              .reset_index(drop=True)
 
@@ -352,12 +354,13 @@ def _prepare_cat_stream(y_true: pd.DataFrame, y_pred: np.ndarray, times:np.ndarr
 
 
         # Clip Ground truth to predictions or pad GT with other such
-        # That both series start and end at the same time
+        # that the ground truth envelopes the predictions by epsilon amount of time
         df_sel_y_true, df_sel_y_pred = df_y_true.copy(), df_y_pred.copy()
         if df_sel_y_pred[TIME].iat[-1] < df_sel_y_true[TIME].iat[-1]:
             # Preds end before GT -> clip GT to preds
             mask = (df_sel_y_true[TIME] < df_sel_y_pred[TIME].iat[-1]).shift(fill_value=True)
             df_sel_y_true = df_sel_y_true[mask].reset_index(drop=True)
+            df_sel_y_true[TIME].iat[-1] = df_sel_y_pred[TIME].iat[-1] + epsilon
         else:
             # GT ends before preds -> add 'other' activity to GT
             df_sel_y_true = pd.concat([df_sel_y_true, pd.DataFrame({
@@ -372,7 +375,7 @@ def _prepare_cat_stream(y_true: pd.DataFrame, y_pred: np.ndarray, times:np.ndarr
                 'y_true': [OTHER]
             }), df_sel_y_true]).reset_index(drop=True)
             clipped_true_to_preds = False
-        else:
+        else: 
             # GT starts before Preds -> clip GT to preds
             mask = (df_sel_y_pred[TIME].iat[0] < df_sel_y_true[TIME]).shift(-1, fill_value=True)
             df_sel_y_true = df_sel_y_true[mask].reset_index(drop=True)
@@ -382,17 +385,16 @@ def _prepare_cat_stream(y_true: pd.DataFrame, y_pred: np.ndarray, times:np.ndarr
         df = _slice_categorical_stream(df_sel_y_pred,  df_sel_y_true)
 
     else:
-        y_true, y_pred, times = y_true.squeeze(), y_pred.squeeze(), times.squeeze()
+        y_true, y_pred, y_times = y_true.squeeze(), y_pred.squeeze(), y_times.squeeze()
 
-        df = pd.DataFrame(data=[times, y_true, y_pred],
+        df = pd.DataFrame(data=[y_times, y_true, y_pred],
                           index=[TIME, 'y_true', 'y_pred']).T
         df[TIME] = pd.to_datetime(df[TIME])
         raise
 
     df['diff'] = df[TIME].shift(-1) - df[TIME]
     # Remove last prediction since there is no td and remove first if GT was clipped 
-    s_idx = 1 if clipped_true_to_preds else 0
-    df = df.iloc[s_idx:-1]
+    df = df.iloc[:-1]
     df.reset_index(inplace=True)
 
     # Create the new column using the index from df_y_pred
@@ -410,6 +412,8 @@ def _prepare_cat_stream(y_true: pd.DataFrame, y_pred: np.ndarray, times:np.ndarr
         assert prev_idx > 0
         df['y_true_idx'] = df['y_true_idx'].fillna(prev_idx-1)\
                                            .astype(int)
+    else:
+        df['y_true_idx'] = df['y_true_idx'].astype(int)
 
     return df.drop(columns=['index'])
 
@@ -424,18 +428,27 @@ def online_max_calibration_error(y_true, y_pred, y_conf, y_times, num_bins):
     return bin_data['max_calibration_error']
 
 
-def relative_rate(df_y_true: pd.DataFrame, y_pred:np.ndarray, y_times: np.ndarray, average: str ='micro'):
-    """ Calculates how often 
+def relative_prediction_rate(y_true: pd.DataFrame, y_pred:np.ndarray, y_times: np.ndarray, average: str ='micro'):
+    """ Calculates how often a prediction changes over the course of a true activity.
 
     Parameters
     ----------
-    df_y_true: pd.DataFrame
+    y_true: pd.DataFrame
+        An activity dataframe with columns ['start_time', 'end_time', 'activity']
+    y_pred: np.ndarray
+
+    y_times: np.ndarray
+
+    average: str, one of ['micro', 'macro'], default='micro'
+
+    Returns
+    ------- 
 
     """
 
     assert average in ['micro', 'macro']
 
-    df = _prepare_cat_stream(df_y_true, y_pred, y_times)
+    df = _prepare_cat_stream(y_true, y_pred, y_times)
     df['y_pred_changes'] = (df['y_pred'] != df['y_pred'].shift())\
                          & (df['y_true'] == df['y_true'].shift())
     counts_per_activity = df.groupby(['y_true', 'y_true_idx'])['y_pred_changes']\

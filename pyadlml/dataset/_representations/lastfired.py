@@ -20,7 +20,7 @@ def resample_last_fired(df_devs, dt=None, n_jobs=None):
 
     """
     use_dask = n_jobs is not None
-    df = df_devs.sort_values(by=TIME).copy()
+    df = df_devs.sort_values(by=TIME).copy().reset_index(drop=True)
     origin = df.at[0, TIME].floor(freq=dt)
 
     # Only keep last device to have fired in a bin

@@ -59,9 +59,12 @@ def create_state(df_dev, dataset_info=None, dev_pre_values={}, n_jobs=None):
     for dev in dev_bool:
         fvi = df[dev].first_valid_index()
         if fvi != 0:
-            if dev_pre_values:
-                df.loc[0, dev] = dev_pre_values[dev]
-            else:
+            try:
+                if dev_pre_values:
+                    df.loc[0, dev] = dev_pre_values[dev]
+                else:
+                    raise
+            except:
                 value = df[dev].iloc[fvi]
                 df.loc[0, dev] = not value
 
