@@ -11,7 +11,7 @@ import numpy as np
 
 from pyadlml.constants import DEVICE, TIME, VALUE, STRFTIME_HOUR, STRFTIME_PRECISE, PRIMARY_COLOR, SECONDARY_COLOR
 from pyadlml.dataset.plot.plotly.activities import _set_compact_title, _scale_xaxis
-from pyadlml.dataset.plot.plotly.util import CatColMap
+from pyadlml.dataset.plot.util import CatColMap
 from pyadlml.dataset.stats.devices import event_count, event_cross_correlogram, event_cross_correlogram3, events_one_day, \
                                           inter_event_intervals
 from pyadlml.dataset.util import check_scale, activity_order_by, device_order_by, infer_dtypes
@@ -274,7 +274,7 @@ def plotly_device_event_correlogram(df_devs, corr_data=(None, None, None), heigh
                         vertical_spacing=0.005, column_titles=devs.tolist(), row_titles=devs.tolist(),
     
     )
-    from pyadlml.dataset.plot.plotly.util import CatColMap
+    from pyadlml.dataset.plot.util import CatColMap
 
     def plot_histogram(fig, row, col, bins, counts, dev1, dev2, cm):
         counts = np.concatenate([counts[:int(len(counts)/2)],
@@ -329,7 +329,7 @@ def plotly_event_correlogram(df_devs=None, cc_data=None, fix=[], to=[], max_lag=
                             vertical_spacing=0.005, column_titles=cols, row_titles=rows,
         
         )
-        from pyadlml.dataset.plot.plotly.util import CatColMap
+        from pyadlml.dataset.plot.util import CatColMap
         import pandas as pd
         def plot_histogram(fig, row, col, bins, counts, dev1, dev2, cm):
             counts = np.concatenate([counts[:int(len(counts)/2)],

@@ -300,7 +300,7 @@ def activities_and_device_events(df_devices, df_activities, start_time=None, end
     fig, ax = plt.subplots(figsize=figsize)
 
     tab = get_qualitative_cmap(len(acts))
-    plot_activity_bar(ax, df_acts, acts, start_time, end_time, act_bar_height,
+    _plot_activity_bar(ax, df_acts, acts, start_time, end_time, act_bar_height,
                       len(devs)+act_offset_space, tab(np.arange(0, len(acts))))
 
     ax.eventplot(data_lst, linelengths=[0.2]*len(devs), colors=event_color)
@@ -398,7 +398,7 @@ def activities_and_device_states(df_devices: pd.DataFrame, df_activities: pd.Dat
     j = _plot_device_states(ax, df_devs, devs, start_time, end_time, color_dev_on, color_dev_off,
                            color_dev_num, binary_off_label, binary_on_label, return_nr_categories_used=True)
 
-    plot_activity_bar(ax, df_acts, acts, start_time, end_time, act_bar_height,
+    _plot_activity_bar(ax, df_acts, acts, start_time, end_time, act_bar_height,
                       len(devs)+act_offset_space,
                       tab(np.arange(j, len(acts)+j))
     )
@@ -418,7 +418,7 @@ def activities_and_device_states(df_devices: pd.DataFrame, df_activities: pd.Dat
 
     return fig
 
-def plot_activity_bar(ax, df_acts: pd.DataFrame, acts: list, start_time, end_time, act_bar_height, y_pos, c_map):
+def _plot_activity_bar(ax, df_acts: pd.DataFrame, acts: list, start_time, end_time, act_bar_height, y_pos, c_map):
     """ Plot a horizontal activity event representation.
     Parameters
     ----------

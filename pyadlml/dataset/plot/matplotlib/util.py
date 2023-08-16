@@ -865,7 +865,7 @@ def xaxis_format_time2(fig, ax, start_time: np.datetime64, end_time: np.datetime
         def __call__(self, x, pos):
          x = matplotlib.dates.num2date(x)
          if pos == 0 and (self.freq == 'hourly' or self.freq == '10minutes'):
-             fmt = '%d.%m.%Y - %H:%M:%S'
+             fmt = '%H:%M:%S\n%d.%m.%Y'
          elif pos == 0:
              fmt = '%d.%m.%Y'
          elif x.strftime('%d:%m') == '01:01':
@@ -874,7 +874,7 @@ def xaxis_format_time2(fig, ax, start_time: np.datetime64, end_time: np.datetime
 
          elif x.time() == datetime.time(0, 0) and self.freq == 'hourly':
              # append for hourly ticks adt midnight the days
-             fmt = '%d:%m - ' + self.formatting
+             fmt = self.formatting + '\n%d.%m.%Y'
          else:
              fmt = self.formatting
          return x.strftime(fmt)

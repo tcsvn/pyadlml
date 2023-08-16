@@ -7,7 +7,8 @@ from copy import copy
 from pyadlml.constants import ACTIVITY, END_TIME, START_TIME, STRFTIME_PRECISE
 from pyadlml.dataset._core.activities import is_activity_df
 from pyadlml.dataset.plot.plotly.acts_and_devs import legend_current_items
-from pyadlml.dataset.plot.plotly.util import remove_whitespace_around_fig, CatColMap
+from pyadlml.dataset.plot.plotly.util import remove_whitespace_around_fig
+from pyadlml.dataset.plot.util import CatColMap
 
 def rlencode(x, dropna=False):
     """

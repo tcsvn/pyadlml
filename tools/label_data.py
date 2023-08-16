@@ -7,7 +7,6 @@ import pandas as pd
 import argparse
 import dash
 from dash.exceptions import PreventUpdate
-from plotly_resampler import FigureResampler
 from pyadlml.constants import ACTIVITY, DEVICE, END_TIME, START_TIME, TIME, VALUE, ts2str, str2ts
 from pyadlml.dataset._core.activities import ActivityDict, create_empty_activity_df
 from pyadlml.dataset.act_assist import read_activities, write_activities, read_devices, write_devices

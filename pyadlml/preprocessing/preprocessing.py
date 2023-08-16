@@ -1179,9 +1179,13 @@ class CyclicTimePositionalEncoding(TimePositionalEncoding):
         trace5 = go.Scatter(x=[X.at[min_period_posx, TIME]]*2, y=[-1, 2*self.d_dim],
                             mode='lines', name=f'{num_min_period}', line=dict(color='black'))
         traces.append(trace5)
-        trace6 = go.Scatter(x=[X.at[max_period_posx, TIME]]*2, y=[-1, 2 *
-                            self.d_dim], mode='lines', name='line', line=dict(color='black'))
-        traces.append(trace6)
+        try:
+            trace6 = go.Scatter(x=[X.at[max_period_posx, TIME]]*2, y=[-1, 2 *
+                                self.d_dim], mode='lines', name='line', line=dict(color='black'))
+            traces.append(trace6)
+        except:
+            # When the time ends before max period
+            pass
         fig = go.Figure(data=traces, layout=layout)
 
         fig.update_layout(

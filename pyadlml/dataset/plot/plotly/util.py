@@ -1,11 +1,18 @@
 from pyadlml.constants import ACTIVITY, BOOL, CAT, START_TIME, END_TIME, STRFTIME_PRECISE
 import numpy as np
 import plotly.graph_objects as go
-import plotly.express as px
 import dash
 from dash.exceptions import PreventUpdate
 import bisect
 import pandas as pd
+from pyadlml.constants import ACTIVITY, BOOL, CAT, START_TIME, END_TIME, STRFTIME_PRECISE
+import numpy as np
+import plotly.graph_objects as go
+import dash
+from dash.exceptions import PreventUpdate
+import bisect
+import pandas as pd
+
 
 
 def remove_whitespace_around_fig(plot_func):
@@ -273,48 +280,6 @@ def legend_current_items(fig):
             legend_current_items.append(trace.legendgroup)
     return legend_current_items
 
-
-class CatColMap():
-    COL_ON = 'teal'
-    COL_OFF = 'lightgray'
-
-    cat_idx =0
-
-    cat_col_map = {
-        0:COL_OFF, -1:COL_OFF, 1:COL_ON, 
-        'off':COL_OFF, 'on':COL_ON,
-        False:COL_OFF, True:COL_ON,
-    }
-    def __init__(self, theme='pastel'):
-        if theme == 'pastel':
-            self.cat_colors = px.colors.qualitative.Pastel \
-                    + px.colors.qualitative.Pastel1 \
-                    + px.colors.qualitative.Pastel2
-        elif theme == 'set':
-            self.cat_colors = px.colors.qualitative.Set1 \
-                    + px.colors.qualitative.Set2 \
-                    + px.colors.qualitative.Set3
-        else:
-            self.cat_colors = px.colors.qualitative.T10
-
-    def update(self, cat, fig=None):
-        if fig is not None:
-            if cat not in legend_current_items(fig):
-                if cat not in self.cat_col_map.keys():
-                    self.cat_col_map[cat] = self.cat_colors[self.cat_idx]
-                    self.cat_idx +=1
-                return True
-            return False
-        else:
-            if cat not in self.cat_col_map.keys():
-                self.cat_col_map[cat] = self.cat_colors[self.cat_idx]
-                self.cat_idx +=1
-            
-    def __getitem__(self, sub):
-        return self.cat_col_map[sub]
-
-    def __setitem__(self, sub, item):
-        self.cat_col_map[sub] = item
 
 def dash_get_trigger_value(ctx=None):
     try:

@@ -2,7 +2,9 @@ import functools
 import plotly.figure_factory as ff
 
 from pyadlml.dataset._core.activities import ActivityDict
-from .util import CatColMap, dyn_y_label_size, legend_current_items, _style_colorbar, remove_whitespace_around_fig
+from ..util import CatColMap
+from pyadlml.dataset.plot.util import CatColMap
+from .util import dyn_y_label_size, legend_current_items, _style_colorbar, remove_whitespace_around_fig
 import plotly.express as px
 import pandas as pd
 import numpy as np
@@ -319,7 +321,7 @@ def heatmap_transitions(df_act, scale='linear', height=350, order='alphabetical'
 
 @remove_whitespace_around_fig
 def correction(df_pre, df_post):
-    from pyadlml.dataset.plot.plotly.util import plot_activities_into, CatColMap
+    from pyadlml.dataset.plot.plotly.util import plot_activities_into
 
     fig = make_subplots(rows=1, cols=2, shared_xaxes=True,
                         subplot_titles=("Pre correction", "Post correction"),

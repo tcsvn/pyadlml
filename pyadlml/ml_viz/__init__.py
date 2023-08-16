@@ -102,47 +102,48 @@ def plotly_confusion_matrix(y_pred, y_true, labels, per_step=False, scale='linea
     return fig
 
 
-def plotly_online_confusion_matrix(y_true=None, y_pred=None, y_times=None, labels=None, conf_mat=None, scale='linear') -> go.Figure:
-    """
-    """
-    cbarlabel = 'counts' if scale == 'linear' else 'log seconds'
-    if conf_mat is None:
-        if isinstance(y_pred, torch.Tensor):
-            y_pred = y_pred.detach().cpu().numpy()
-
-        if isinstance(y_true, torch.Tensor):
-            y_true = y_true.detach().cpu().numpy()
-
-        # Row = true, column = prediction
-        cm = online_confusion_matrix(
-            y_true, y_pred, y_times, n_classes=len(labels))
-    else:
-        cm = conf_mat
-        labels = conf_mat.index
-    z = cm.astype('timedelta64[ns]')/np.timedelta64(1, 'ns')
-    z = z if scale == 'linear' else np.log(z)
-    z = z.T
-
-    # Create hoverdata, the duration as strings in (D,A,0) and full X names in (D,A,1)
-    cd = cm.astype(str).values.T
-    # tmp = np.tile(vals.index, (len(vals.columns), 1))
-    # cd = np.array([tmp, vals.values.T])
-    # d = np.moveaxis(cd, 0, -1)
-
-    fig = go.Figure(
-        data=go.Heatmap(
-            z=z,
-            x=labels,
-            y=labels,
-            customdata=cd,
-            colorscale='Viridis',
-            hovertemplate='Truth: %{y}<br>Pred: %{x}<br>Overlap: %{customdata} <extra></extra>',
-            hoverongaps=False),
-    )
-    fig.update_layout(
-        title="Confusion Matrix",
-        xaxis=dict(title="Predicted"),
-        yaxis=dict(title="True"),
-    )
-
-    return fig
+#def plotly_online_confusion_matrix(y_true=None, y_pred=None, y_times=None, labels=None, conf_mat=None, scale='linear') -> go.Figure:
+#    """
+#    """
+#    cbarlabel = 'counts' if scale == 'linear' else 'log seconds'
+#    if conf_mat is None:
+#        if isinstance(y_pred, torch.Tensor):
+#            y_pred = y_pred.detach().cpu().numpy()
+#
+#        if isinstance(y_true, torch.Tensor):
+#            y_true = y_true.detach().cpu().numpy()
+#
+#        # Row = true, column = prediction
+#        cm = online_confusion_matrix(
+#            y_true, y_pred, y_times, n_classes=len(labels))
+#    else:
+#        cm = conf_mat
+#        labels = conf_mat.index
+#    z = cm.astype('timedelta64[ns]')/np.timedelta64(1, 'ns')
+#    z = z if scale == 'linear' else np.log(z)
+#    z = z.T
+#
+#    # Create hoverdata, the duration as strings in (D,A,0) and full X names in (D,A,1)
+#    cd = cm.astype(str).values.T
+#    # tmp = np.tile(vals.index, (len(vals.columns), 1))
+#    # cd = np.array([tmp, vals.values.T])
+#    # d = np.moveaxis(cd, 0, -1)
+#
+#    fig = go.Figure(
+#        data=go.Heatmap(
+#            z=z,
+#            x=labels,
+#            y=labels,
+#            customdata=cd,
+#            colorscale='Viridis',
+#            hovertemplate='Truth: %{y}<br>Pred: %{x}<br>Overlap: %{customdata} <extra></extra>',
+#            hoverongaps=False),
+#    )
+#    fig.update_layout(
+#        title="Confusion Matrix",
+#        xaxis=dict(title="Predicted"),
+#        yaxis=dict(title="True"),
+#    )
+#
+#    return fig
+#
