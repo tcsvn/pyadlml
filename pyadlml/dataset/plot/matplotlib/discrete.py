@@ -10,6 +10,7 @@ from pyadlml.util import get_primary_color, get_diverging_color, get_secondary_c
 import matplotlib.pyplot as plt
 import pandas as pd 
 import numpy as np
+from copy import copy
 
 
 
@@ -460,7 +461,6 @@ def plot_acts_and_probs(y_true=None, y_pred=None, y_prob=None, y_times=None, act
     if y_pred is not None or y_true is not None:
         axes[1].set_yticks(np.vectorize(pos_func)(np.arange(len(y_act_labels))))
         axes[1].set_yticklabels(y_act_labels)
-        print()
 
 
     handles = []
@@ -478,5 +478,117 @@ def plot_acts_and_probs(y_true=None, y_pred=None, y_prob=None, y_times=None, act
     # Format labels
     axes[0].set_xticks([])
     xaxis_format_time2(fig, axes[1], start_time, end_time)
+
+    return fig
+
+
+
+def _plot_devices_into(fig, X, time, row, col, cat_col_map, dev_order=None):
+    ON = 1
+    OFF = 0
+
+    # Determine device order
+    if dev_order is None:
+        device_order = X.columns.to_list() 
+    elif isinstance(dev_order, np.ndarray):
+        device_order = device_order.tolist() 
+    elif isinstance(dev_order, str) and dev_order == 'alphabetical':
+        device_order = X.columns.to_list()
+        device_order.sort(reverse=True)
+    else:
+        device_order = dev_order
+
+    def _is_in_powerset(s, base_set):
+        import itertools
+        return any(set(combo) == s for i in range(len(base_set) + 1) 
+                                   for combo in itertools.combinations(base_set, i))
+
+    start_time = time[0]
+    bar_height = 0.3
+    devs = X.columns.to_list() if dev_order is None else copy(dev_order)
+    devs = devs.tolist() if isinstance(devs, np.ndarray) else devs
+    dev_pos = np.arange(len(devs))
+
+    # Split in binary and numerical features
+    binary_features = []
+    numerical_features = []
+    for dev in devs:
+        vals = set(X[dev].unique())
+        assert vals != {}, f'No values for feature {dev}'
+        if _is_in_powerset(vals, {0, 1}) or _is_in_powerset(vals, {-1, 1}):
+            binary_features.append(dev)
+        else:
+            numerical_features.append(dev)
+
+    bars = {f:{OFF:[], ON:[]} for f in binary_features}
+    for f in binary_features:
+        bars[f] = pd.DataFrame(data=zip(*rlencode(X[f])), columns=['start', 'lengths', 'state'])
+        if time is not None:
+            df = bars[f]
+            df = discreteRle2timeRle(df, time).copy()
+            df['lengths'] = df['lengths'].astype("timedelta64[ms]")
+            df['lengths'] = df['lengths'].astype("timedelta64[ms]")
+            df['end'] = df['start'] + df['lengths']
+            df['num_st'] = time2num(df['start'], start_time)
+            df['num_et'] = time2num(df['end'], start_time)
+            df['diff'] = df['num_et'] - df['num_st']
+            bars[f] = df
+
+
+    ax = _mp_get_axes(fig, row, col)
+    bin_label_set = False
+    num_label_set = False
+    for i, dev in enumerate(devs):
+        if dev in binary_features:
+            on_mask = (bars[dev]['state'] == 1)
+            x_range = bars[dev][on_mask][['num_st', 'diff']].values.tolist()
+            label = None if bin_label_set else 1
+            ax.broken_barh(x_range, (i, bar_height), linewidth=0,
+                        color=cat_col_map[1], label=label, alpha=1.0)
+            x_range = bars[dev][~on_mask][['num_st', 'diff']].values.tolist()
+            label = None if bin_label_set else 0
+            ax.broken_barh(x_range, (i, bar_height), linewidth=0,
+                        color=cat_col_map[0], label=label, alpha=1.0)
+            bin_label_set = True
+        else:
+            times_x = time2num(time, start_time)
+            values = pd.to_numeric(X[dev])
+            values_norm = (values-values.min())/(values.max()-values.min())*0.5
+            values = values_norm + i - 0.25
+            label = None if num_label_set else 'num'
+            ax.plot(times_x, values, color='blue', label=label)
+            num_label_set = True
+    
+    ax.set_yticks(dev_pos)
+    ax.set_yticklabels(devs)
+
+    return fig
+
+
+def plot_devices(X, times):
+
+    cols = 1
+    rows = 1
+    row_heights = [1.0]
+    cat_col_map = CatColMap()
+    specs = [[{"secondary_y": True}]]
+
+
+    device_order = X.columns.to_list()
+    #device_order.sort(reverse=True)
+    fig, axes = plt.subplots(nrows=rows, ncols=cols, figsize=(12, 14))
+
+
+    fig = _plot_devices_into(fig, X, times, cat_col_map=cat_col_map, row=rows, col=cols, 
+                                dev_order=device_order
+        )
+
+    start_time = times[0]
+    end_time = times[-1]
+
+    axes.set_xticks([])
+    xaxis_format_time2(fig, axes, start_time, end_time)
+    axes.set_ylim(-1, 79)
+    axes.legend(loc='upper right')
 
     return fig

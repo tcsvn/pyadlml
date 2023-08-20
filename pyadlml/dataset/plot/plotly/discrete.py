@@ -215,6 +215,7 @@ def _plot_activities_into(fig, y, y_label, cat_col_map, row=1, col=1, time=None,
         return fig
 
 def discreteRle2timeRle(df, time):
+    time = pd.Series(time)
     delta_t = (time - time.shift(1))[1:].reset_index(drop=True)
     df['start_time'] = time[0]
     df['lengths_time'] = pd.Timedelta('0ns')
