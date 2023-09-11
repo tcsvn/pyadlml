@@ -15,4 +15,12 @@ from .preprocessing import \
     SineCosEncoder, \
     PositionalEncoding, \
     TimePositionalEncoding, \
-    CyclicTimePositionalEncoding
+    CyclicTimePositionalEncoding, \
+    OneHotEncoder, \
+    TimeOfDay, \
+    DropOffEvents, \
+    AllZeroToNegOne, \
+    AddDeviceLocation, \
+    MarkArea
+    
+

@@ -14,6 +14,7 @@ from pyadlml.constants import TIME, END_TIME, START_TIME, DEVICE, VALUE, BOOL, C
 from pyadlml.dataset.util import unitsfromdaystart
 from pyadlml.util import get_sequential_color, get_diverging_color
 import matplotlib.ticker as ticker
+import matplotlib.dates as mdates
 
 LOG = 'log'
 
@@ -863,21 +864,21 @@ def xaxis_format_time2(fig, ax, start_time: np.datetime64, end_time: np.datetime
             self.freq = freq
 
         def __call__(self, x, pos):
-         x = matplotlib.dates.num2date(x)
-         if pos == 0 and (self.freq == 'hourly' or self.freq == '10minutes'):
-             fmt = '%H:%M:%S\n%d.%m.%Y'
-         elif pos == 0:
-             fmt = '%d.%m.%Y'
-         elif x.strftime('%d:%m') == '01:01':
-             # if silvester
-             fmt = '%d.%m.%Y'
+            x = matplotlib.dates.num2date(x)
+            if pos == 0 and (self.freq == 'hourly' or self.freq == '10minutes'):
+                fmt = '%H:%M:%S\n%d.%m.%Y'
+            elif pos == 0:
+                fmt = '%d.%m.%Y'
+            elif x.strftime('%d:%m') == '01:01':
+                # if silvester
+                fmt = '%d.%m.%Y'
 
-         elif x.time() == datetime.time(0, 0) and self.freq == 'hourly':
-             # append for hourly ticks adt midnight the days
-             fmt = self.formatting + '\n%d.%m.%Y'
-         else:
-             fmt = self.formatting
-         return x.strftime(fmt)
+            elif x.time() == datetime.time(0, 0) and self.freq == 'hourly':
+                # append for hourly ticks adt midnight the days
+                fmt = self.formatting + '\n%d.%m.%Y'
+            else:
+                fmt = self.formatting
+            return x.strftime(fmt)
 
     locator = AutoDateLocator()
     formatter = AutoDateFormatter(locator)
@@ -895,6 +896,35 @@ def xaxis_format_time2(fig, ax, start_time: np.datetime64, end_time: np.datetime
     newax.xaxis.set_major_formatter(formatter)
 
     plt.setp(newax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+
+
+def xaxis_format_time_concise(ax, x_num: np.ndarray, x_times: np.ndarray) -> None:
+    """
+    Presumes there on axis ``ax`` timepoints are plotted. The points represent the dates in x_time 
+    but are plotted on a numerical scale for ease of coding. The corresponding numerical values
+    are in x_num. This method aligns a datetime axis to the numerical axis and formats the labels   
+
+    Parameters
+
+    """
+    assert len(x_num) == len(x_times)
+
+    ## Making ax1's x-axis invisible
+    ax.set_xlim([x_num[0], x_num[-1]])
+    ax.xaxis.set_visible(False)
+
+    ## Creating a second x-axis at the bottom and aligning it with ax1
+    ax2 = ax.twiny()
+    ax2.plot(x_times, [0]*len(x_times), alpha=0.0)
+    ax2.xaxis.set_ticks_position('bottom')
+    ax2.xaxis.set_label_position('bottom')
+    ax2.set_xlim([x_times[0], x_times[-1]])
+
+    locator = mdates.AutoDateLocator()
+    formatter = mdates.ConciseDateFormatter(locator)
+    ax2.xaxis.set_major_locator(locator)
+    ax2.xaxis.set_major_formatter(formatter)
+
 
 def xaxis_format_time(ax , start_time : np.datetime64, end_time : np.datetime64):
     """

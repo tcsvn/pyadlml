@@ -5,8 +5,15 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder as SkOneHotEncoder
 from sklearn.compose import ColumnTransformer
 import pandas as pd
-
-
+from numpy import ndarray
+import numpy as np
+from sklearn.base import BaseEstimator, TransformerMixin
+import pandas as pd
+from sklearn.preprocessing import OneHotEncoder as SkOneHotEncoder
+from sklearn.base import BaseEstimator, TransformerMixin
+from pyadlml.pipeline import XOrYTransformer
+from pyadlml.constants import VALUE, DEVICE, TIME, START_TIME, END_TIME
+from pyadlml.dataset._core.devices import correct_device_ts_duplicates
 from sklearn.utils.metaestimators import _safe_split
 import sklearn.preprocessing as preprocessing
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -1215,3 +1222,361 @@ class CyclicTimePositionalEncoding(TimePositionalEncoding):
         )
         fig.update_layout(title='Period per dim')
         return fig
+
+
+class OneHotEncoder(BaseEstimator, TransformerMixin):
+    def __init__(self, column_name, inplace=True, dtype=False):
+        self.column_name = column_name
+        self.inplace = inplace
+        self.dtype=dtype
+
+    def fit(self, X, y=None):
+        self.one_hot_encoder_ = SkOneHotEncoder()
+        self.one_hot_encoder_.fit(
+            X[self.column_name].values.reshape(-1, 1))
+
+        self.categories = self.column_name + ':' + \
+            self.one_hot_encoder_.categories_[0]
+        return self
+
+    def fit_transform(self, X, y=None):
+        assert self.dtype in [bool, int]
+
+        self.fit(X, y)
+        return self.transform(X, y)
+
+    def transform(self, X, y=None):
+        is_df = isinstance(X, pd.DataFrame)
+        assert is_df or isinstance(X, pd.Series)
+
+        if is_df:
+            ser = X[self.column_name]
+        else:
+            ser = X
+
+        encoded = self.one_hot_encoder_.transform(
+            ser.values.reshape(-1, 1)).toarray()
+        df_encoded = pd.DataFrame(encoded, columns=self.categories, dtype=self.dtype)
+
+        if self.inplace and is_df:
+            X = X.drop(columns=self.column_name)
+            X = pd.concat([X, df_encoded], axis=1)
+        return X
+
+
+class TimeOfDay(TransformerMixin, BaseEstimator):
+    """
+    Divides a day into equal-length time bins and assigns time bin as features to
+    a row that falls into that bin.
+
+    Attributes
+    ----------
+    dt: str, default='2h'
+        The frequency that the day is divided. Different resolutions are
+        accepted, like minutes '[x]m' seconds '[x]s] or hours '[x]h'
+    inplace : bool, default=False
+        Determines whether to append the one-hot encoded time_bins as columns
+        to the existing dataframe or return only the one-hot encoding.
+
+    """
+    TIME_BINS = 'time_bins'
+    ALLOWED_RESOLUTIONS = ['m', 's', 'h']
+
+    def __init__(self, dt='2h', one_hot_encoding=False, inplace=False, dtype=bool):
+        self.dt = dt
+        self.inplace = inplace
+        self.one_hot_encoding = one_hot_encoding
+        self.dtype = dtype
+
+    def fit(self, X, y=None):
+        assert self.dt[-1:] in self.ALLOWED_RESOLUTIONS
+        assert self.dtype in [bool, int]
+        if 'm' in self.dt:
+            self.dt = self.dt[:-1] + 'min'
+        self.dt = pd.Timedelta(self.dt)
+
+        return self
+
+    def get_time_bin(self, value: pd.Timestamp) -> str:
+        from pyadlml.feature_extraction import _time2intervall
+        return _time2intervall(value, self.dt)
+
+    def get_time_bins(self) -> list:
+        tdelta = pd.Timedelta(self.dt)
+        total_bins = (pd.Timedelta('1 day') // tdelta)
+
+        time_bins = []
+        current_time = pd.Timestamp("00:00:00")
+
+        for _ in range(total_bins):
+            from pyadlml.feature_extraction import _time2intervall
+            time_bin = _time2intervall(
+                current_time + pd.Timedelta('1ms'), self.dt)
+            time_bins.append(time_bin)
+            current_time += tdelta
+
+        return time_bins
+
+    def fit_transform(self, X, y=None, **fit_params):
+        """
+
+        Parameters
+        ----------
+        X: pd.DataFrame
+           A device dataframe. The dataframe has to include a column with
+           the name 'time' containing the timestamps of the representation.
+
+        Returns
+        -------
+        df : pd.DataFrame
+            One-hot encoding of the devices.
+        """
+        self.fit(X, y)
+
+        return self.transform(X)
+
+    def transform(self, X, y=None):
+        """
+
+        Parameters
+        ----------
+        X: pd.DataFrame
+           A device dataframe. The dataframe has to include a column
+           named 'time' containing timestamps of the representation.
+
+        Returns
+        -------
+        df : pd.DataFrame
+            One-hot encoding of the devices.
+        """
+        from pyadlml.constants import TIME
+        from pyadlml.feature_extraction import _time2intervall, _tres_2_discrete
+        df = X.copy()
+        df['l_edge'] = df[TIME].dt.floor(freq=self.dt)
+        df['u_edge'] = df[TIME].dt.ceil(freq=self.dt)
+
+        # Correct such that [l, u)
+        mask_l_eq_u = (df['l_edge'] == df['u_edge'])
+        df.loc[mask_l_eq_u, 'u_edge'] = df.loc[mask_l_eq_u, 'u_edge'] + self.dt
+        df[self.TIME_BINS] = df['l_edge'].dt.time.astype(str) + '-' + df['u_edge'].dt.time.astype(str)
+
+        if not self.one_hot_encoding:
+            if self.inplace:
+                return df
+            else:
+                return df[self.TIME_BINS]
+
+        one_hot = pd.get_dummies(df[self.TIME_BINS]).astype(self.dtype)
+        df = df.join(one_hot, on=df.index)
+        del df[self.TIME_BINS],  df['l_edge'], df['u_edge']
+
+        # add columns that don't exist in the dataset
+        missing_cols = set(_tres_2_discrete(self.dt)) - set(df.columns)
+        for col in missing_cols:
+            if self.dtype == int:
+                df[col] = 0
+            elif self.dtype == bool:
+                df[col] = False
+            else:
+                raise
+
+        if self.inplace:
+            return df
+        else:
+            cols = np.array(one_hot.columns.to_list() + list(missing_cols))
+            cols.sort()
+            return df[cols.tolist()]
+
+from pyadlml.dataset._core.activities import is_activity_df
+from pyadlml.dataset._core.devices import is_device_df
+
+class DropOffEvents(BaseEstimator, TransformerMixin, XOrYTransformer):
+    def __init__(self, devices):
+        self.devices = devices
+
+    def fit(self, X, y=None):
+        if isinstance(self.devices, str):
+            self.devices = [self.devices]
+        assert isinstance(self.devices, list)
+
+        self.on_device_df_ = is_device_df(X)
+
+        return self
+
+    def fit_transform(self, X, y=None):
+        self.fit(X, y)
+        return self.transform(X, y)
+
+    @XOrYTransformer.x_or_y_transform
+    def transform(self, X, y=None):
+
+        if X is None:
+            return X, y
+        if self.on_device_df_:
+            mask_false_events = pd.Series([False]*X.shape[0])
+            for dev in self.devices:
+                mask_false_events = mask_false_events | \
+                    ((X[DEVICE] == dev) & (X[VALUE] == False)) 
+            X = X[~mask_false_events].copy()
+        else:
+            mask_zero_events = pd.Series([False]*X.shape[0])
+            for col in self.devices:
+                assert col in X.columns, f"Column {col} not found in DataFrame"
+                mask_zero_events = mask_zero_events | (X[col] == 0) | (X[col] == False)
+
+            X = X[~mask_zero_events].copy()
+            if y is not None:
+                y = y[~mask_zero_events].copy()
+            
+        return X, y
+
+class DeviceCat2Binary(BaseEstimator, TransformerMixin):
+    def __init__(self, devices):
+        self.devices = devices
+
+
+    def fit(self, X, y=None):
+        if isinstance(self.devices, str):
+            self.devices = [self.devices]
+        assert isinstance(self.devices, list)
+
+        self.on_device_df_ = is_device_df(X)
+        return self
+
+    def fit_transform(self, X: pd.DataFrame, y: pd.DataFrame, **fit_params) -> ndarray:
+        self.fit(X)
+        return self.transform(X, y)
+
+
+    def transform(self, X, y=None):
+        for dev in self.devices:
+            df_dev = X.loc[X[DEVICE] == dev].copy()
+            df_dev[END_TIME] = df_dev[TIME].shift(-1)
+            new_devices = []
+
+            # For each category create a binary device
+            for cat in df_dev[VALUE].unique():
+                df_cat = df_dev[df_dev[VALUE] == cat].copy()
+                df_cat[DEVICE] = dev + ':' + cat
+
+                df_cat_off = df_cat.copy()
+                df_cat = df_cat.drop(columns=[END_TIME])
+                df_cat[TIME] = df_cat[TIME] + pd.Timedelta('1ms')
+
+                # Create category onsets
+                df_cat.loc[df_cat[VALUE] == cat, VALUE] = True
+
+                        
+                # Create the off events 
+                df_cat_off = df_cat_off.drop(columns=[TIME])\
+                               .rename(columns={END_TIME:TIME})
+                df_cat_off[VALUE] = False
+
+                # Correct for one category being the last device
+                if pd.isna(df_cat_off.at[df_cat_off.index[-1], TIME]):
+                    df_cat_off = df_cat_off.iloc[:-1, :]
+
+                if pd.isna(df_cat.at[df_cat.index[-1], TIME]):
+                    df_cat = df_cat.iloc[:-1, :]
+
+                new_devices += [df_cat, df_cat_off]
+                assert not df_cat.isna().any().any()\
+                    and not df_cat_off.isna().any().any()
+
+        Xt = X[~X[DEVICE].isin(self.devices)]
+        Xt = pd.concat([Xt, *new_devices], axis=0)\
+               .sort_values(by=TIME)\
+               .reset_index(drop=True)
+
+        return Xt
+
+class AllZeroToNegOne(BaseEstimator, TransformerMixin):
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        return X.replace(0, -1)
+
+    def fit_transform(self, X: pd.DataFrame, y: pd.DataFrame, **fit_params) -> ndarray:
+        self.fit(X)
+        return self.transform(X, y)
+
+
+
+
+class AddDeviceLocation(BaseEstimator, TransformerMixin):
+    def __init__(self, fp_dev2area="/home/chris/master_thesis/ma_adl_prediction/data_csvs/dev2areamap_01.06.23.csv"):
+        """
+        
+        Parameters
+        drop_dev_cps : (bool) 
+            If the encoding is changepoint events where the the category
+            i.e. room occupancy changes are dropped. CAVE
+        """
+        self.fp_dev2area = fp_dev2area
+
+
+    def fit(self, X, y=None):
+        self.on_device_df_ = is_device_df(X)
+        return self
+
+    def fit_transform(self, X: pd.DataFrame, y: pd.DataFrame=None) -> ndarray:
+        self.fit(X)
+        return self.transform(X, y)
+
+    def transform(self, X, y=None):
+        dev2area_map = pd.read_csv(self.fp_dev2area)
+        dev2area_map = dev2area_map.set_index('device').to_dict()['area']
+
+        room_ass = X.idxmax(axis=1)
+        room_ass = room_ass.map(dev2area_map)
+        room_ass = room_ass.fillna('many')
+        room_ass = pd.get_dummies(room_ass)
+        room_ass.columns = ['dev_loc:' + c for c in room_ass.columns]
+
+        room_ass.columns = room_ass.columns.sort_values()
+        X = pd.concat([X, room_ass], axis=1)
+
+        return X
+
+
+class MarkArea(BaseEstimator, TransformerMixin, XOrYTransformer):
+    def __init__(self, device_name, drop_dev_cps=False):
+        """
+        
+        Parameters
+        drop_dev_cps : (bool) 
+            If the encoding is changepoint events where the the category
+            i.e. room occupancy changes are dropped. CAVE
+        """
+        self.device_name = device_name
+        self.drop_dev_cps = drop_dev_cps
+
+
+    def fit(self, X, y=None):
+        self.on_device_df_ = is_device_df(X)
+        return self
+
+    def fit_transform(self, X: pd.DataFrame, y: pd.DataFrame, **fit_params) -> ndarray:
+        self.fit(X)
+        return self.transform(X, y)
+
+    @XOrYTransformer.x_or_y_transform
+    def transform(self, X, y=None):
+        cols = [c for c in X.columns if self.device_name + ':' in c]
+        mask_all_cats_zero = X[cols].sum(axis=1) == 0
+        X.loc[mask_all_cats_zero, cols] = np.nan
+        X.ffill(inplace=True)
+
+        # First values before 
+        X[cols] = X[cols].fillna(0)
+        if self.drop_dev_cps:
+            mask_dev_event = (X[list(set(X.columns) - set(cols))].sum(axis=1) == 0)
+            X = X[~mask_dev_event].copy()
+            y = y[~mask_dev_event].copy()
+
+            assert not X.isna().any().any()
+            return X, y
+        else:
+            return X

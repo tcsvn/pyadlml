@@ -253,21 +253,17 @@ def _plot_confidences_into(fig, col, row, y_prob, act_order, cat_col_map, y_time
     ax = np.atleast_2d(fig.get_axes())[row-1, col-1]
     for act in act_order:
         cat_col_map.update(act, fig)
-    # First plot is a stacked plot of probabilities
 
     x_values = time2num(y_times, start_time)
-
     ax.stackplot(
         x_values, 
-        y_prob.T, 
+        y_prob.T,
         labels=act_order, 
         colors =[cat_col_map[act] for act in act_order],
-        alpha=alpha)
-
-    # Set y limit between 0 and 1
+        alpha=alpha,
+        step='post'
+        )
     ax.set_ylim(0, 1)
-
-    # Add legend
     return fig
 
 def _mp_get_axes(fig, row, col):
@@ -301,7 +297,8 @@ def _plot_activity_bar(fig, y: pd.DataFrame, activities: list, row, col,
         df = pd.DataFrame(data=zip(*rlencode(y)), columns=['start', 'lengths', ACTIVITY])
         if time is not None:
             df = discreteRle2timeRle(df, time)
-
+        # The last prediction has no length!!!
+        df = df.loc[df.index[:-1]]
         df['end'] = df['start'] + df['lengths']
         if time is not None:
             df['lengths' ] = df['lengths'].astype("timedelta64[s]")
@@ -319,87 +316,6 @@ def _plot_activity_bar(fig, y: pd.DataFrame, activities: list, row, col,
                        color=cat_col_map[act], label=act, alpha=alpha)
     return fig
 
-
-def plot_acts_and_probs(y_true=None, y_pred=None, y_prob=None, y_times=None, act_order=[]):
-    import matplotlib.gridspec as gridspec
-
-    if y_prob is None:
-        cols, rows = 1,1
-    else:
-        cols, rows = 1,2
-        assert len(y_prob.shape) == 2, "y_prob should be a 2D array"
-        assert y_prob.shape[1] >= 2, "y_prob should have at least two columns"
-
-
-    title = 'asdf'
-    cat_col_map = CatColMap(plotly=False, theme='set')
-    # Equation for position is ki-h/2. 
-    # Gap between bars is e=k-h. Fix gap as 20% of bar length 
-    # leads to k=e+h
-    bar_height = 1
-    e = 0.25
-    pos_func = lambda i: i*(e+bar_height)
-    pos_bar_func = lambda i: i*(e+bar_height) - bar_height/2
-    #pos_bar_func = lambda i: i- bar_height/2
-    alpha = 0.6
-    start_time = y_times[0]
-    end_time = y_times[-1]
-
-    # Create a figure and a grid of subplots with 1 row and 3 columns
-    fig, axes = plt.subplots(nrows=rows, ncols=cols, figsize=(12, 4),
-                            gridspec_kw={'height_ratios':[6, 4]}
-    )
-    #gs = gridspec.GridSpec(1, 2, width_ratios=[8,2])
-
-    # Show plot
-    if y_prob is not None:
-        fig = _plot_confidences_into(fig, 1, 1, y_prob, act_order, cat_col_map,  
-                                     y_times, alpha=alpha, start_time=start_time
-        )
-        ax = np.atleast_2d(fig.get_axes())[0, 0]
-        ax.set_ylabel('Probs')
-
-    y_act_labels = []
-
-    if y_true is not None:
-        fig = _plot_activity_bar(fig, y_true, y_label='y_true', cat_col_map=cat_col_map, 
-                                 row=rows, col=1, time=y_times, activities=act_order, 
-                                 act_bar_height=bar_height, y_pos=pos_bar_func(0),
-                                 alpha=alpha, start_time=start_time
-            )
-        y_act_labels.append('y_true')
-
-    if y_pred is not None:
-        fig = _plot_activity_bar(fig, y_pred, y_label='y_pred', cat_col_map=cat_col_map, 
-                                 row=rows, col=1, time=y_times, activities=act_order, 
-                                 act_bar_height=bar_height, y_pos=pos_bar_func(1),
-                                 alpha=alpha, start_time=start_time
-            )
-        y_act_labels.append('y_pred')
-
-    if y_pred is not None or y_true is not None:
-        axes[1].set_yticks(np.vectorize(pos_func)(np.arange(len(y_act_labels))))
-        axes[1].set_yticklabels(y_act_labels)
-        print()
-
-
-    handles = []
-    import matplotlib.patches as mpatches
-
-    # Plot data and create a Line2D object for each entry, and add them to handles
-    for color, name in cat_col_map.items():
-        # Create a Line2D object for the legend and add to handles
-        handles.append(mpatches.Patch(color=color, label=name, alpha=alpha))
-
-    # Create a legend with the handles and labels
-    fig.legend(loc='upper left', bbox_to_anchor=(1.01, 1), 
-               borderaxespad=0, handles=handles
-    )
-    # Format labels
-    axes[0].set_xticks([])
-    xaxis_format_time2(fig, axes[1], start_time, end_time)
-
-    return fig
 
 def plot_acts_and_probs(y_true=None, y_pred=None, y_prob=None, y_times=None, act_order=[]):
     import matplotlib.gridspec as gridspec
@@ -543,11 +459,11 @@ def _plot_devices_into(fig, X, time, row, col, cat_col_map, dev_order=None):
             on_mask = (bars[dev]['state'] == 1)
             x_range = bars[dev][on_mask][['num_st', 'diff']].values.tolist()
             label = None if bin_label_set else 1
-            ax.broken_barh(x_range, (i, bar_height), linewidth=0,
+            ax.broken_barh(x_range, (i-bar_height/2, bar_height), linewidth=0,
                         color=cat_col_map[1], label=label, alpha=1.0)
             x_range = bars[dev][~on_mask][['num_st', 'diff']].values.tolist()
             label = None if bin_label_set else 0
-            ax.broken_barh(x_range, (i, bar_height), linewidth=0,
+            ax.broken_barh(x_range, (i-bar_height/2, bar_height), linewidth=0,
                         color=cat_col_map[0], label=label, alpha=1.0)
             bin_label_set = True
         else:
@@ -565,7 +481,7 @@ def _plot_devices_into(fig, X, time, row, col, cat_col_map, dev_order=None):
     return fig
 
 
-def plot_devices(X, times):
+def plot_devices(X, times, figsize=(12, 14)):
 
     cols = 1
     rows = 1
@@ -576,7 +492,7 @@ def plot_devices(X, times):
 
     device_order = X.columns.to_list()
     #device_order.sort(reverse=True)
-    fig, axes = plt.subplots(nrows=rows, ncols=cols, figsize=(12, 14))
+    fig, axes = plt.subplots(nrows=rows, ncols=cols, figsize=figsize)
 
 
     fig = _plot_devices_into(fig, X, times, cat_col_map=cat_col_map, row=rows, col=cols, 
@@ -588,7 +504,7 @@ def plot_devices(X, times):
 
     axes.set_xticks([])
     xaxis_format_time2(fig, axes, start_time, end_time)
-    axes.set_ylim(-1, 79)
+    axes.set_ylim(-1, len(device_order))
     axes.legend(loc='upper right')
 
     return fig

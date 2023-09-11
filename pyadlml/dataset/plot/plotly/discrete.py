@@ -502,3 +502,23 @@ def _plot_selected_device_marker(fig, times, init=False):
 
     fig.add_trace(trace, row=row, col=col, secondary_y=True)
     return fig
+
+
+def plot_acts_and_probs(y_val, y_pred, y_prob, y_times, act_order='alphabetical'):
+    cols, rows = 1,2
+    cat_col_map = CatColMap()
+    fig = make_subplots(cols=cols, rows=rows, row_heights=[0.75, 0.25],
+        shared_xaxes=True, vertical_spacing=0.02,
+        #specs = specs
+    )
+
+
+    fig = _plot_confidences_into(fig, 1, 1, y_prob, act_order,
+                                    cat_col_map,  y_times)
+
+    fig = _plot_activities_into(fig, y_val, 'y_true', cat_col_map=cat_col_map, 
+                                row=2, col=1, time=y_times, activities=act_order)
+    fig = _plot_activities_into(fig, y_pred, 'y_pred', cat_col_map=cat_col_map, 
+                                row=2, col=1, time=y_times, activities=act_order)
+    fig.update_xaxes(type="date")
+    return fig
